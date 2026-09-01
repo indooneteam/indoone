@@ -21,6 +21,7 @@
     modal.innerHTML = `<div class="auth-page">${html}<div id="authStatus" class="auth-status" hidden aria-live="polite"></div></div>`;
     bindButtons(modal);
     bindMobileDefaults(modal);
+    bindPasswordToggles(modal);
     return true;
   }
 
@@ -88,12 +89,36 @@
     }
   }
 
+  function bindPasswordToggles(root) {
+    root.querySelectorAll('button[data-password-toggle]').forEach(button => {
+      if (button.dataset.passwordToggleBound === 'true') return;
+      button.dataset.passwordToggleBound = 'true';
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const inputId = button.dataset.passwordToggle;
+        const input = inputId ? $(inputId) : null;
+        if (!input) return;
+        const showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        button.textContent = showing ? '◉' : '◌';
+        button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        button.setAttribute('title', showing ? 'Show password' : 'Hide password');
+        input.focus();
+      });
+    });
+  }
+
+  function passwordField(id, autocomplete, placeholder) {
+    return `<div class="password-wrap"><input id="${id}" type="password" autocomplete="${autocomplete}" placeholder="${placeholder}" /><button type="button" class="password-toggle" data-password-toggle="${id}" aria-label="Show password" title="Show password">◉</button></div>`;
+  }
+
   function showLogin() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div><div class="field"><label>PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Continue &amp; Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button><button type="button" class="secondary auth-action-button" data-auth-action="login-resend">Resend OTP</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Password is checked by Firebase first; login is completed only after OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Continue &amp; Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button><button type="button" class="secondary auth-action-button" data-auth-action="login-resend">Resend OTP</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Password is checked by Firebase first; login is completed only after OTP verification.</div>`);
   }
 
   function showSignup() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="98765 43210" /></div><div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="98765 43210" /></div><div class="field"><label>PASSWORD</label>${passwordField('signupPassword', 'new-password', 'Create a strong password')}</div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>`);
   }
 
   async function run(button) {
