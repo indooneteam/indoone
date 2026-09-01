@@ -33,7 +33,10 @@
 
       loginInput.addEventListener('input', () => {
         const raw = loginInput.value.trim();
-        if (!raw) return;
+        if (!raw || raw === '+91') {
+          loginInput.value = '';
+          return;
+        }
 
         // Email input: never add the mobile country code.
         if (/[A-Za-z@]/.test(raw)) {
