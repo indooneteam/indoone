@@ -1,18 +1,24 @@
 window.IndooneAuthUI = (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
-  let actionBound = false;
+
+  function status(text, isError = false) {
+    const node = document.getElementById('authStatus');
+    if (!node) return;
+    node.textContent = text || '';
+    node.dataset.error = isError ? 'true' : 'false';
+    node.hidden = !text;
+  }
 
   function reportError(error) {
-    const authApi = window.IndooneFirebaseAuth;
-    const message = authApi && typeof authApi.errorMessage === 'function'
-      ? authApi.errorMessage(error)
+    const message = window.IndooneFirebaseAuth && typeof window.IndooneFirebaseAuth.errorMessage === 'function'
+      ? window.IndooneFirebaseAuth.errorMessage(error)
       : (error?.message || 'Authentication failed.');
+    status(message, true);
     if (typeof toast === 'function') toast(message);
     else console.error(message, error);
   }
 
   function setBusy(button, busyText) {
-    if (!button) return () => {};
     const idleText = button.dataset.idleText || button.textContent;
     button.dataset.idleText = idleText;
     button.disabled = true;
@@ -25,78 +31,98 @@ window.IndooneAuthUI = (() => {
     };
   }
 
-  async function handleAction(event) {
-    const button = event.target.closest('button[data-auth-action]');
-    if (!button) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const action = button.dataset.authAction;
+  function bindButtons() {
+    const modal = document.getElementById('modal');
+    if (!modal) return;
 
-    if (action === 'signup') return showSignup();
-    if (action === 'login') return showLogin();
+    modal.querySelectorAll('[data-auth-action]').forEach(button => {
+      button.onclick = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const action = button.dataset.authAction;
 
-    try {
-      if (action === 'login-submit') {
-        const done = setBusy(button, 'Checking…');
-        try { await window.IndooneFirebaseAuth.login(); }
-        catch (error) { reportError(error); }
-        finally { done(); }
-        return;
-      }
-      if (action === 'login-verify') {
-        const done = setBusy(button, 'Verifying…');
-        try { await window.IndooneFirebaseAuth.verifyLoginOtp(); }
-        catch (error) { reportError(error); }
-        finally { done(); }
-        return;
-      }
-      if (action === 'login-resend') {
-        const done = setBusy(button, 'Sending…');
-        try { await window.IndooneFirebaseAuth.resendLoginOtp(); }
-        catch (error) { reportError(error); }
-        finally { done(); }
-        return;
-      }
-      if (action === 'signup-submit') {
-        const done = setBusy(button, 'Sending OTP…');
+        if (action === 'signup') {
+          showSignup();
+          return;
+        }
+        if (action === 'login') {
+          showLogin();
+          return;
+        }
+
+        status('', false);
         try {
-          await window.IndooneFirebaseAuth.startSignup();
-          button.disabled = false;
-          button.removeAttribute('aria-busy');
-          button.textContent = 'OTP sent';
+          if (action === 'login-submit') {
+            const done = setBusy(button, 'Checking…');
+            try {
+              await window.IndooneFirebaseAuth.login();
+            } finally {
+              done();
+            }
+            return;
+          }
+
+          if (action === 'login-verify') {
+            const done = setBusy(button, 'Verifying…');
+            try {
+              await window.IndooneFirebaseAuth.verifyLoginOtp();
+            } finally {
+              done();
+            }
+            return;
+          }
+
+          if (action === 'login-resend') {
+            const done = setBusy(button, 'Sending…');
+            try {
+              await window.IndooneFirebaseAuth.resendLoginOtp();
+            } finally {
+              done();
+            }
+            return;
+          }
+
+          if (action === 'signup-submit') {
+            const done = setBusy(button, 'Sending OTP…');
+            status('Sending OTP…');
+            try {
+              await window.IndooneFirebaseAuth.startSignup();
+              button.textContent = 'OTP sent';
+              button.disabled = false;
+              button.removeAttribute('aria-busy');
+              button.dataset.idleText = 'OTP sent';
+              status('OTP sent. Enter the code from your email.');
+            } catch (error) {
+              done();
+              throw error;
+            }
+            return;
+          }
+
+          if (action === 'signup-verify') {
+            const done = setBusy(button, 'Verifying…');
+            try {
+              await window.IndooneFirebaseAuth.finishSignupAfterOtp();
+            } finally {
+              done();
+            }
+          }
         } catch (error) {
-          done();
           reportError(error);
         }
-        return;
-      }
-      if (action === 'signup-verify') {
-        const done = setBusy(button, 'Verifying…');
-        try { await window.IndooneFirebaseAuth.finishSignupAfterOtp(); }
-        catch (error) { done(); reportError(error); }
-        return;
-      }
-    } catch (error) {
-      reportError(error);
-    }
-  }
-
-  function bindModalActions() {
-    const modal = document.getElementById('modal');
-    if (!modal || actionBound) return;
-    modal.addEventListener('click', handleAction, false);
-    actionBound = true;
+      };
+    });
   }
 
   function mount(content) {
     const overlay = document.getElementById('overlay');
     const modal = document.getElementById('modal');
     if (!overlay || !modal) return;
-    bindModalActions();
     overlay.classList.remove('hidden');
     overlay.classList.add(AUTH_CLASS);
-    modal.innerHTML = `<div class="auth-page">${content}</div>`;
+    modal.innerHTML = `<div class="auth-page">${content}<div id="authStatus" class="auth-status" hidden aria-live="polite"></div></div>`;
     document.body.classList.add('auth-open');
+    bindButtons();
   }
 
   function showLogin() {
