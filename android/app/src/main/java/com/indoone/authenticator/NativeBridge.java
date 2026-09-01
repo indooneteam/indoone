@@ -56,4 +56,9 @@ public final class NativeBridge {
             prompt.authenticate(info);
         });
     }
+
+    @JavascriptInterface
+    public void requestCameraPermission() {
+        activity.requestCameraPermission();
+    }
 }
