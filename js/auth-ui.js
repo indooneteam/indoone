@@ -25,58 +25,68 @@ window.IndooneAuthUI = (() => {
   function bindCommonActions() {
     const modal = document.getElementById('modal');
     if (!modal) return;
-    modal.querySelector('[data-auth-login]')?.addEventListener('click', async (event) => {
+
+    modal.querySelectorAll('[data-auth-login]').forEach(button => button.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const button = event.currentTarget;
-      const done = setBusy(button, 'Checking…', 'Continue & Send OTP');
+      const done = setBusy(event.currentTarget, 'Checking…', 'Continue & Send OTP');
       try { await window.IndooneFirebaseAuth.login(); }
       catch (error) { reportError(error); }
       finally { done(); }
-    });
-    modal.querySelector('[data-auth-verify-login]')?.addEventListener('click', async (event) => {
+    }));
+
+    modal.querySelectorAll('[data-auth-verify-login]').forEach(button => button.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const button = event.currentTarget;
-      const done = setBusy(button, 'Verifying…', 'Verify & Login');
+      const done = setBusy(event.currentTarget, 'Verifying…', 'Verify & Login');
       try { await window.IndooneFirebaseAuth.verifyLoginOtp(); }
       catch (error) { reportError(error); }
       finally { done(); }
-    });
-    modal.querySelector('[data-auth-resend-login]')?.addEventListener('click', async (event) => {
+    }));
+
+    modal.querySelectorAll('[data-auth-resend-login]').forEach(button => button.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const button = event.currentTarget;
-      const done = setBusy(button, 'Sending…', 'Resend OTP');
+      const done = setBusy(event.currentTarget, 'Sending…', 'Resend OTP');
       try { await window.IndooneFirebaseAuth.resendLoginOtp(); }
       catch (error) { reportError(error); }
       finally { done(); }
-    });
-    modal.querySelector('[data-auth-signup]')?.addEventListener('click', (event) => { event.preventDefault(); showSignup(); });
-    modal.querySelector('[data-auth-back-login]')?.addEventListener('click', (event) => { event.preventDefault(); showLogin(); });
-    modal.querySelector('[data-auth-send-otp]')?.addEventListener('click', async (event) => {
+    }));
+
+    modal.querySelectorAll('[data-auth-signup]').forEach(button => button.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const button = event.currentTarget;
-      const done = setBusy(button, 'Sending OTP…', 'Send OTP');
+      showSignup();
+    }));
+
+    modal.querySelectorAll('[data-auth-back-login]').forEach(button => button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showLogin();
+    }));
+
+    modal.querySelectorAll('[data-auth-send-otp]').forEach(button => button.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const done = setBusy(event.currentTarget, 'Sending OTP…', 'Send OTP');
       try {
         await window.IndooneFirebaseAuth.startSignup();
-        button.disabled = false;
-        button.removeAttribute('aria-busy');
-        button.textContent = 'OTP sent';
+        event.currentTarget.disabled = false;
+        event.currentTarget.removeAttribute('aria-busy');
+        event.currentTarget.textContent = 'OTP sent';
       } catch (error) {
         done();
         reportError(error);
       }
-    });
-    modal.querySelector('[data-auth-verify-signup]')?.addEventListener('click', async (event) => {
+    }));
+
+    modal.querySelectorAll('[data-auth-verify-signup]').forEach(button => button.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const button = event.currentTarget;
-      const done = setBusy(button, 'Verifying…', 'Verify & Create Account');
+      const done = setBusy(event.currentTarget, 'Verifying…', 'Verify & Create Account');
       try { await window.IndooneFirebaseAuth.finishSignupAfterOtp(); }
       catch (error) { done(); reportError(error); }
-    });
+    }));
   }
 
   function mount(content) {
