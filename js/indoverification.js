@@ -10,8 +10,11 @@
     try {
       const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body || {}),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Indo-App-Id': APP_ID
+        },
+        body: JSON.stringify({ ...(body || {}), appId: APP_ID }),
         signal: controller.signal
       });
       const result = await response.json().catch(() => ({}));
