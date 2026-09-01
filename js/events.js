@@ -38,8 +38,9 @@ async function showAuthOrHome(user){
       sessionStorage.removeItem('indoone_otp_verified_uid');
       sessionStorage.removeItem('indoone_authenticated_uid');
       if(user)await window.IndooneFirebase?.auth?.signOut?.().catch(()=>{});
-      indooneState.accounts=[];
-      renderAccounts();
+      // Always show authentication first. Do not render the authenticated
+      // accounts screen before the login gate, so a render/init error cannot
+      // prevent Login / Create Account from appearing at launch.
       window.IndooneAuthUI?.showLogin?.();
       return;
     }
@@ -52,6 +53,10 @@ async function showAuthOrHome(user){
       renderAccounts();
       if(typeof startDemoTimers==='function')startDemoTimers();
     }
+  }catch(error){
+    console.error('Indoone auth gate error:',error);
+    // Authentication must remain the safe launch state if home rendering fails.
+    try{window.IndooneAuthUI?.showLogin?.()}catch(authError){console.error('Indoone login UI error:',authError)}
   }finally{
     authGateRunning=false;
     markAuthReady();
