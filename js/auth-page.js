@@ -20,7 +20,54 @@
     document.body.classList.add('auth-open', 'auth-pending');
     modal.innerHTML = `<div class="auth-page">${html}<div id="authStatus" class="auth-status" hidden aria-live="polite"></div></div>`;
     bindButtons(modal);
+    bindMobileDefaults(modal);
     return true;
+  }
+
+  function bindMobileDefaults(root) {
+    const inputs = root.querySelectorAll('#signupMobile, #authIdentifier');
+    inputs.forEach(input => {
+      if (input.dataset.indiaMobileBound === 'true') return;
+      input.dataset.indiaMobileBound = 'true';
+
+      // Show India code by default. Login still supports email: as soon as
+      // the user types an email, the visual prefix is removed automatically.
+      if (!input.value) {
+        input.value = '+91 ';
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+
+      input.addEventListener('focus', () => {
+        if (!input.value.trim()) {
+          input.value = '+91 ';
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+      });
+
+      input.addEventListener('input', () => {
+        const raw = input.value.trim();
+        if (!raw) {
+          input.value = '+91 ';
+          input.setSelectionRange(input.value.length, input.value.length);
+          return;
+        }
+
+        // Email/username input: don't force the +91 prefix on non-mobile text.
+        if (/[A-Za-z@]/.test(raw)) {
+          if (raw.startsWith('+91 ')) input.value = raw.slice(4).trimStart();
+          else if (raw.startsWith('+91')) input.value = raw.slice(3).trimStart();
+          return;
+        }
+
+        // Numeric mobile input: always normalize to India country code.
+        const digits = raw.replace(/\D/g, '');
+        if (!raw.startsWith('+91')) {
+          input.value = `+91 ${digits}`;
+        } else {
+          input.value = `+91 ${digits.replace(/^91/, '')}`;
+        }
+      });
+    });
   }
 
   function showLogin() {
@@ -28,7 +75,7 @@
   }
 
   function showSignup() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="+91 98765 43210" /></div><div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="98765 43210" /></div><div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>`);
   }
 
   async function run(button) {
