@@ -1,5 +1,6 @@
 window.IndooneAuthUI = (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
+  let actionBusy = false;
 
   function status(text, isError = false) {
     const node = document.getElementById('authStatus');
@@ -18,111 +19,84 @@ window.IndooneAuthUI = (() => {
     else console.error(message, error);
   }
 
-  function setBusy(button, busyText) {
-    const idleText = button.dataset.idleText || button.textContent;
-    button.dataset.idleText = idleText;
+  function setBusy(button, text) {
+    const previous = button.textContent;
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
-    button.textContent = busyText;
+    button.textContent = text;
     return () => {
       button.disabled = false;
       button.removeAttribute('aria-busy');
-      button.textContent = button.dataset.idleText || idleText;
+      button.textContent = previous;
     };
   }
 
-  function bindButtons() {
-    const modal = document.getElementById('modal');
-    if (!modal) return;
+  async function runAction(button) {
+    if (!button || button.disabled || actionBusy) return;
+    const action = button.dataset.authAction;
+    if (!action) return;
 
-    modal.querySelectorAll('[data-auth-action]').forEach(button => {
-      button.onclick = async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const action = button.dataset.authAction;
+    if (action === 'signup') { showSignup(); return; }
+    if (action === 'login') { showLogin(); return; }
 
-        if (action === 'signup') {
-          showSignup();
-          return;
-        }
-        if (action === 'login') {
-          showLogin();
-          return;
-        }
+    actionBusy = true;
+    status('', false);
+    let done = () => {};
+    try {
+      if (action === 'login-submit') {
+        done = setBusy(button, 'Checking…');
+        await window.IndooneFirebaseAuth.login();
+      } else if (action === 'login-verify') {
+        done = setBusy(button, 'Verifying…');
+        await window.IndooneFirebaseAuth.verifyLoginOtp();
+      } else if (action === 'login-resend') {
+        done = setBusy(button, 'Sending…');
+        await window.IndooneFirebaseAuth.resendLoginOtp();
+      } else if (action === 'signup-submit') {
+        done = setBusy(button, 'Sending OTP…');
+        status('Sending OTP…');
+        await window.IndooneFirebaseAuth.startSignup();
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.textContent = 'OTP sent';
+        status('OTP sent. Enter the code from your email.');
+        done = () => {};
+      } else if (action === 'signup-verify') {
+        done = setBusy(button, 'Verifying…');
+        await window.IndooneFirebaseAuth.finishSignupAfterOtp();
+      }
+    } catch (error) {
+      reportError(error);
+    } finally {
+      done();
+      actionBusy = false;
+    }
+  }
 
-        status('', false);
-        try {
-          if (action === 'login-submit') {
-            const done = setBusy(button, 'Checking…');
-            try {
-              await window.IndooneFirebaseAuth.login();
-            } finally {
-              done();
-            }
-            return;
-          }
-
-          if (action === 'login-verify') {
-            const done = setBusy(button, 'Verifying…');
-            try {
-              await window.IndooneFirebaseAuth.verifyLoginOtp();
-            } finally {
-              done();
-            }
-            return;
-          }
-
-          if (action === 'login-resend') {
-            const done = setBusy(button, 'Sending…');
-            try {
-              await window.IndooneFirebaseAuth.resendLoginOtp();
-            } finally {
-              done();
-            }
-            return;
-          }
-
-          if (action === 'signup-submit') {
-            const done = setBusy(button, 'Sending OTP…');
-            status('Sending OTP…');
-            try {
-              await window.IndooneFirebaseAuth.startSignup();
-              button.textContent = 'OTP sent';
-              button.disabled = false;
-              button.removeAttribute('aria-busy');
-              button.dataset.idleText = 'OTP sent';
-              status('OTP sent. Enter the code from your email.');
-            } catch (error) {
-              done();
-              throw error;
-            }
-            return;
-          }
-
-          if (action === 'signup-verify') {
-            const done = setBusy(button, 'Verifying…');
-            try {
-              await window.IndooneFirebaseAuth.finishSignupAfterOtp();
-            } finally {
-              done();
-            }
-          }
-        } catch (error) {
-          reportError(error);
-        }
-      };
-    });
+  function bindActionBridge() {
+    if (window.__indooneAuthActionBridgeInstalled) return;
+    const handler = event => {
+      const element = event.target;
+      if (!(element instanceof Element)) return;
+      const button = element.closest('#modal button[data-auth-action]');
+      if (!button) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void runAction(button);
+    };
+    document.addEventListener('click', handler, true);
+    window.__indooneAuthActionBridgeInstalled = true;
   }
 
   function mount(content) {
     const overlay = document.getElementById('overlay');
     const modal = document.getElementById('modal');
     if (!overlay || !modal) return;
+    bindActionBridge();
     overlay.classList.remove('hidden');
     overlay.classList.add(AUTH_CLASS);
     modal.innerHTML = `<div class="auth-page">${content}<div id="authStatus" class="auth-status" hidden aria-live="polite"></div></div>`;
     document.body.classList.add('auth-open');
-    bindButtons();
   }
 
   function showLogin() {
@@ -131,9 +105,9 @@ window.IndooneAuthUI = (() => {
       <div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div>
       <div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div>
       <div class="field"><label>PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password" /></div>
-      <button type="button" class="primary" data-auth-action="login-submit">Continue &amp; Send OTP</button>
-      <div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary" data-auth-action="login-verify">Verify &amp; Login</button><button type="button" class="secondary" data-auth-action="login-resend">Resend OTP</button></div>
-      <button type="button" class="secondary" data-auth-action="signup">Create Account</button>
+      <button type="button" class="primary auth-action-button" data-auth-action="login-submit">Continue &amp; Send OTP</button>
+      <div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button><button type="button" class="secondary auth-action-button" data-auth-action="login-resend">Resend OTP</button></div>
+      <button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button>
       <div class="auth-footer">Password is checked by Firebase first; login is completed only after OTP verification.</div>
     `);
   }
@@ -145,9 +119,9 @@ window.IndooneAuthUI = (() => {
       <div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div>
       <div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="+91 98765 43210" /></div>
       <div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div>
-      <button type="button" class="primary" data-auth-action="signup-submit">Send OTP</button>
-      <div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary" data-auth-action="signup-verify">Verify &amp; Create Account</button></div>
-      <button type="button" class="secondary" data-auth-action="login">Already have an account? Login</button>
+      <button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button>
+      <div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div>
+      <button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button>
       <div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>
     `);
   }
@@ -162,6 +136,7 @@ window.IndooneAuthUI = (() => {
     if (modal) modal.innerHTML = '';
   }
 
+  bindActionBridge();
   window.IndooneAuthUI = { showLogin, showSignup, close };
   return window.IndooneAuthUI;
 })();
