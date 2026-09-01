@@ -2,57 +2,65 @@ window.IndooneQrScanner = (() => {
   let stream = null;
   let video = null;
   let detector = null;
-  let timer = null;
+  let raf = 0;
+  let scanning = false;
 
   async function start() {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast('Camera is not available in this browser');
-      return;
-    }
-    if (!('BarcodeDetector' in window)) {
-      toast('QR camera scanning needs a supported browser');
-      return;
-    }
+    if (!navigator.mediaDevices?.getUserMedia) return toast('Camera is not available');
+    if (!('BarcodeDetector' in window)) return toast('QR scanning is not supported here');
 
     openModal(`<div class="modal-head"><h2>Scan QR Code</h2><button class="close-btn" data-stop-scan>×</button></div>
       <div class="scanner"><video id="qrVideo" autoplay playsinline muted></video><div class="scan-frame"></div></div>
-      <p style="text-align:center">Align the QR code inside the frame.</p>
+      <p style="text-align:center">Place the TOTP QR code inside the frame.</p>
       <button class="secondary" data-stop-scan>Cancel</button>`);
 
     video = document.getElementById('qrVideo');
-    detector = new BarcodeDetector({formats:['qr_code']});
+    detector = new BarcodeDetector({ formats: ['qr_code'] });
     try {
-      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
       video.srcObject = stream;
       await video.play();
-      timer = setInterval(scanFrame, 350);
+      scanning = true;
+      scanLoop();
     } catch (error) {
       stop();
       toast(error?.name === 'NotAllowedError' ? 'Camera permission denied' : 'Unable to open camera');
     }
   }
 
-  async function scanFrame() {
-    if (!video || video.readyState < 2) return;
+  async function scanLoop() {
+    if (!scanning || !video || !detector) return;
     try {
-      const codes = await detector.detect(video);
-      const raw = codes?.[0]?.rawValue;
-      if (!raw) return;
-      const parsed = TOTP.parseOtpAuth(raw);
-      if (!parsed.secret) throw new Error('QR code has no secret');
-      stop();
-      showManual({name: parsed.label || parsed.issuer || 'Account', email:'', secret:parsed.secret, issuer:parsed.issuer, algorithm:parsed.algorithm, digits:parsed.digits, period:parsed.period});
-      toast('QR code detected');
-    } catch (_) {
-      // Ignore frames that do not contain a supported TOTP QR code.
-    }
+      if (video.readyState >= 2) {
+        const codes = await detector.detect(video);
+        const raw = codes?.[0]?.rawValue?.trim();
+        if (raw?.toLowerCase().startsWith('otpauth://')) {
+          const parsed = TOTP.parseOtpAuth(raw);
+          if (!parsed.secret) throw new Error('Missing secret');
+          stop();
+          showManual({
+            name: parsed.issuer || parsed.label || 'Account',
+            email: parsed.label || '',
+            secret: parsed.secret,
+            algorithm: parsed.algorithm,
+            digits: parsed.digits,
+            period: parsed.period
+          });
+          toast('QR code detected');
+          return;
+        }
+      }
+    } catch (_) {}
+    raf = requestAnimationFrame(scanLoop);
   }
 
   function stop() {
-    if (timer) clearInterval(timer);
-    timer = null;
+    scanning = false;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
     if (stream) stream.getTracks().forEach(track => track.stop());
     stream = null;
+    if (video) video.srcObject = null;
     video = null;
     detector = null;
   }
