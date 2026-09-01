@@ -2,6 +2,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyCwp4d_vMD44UBK38WtVq7vF8CHT3QzA8c",
     authDomain: "indoone.firebaseapp.com",
+    databaseURL: "https://indoone-default-rtdb.asia-southeast1.firebasedatabase.app/",
     projectId: "indoone",
     storageBucket: "indoone.firebasestorage.app",
     messagingSenderId: "715011875230",
@@ -14,8 +15,9 @@
     return;
   }
 
-  const app = firebase.initializeApp(firebaseConfig);
+  const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
+  const database = firebase.database ? firebase.database() : null;
 
-  window.IndooneFirebase = { app, auth, config: firebaseConfig };
+  window.IndooneFirebase = { app, auth, database, config: firebaseConfig };
 })();
