@@ -3,12 +3,14 @@
   const getVerification = () => window.IndooneIndoVerification;
   const cleanEmail = value => String(value || '').trim().toLowerCase();
   const normalizeMobile = value => String(value || '').replace(/[^0-9+]/g, '').replace(/^00/, '+');
+  const setAuthSession = uid => sessionStorage.setItem('indoone_otp_verified_uid', uid);
+  const clearAuthSession = () => sessionStorage.removeItem('indoone_otp_verified_uid');
 
   function errorMessage(error) {
     const map = {
       'auth/invalid-email': 'Enter a valid email address.',
       'auth/user-not-found': 'No Indoone account was found.',
-      'auth/wrong-password': 'Incorrect password.',
+      'auth/wrong-password': 'Email or password is incorrect.',
       'auth/invalid-credential': 'Email or password is incorrect.',
       'auth/too-many-requests': 'Too many attempts. Please try again later.',
       'auth/network-request-failed': 'Network error. Check your connection and try again.',
@@ -21,9 +23,24 @@
   function toastSafe(text) {
     if (typeof toast === 'function') toast(text); else console.warn(text);
   }
-  function db() { const fb = getFirebase(); if (!fb?.database) throw new Error('Firebase Realtime Database is not initialized.'); return fb.database; }
-  function auth() { const fb = getFirebase(); if (!fb?.auth) throw new Error('Firebase Authentication is not initialized.'); return fb.auth; }
-  function verification() { const api = getVerification(); if (!api) throw new Error('IndoVerification service is not loaded.'); return api; }
+
+  function db() {
+    const fb = getFirebase();
+    if (!fb?.database) throw new Error('Firebase Realtime Database is not initialized.');
+    return fb.database;
+  }
+
+  function auth() {
+    const fb = getFirebase();
+    if (!fb?.auth) throw new Error('Firebase Authentication is not initialized.');
+    return fb.auth;
+  }
+
+  function verification() {
+    const api = getVerification();
+    if (!api) throw new Error('IndoVerification service is not loaded.');
+    return api;
+  }
 
   async function emailForMobile(mobile) {
     const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(mobile)}`).once('value');
@@ -35,27 +52,50 @@
   async function syncProfile(user, profile = {}) {
     if (!user) return;
     const now = Date.now();
-    const payload = { uid: user.uid, email: user.email || profile.email || '', mobile: profile.mobile || '', updatedAt: now };
+    const payload = {
+      uid: user.uid,
+      email: user.email || profile.email || '',
+      mobile: profile.mobile || '',
+      updatedAt: now
+    };
     await db().ref(`users/${user.uid}/profile`).update(payload);
-    if (payload.mobile) await db().ref(`mobileIndex/${encodeURIComponent(normalizeMobile(payload.mobile))}`).set({ uid: user.uid, email: payload.email, updatedAt: now });
+    if (payload.mobile) {
+      await db().ref(`mobileIndex/${encodeURIComponent(normalizeMobile(payload.mobile))}`).set({
+        uid: user.uid,
+        email: payload.email,
+        updatedAt: now
+      });
+    }
   }
 
   async function login() {
     const identifier = String(document.getElementById('authIdentifier')?.value || '').trim();
     const password = String(document.getElementById('authPassword')?.value || '');
     if (!identifier || !password) throw new Error('Enter your email/mobile number and password.');
+
     const email = identifier.includes('@') ? cleanEmail(identifier) : await emailForMobile(normalizeMobile(identifier));
-    await auth().signInWithEmailAndPassword(email, password);
+    clearAuthSession();
+    window.__indooneAuthPending = true;
+
     try {
+      // Firebase validates the password first, but the app is not considered
+      // authenticated until the separate IndoVerification OTP succeeds.
+      await auth().signInWithEmailAndPassword(email, password);
       const result = await verification().requestLoginOtp(email, 'Indoone user');
       if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
+
       window.__indooneLoginOtp = { email, challengeId: result.challengeId, requestedAt: Date.now() };
-      const area = document.getElementById('loginOtpArea'); if (area) area.hidden = false;
-      const label = document.getElementById('loginOtpEmail'); if (label) label.textContent = email;
-      const input = document.getElementById('loginOtp'); if (input) { input.value = ''; input.focus(); }
+      const area = document.getElementById('loginOtpArea');
+      if (area) area.hidden = false;
+      const label = document.getElementById('loginOtpEmail');
+      if (label) label.textContent = email;
+      const input = document.getElementById('loginOtp');
+      if (input) { input.value = ''; input.focus(); }
       toastSafe('OTP sent. Check your email to finish login.');
     } catch (error) {
       await auth().signOut().catch(() => {});
+      window.__indooneAuthPending = false;
+      window.__indooneLoginOtp = null;
       throw error;
     }
   }
@@ -65,13 +105,16 @@
     if (!pending?.challengeId) throw new Error('Please request a new OTP.');
     const otp = String(document.getElementById('loginOtp')?.value || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP.');
+
     const result = await verification().verifyLoginOtp({ email: pending.email, challengeId: pending.challengeId, otp, name: 'Indoone user' });
     if (!result?.verified) throw new Error(result?.error || 'OTP verification failed.');
+
     const user = auth().currentUser;
     if (!user) throw new Error('Login session expired. Please login again.');
     const snapshot = await db().ref(`users/${user.uid}/profile`).once('value');
     await syncProfile(user, snapshot.val() || { email: pending.email });
-    sessionStorage.setItem('indoone_authenticated_uid', user.uid);
+    setAuthSession(user.uid);
+    window.__indooneAuthPending = false;
     window.__indooneLoginOtp = null;
     toastSafe('Login successful.');
     window.IndooneAuthUI?.close?.();
@@ -85,7 +128,8 @@
     if (!result?.challengeId) throw new Error('OTP service did not return a new challenge ID.');
     pending.challengeId = result.challengeId;
     pending.requestedAt = Date.now();
-    const input = document.getElementById('loginOtp'); if (input) { input.value = ''; input.focus(); }
+    const input = document.getElementById('loginOtp');
+    if (input) { input.value = ''; input.focus(); }
     toastSafe('New OTP sent to your email.');
   }
 
@@ -96,12 +140,16 @@
     if (!email || !email.includes('@')) throw new Error('Enter a valid email address.');
     if (!/^\+[1-9]\d{7,14}$/.test(mobile)) throw new Error('Enter a valid international mobile number.');
     if (password.length < 6) throw new Error('Password should be at least 6 characters.');
+
     const result = await verification().requestSignupOtp(email, 'Indoone user');
     if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
     window.__indooneSignupDraft = { email, mobile, password, challengeId: result.challengeId, createdAt: Date.now() };
-    const area = document.getElementById('signupOtpArea'); if (area) area.hidden = false;
-    const label = document.getElementById('signupOtpEmail'); if (label) label.textContent = email;
-    const input = document.getElementById('signupOtp'); if (input) { input.value = ''; input.focus(); }
+    const area = document.getElementById('signupOtpArea');
+    if (area) area.hidden = false;
+    const label = document.getElementById('signupOtpEmail');
+    if (label) label.textContent = email;
+    const input = document.getElementById('signupOtp');
+    if (input) { input.value = ''; input.focus(); }
     toastSafe('OTP sent. Check your email to finish account creation.');
   }
 
@@ -110,16 +158,42 @@
     if (!draft?.challengeId) throw new Error('Signup session expired. Enter your details again.');
     const otp = String(document.getElementById('signupOtp')?.value || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP.');
+
     const result = await verification().verifySignupOtp({ email: draft.email, challengeId: draft.challengeId, otp, name: 'Indoone user' });
     if (!result?.verified) throw new Error(result?.error || 'OTP verification failed.');
+
+    window.__indooneAuthPending = true;
     const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
     await syncProfile(credential.user, { email: draft.email, mobile: draft.mobile });
-    sessionStorage.setItem('indoone_authenticated_uid', credential.user.uid);
+
+    let welcomeSent = true;
+    try {
+      await verification().sendSignupWelcome({
+        email: draft.email,
+        name: 'Indoone user',
+        welcomeToken: result.welcomeToken
+      });
+    } catch (error) {
+      welcomeSent = false;
+      console.warn('Indoone welcome email failed:', error);
+    }
+
+    setAuthSession(credential.user.uid);
+    window.__indooneAuthPending = false;
     window.__indooneSignupDraft = null;
-    toastSafe('Account created successfully.');
+    sessionStorage.removeItem('indoone_signup_identity');
+    toastSafe(welcomeSent ? 'Account created successfully.' : 'Account created. Welcome email could not be sent.');
     window.IndooneAuthUI?.close?.();
     if (typeof renderAccounts === 'function') renderAccounts();
   }
 
-  window.IndooneFirebaseAuth = { login, verifyLoginOtp, resendLoginOtp, startSignup, finishSignupAfterOtp, syncProfile, errorMessage };
+  window.IndooneFirebaseAuth = {
+    login,
+    verifyLoginOtp,
+    resendLoginOtp,
+    startSignup,
+    finishSignupAfterOtp,
+    syncProfile,
+    errorMessage
+  };
 })();
