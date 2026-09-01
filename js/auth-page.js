@@ -19,6 +19,7 @@
     overlay.classList.add(AUTH_CLASS);
     document.body.classList.add('auth-open', 'auth-pending');
     modal.innerHTML = `<div class="auth-page">${html}<div id="authStatus" class="auth-status" hidden aria-live="polite"></div></div>`;
+    bindButtons(modal);
     return true;
   }
 
@@ -35,39 +36,63 @@
     const action = button.dataset.authAction;
     if (action === 'signup') return showSignup();
     if (action === 'login') return showLogin();
-    if (!window.IndooneFirebaseAuth) return setStatus('Authentication service is still loading. Please try again.', true);
+    const auth = window.IndooneFirebaseAuth;
+    if (!auth) return setStatus('Authentication service is still loading. Please try again.', true);
 
     busy = true;
     const previous = button.textContent;
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
+    setStatus('', false);
+
     try {
-      if (action === 'login-submit') { button.textContent = 'Checking…'; await window.IndooneFirebaseAuth.login(); }
-      else if (action === 'login-verify') { button.textContent = 'Verifying…'; await window.IndooneFirebaseAuth.verifyLoginOtp(); }
-      else if (action === 'login-resend') { button.textContent = 'Sending…'; await window.IndooneFirebaseAuth.resendLoginOtp(); }
-      else if (action === 'signup-submit') { button.textContent = 'Sending OTP…'; await window.IndooneFirebaseAuth.startSignup(); button.textContent = 'OTP sent'; setStatus('OTP sent. Enter the code from your email.'); button.disabled = false; button.removeAttribute('aria-busy'); busy = false; return; }
-      else if (action === 'signup-verify') { button.textContent = 'Verifying…'; await window.IndooneFirebaseAuth.finishSignupAfterOtp(); }
+      if (action === 'login-submit') {
+        button.textContent = 'Checking…';
+        await auth.login();
+      } else if (action === 'login-verify') {
+        button.textContent = 'Verifying…';
+        await auth.verifyLoginOtp();
+      } else if (action === 'login-resend') {
+        button.textContent = 'Sending…';
+        await auth.resendLoginOtp();
+      } else if (action === 'signup-submit') {
+        button.textContent = 'Sending OTP…';
+        await auth.startSignup();
+        button.textContent = 'OTP sent';
+        setStatus('OTP sent. Enter the code from your email.');
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        busy = false;
+        return;
+      } else if (action === 'signup-verify') {
+        button.textContent = 'Verifying…';
+        await auth.finishSignupAfterOtp();
+      }
     } catch (error) {
-      const message = typeof window.IndooneFirebaseAuth.errorMessage === 'function' ? window.IndooneFirebaseAuth.errorMessage(error) : (error?.message || 'Authentication failed.');
+      const message = typeof auth.errorMessage === 'function' ? auth.errorMessage(error) : (error?.message || 'Authentication failed.');
       setStatus(message, true);
       console.error('Indoone auth action failed:', error);
     } finally {
-      if (button.textContent !== 'OTP sent') button.textContent = previous;
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
+      if (button.isConnected) {
+        if (button.textContent !== 'OTP sent') button.textContent = previous;
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      }
       busy = false;
     }
   }
 
-  document.addEventListener('click', event => {
-    const element = event.target;
-    if (!(element instanceof Element)) return;
-    const button = element.closest('#modal button[data-auth-action]');
-    if (!button) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    void run(button);
-  }, true);
+  function bindButtons(root) {
+    root.querySelectorAll('button[data-auth-action]').forEach(button => {
+      if (button.dataset.authBound === 'true') return;
+      button.dataset.authBound = 'true';
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        void run(button);
+      });
+    });
+  }
 
   function close() {
     $('overlay')?.classList.remove(AUTH_CLASS);
@@ -77,5 +102,11 @@
   }
 
   window.IndooneAuthUI = { showLogin, showSignup, close };
-  showLogin();
+
+  function init() {
+    showLogin();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
 })();
