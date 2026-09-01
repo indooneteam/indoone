@@ -17,21 +17,39 @@ document.querySelector('.account-list').addEventListener('click',e=>{const fav=e
 document.querySelector('.account-list').addEventListener('keydown',e=>{const card=e.target.closest('.account');if(card&&(e.key==='Enter'||e.key===' '))openAccount(card.dataset.id)});
 overlay.addEventListener('click',async e=>{if(e.target===overlay){closeModal();return}if(e.target.closest('[data-close]')){if(window.IndooneQrScanner)IndooneQrScanner.stop();closeModal();return}if(e.target.closest('[data-tab]')){const tab=e.target.closest('[data-tab]').dataset.tab;if(window.IndooneQrScanner)IndooneQrScanner.stop();if(tab==='manual')showManual();else showAdd();return}if(e.target.closest('[data-import-uri]')){importOtpUri();return}if(e.target.closest('[data-create-recovery]')){createBackup();return}if(e.target.closest('[data-restore-recovery]')){restoreRecoveryPdf();return}if(e.target.closest('[data-delete-recovery]')){deleteRecoveryPdf();return}if(e.target.closest('[data-camera]')){IndooneQrScanner.start();return}if(e.target.closest('[data-save-account]')){saveAccount();return}if(e.target.closest('[data-copy]')){copyCurrentCode();return}if(e.target.closest('[data-delete]')){deleteCurrent();return}if(e.target.closest('[data-edit]')){editCurrent();return}if(e.target.closest('[data-toggle]')){e.target.closest('[data-toggle]').classList.toggle('on');toast('Setting updated');return}if(e.target.closest('[data-pin]')){showAppLock('setup');return}if(e.target.closest('[data-backup]')){showBackup();return}if(e.target.closest('[data-about]')){showAbout();return}if(e.target.closest('[data-security]')){showSecurity();return}if(e.target.closest('[data-sort-modal]')){$('sortBtn').click();closeModal();return}if(e.target.closest('[data-stop-scan]')){IndooneQrScanner.stop();closeModal();return}});
 
+function clearPersistentAuthState(){
+  sessionStorage.removeItem('indoone_otp_verified_uid');
+  sessionStorage.removeItem('indoone_authenticated_uid');
+  sessionStorage.removeItem('indoone_signup_identity');
+  try{localStorage.removeItem('indoone_otp_verified_uid');localStorage.removeItem('indoone_authenticated_uid')}catch{}
+}
+
+function showLoginScreen(){
+  clearPersistentAuthState();
+  indooneState.accounts=[];
+  renderAccounts();
+  window.IndooneAuthUI?.showLogin?.();
+}
+
 async function showAuthOrHome(user){
-  const verifiedUid=sessionStorage.getItem('indoone_otp_verified_uid');
-  if(!user){
-    if(verifiedUid) sessionStorage.removeItem('indoone_otp_verified_uid');
-    indooneState.accounts=[];
-    renderAccounts();
-    window.IndooneAuthUI?.showLogin?.();
+  // Firebase Auth persists its own session in the browser. Indoone intentionally
+  // starts a fresh auth session on every page load; an authenticated home view
+  // is only allowed after this page load completes OTP verification.
+  if (!window.__indoonePageAuthReady){
+    window.__indoonePageAuthReady=true;
+    if(user){
+      await window.IndooneFirebase?.auth?.signOut?.().catch?.(()=>{});
+      showLoginScreen();
+      return;
+    }
+    showLoginScreen();
     return;
   }
 
-  if(verifiedUid !== user.uid){
-    // Firebase may restore its persistent account session automatically, but
-    // Indoone requires a fresh OTP-verified browser session before showing home.
-    await window.IndooneFirebase?.auth?.signOut?.().catch?.(()=>{});
-    sessionStorage.removeItem('indoone_otp_verified_uid');
+  const verifiedUid=sessionStorage.getItem('indoone_otp_verified_uid');
+  if(!user || !verifiedUid || verifiedUid!==user.uid){
+    if(user) await window.IndooneFirebase?.auth?.signOut?.().catch?.(()=>{});
+    clearPersistentAuthState();
     indooneState.accounts=[];
     renderAccounts();
     window.IndooneAuthUI?.showLogin?.();
@@ -51,5 +69,5 @@ async function showAuthOrHome(user){
 window.addEventListener('load',()=>{
   const auth=window.IndooneFirebase?.auth;
   if(auth && typeof auth.onAuthStateChanged==='function') auth.onAuthStateChanged(showAuthOrHome);
-  else showAuthOrHome(null);
+  else showLoginScreen();
 });
