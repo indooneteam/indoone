@@ -3,8 +3,14 @@
   const getVerification = () => window.IndooneIndoVerification;
   const cleanEmail = value => String(value || '').trim().toLowerCase();
   const normalizeMobile = value => String(value || '').replace(/[^0-9+]/g, '').replace(/^00/, '+');
-  const setAuthSession = uid => sessionStorage.setItem('indoone_otp_verified_uid', uid);
-  const clearAuthSession = () => sessionStorage.removeItem('indoone_otp_verified_uid');
+  const setAuthSession = uid => {
+    sessionStorage.setItem('indoone_otp_verified_uid', uid);
+    sessionStorage.setItem('indoone_authenticated_uid', uid);
+  };
+  const clearAuthSession = () => {
+    sessionStorage.removeItem('indoone_otp_verified_uid');
+    sessionStorage.removeItem('indoone_authenticated_uid');
+  };
 
   function errorMessage(error) {
     const map = {
@@ -78,8 +84,6 @@
     window.__indooneAuthPending = true;
 
     try {
-      // Firebase validates the password first, but the app is not considered
-      // authenticated until the separate IndoVerification OTP succeeds.
       await auth().signInWithEmailAndPassword(email, password);
       const result = await verification().requestLoginOtp(email, 'Indoone user');
       if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
@@ -96,6 +100,7 @@
       await auth().signOut().catch(() => {});
       window.__indooneAuthPending = false;
       window.__indooneLoginOtp = null;
+      clearAuthSession();
       throw error;
     }
   }
@@ -106,19 +111,27 @@
     const otp = String(document.getElementById('loginOtp')?.value || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP.');
 
-    const result = await verification().verifyLoginOtp({ email: pending.email, challengeId: pending.challengeId, otp, name: 'Indoone user' });
-    if (!result?.verified) throw new Error(result?.error || 'OTP verification failed.');
+    try {
+      const result = await verification().verifyLoginOtp({ email: pending.email, challengeId: pending.challengeId, otp, name: 'Indoone user' });
+      if (!result?.verified) throw new Error(result?.error || 'OTP verification failed.');
 
-    const user = auth().currentUser;
-    if (!user) throw new Error('Login session expired. Please login again.');
-    const snapshot = await db().ref(`users/${user.uid}/profile`).once('value');
-    await syncProfile(user, snapshot.val() || { email: pending.email });
-    setAuthSession(user.uid);
-    window.__indooneAuthPending = false;
-    window.__indooneLoginOtp = null;
-    toastSafe('Login successful.');
-    window.IndooneAuthUI?.close?.();
-    if (typeof renderAccounts === 'function') renderAccounts();
+      const user = auth().currentUser;
+      if (!user) throw new Error('Login session expired. Please login again.');
+      const snapshot = await db().ref(`users/${user.uid}/profile`).once('value');
+      await syncProfile(user, snapshot.val() || { email: pending.email });
+      setAuthSession(user.uid);
+      window.__indooneAuthPending = false;
+      window.__indooneLoginOtp = null;
+      toastSafe('Login successful.');
+      window.IndooneAuthUI?.close?.();
+      if (typeof renderAccounts === 'function') renderAccounts();
+    } catch (error) {
+      await auth().signOut().catch(() => {});
+      window.__indooneAuthPending = false;
+      window.__indooneLoginOtp = null;
+      clearAuthSession();
+      throw error;
+    }
   }
 
   async function resendLoginOtp() {
@@ -163,28 +176,36 @@
     if (!result?.verified) throw new Error(result?.error || 'OTP verification failed.');
 
     window.__indooneAuthPending = true;
-    const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
-    await syncProfile(credential.user, { email: draft.email, mobile: draft.mobile });
-
-    let welcomeSent = true;
     try {
-      await verification().sendSignupWelcome({
-        email: draft.email,
-        name: 'Indoone user',
-        welcomeToken: result.welcomeToken
-      });
-    } catch (error) {
-      welcomeSent = false;
-      console.warn('Indoone welcome email failed:', error);
-    }
+      const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
+      await syncProfile(credential.user, { email: draft.email, mobile: draft.mobile });
 
-    setAuthSession(credential.user.uid);
-    window.__indooneAuthPending = false;
-    window.__indooneSignupDraft = null;
-    sessionStorage.removeItem('indoone_signup_identity');
-    toastSafe(welcomeSent ? 'Account created successfully.' : 'Account created. Welcome email could not be sent.');
-    window.IndooneAuthUI?.close?.();
-    if (typeof renderAccounts === 'function') renderAccounts();
+      let welcomeSent = true;
+      try {
+        await verification().sendSignupWelcome({
+          email: draft.email,
+          name: 'Indoone user',
+          welcomeToken: result.welcomeToken
+        });
+      } catch (error) {
+        welcomeSent = false;
+        console.warn('Indoone welcome email failed:', error);
+      }
+
+      setAuthSession(credential.user.uid);
+      window.__indooneSignupDraft = null;
+      sessionStorage.removeItem('indoone_signup_identity');
+      toastSafe(welcomeSent ? 'Account created successfully.' : 'Account created. Welcome email could not be sent.');
+      window.__indooneAuthPending = false;
+      window.IndooneAuthUI?.close?.();
+      if (typeof renderAccounts === 'function') renderAccounts();
+    } catch (error) {
+      await auth().signOut().catch(() => {});
+      window.__indooneAuthPending = false;
+      window.__indooneSignupDraft = null;
+      clearAuthSession();
+      throw error;
+    }
   }
 
   window.IndooneFirebaseAuth = {
