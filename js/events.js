@@ -16,14 +16,26 @@ document.querySelector('.drawer').addEventListener('click',e=>{const item=e.targ
 document.querySelector('.account-list').addEventListener('click',e=>{const fav=e.target.closest('[data-fav]');if(fav){e.stopPropagation();toggleFavorite(fav.dataset.fav);return}const card=e.target.closest('.account');if(card)openAccount(card.dataset.id)});
 document.querySelector('.account-list').addEventListener('keydown',e=>{const card=e.target.closest('.account');if(card&&(e.key==='Enter'||e.key===' '))openAccount(card.dataset.id)});
 overlay.addEventListener('click',async e=>{if(e.target===overlay){closeModal();return}if(e.target.closest('[data-close]')){if(window.IndooneQrScanner)IndooneQrScanner.stop();closeModal();return}if(e.target.closest('[data-tab]')){const tab=e.target.closest('[data-tab]').dataset.tab;if(window.IndooneQrScanner)IndooneQrScanner.stop();if(tab==='manual')showManual();else showAdd();return}if(e.target.closest('[data-import-uri]')){importOtpUri();return}if(e.target.closest('[data-create-recovery]')){createBackup();return}if(e.target.closest('[data-restore-recovery]')){restoreRecoveryPdf();return}if(e.target.closest('[data-delete-recovery]')){deleteRecoveryPdf();return}if(e.target.closest('[data-camera]')){IndooneQrScanner.start();return}if(e.target.closest('[data-save-account]')){saveAccount();return}if(e.target.closest('[data-copy]')){copyCurrentCode();return}if(e.target.closest('[data-delete]')){deleteCurrent();return}if(e.target.closest('[data-edit]')){editCurrent();return}if(e.target.closest('[data-toggle]')){e.target.closest('[data-toggle]').classList.toggle('on');toast('Setting updated');return}if(e.target.closest('[data-pin]')){showAppLock('setup');return}if(e.target.closest('[data-backup]')){showBackup();return}if(e.target.closest('[data-about]')){showAbout();return}if(e.target.closest('[data-security]')){showSecurity();return}if(e.target.closest('[data-sort-modal]')){$('sortBtn').click();closeModal();return}if(e.target.closest('[data-stop-scan]')){IndooneQrScanner.stop();closeModal();return}});
-window.addEventListener('load',()=>{
+
+function showAuthOrHome(user){
+  if(!user){
+    indooneState.accounts=[];
+    renderAccounts();
+    window.IndooneAuthUI?.showLogin?.();
+    return;
+  }
   if(IndoonePersistence.hasVault()){
     indooneState.accounts=[];
     renderAccounts();
     showAppLock('unlock');
-  } else {
+  }else{
     renderAccounts();
     if(typeof startDemoTimers==='function') startDemoTimers();
-    if(window.IndooneAuthUI) window.IndooneAuthUI.showLogin();
   }
+}
+
+window.addEventListener('load',()=>{
+  const auth=window.IndooneFirebase?.auth;
+  if(auth && typeof auth.onAuthStateChanged==='function') auth.onAuthStateChanged(showAuthOrHome);
+  else showAuthOrHome(null);
 });
