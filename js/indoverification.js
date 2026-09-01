@@ -3,34 +3,54 @@
   const APP_ID = 'indoone';
   const APP_NAME = 'Indoone';
   const REQUEST_TIMEOUT_MS = 15000;
+  const REQUEST_DEDUPE_MS = 3000;
+  const inFlight = new Map();
 
   async function request(path, body) {
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    try {
-      const response = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Indo-App-Id': APP_ID
-        },
-        body: JSON.stringify({ ...(body || {}), appId: APP_ID }),
-        signal: controller.signal
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result?.ok === false) {
-        throw new Error(result?.error || `OTP service request failed (${response.status}).`);
+    const payload = { ...(body || {}), appId: APP_ID };
+    const requestKey = `${path}:${JSON.stringify(payload)}`;
+    const existing = inFlight.get(requestKey);
+    if (existing) return existing;
+
+    const promise = (async () => {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        const response = await fetch(`${API_BASE}${path}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Indo-App-Id': APP_ID
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result?.ok === false) {
+          throw new Error(result?.error || `OTP service request failed (${response.status}).`);
+        }
+        return result;
+      } catch (error) {
+        if (error?.name === 'AbortError') throw new Error('OTP service request timed out. Please try again.');
+        if (error instanceof TypeError) {
+          throw new Error('Unable to reach the OTP service. Check your connection and try again.');
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timer);
       }
-      return result;
-    } catch (error) {
-      if (error?.name === 'AbortError') throw new Error('OTP service request timed out. Please try again.');
-      if (error instanceof TypeError) {
-        throw new Error('Unable to reach the OTP service. Check your connection and try again.');
-      }
-      throw error;
-    } finally {
-      window.clearTimeout(timer);
-    }
+    })();
+
+    inFlight.set(requestKey, promise);
+    void promise.then(
+      () => window.setTimeout(() => {
+        if (inFlight.get(requestKey) === promise) inFlight.delete(requestKey);
+      }, REQUEST_DEDUPE_MS),
+      () => window.setTimeout(() => {
+        if (inFlight.get(requestKey) === promise) inFlight.delete(requestKey);
+      }, REQUEST_DEDUPE_MS),
+    );
+    return promise;
   }
 
   function requestSignupOtp(email, name = 'Indoone user') {
