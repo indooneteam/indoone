@@ -1,6 +1,41 @@
 window.IndooneAuthUI = (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
 
+  function reportError(error) {
+    const message = window.IndooneFirebaseAuth && typeof window.IndooneFirebaseAuth.messageFor === 'function'
+      ? window.IndooneFirebaseAuth.messageFor(error)
+      : (error?.message || 'Authentication failed.');
+    if (typeof toast === 'function') toast(message);
+    else console.error(message, error);
+  }
+
+  function bindCommonActions() {
+    const modal = document.getElementById('modal');
+    if (!modal) return;
+    modal.querySelector('[data-auth-login]')?.addEventListener('click', async () => {
+      try {
+        if (!window.IndooneFirebaseAuth) throw new Error('Firebase Authentication is not ready.');
+        await window.IndooneFirebaseAuth.login();
+      } catch (error) { reportError(error); }
+    });
+    modal.querySelector('[data-auth-signup]')?.addEventListener('click', () => showSignup());
+    modal.querySelector('[data-auth-back-login]')?.addEventListener('click', () => showLogin());
+    modal.querySelector('[data-auth-send-otp]')?.addEventListener('click', async () => {
+      try {
+        if (!window.IndooneFirebaseAuth) throw new Error('Firebase Authentication is not ready.');
+        await window.IndooneFirebaseAuth.startSignup();
+        const button = modal.querySelector('[data-auth-send-otp]');
+        if (button) { button.disabled = true; button.textContent = 'OTP step ready'; }
+      } catch (error) { reportError(error); }
+    });
+    modal.querySelector('[data-auth-verify-signup]')?.addEventListener('click', async () => {
+      try {
+        if (!window.IndooneFirebaseAuth) throw new Error('Firebase Authentication is not ready.');
+        await window.IndooneFirebaseAuth.finishSignupAfterOtp();
+      } catch (error) { reportError(error); }
+    });
+  }
+
   function mount(content) {
     const overlay = document.getElementById('overlay');
     const modal = document.getElementById('modal');
@@ -9,6 +44,7 @@ window.IndooneAuthUI = (() => {
     overlay.classList.add(AUTH_CLASS);
     modal.innerHTML = `<div class="auth-page">${content}</div>`;
     document.body.classList.add('auth-open');
+    bindCommonActions();
   }
 
   function showLogin() {
@@ -31,9 +67,9 @@ window.IndooneAuthUI = (() => {
       <div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="+91 98765 43210" /></div>
       <div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div>
       <button class="primary" data-auth-send-otp>Send OTP</button>
-      <div id="signupOtpArea" hidden><div class="field"><label>OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button class="primary" data-auth-verify-signup>Verify &amp; Create Account</button></div>
+      <div id="signupOtpArea" hidden><div class="field"><label>OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /><button type="button" class="secondary" data-auth-back-login>Back to Login</button></div><button class="primary" data-auth-verify-signup>Verify &amp; Create Account</button></div>
       <button class="secondary" data-auth-login>Already have an account? Login</button>
-      <div class="auth-footer">OTP and Firebase integration will be connected next.</div>
+      <div class="auth-footer">OTP and Firebase integration are wired in stages; account creation remains blocked until the real OTP service is connected.</div>
     `);
   }
 
@@ -47,9 +83,6 @@ window.IndooneAuthUI = (() => {
     if (modal) modal.innerHTML = '';
   }
 
-  function loginFromModal() { showLogin(); }
-  function signupFromModal() { showSignup(); }
-
-  window.IndooneAuthUI = { showLogin, showSignup, loginFromModal, signupFromModal, close };
+  window.IndooneAuthUI = { showLogin, showSignup, close };
   return window.IndooneAuthUI;
 })();
