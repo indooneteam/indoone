@@ -1,7 +1,7 @@
 window.IndooneTotpController = (() => {
   let timerId = null;
 
-  function remaining(period=30) {
+  function remaining(period = 30) {
     const now = Math.floor(Date.now() / 1000);
     return period - (now % period);
   }
@@ -23,20 +23,17 @@ window.IndooneTotpController = (() => {
   async function refreshAll() {
     await Promise.all(indooneState.accounts.map(refreshAccount));
     renderAccounts();
-    persist();
-  }
-
-  function persist() {
-    if (window.IndooneStorage) {
-      IndooneStorage.save(indooneState.accounts);
+    if (IndoonePersistence.isUnlocked()) {
+      try { await IndoonePersistence.persistCurrent(); } catch (_) {}
     }
   }
 
   function start() {
-    refreshAll();
     clearInterval(timerId);
+    if (!IndoonePersistence.isUnlocked()) return;
+    refreshAll();
     timerId = setInterval(refreshAll, 1000);
   }
 
-  return { refreshAccount, refreshAll, start, persist };
+  return { refreshAccount, refreshAll, start };
 })();
