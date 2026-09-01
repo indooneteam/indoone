@@ -2,8 +2,8 @@ window.IndooneAuthUI = (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
 
   function reportError(error) {
-    const message = window.IndooneFirebaseAuth && typeof window.IndooneFirebaseAuth.messageFor === 'function'
-      ? window.IndooneFirebaseAuth.messageFor(error)
+    const message = window.IndooneFirebaseAuth && typeof window.IndooneFirebaseAuth.errorMessage === 'function'
+      ? window.IndooneFirebaseAuth.errorMessage(error)
       : (error?.message || 'Authentication failed.');
     if (typeof toast === 'function') toast(message);
     else console.error(message, error);
@@ -55,7 +55,7 @@ window.IndooneAuthUI = (() => {
       <div class="field"><label>PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password" /></div>
       <button class="primary" data-auth-login>Login &amp; Verify</button>
       <button class="secondary" data-auth-signup>Create Account</button>
-      <div class="auth-footer">Your OTP verification will be handled securely after backend integration.</div>
+      <div class="auth-footer">Firebase account credentials are verified before entering Indoone.</div>
     `);
   }
 
@@ -69,7 +69,7 @@ window.IndooneAuthUI = (() => {
       <button class="primary" data-auth-send-otp>Send OTP</button>
       <div id="signupOtpArea" hidden><div class="field"><label>OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /><button type="button" class="secondary" data-auth-back-login>Back to Login</button></div><button class="primary" data-auth-verify-signup>Verify &amp; Create Account</button></div>
       <button class="secondary" data-auth-login>Already have an account? Login</button>
-      <div class="auth-footer">OTP and Firebase integration are wired in stages; account creation remains blocked until the real OTP service is connected.</div>
+      <div class="auth-footer">The account is created only after the real IndoVerification OTP is successfully verified.</div>
     `);
   }
 
