@@ -1,5 +1,6 @@
 (() => {
-  const API_BASE = 'https://indomail-production.up.railway.app';
+  const API_BASE = 'https://indoverification-production.up.railway.app';
+  const APP_ID = 'indoone';
   const APP_NAME = 'Indoone';
   const REQUEST_TIMEOUT_MS = 15000;
 
@@ -11,6 +12,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Indo-App-Id': APP_ID,
           'X-Indo-App-Name': APP_NAME
         },
         body: JSON.stringify(body || {}),
@@ -54,6 +56,7 @@
 
   window.IndooneIndoVerification = {
     API_BASE,
+    APP_ID,
     APP_NAME,
     requestSignupOtp,
     verifySignupOtp,
