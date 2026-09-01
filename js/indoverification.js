@@ -42,6 +42,10 @@
     return request('/api/auth/signup/verify-otp', { email, challengeId, otp, name });
   }
 
+  function sendSignupWelcome({ email, welcomeToken, name = 'Indoone user' }) {
+    return request('/api/auth/signup/welcome', { email, welcomeToken, name });
+  }
+
   function requestLoginOtp(email, name = 'Indoone user') {
     return request('/api/auth/login/request-otp', { email, name });
   }
@@ -60,6 +64,7 @@
     APP_NAME,
     requestSignupOtp,
     verifySignupOtp,
+    sendSignupWelcome,
     requestLoginOtp,
     verifyLoginOtp,
     resendOtp
