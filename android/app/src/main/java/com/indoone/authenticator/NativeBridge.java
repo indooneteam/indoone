@@ -1,6 +1,5 @@
 package com.indoone.authenticator;
 
-import android.app.Activity;
 import android.webkit.JavascriptInterface;
 
 import androidx.biometric.BiometricManager;
@@ -49,8 +48,10 @@ public final class NativeBridge {
 
             BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
                     .setTitle("Unlock Indoone")
-                    .setSubtitle("Verify your identity to unlock the authenticator vault")
-                    .setNegativeButtonText("Use PIN")
+                    .setSubtitle("Use your biometric or device credential")
+                    .setAllowedAuthenticators(
+                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                                    | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                     .build();
             prompt.authenticate(info);
         });
