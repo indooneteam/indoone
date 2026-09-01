@@ -148,7 +148,7 @@
       } else if (action === 'signup-submit') {
         button.textContent = 'Sending OTP…';
         await auth.startSignup();
-        button.textContent = 'OTP sent';
+        button.textContent = 'Resend OTP';
         setStatus('OTP sent. Enter the code from your email.');
         button.disabled = false;
         button.removeAttribute('aria-busy');
@@ -164,7 +164,7 @@
       console.error('Indoone auth action failed:', error);
     } finally {
       if (button.isConnected) {
-        if (button.textContent !== 'OTP sent') button.textContent = previous;
+        button.textContent = button.textContent === 'Resend OTP' ? 'Resend OTP' : previous;
         button.disabled = false;
         button.removeAttribute('aria-busy');
       }
