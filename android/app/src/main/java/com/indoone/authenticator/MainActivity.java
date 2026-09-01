@@ -3,7 +3,6 @@ package com.indoone.authenticator;
 import android.Manifest;
 import android.app.Activity;
 import android.os.Bundle;
-import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -30,7 +29,7 @@ public class MainActivity extends Activity {
                 });
             }
         });
-        webView.loadUrl("file:///android_asset/indooone/index.html");
+        webView.loadUrl("file:///android_asset/index.html");
         setContentView(webView);
         if (android.os.Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 41);
