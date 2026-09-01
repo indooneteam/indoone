@@ -9,43 +9,73 @@ window.IndooneAuthUI = (() => {
     else console.error(message, error);
   }
 
+  function setBusy(button, busyText, idleText) {
+    if (!button) return () => {};
+    const previous = button.textContent;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = busyText;
+    return () => {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.textContent = idleText || previous;
+    };
+  }
+
   function bindCommonActions() {
     const modal = document.getElementById('modal');
     if (!modal) return;
-    modal.querySelector('[data-auth-login]')?.addEventListener('click', async () => {
-      const button = modal.querySelector('[data-auth-login]');
-      if (button) button.disabled = true;
+    modal.querySelector('[data-auth-login]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const button = event.currentTarget;
+      const done = setBusy(button, 'Checking…', 'Continue & Send OTP');
       try { await window.IndooneFirebaseAuth.login(); }
       catch (error) { reportError(error); }
-      finally { if (button) button.disabled = false; }
+      finally { done(); }
     });
-    modal.querySelector('[data-auth-verify-login]')?.addEventListener('click', async () => {
-      const button = modal.querySelector('[data-auth-verify-login]');
-      if (button) button.disabled = true;
+    modal.querySelector('[data-auth-verify-login]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const button = event.currentTarget;
+      const done = setBusy(button, 'Verifying…', 'Verify & Login');
       try { await window.IndooneFirebaseAuth.verifyLoginOtp(); }
       catch (error) { reportError(error); }
-      finally { if (button) button.disabled = false; }
+      finally { done(); }
     });
-    modal.querySelector('[data-auth-resend-login]')?.addEventListener('click', async () => {
-      const button = modal.querySelector('[data-auth-resend-login]');
-      if (button) button.disabled = true;
+    modal.querySelector('[data-auth-resend-login]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const button = event.currentTarget;
+      const done = setBusy(button, 'Sending…', 'Resend OTP');
       try { await window.IndooneFirebaseAuth.resendLoginOtp(); }
       catch (error) { reportError(error); }
-      finally { if (button) button.disabled = false; }
+      finally { done(); }
     });
-    modal.querySelector('[data-auth-signup]')?.addEventListener('click', () => showSignup());
-    modal.querySelector('[data-auth-back-login]')?.addEventListener('click', () => showLogin());
-    modal.querySelector('[data-auth-send-otp]')?.addEventListener('click', async () => {
-      const button = modal.querySelector('[data-auth-send-otp]');
-      if (button) button.disabled = true;
-      try { await window.IndooneFirebaseAuth.startSignup(); if (button) button.textContent = 'OTP sent'; }
-      catch (error) { if (button) button.disabled = false; reportError(error); }
+    modal.querySelector('[data-auth-signup]')?.addEventListener('click', (event) => { event.preventDefault(); showSignup(); });
+    modal.querySelector('[data-auth-back-login]')?.addEventListener('click', (event) => { event.preventDefault(); showLogin(); });
+    modal.querySelector('[data-auth-send-otp]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const button = event.currentTarget;
+      const done = setBusy(button, 'Sending OTP…', 'Send OTP');
+      try {
+        await window.IndooneFirebaseAuth.startSignup();
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.textContent = 'OTP sent';
+      } catch (error) {
+        done();
+        reportError(error);
+      }
     });
-    modal.querySelector('[data-auth-verify-signup]')?.addEventListener('click', async () => {
-      const button = modal.querySelector('[data-auth-verify-signup]');
-      if (button) button.disabled = true;
+    modal.querySelector('[data-auth-verify-signup]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const button = event.currentTarget;
+      const done = setBusy(button, 'Verifying…', 'Verify & Create Account');
       try { await window.IndooneFirebaseAuth.finishSignupAfterOtp(); }
-      catch (error) { if (button) button.disabled = false; reportError(error); }
+      catch (error) { done(); reportError(error); }
     });
   }
 
@@ -66,9 +96,9 @@ window.IndooneAuthUI = (() => {
       <div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div>
       <div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div>
       <div class="field"><label>PASSWORD</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password" /></div>
-      <button class="primary" data-auth-login>Continue &amp; Send OTP</button>
-      <div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button class="primary" data-auth-verify-login>Verify &amp; Login</button><button class="secondary" data-auth-resend-login>Resend OTP</button></div>
-      <button class="secondary" data-auth-signup>Create Account</button>
+      <button type="button" class="primary" data-auth-login>Continue &amp; Send OTP</button>
+      <div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary" data-auth-verify-login>Verify &amp; Login</button><button type="button" class="secondary" data-auth-resend-login>Resend OTP</button></div>
+      <button type="button" class="secondary" data-auth-signup>Create Account</button>
       <div class="auth-footer">Password is checked by Firebase first; login is completed only after OTP verification.</div>
     `);
   }
@@ -80,9 +110,9 @@ window.IndooneAuthUI = (() => {
       <div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div>
       <div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="+91 98765 43210" /></div>
       <div class="field"><label>PASSWORD</label><input id="signupPassword" type="password" autocomplete="new-password" placeholder="Create a strong password" /></div>
-      <button class="primary" data-auth-send-otp>Send OTP</button>
-      <div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /><button type="button" class="secondary" data-auth-back-login>Back to Login</button></div><button class="primary" data-auth-verify-signup>Verify &amp; Create Account</button></div>
-      <button class="secondary" data-auth-login>Already have an account? Login</button>
+      <button type="button" class="primary" data-auth-send-otp>Send OTP</button>
+      <div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /><button type="button" class="secondary" data-auth-back-login>Back to Login</button></div><button type="button" class="primary" data-auth-verify-signup>Verify &amp; Create Account</button></div>
+      <button type="button" class="secondary" data-auth-back-login>Already have an account? Login</button>
       <div class="auth-footer">The Firebase account is created only after the real IndoVerification OTP is successfully verified.</div>
     `);
   }
