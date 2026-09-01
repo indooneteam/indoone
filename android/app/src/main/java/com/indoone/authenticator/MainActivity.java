@@ -1,7 +1,6 @@
 package com.indoone.authenticator;
 
 import android.Manifest;
-import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -10,7 +9,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.content.pm.PackageManager;
 
-public class MainActivity extends Activity {
+import androidx.fragment.app.FragmentActivity;
+
+public class MainActivity extends FragmentActivity {
     private WebView webView;
 
     @Override public void onCreate(Bundle savedInstanceState) {
