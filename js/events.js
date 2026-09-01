@@ -34,19 +34,10 @@ async function showAuthOrHome(user){
     if(window.__indooneAuthPending)return;
 
     const verifiedUid=sessionStorage.getItem('indoone_otp_verified_uid');
-    if(!user){
+    if(!user||verifiedUid!==user.uid){
       sessionStorage.removeItem('indoone_otp_verified_uid');
       sessionStorage.removeItem('indoone_authenticated_uid');
-      indooneState.accounts=[];
-      renderAccounts();
-      window.IndooneAuthUI?.showLogin?.();
-      return;
-    }
-
-    if(verifiedUid!==user.uid){
-      await window.IndooneFirebase?.auth?.signOut?.().catch(()=>{});
-      sessionStorage.removeItem('indoone_otp_verified_uid');
-      sessionStorage.removeItem('indoone_authenticated_uid');
+      if(user)await window.IndooneFirebase?.auth?.signOut?.().catch(()=>{});
       indooneState.accounts=[];
       renderAccounts();
       window.IndooneAuthUI?.showLogin?.();
@@ -67,12 +58,23 @@ async function showAuthOrHome(user){
   }
 }
 
-window.addEventListener('load',()=>{
+window.addEventListener('load',async()=>{
   const auth=window.IndooneFirebase?.auth;
+
+  // A browser reload is a new Indoone authentication session. Never reuse a
+  // previous OTP-verification marker or Firebase's persisted account session.
+  sessionStorage.removeItem('indoone_otp_verified_uid');
+  sessionStorage.removeItem('indoone_authenticated_uid');
+  window.__indooneLoginOtp=null;
+  window.__indooneSignupDraft=null;
+  window.__indooneAuthPending=false;
+
+  if(auth&&typeof auth.signOut==='function')await auth.signOut().catch(()=>{});
+
   if(auth&&typeof auth.onAuthStateChanged==='function'){
     auth.onAuthStateChanged(user=>showAuthOrHome(user));
     setTimeout(()=>{
-      if(!authResolved&&!auth.currentUser&&!window.__indooneAuthPending)showAuthOrHome(null);
+      if(!authResolved&&!auth.currentUser)showAuthOrHome(null);
     },1500);
   }else{
     showAuthOrHome(null);
