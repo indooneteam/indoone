@@ -20,13 +20,19 @@ window.saveAccount = async function () {
   if (editId) {
     const a = indooneState.accounts.find(x => x.id === editId);
     if (a) Object.assign(a, {name, email, secret, digits, period, algorithm});
+    if (IndoonePersistence.isUnlocked()) await IndoonePersistence.persistCurrent();
     closeModal();
     await IndooneTotpController.refreshAll();
-    toast('Account updated');
+    toast('Account updated securely');
     return;
   }
   indooneState.accounts.push({id:Date.now(),name,email,secret,digits,period,algorithm,favorite:false,icon:name.charAt(0).toUpperCase(),cls:'google',seconds:period,code:'------'});
+  if (!IndoonePersistence.isUnlocked()) {
+    indooneState.accounts.pop();
+    return toast('Create or unlock your vault first');
+  }
+  await IndoonePersistence.persistCurrent();
   closeModal();
   await IndooneTotpController.refreshAll();
-  toast('Account added');
+  toast('Account encrypted and saved');
 };
