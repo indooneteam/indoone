@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>Indoone Authenticator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="phone-shell">
+    <header class="topbar">
+      <button class="icon-btn" aria-label="Menu" onclick="toggleMenu()">☰</button>
+      <div class="brand"><span class="brand-mark">◇</span><div><strong>Indoone</strong><small>Authenticator</small></div></div>
+      <button class="icon-btn" aria-label="Search" onclick="focusSearch()">⌕</button>
+    </header>
+
+    <section class="search-wrap"><input id="search" type="search" placeholder="Search accounts" oninput="filterAccounts()" /></section>
+
+    <section class="account-list" id="accountList">
+      <article class="account" data-name="Google Gmail" onclick="openAccount('Google','personal@gmail.com','287 463')"><div class="service-icon google">G</div><div class="account-info"><b>Google</b><span>personal@gmail.com</span><strong>287 463</strong></div><div class="timer">18</div></article>
+      <article class="account" data-name="GitHub" onclick="openAccount('GitHub','user@github.com','192 834')"><div class="service-icon github">●</div><div class="account-info"><b>GitHub</b><span>user@github.com</span><strong>192 834</strong></div><div class="timer">18</div></article>
+      <article class="account" data-name="Microsoft Outlook" onclick="openAccount('Microsoft','account@outlook.com','653 198')"><div class="service-icon microsoft">⊞</div><div class="account-info"><b>Microsoft</b><span>account@outlook.com</span><strong>653 198</strong></div><div class="timer">18</div></article>
+      <article class="account" data-name="Binance" onclick="openAccount('Binance','user@binance.com','312 658')"><div class="service-icon binance">◆</div><div class="account-info"><b>Binance</b><span>user@binance.com</span><strong>312 658</strong></div><div class="timer">18</div></article>
+      <article class="account" data-name="Dropbox" onclick="openAccount('Dropbox','user@dropbox.com','478 921')"><div class="service-icon dropbox">◆</div><div class="account-info"><b>Dropbox</b><span>user@dropbox.com</span><strong>478 921</strong></div><div class="timer">18</div></article>
+    </section>
+
+    <button class="fab" onclick="showAdd()">+</button>
+    <nav class="bottom-nav"><button class="active" onclick="showHome()">⌂<span>Accounts</span></button><button onclick="showSettings()">⚙<span>Settings</span></button></nav>
+  </main>
+
+  <div class="overlay hidden" id="overlay" onclick="closeOverlay(event)">
+    <section class="modal" id="modal"></section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
