@@ -4,10 +4,28 @@ window.IndooneQrScanner = (() => {
   let detector = null;
   let raf = 0;
   let scanning = false;
+  let permissionWaiter = null;
+
+  function requestNativeCameraPermission() {
+    if (!window.IndooneNative?.requestCameraPermission) return Promise.resolve(true);
+    return new Promise(resolve => {
+      permissionWaiter = resolve;
+      window.IndooneNative.requestCameraPermission();
+    });
+  }
+
+  window.addEventListener('indoone-camera-permission', event => {
+    const resolve = permissionWaiter;
+    permissionWaiter = null;
+    resolve?.(Boolean(event.detail?.success));
+  });
 
   async function start() {
-    if (!navigator.mediaDevices?.getUserMedia) return toast('Camera is not available');
+    if (!navigator.mediaDevices?.getUserMedia) return toast('Camera is not available on this device');
     if (!('BarcodeDetector' in window)) return toast('QR scanning is not supported here');
+
+    const permissionGranted = await requestNativeCameraPermission();
+    if (!permissionGranted) return toast('Camera permission is required to scan a QR code');
 
     openModal(`<div class="modal-head"><h2>Scan QR Code</h2><button class="close-btn" data-stop-scan>×</button></div>
       <div class="scanner"><video id="qrVideo" autoplay playsinline muted></video><div class="scan-frame"></div></div>
@@ -63,6 +81,10 @@ window.IndooneQrScanner = (() => {
     if (video) video.srcObject = null;
     video = null;
     detector = null;
+    if (permissionWaiter) {
+      permissionWaiter(false);
+      permissionWaiter = null;
+    }
   }
 
   return { start, stop };
