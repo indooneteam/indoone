@@ -77,15 +77,19 @@
     if (!email || !email.includes('@')) throw new Error('Enter a valid email address.');
     if (!/^\+[1-9]\d{7,14}$/.test(mobile)) throw new Error('Enter a valid international mobile number.');
     if (password.length < 6) throw new Error('Password should be at least 6 characters.');
-    sessionStorage.setItem('indoone_signup_draft', JSON.stringify({ email, mobile, password, createdAt: Date.now() }));
+
+    // Do not persist passwords in browser storage. The password is submitted only
+    // when the verified signup flow is completed.
+    window.__indooneSignupDraft = { email, mobile, password, createdAt: Date.now() };
+    sessionStorage.setItem('indoone_signup_identity', JSON.stringify({ email, mobile, createdAt: Date.now() }));
     const area = document.getElementById('signupOtpArea');
     if (area) area.hidden = false;
     toastSafe('Details saved. Verify the OTP before creating the Firebase account.');
   }
 
   async function finishSignupAfterOtp() {
-    const raw = sessionStorage.getItem('indoone_signup_draft');
-    if (!raw) throw new Error('Signup session expired. Enter your details again.');
+    const draft = window.__indooneSignupDraft;
+    if (!draft) throw new Error('Signup session expired. Enter your details again.');
     const otp = String(document.getElementById('signupOtp')?.value || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP.');
     throw new Error('IndoVerification OTP is not connected yet. Firebase account creation remains blocked until OTP verification is connected.');
@@ -96,9 +100,10 @@
     if (!fb?.auth) return;
     fb.auth.onAuthStateChanged(async user => {
       if (!user) return;
+      sessionStorage.setItem('indoone_authenticated_uid', user.uid);
       try {
         const snapshot = await db().ref(`users/${user.uid}/profile`).once('value');
-        if (snapshot.exists()) sessionStorage.setItem('indoone_authenticated_uid', user.uid);
+        if (snapshot.exists()) return;
       } catch (error) {
         console.warn('Firebase profile sync skipped:', error);
       }
