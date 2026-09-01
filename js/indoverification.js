@@ -10,11 +10,7 @@
     try {
       const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Indo-App-Id': APP_ID,
-          'X-Indo-App-Name': APP_NAME
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body || {}),
         signal: controller.signal
       });
@@ -26,7 +22,7 @@
     } catch (error) {
       if (error?.name === 'AbortError') throw new Error('OTP service request timed out. Please try again.');
       if (error instanceof TypeError) {
-        throw new Error('Unable to reach the OTP service. The current service may not allow this app origin yet.');
+        throw new Error('Unable to reach the OTP service. Check your connection and try again.');
       }
       throw error;
     } finally {
