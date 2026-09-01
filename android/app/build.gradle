@@ -20,10 +20,24 @@ android {
     sourceSets {
         main {
             assets {
-                srcDirs = ['../..']
-                include 'index.html', 'style.css', 'js/**'
+                srcDirs = [file("${layout.buildDirectory.get()}/generated/indooneAssets")]
             }
         }
+    }
+}
+
+def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
+    from(file("$rootDir/..")) {
+        include 'index.html'
+        include 'style.css'
+        include 'js/**'
+    }
+    into(layout.buildDirectory.dir('generated/indooneAssets'))
+}
+
+tasks.configureEach { task ->
+    if (task.name ==~ /merge.*Assets/) {
+        task.dependsOn(prepareIndooneWebAssets)
     }
 }
 
