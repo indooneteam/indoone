@@ -25,49 +25,67 @@
   }
 
   function bindMobileDefaults(root) {
-    const inputs = root.querySelectorAll('#signupMobile, #authIdentifier');
-    inputs.forEach(input => {
-      if (input.dataset.indiaMobileBound === 'true') return;
-      input.dataset.indiaMobileBound = 'true';
+    // Login: only add +91 after the user starts typing a number.
+    const loginInput = root.querySelector('#authIdentifier');
+    if (loginInput && loginInput.dataset.indiaMobileBound !== 'true') {
+      loginInput.dataset.indiaMobileBound = 'true';
 
-      // Show India code by default. Login still supports email: as soon as
-      // the user types an email, the visual prefix is removed automatically.
-      if (!input.value) {
-        input.value = '+91 ';
-        input.setSelectionRange(input.value.length, input.value.length);
+      loginInput.addEventListener('input', () => {
+        const raw = loginInput.value.trim();
+        if (!raw) return;
+
+        // Email input: never add the mobile country code.
+        if (/[A-Za-z@]/.test(raw)) {
+          if (raw.startsWith('+91 ')) loginInput.value = raw.slice(4).trimStart();
+          else if (raw.startsWith('+91')) loginInput.value = raw.slice(3).trimStart();
+          return;
+        }
+
+        // Numeric input: normalize to India country code.
+        const digits = raw.replace(/\D/g, '');
+        loginInput.value = raw.startsWith('+91')
+          ? `+91 ${digits.replace(/^91/, '')}`
+          : `+91 ${digits}`;
+      });
+    }
+
+    // Create Account mobile field keeps its existing +91 default behavior.
+    const signupInput = root.querySelector('#signupMobile');
+    if (signupInput && signupInput.dataset.indiaMobileBound !== 'true') {
+      signupInput.dataset.indiaMobileBound = 'true';
+
+      if (!signupInput.value) {
+        signupInput.value = '+91 ';
+        signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
       }
 
-      input.addEventListener('focus', () => {
-        if (!input.value.trim()) {
-          input.value = '+91 ';
-          input.setSelectionRange(input.value.length, input.value.length);
+      signupInput.addEventListener('focus', () => {
+        if (!signupInput.value.trim()) {
+          signupInput.value = '+91 ';
+          signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
         }
       });
 
-      input.addEventListener('input', () => {
-        const raw = input.value.trim();
+      signupInput.addEventListener('input', () => {
+        const raw = signupInput.value.trim();
         if (!raw) {
-          input.value = '+91 ';
-          input.setSelectionRange(input.value.length, input.value.length);
+          signupInput.value = '+91 ';
+          signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
           return;
         }
-
-        // Email/username input: don't force the +91 prefix on non-mobile text.
         if (/[A-Za-z@]/.test(raw)) {
-          if (raw.startsWith('+91 ')) input.value = raw.slice(4).trimStart();
-          else if (raw.startsWith('+91')) input.value = raw.slice(3).trimStart();
+          if (raw.startsWith('+91 ')) signupInput.value = raw.slice(4).trimStart();
+          else if (raw.startsWith('+91')) signupInput.value = raw.slice(3).trimStart();
           return;
         }
-
-        // Numeric mobile input: always normalize to India country code.
         const digits = raw.replace(/\D/g, '');
         if (!raw.startsWith('+91')) {
-          input.value = `+91 ${digits}`;
+          signupInput.value = `+91 ${digits}`;
         } else {
-          input.value = `+91 ${digits.replace(/^91/, '')}`;
+          signupInput.value = `+91 ${digits.replace(/^91/, '')}`;
         }
       });
-    });
+    }
   }
 
   function showLogin() {
