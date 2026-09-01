@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#ffffff" />
-  <meta name="description" content="Indoone Authenticator — private, offline-first authenticator." />
+  <meta name="description" content="Indoone Authenticator — private, offline-first authenticator demo." />
   <title>Indoone Authenticator</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -19,26 +19,6 @@
   <aside class="drawer" id="drawer" aria-hidden="true"><div class="drawer-backdrop" id="drawerBackdrop"></div><section class="drawer-panel"><div class="drawer-brand"><span class="brand-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><button class="drawer-item active" data-action="accounts">▦ <span>All Accounts</span><b id="drawerCount">0</b></button><button class="drawer-item" data-action="favorites">☆ <span>Favorites</span></button><button class="drawer-item" data-action="trash">♙ <span>Trash</span></button><div class="drawer-divider"></div><button class="drawer-item" data-action="security">◈ <span>Security</span></button><button class="drawer-item" data-action="backup">☁ <span>Backup</span></button><button class="drawer-item" data-action="settings">⚙ <span>Settings</span></button><button class="drawer-item" data-action="about">ⓘ <span>About Indoone</span></button><button class="drawer-item lock-item" data-action="lock">▣ <span>Lock App</span></button></section></aside>
   <div class="overlay hidden" id="overlay"><section class="modal" id="modal" role="dialog" aria-modal="true"></section></div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="js/core.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/totp.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/totp-controller.js"></script>
-  <script src="js/menu.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/add-account.js"></script>
-  <script src="js/qr-scanner.js"></script>
-  <script src="js/manual-account.js"></script>
-  <script src="js/account.js"></script>
-  <script src="js/account-actions.js"></script>
-  <script src="js/favorite.js"></script>
-  <script src="js/settings.js"></script>
-  <script src="js/app-lock.js"></script>
-  <script src="js/backup.js"></script>
-  <script src="js/navigation.js"></script>
-  <script src="js/drawer.js"></script>
-  <script src="js/persistence-hooks.js"></script>
-  <script src="js/events.js"></script>
-  <script>IndooneTotpController.start();</script>
+  <script src="js/core.js"></script><script src="js/state.js"></script><script src="js/totp.js"></script><script src="js/vault.js"></script><script src="js/secure-session.js"></script><script src="js/persistence.js"></script><script src="js/menu.js"></script><script src="js/search.js"></script><script src="js/add-account.js"></script><script src="js/manual-account.js"></script><script src="js/account.js"></script><script src="js/account-actions.js"></script><script src="js/favorite.js"></script><script src="js/settings.js"></script><script src="js/app-lock.js"></script><script src="js/backup.js"></script><script src="js/navigation.js"></script><script src="js/drawer.js"></script><script src="js/events.js"></script>
 </body>
 </html>
