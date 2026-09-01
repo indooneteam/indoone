@@ -2,7 +2,8 @@
   const API_BASE = 'https://indoverification-production.up.railway.app';
   const APP_ID = 'indoone';
   const APP_NAME = 'Indoone';
-  const REQUEST_TIMEOUT_MS = 15000;
+  // Give the shared SMTP -> Zoho fallback enough time to finish delivery.
+  const REQUEST_TIMEOUT_MS = 45000;
   const REQUEST_DEDUPE_MS = 3000;
   const inFlight = new Map();
 
