@@ -114,7 +114,7 @@
   }
 
   function showLogin() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Continue &amp; Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button><button type="button" class="secondary auth-action-button" data-auth-action="login-resend">Resend OTP</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Continue &amp; Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
   }
 
   function showSignup() {
@@ -139,12 +139,17 @@
       if (action === 'login-submit') {
         button.textContent = 'Checking…';
         await auth.login();
+        button.dataset.authAction = 'login-resend';
+        button.textContent = 'Resend OTP';
+        setStatus('OTP sent. Enter the code from your email.');
       } else if (action === 'login-verify') {
         button.textContent = 'Verifying…';
         await auth.verifyLoginOtp();
       } else if (action === 'login-resend') {
         button.textContent = 'Sending…';
         await auth.resendLoginOtp();
+        button.textContent = 'Resend OTP';
+        setStatus('New OTP sent. Check your email.');
       } else if (action === 'signup-submit') {
         button.textContent = 'Sending OTP…';
         await auth.startSignup();
@@ -164,7 +169,8 @@
       console.error('Indoone auth action failed:', error);
     } finally {
       if (button.isConnected) {
-        button.textContent = button.textContent === 'Resend OTP' ? 'Resend OTP' : previous;
+        if (button.dataset.authAction === 'login-resend') button.textContent = 'Resend OTP';
+        else if (button.textContent !== 'Resend OTP') button.textContent = previous;
         button.disabled = false;
         button.removeAttribute('aria-busy');
       }
