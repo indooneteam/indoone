@@ -1,2 +1,0 @@
-Vercel develop preview deployment test.
-This file is temporary and can be removed after preview verification.
