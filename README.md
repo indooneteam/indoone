@@ -1,12 +1,13 @@
 # Indoone Authenticator
 
-Private, offline-first TOTP authenticator prototype.
+Indoone is a Firebase-backed TOTP authenticator prototype.
 
-## Security
+## Storage and security
 
-- TOTP codes are generated locally with Web Crypto.
-- Vault data is encrypted locally with AES-GCM.
-- The PIN is used only to derive the vault key via PBKDF2 and is not stored.
-- No application server or account database is required.
+- Firebase Authentication is used for the Indoone user login session.
+- Authenticator accounts are stored under `users/<uid>/accounts` in Firebase Realtime Database.
+- TOTP codes are generated in the app from the stored TOTP secret and are not persisted as generated codes.
+- The previous local encrypted account vault is no longer used for account storage; legacy local vault keys are cleared by the app.
+- Firebase Realtime Database rules should restrict each user's account data to their own Firebase UID.
 
-This repository currently contains the browser demo/prototype. Native Android camera/biometric integration is a separate implementation step.
+Native Android camera and biometric integration are included separately from the web UI.
