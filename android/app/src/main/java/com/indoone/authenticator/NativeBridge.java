@@ -72,6 +72,41 @@ public final class NativeBridge {
         activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply();
     }
 
+    @JavascriptInterface
+    public void requestCameraPermission() {
+        activity.requestCameraPermission();
+    }
+
+    @JavascriptInterface
+    public void requestNearbyPermissions() {
+        activity.requestNearbyPermissions();
+    }
+
+    @JavascriptInterface
+    public void startNearbyAdvertising(String deviceName) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().startAdvertising(deviceName));
+    }
+
+    @JavascriptInterface
+    public void startNearbyDiscovery() {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().startDiscovery());
+    }
+
+    @JavascriptInterface
+    public void connectNearbyEndpoint(String endpointId, String deviceName) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().requestConnection(endpointId, deviceName));
+    }
+
+    @JavascriptInterface
+    public void sendNearbyText(String endpointId, String text) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().sendText(endpointId, text));
+    }
+
+    @JavascriptInterface
+    public void stopNearby() {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().stop());
+    }
+
     private void authenticate(boolean unlockVault) {
         activity.runOnUiThread(() -> {
             BiometricManager manager = BiometricManager.from(activity);
@@ -172,10 +207,5 @@ public final class NativeBridge {
         String encoded = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(PREF_CIPHERTEXT, null);
         if (encoded == null) throw new IllegalStateException("Missing biometric credential");
         return Base64.decode(encoded, Base64.NO_WRAP);
-    }
-
-    @JavascriptInterface
-    public void requestCameraPermission() {
-        activity.requestCameraPermission();
     }
 }
