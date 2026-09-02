@@ -63,7 +63,7 @@
     openModal(`
       <div class="modal-head"><h2>Delete local data?</h2><button class="close-btn" data-close>×</button></div>
       <p>This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.</p>
-      <button type="button" class="primary danger" id="confirmLocalDelete" onclick="window.executeDeleteLocalData();return false;">Delete local data</button>
+      <button type="button" class="primary danger" onclick="window.executeDeleteLocalData();return false;">Delete local data</button>
       <button type="button" class="secondary" data-close>Cancel</button>
     `);
   };
@@ -97,7 +97,7 @@
   };
 
   window.executeDeleteIndooneAccount = async function () {
-    const { firebase, auth, db } = firebaseState();
+    const { auth, db } = firebaseState();
     const user = auth?.currentUser || null;
     const passwordInput = document.getElementById('deleteAccountPassword');
     const confirmInput = document.getElementById('deleteAccountConfirm');
@@ -112,14 +112,16 @@
       confirmInput?.focus();
       return toast('Type DELETE to confirm');
     }
-    if (!firebase || !auth || !db || !user) return toast('Login session expired. Please login again.');
+    if (!auth || !db || !user) return toast('Login session expired. Please login again.');
     if (!user.email) return toast('This account cannot be re-authenticated here.');
 
     setDeleteBusy(true);
     setStatus('Verifying your account…');
 
     try {
-      const provider = firebase.auth?.EmailAuthProvider;
+      // firebaseState().firebase is the initialized app facade, not the Firebase SDK namespace.
+      // The compat SDK exposes EmailAuthProvider on the global firebase namespace.
+      const provider = window.firebase?.auth?.EmailAuthProvider;
       const credential = provider?.credential?.(user.email, password);
       if (!credential) throw new Error('Firebase email authentication is unavailable.');
 
@@ -135,8 +137,7 @@
       const profile = profileSnapshot.val() || {};
       const mobile = String(profile.mobile || '').trim();
 
-      const updates = {};
-      updates[`users/${liveUser.uid}`] = null;
+      const updates = { [`users/${liveUser.uid}`]: null };
       if (mobile) updates[`mobileIndex/${encodeURIComponent(mobile)}`] = null;
       await db.ref().update(updates);
 
