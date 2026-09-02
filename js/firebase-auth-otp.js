@@ -134,6 +134,7 @@
       window.__indooneLoginOtp = null;
       toastSafe('Login successful.');
       window.IndooneAuthUI?.close?.();
+      if (typeof window.loadFirebaseAccounts === 'function') await window.loadFirebaseAccounts();
       if (typeof renderAccounts === 'function') renderAccounts();
     } catch (error) {
       await auth().signOut().catch(() => {});
@@ -208,6 +209,7 @@
       toastSafe(welcomeSent ? 'Account created successfully.' : 'Account created. Welcome email could not be sent.');
       window.__indooneAuthPending = false;
       window.IndooneAuthUI?.close?.();
+      if (typeof window.loadFirebaseAccounts === 'function') await window.loadFirebaseAccounts();
       if (typeof renderAccounts === 'function') renderAccounts();
     } catch (error) {
       await auth().signOut().catch(() => {});
