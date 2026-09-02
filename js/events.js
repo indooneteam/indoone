@@ -65,6 +65,13 @@ document.addEventListener('click', e => {
   if (!overlay.classList.contains('hidden') && e.target === overlay) closeModal();
 }, true);
 
+async function loadFirebaseAccounts() {
+  if (!window.IndooneCloudAccounts?.load) throw new Error('Firebase account storage is unavailable.');
+  await window.IndooneCloudAccounts.load();
+}
+
+window.loadFirebaseAccounts = loadFirebaseAccounts;
+
 async function showAuthOrHome(user) {
   if (authGateRunning) return;
   authGateRunning = true;
@@ -97,16 +104,8 @@ async function showAuthOrHome(user) {
 
     sessionStorage.setItem('indoone_otp_verified_uid', persistedUid);
     sessionStorage.setItem('indoone_authenticated_uid', persistedUid);
-
-    if (IndoonePersistence.hasVault()) {
-      indooneState.accounts = [];
-      renderAccounts();
-      if (window.IndooneBiometric?.enabled?.()) showBiometricUnlock();
-      else showAppLock('unlock');
-    } else {
-      renderAccounts();
-      if (typeof startDemoTimers === 'function') startDemoTimers();
-    }
+    await loadFirebaseAccounts();
+    if (typeof startDemoTimers === 'function') startDemoTimers();
   } catch (error) {
     console.error('Indoone auth gate error:', error);
     renderLoginNow();
