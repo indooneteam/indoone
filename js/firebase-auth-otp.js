@@ -2,7 +2,13 @@
   const getFirebase = () => window.IndooneFirebase;
   const getVerification = () => window.IndooneIndoVerification;
   const cleanEmail = value => String(value || '').trim().toLowerCase();
-  const normalizeMobile = value => String(value || '').replace(/[^0-9+]/g, '').replace(/^00/, '+');
+  const normalizeMobile = value => {
+    const raw = String(value || '').trim();
+    const digits = raw.replace(/\D/g, '');
+    if (/^91\d{10}$/.test(digits)) return `+${digits}`;
+    if (/^\d{10}$/.test(digits)) return `+91${digits}`;
+    return raw.replace(/[^0-9+]/g, '').replace(/^00/, '+');
+  };
   const setAuthSession = uid => {
     sessionStorage.setItem('indoone_otp_verified_uid', uid);
     sessionStorage.setItem('indoone_authenticated_uid', uid);
@@ -61,12 +67,12 @@
     const payload = {
       uid: user.uid,
       email: user.email || profile.email || '',
-      mobile: profile.mobile || '',
+      mobile: profile.mobile ? normalizeMobile(profile.mobile) : '',
       updatedAt: now
     };
     await db().ref(`users/${user.uid}/profile`).update(payload);
     if (payload.mobile) {
-      await db().ref(`mobileIndex/${encodeURIComponent(normalizeMobile(payload.mobile))}`).set({
+      await db().ref(`mobileIndex/${encodeURIComponent(payload.mobile)}`).set({
         uid: user.uid,
         email: payload.email,
         updatedAt: now
@@ -151,7 +157,7 @@
     const mobile = normalizeMobile(document.getElementById('signupMobile')?.value);
     const password = String(document.getElementById('signupPassword')?.value || '');
     if (!email || !email.includes('@')) throw new Error('Enter a valid email address.');
-    if (!/^\+[1-9]\d{7,14}$/.test(mobile)) throw new Error('Enter a valid international mobile number.');
+    if (!/^\+91\d{10}$/.test(mobile)) throw new Error('Enter a valid 10-digit Indian mobile number.');
     if (password.length < 6) throw new Error('Password should be at least 6 characters.');
 
     const result = await verification().requestSignupOtp(email, 'Indoone user');
