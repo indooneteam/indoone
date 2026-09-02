@@ -1,10 +1,5 @@
 window.showAdd = function () {
   openModal(`<div class="modal-head"><h2>Add Account</h2><button class="close-btn" data-close>×</button></div><div class="tabs"><button class="selected" data-tab="qr">Scan QR Code</button><button data-tab="manual">Enter Setup Key</button></div><div class="qr">▦</div><p style="text-align:center">Scan a TOTP QR code from your account security settings.</p><button class="primary" onclick="IndooneQrScanner.start()">Open Camera Scanner</button><div class="field"><label>OR PASTE OTPAUTH URI</label><input id="otpUri" placeholder="otpauth://totp/..." autocomplete="off"></div><button class="secondary" data-import-uri>Import OTP URI</button><button class="secondary" data-tab="manual">Enter Setup Key Instead</button>`);
-  // Start the scanner immediately after the Add Account modal is shown.
-  // The scanner itself requests camera permission only when needed.
-  setTimeout(() => {
-    try { IndooneQrScanner.start(); } catch (_) { toast('Unable to start camera scanner'); }
-  }, 0);
 };
 
 window.importOtpUri = function () {
