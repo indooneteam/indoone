@@ -49,7 +49,6 @@ window.handleSortAccounts = function () {
   renderAccounts();
   toast(indooneState.newestFirst ? 'Newest first' : 'Name A–Z');
 };
-$('sortBtn').addEventListener('click', window.handleSortAccounts);
 
 $('addBtn').addEventListener('click', showAdd);
 $('emptyAddBtn').addEventListener('click', showAdd);
