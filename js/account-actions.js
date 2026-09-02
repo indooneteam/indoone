@@ -19,13 +19,13 @@ window.deleteCurrent=async function(){
   if(i<0)return;
   const removed=indooneState.accounts[i];
   try {
-    await IndooneCloudAccounts.remove(id);
-    indooneState.trash.push(indooneState.accounts.splice(i,1)[0]);
+    await IndooneCloudAccounts.moveToTrash(removed);
+    indooneState.accounts.splice(i,1);
     renderAccounts();
     closeModal();
-    toast('Account permanently deleted from Firebase');
-  } catch (_) {
-    toast('Could not delete account');
+    toast('Account moved to Trash for 30 days');
+  } catch (error) {
+    toast(error?.message || 'Could not move account to Trash');
   }
 };
 
