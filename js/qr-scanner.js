@@ -6,7 +6,11 @@ window.IndooneQrScanner = (() => {
   let scanning = false;
   let permissionWaiter = null;
 
-  function requestNativeCameraPermission() {
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>\"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '\"':'&quot;', "'":'&#39;' }[char]));
+  }
+
+  function requestCameraPermission() {
     if (!window.IndooneNative?.requestCameraPermission) return Promise.resolve(true);
     return new Promise(resolve => {
       permissionWaiter = resolve;
@@ -24,13 +28,13 @@ window.IndooneQrScanner = (() => {
     if (!navigator.mediaDevices?.getUserMedia) return toast('Camera is not available on this device');
     if (!('BarcodeDetector' in window)) return toast('QR scanning is not supported here');
 
-    const permissionGranted = await requestNativeCameraPermission();
+    const permissionGranted = await requestCameraPermission();
     if (!permissionGranted) return toast('Camera permission is required to scan a QR code');
 
-    openModal(`<div class="modal-head"><h2>Scan QR Code</h2><button class="close-btn" data-stop-scan>×</button></div>
+    openModal(`<div class="modal-head"><h2>Scan QR Code</h2><button type="button" class="close-btn" data-stop-scan aria-label="Close scanner">×</button></div>
       <div class="scanner"><video id="qrVideo" autoplay playsinline muted></video><div class="scan-frame"></div></div>
       <p style="text-align:center">Place the TOTP QR code inside the frame.</p>
-      <button class="secondary" data-stop-scan>Cancel</button>`);
+      <button type="button" class="secondary" data-stop-scan>Cancel</button>`);
 
     video = document.getElementById('qrVideo');
     detector = new BarcodeDetector({ formats: ['qr_code'] });
@@ -92,3 +96,23 @@ window.IndooneQrScanner = (() => {
 
   return { start, stop };
 })();
+
+// Make Connect's scanner and modal close controls deterministic even when
+// other document-level click handlers are also installed.
+document.addEventListener('click', event => {
+  const close = event.target.closest('#overlay [data-close], #overlay [data-stop-scan]');
+  if (close) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.IndooneQrScanner?.stop();
+    window.closeModal?.();
+    return;
+  }
+
+  const connectScanner = event.target.closest('[data-connect-action="scanner"]');
+  if (connectScanner) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.IndooneQrScanner?.start();
+  }
+}, true);
