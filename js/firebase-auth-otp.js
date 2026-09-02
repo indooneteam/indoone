@@ -58,18 +58,30 @@
     return api;
   }
 
+  function mobileCandidates(value) {
+    const normalized = normalizeMobile(value);
+    const digits = normalized.replace(/\D/g, '');
+    const tenDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+    return Array.from(new Set([
+      normalized,
+      `+91${tenDigits}`,
+      tenDigits,
+      `91${tenDigits}`
+    ].filter(Boolean)));
+  }
+
   async function mobileIdentity(mobile) {
-    const normalizedMobile = normalizeMobile(mobile);
-    const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(normalizedMobile)}`).once('value');
-    const value = snapshot.val();
-    if (!value?.email || !value?.uid) {
-      throw new Error('No Indoone account is linked to this mobile number.');
+    for (const candidate of mobileCandidates(mobile)) {
+      const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(candidate)}`).once('value');
+      const value = snapshot.val();
+      if (value?.email && value?.uid) {
+        return { mobile: normalizeMobile(value.mobile || candidate), email: cleanEmail(value.email), uid: String(value.uid) };
+      }
+      if (value?.email) {
+        return { mobile: normalizeMobile(value.mobile || candidate), email: cleanEmail(value.email), uid: '' };
+      }
     }
-    return {
-      mobile: normalizedMobile,
-      email: cleanEmail(value.email),
-      uid: String(value.uid)
-    };
+    throw new Error('No Indoone account is linked to this mobile number.');
   }
 
   async function emailForMobile(mobile) {
@@ -78,23 +90,19 @@
 
   async function signupIdentityExists(email, mobile) {
     const normalizedEmail = cleanEmail(email);
-    const normalizedMobile = normalizeMobile(mobile);
-
-    try {
-      const methods = await auth().fetchSignInMethodsForEmail(normalizedEmail);
-      if (Array.isArray(methods) && methods.length > 0) {
-        throw new Error('An account already exists with this email.');
-      }
-    } catch (error) {
-      if (error?.message === 'An account already exists with this email.') throw error;
+    const methods = await auth().fetchSignInMethodsForEmail(normalizedEmail).catch(error => {
       const code = String(error?.code || '');
-      if (code === 'auth/email-already-in-use') throw new Error('An account already exists with this email.');
+      if (code === 'auth/invalid-email') throw error;
+      return [];
+    });
+    if (Array.isArray(methods) && methods.length > 0) {
+      throw new Error('An account already exists with this email.');
     }
 
-    const mobileSnapshot = await db().ref(`mobileIndex/${encodeURIComponent(normalizedMobile)}`).once('value');
-    const mobileValue = mobileSnapshot.val();
-    if (mobileValue?.uid || mobileValue?.email) {
-      throw new Error('An account already exists with this mobile number.');
+    for (const candidate of mobileCandidates(mobile)) {
+      const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(candidate)}`).once('value');
+      const value = snapshot.val();
+      if (value?.uid || value?.email) throw new Error('An account already exists with this mobile number.');
     }
   }
 
@@ -125,11 +133,11 @@
     const isEmail = identifier.includes('@');
     let email = '';
     let mobileLookup = null;
-
     if (isEmail) {
       email = cleanEmail(identifier);
     } else {
-      mobileLookup = await mobileIdentity(identifier);
+      const normalizedMobile = normalizeMobile(identifier);
+      mobileLookup = await mobileIdentity(normalizedMobile);
       email = mobileLookup.email;
     }
 
@@ -141,8 +149,7 @@
       const user = auth().currentUser;
       if (!user) throw new Error('Login session expired. Please login again.');
 
-      if (mobileLookup && String(user.uid) !== mobileLookup.uid) {
-        await auth().signOut().catch(() => {});
+      if (mobileLookup?.uid && String(user.uid) !== mobileLookup.uid) {
         throw new Error('This mobile number is not linked to that Indoone account.');
       }
 
@@ -151,19 +158,22 @@
 
       if (mobileLookup) {
         const savedMobile = normalizeMobile(profile.mobile || '');
-        if (savedMobile !== mobileLookup.mobile) {
-          await auth().signOut().catch(() => {});
+        if (savedMobile !== normalizeMobile(identifier)) {
           throw new Error('This mobile number is not linked to that Indoone account.');
         }
       } else if (cleanEmail(profile.email || '') && cleanEmail(profile.email) !== email) {
-        await auth().signOut().catch(() => {});
         throw new Error('The Firebase account profile does not match this email address.');
       }
 
       const result = await verification().requestLoginOtp(email, 'Indoone user');
       if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
 
-      window.__indooneLoginOtp = { email, challengeId: result.challengeId, requestedAt: Date.now() };
+      window.__indooneLoginOtp = {
+        email,
+        challengeId: result.challengeId,
+        requestedAt: Date.now(),
+        uid: user.uid
+      };
       const area = document.getElementById('loginOtpArea');
       if (area) area.hidden = false;
       const label = document.getElementById('loginOtpEmail');
@@ -192,6 +202,8 @@
 
       const user = auth().currentUser;
       if (!user) throw new Error('Login session expired. Please login again.');
+      if (pending.uid && user.uid !== pending.uid) throw new Error('Login session changed. Please try again.');
+
       const snapshot = await db().ref(`users/${user.uid}/profile`).once('value');
       await syncProfile(user, snapshot.val() || { email: pending.email });
       setAuthSession(user.uid);
@@ -256,17 +268,12 @@
     window.__indooneAuthPending = true;
     try {
       await signupIdentityExists(draft.email, draft.mobile);
-
       const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
       await syncProfile(credential.user, { email: draft.email, mobile: draft.mobile });
 
       let welcomeSent = true;
       try {
-        await verification().sendSignupWelcome({
-          email: draft.email,
-          name: 'Indoone user',
-          welcomeToken: result.welcomeToken
-        });
+        await verification().sendSignupWelcome({ email: draft.email, name: 'Indoone user', welcomeToken: result.welcomeToken });
       } catch (error) {
         welcomeSent = false;
         console.warn('Indoone welcome email failed:', error);
