@@ -19,12 +19,13 @@
   const auth = firebase.auth();
   const database = firebase.database ? firebase.database() : null;
 
-  // Keep authenticated Firebase sessions across page refreshes/browser restarts.
-  if (auth?.setPersistence && firebase.auth?.Auth?.Persistence?.LOCAL) {
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
-      console.warn('Indoone Firebase local persistence setup failed:', error);
-    });
-  }
+  // Start LOCAL persistence immediately and expose its promise so the app can
+  // attach the auth-state listener only after Firebase finishes configuring it.
+  const persistenceReady = auth?.setPersistence && firebase.auth?.Auth?.Persistence?.LOCAL
+    ? auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
+        console.warn('Indoone Firebase local persistence setup failed:', error);
+      })
+    : Promise.resolve();
 
-  window.IndooneFirebase = { app, auth, database, config: firebaseConfig };
+  window.IndooneFirebase = { app, auth, database, config: firebaseConfig, persistenceReady };
 })();
