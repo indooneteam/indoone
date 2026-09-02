@@ -26,29 +26,50 @@
   }
 
   function mobileField(id, prefixId, placeholder = '98765 43210') {
-    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix">+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="${placeholder}" /></div>`;
+    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="${placeholder}" /></div>`;
+  }
+
+  function syncMobilePrefix(input, prefix, rawValue = input?.value || '') {
+    if (!input) return;
+    const raw = String(rawValue || '');
+    const isEmail = /[A-Za-z@]/.test(raw);
+    const digits = raw.replace(/\D/g, '').slice(0, 10);
+    const showPrefix = !isEmail && digits.length > 0;
+    if (prefix) prefix.hidden = !showPrefix;
+    input.classList.toggle('has-mobile-prefix', showPrefix);
   }
 
   function bindMobileInput(input, prefix) {
     if (!input || input.dataset.indiaMobileBound === 'true') return;
     input.dataset.indiaMobileBound = 'true';
+    syncMobilePrefix(input, prefix);
 
     input.addEventListener('input', () => {
       const raw = input.value || '';
       const isEmail = /[A-Za-z@]/.test(raw);
-      if (prefix) prefix.hidden = isEmail;
-      if (isEmail) return;
+      if (isEmail) {
+        if (prefix) prefix.hidden = true;
+        input.classList.remove('has-mobile-prefix');
+        return;
+      }
 
       const digits = raw.replace(/\D/g, '').slice(0, 10);
       input.value = digits;
+      syncMobilePrefix(input, prefix, digits);
     });
 
     input.addEventListener('paste', () => {
       setTimeout(() => {
         const raw = input.value || '';
+        const isEmail = /[A-Za-z@]/.test(raw);
+        if (isEmail) {
+          if (prefix) prefix.hidden = true;
+          input.classList.remove('has-mobile-prefix');
+          return;
+        }
         const digits = raw.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(0, 10);
         input.value = digits;
-        if (prefix) prefix.hidden = false;
+        syncMobilePrefix(input, prefix, digits);
       }, 0);
     });
   }
