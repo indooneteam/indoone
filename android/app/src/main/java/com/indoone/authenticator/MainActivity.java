@@ -18,6 +18,7 @@ public class MainActivity extends FragmentActivity {
     private static final int NEARBY_REQUEST_CODE = 42;
     private WebView webView;
     private NearbyConnectionManager nearbyConnectionManager;
+    private UpdateManager updateManager;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,6 +28,7 @@ public class MainActivity extends FragmentActivity {
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         nearbyConnectionManager = new NearbyConnectionManager(this);
+        updateManager = new UpdateManager(this);
         webView.addJavascriptInterface(new NativeBridge(this), "IndooneNative");
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient() {
@@ -38,6 +40,7 @@ public class MainActivity extends FragmentActivity {
         });
         webView.loadUrl("file:///android_asset/index.html");
         setContentView(webView);
+        webView.postDelayed(() -> updateManager.checkForUpdate(), 1800);
     }
 
     public void requestCameraPermission() {
@@ -63,8 +66,7 @@ public class MainActivity extends FragmentActivity {
         ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), NEARBY_REQUEST_CODE);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_REQUEST_CODE) {
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
@@ -78,17 +80,13 @@ public class MainActivity extends FragmentActivity {
 
     public void sendCameraPermissionResult(boolean success, String message) {
         String safe = escape(message);
-        if (webView != null) {
-            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-camera-permission',{detail:{success:" + success + ",message:'" + safe + "'}}));", null);
-        }
+        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-camera-permission',{detail:{success:" + success + ",message:'" + safe + "'}}));", null);
     }
 
     public void sendBiometricResult(boolean success, String message, String pin) {
         String safe = escape(message);
         String safePin = escape(pin);
-        if (webView != null) {
-            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null);
-        }
+        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null);
     }
 
     public void sendNearbyEvent(String type, String message, String endpointId) {
@@ -100,16 +98,10 @@ public class MainActivity extends FragmentActivity {
         String safeMessage = escape(message);
         String safeEndpoint = escape(endpointId);
         String safeDigits = escape(authenticationDigits);
-        if (webView != null) {
-            webView.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "',authenticationDigits:'" + safeDigits + "',incoming:" + incoming + "}}));",
-                    null);
-        }
+        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "',authenticationDigits:'" + safeDigits + "',incoming:" + incoming + "'}}));", null);
     }
 
-    public NearbyConnectionManager getNearbyConnectionManager() {
-        return nearbyConnectionManager;
-    }
+    public NearbyConnectionManager getNearbyConnectionManager() { return nearbyConnectionManager; }
 
     private static String escape(String value) {
         return value == null ? "" : value.replace("\\", "\\\\").replace("'", "\\'");
