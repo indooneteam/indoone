@@ -3,6 +3,7 @@ const overlay = $('overlay');
 
 let authResolved = false;
 let authGateRunning = false;
+let authStateResolved = false;
 
 function markAuthReady() {
   if (authResolved) return;
@@ -51,16 +52,34 @@ async function showAuthOrHome(user) {
   try {
     if (window.__indooneAuthPending) return;
 
-    const verifiedUid = localStorage.getItem('indoone_otp_verified_uid');
-    if (!user || verifiedUid !== user.uid) {
+    const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
+
+    // Firebase may briefly report null while restoring LOCAL persistence.
+    // Never delete a persisted verified session during that startup window.
+    if (!user) {
+      if (persistedUid && !authStateResolved) return;
       localStorage.removeItem('indoone_otp_verified_uid');
       localStorage.removeItem('indoone_authenticated_uid');
       sessionStorage.removeItem('indoone_otp_verified_uid');
       sessionStorage.removeItem('indoone_authenticated_uid');
-      if (user) await window.IndooneFirebase?.auth?.signOut?.().catch(() => {});
       renderLoginNow();
       return;
     }
+
+    authStateResolved = true;
+
+    if (!persistedUid || persistedUid !== user.uid) {
+      localStorage.removeItem('indoone_otp_verified_uid');
+      localStorage.removeItem('indoone_authenticated_uid');
+      sessionStorage.removeItem('indoone_otp_verified_uid');
+      sessionStorage.removeItem('indoone_authenticated_uid');
+      await window.IndooneFirebase?.auth?.signOut?.().catch(() => {});
+      renderLoginNow();
+      return;
+    }
+
+    sessionStorage.setItem('indoone_otp_verified_uid', persistedUid);
+    sessionStorage.setItem('indoone_authenticated_uid', persistedUid);
 
     if (IndoonePersistence.hasVault()) {
       indooneState.accounts = [];
@@ -81,10 +100,6 @@ async function showAuthOrHome(user) {
 
 window.addEventListener('load', async () => {
   const auth = window.IndooneFirebase?.auth;
-  const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
-  const persistedAuthUid = localStorage.getItem('indoone_authenticated_uid');
-  if (persistedUid) sessionStorage.setItem('indoone_otp_verified_uid', persistedUid);
-  if (persistedAuthUid) sessionStorage.setItem('indoone_authenticated_uid', persistedAuthUid);
   window.__indooneLoginOtp = null;
   window.__indooneSignupDraft = null;
   window.__indooneAuthPending = false;
@@ -94,13 +109,23 @@ window.addEventListener('load', async () => {
     return;
   }
 
+  try {
+    if (window.firebase?.auth?.Auth?.Persistence?.LOCAL) {
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    }
+  } catch (error) {
+    console.warn('Indoone Firebase local persistence setup failed:', error);
+  }
+
   if (typeof auth.onAuthStateChanged === 'function') {
     auth.onAuthStateChanged(user => showAuthOrHome(user));
     setTimeout(() => {
-      if (!authResolved && !auth.currentUser) {
-        if (persistedUid) renderLoginNow(); else renderLoginNow();
+      if (!authStateResolved && !auth.currentUser) {
+        // Give Firebase LOCAL persistence a little more time to restore.
+        // Do not clear the local verified session here.
+        renderLoginNow();
       }
-    }, 1500);
+    }, 3000);
   } else {
     renderLoginNow();
   }
