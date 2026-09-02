@@ -6,6 +6,11 @@ const DEMO_ACCOUNTS = [
 
 window.indooneState = {accounts: DEMO_ACCOUNTS, search: '', newestFirst: true, trash: []};
 
+window.handleSortAccounts = function () {
+  indooneState.newestFirst = !indooneState.newestFirst;
+  renderAccounts();
+};
+
 window.refreshAccountCodes = async function () {
   const now = Math.floor(Date.now() / 1000);
   for (const a of indooneState.accounts) {
