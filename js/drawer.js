@@ -127,6 +127,20 @@ window.showDangerZone = function () {
   `);
 };
 
+window.showLogoutOptions = function () {
+  closeDrawer();
+  openModal(`
+    <div class="modal-head"><h2>Log out</h2><button class="close-btn" data-close>×</button></div>
+    <p>Choose where you want to end your Indoone session.</p>
+    <button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-logout-choice="this">
+      <span>Log out on this device<small>Only this device will be signed out.</small></span><b>›</b>
+    </button>
+    <button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-logout-choice="all">
+      <span>Log out on all devices<small>Sign out from every device using this account.</small></span><b>›</b>
+    </button>
+  `);
+};
+
 drawerPanel?.addEventListener('click', event => {
   const item = event.target.closest('[data-action]');
   if (!item || !drawerPanel.contains(item)) return;
@@ -147,6 +161,8 @@ drawerPanel?.addEventListener('click', event => {
     showAbout();
   } else if (action === 'danger-zone') {
     showDangerZone();
+  } else if (action === 'logout') {
+    showLogoutOptions();
   } else if (action === 'lock') {
     closeDrawer();
     lockIndoone();
@@ -170,21 +186,31 @@ document.addEventListener('click', async event => {
   }
 
   const restoreButton = event.target.closest('[data-trash-restore]');
-  if (!restoreButton) return;
-  const id = Number(restoreButton.dataset.trashRestore);
-  if (!id) return;
+  if (restoreButton) {
+    const id = Number(restoreButton.dataset.trashRestore);
+    if (!id) return;
 
-  restoreButton.disabled = true;
-  try {
-    const restored = await window.IndooneCloudAccounts.restoreFromTrash(id);
-    if (!window.indooneState.accounts.some(account => Number(account.id) === Number(restored.id))) {
-      window.indooneState.accounts.push(restored);
+    restoreButton.disabled = true;
+    try {
+      const restored = await window.IndooneCloudAccounts.restoreFromTrash(id);
+      if (!window.indooneState.accounts.some(account => Number(account.id) === Number(restored.id))) {
+        window.indooneState.accounts.push(restored);
+      }
+      renderAccounts();
+      closeModal();
+      toast('Account restored');
+    } catch (error) {
+      restoreButton.disabled = false;
+      toast(error?.message || 'Could not restore account');
     }
-    renderAccounts();
+    return;
+  }
+
+  const logoutChoice = event.target.closest('[data-logout-choice]');
+  if (logoutChoice) {
+    const choice = logoutChoice.dataset.logoutChoice;
     closeModal();
-    toast('Account restored');
-  } catch (error) {
-    restoreButton.disabled = false;
-    toast(error?.message || 'Could not restore account');
+    if (choice === 'this') toast('This device logout is ready to connect');
+    if (choice === 'all') toast('All devices logout is ready to connect');
   }
 });
