@@ -43,7 +43,7 @@ window.showFavorites = async function () {
     openModal(`
       <div class="modal-head">
         <h2>Favorites</h2>
-        <button type="button" class="close-btn" data-close aria-label="Close">×</button>
+        <button type="button" class="close-btn" aria-label="Close Favorites" onclick="closeModal();return false;">×</button>
       </div>
       <div id="favoritesList" class="drawer-list-modal">${rows}</div>
     `);
@@ -57,7 +57,7 @@ window.showTrash = function () {
   openModal(`
     <div class="modal-head">
       <h2>Trash</h2>
-      <button type="button" class="close-btn" data-close aria-label="Close">×</button>
+      <button type="button" class="close-btn" aria-label="Close Trash" onclick="closeModal();return false;">×</button>
     </div>
     <div class="empty-state compact-empty">
       <div class="empty-icon">♙</div>
@@ -85,12 +85,9 @@ window.showAbout = function () {
   `);
 };
 
-// Use direct event delegation so Favorites/Trash always open from the drawer,
-// independent of other click handlers in events.js.
 drawerPanel?.addEventListener('click', event => {
   const item = event.target.closest('[data-action]');
   if (!item || !drawerPanel.contains(item)) return;
-
   event.preventDefault();
   event.stopPropagation();
 
@@ -99,7 +96,7 @@ drawerPanel?.addEventListener('click', event => {
     closeDrawer();
     document.getElementById('accountsNav')?.click();
   } else if (action === 'favorites') {
-    showFavorites();
+    void showFavorites();
   } else if (action === 'trash') {
     showTrash();
   } else if (action === 'security') {
@@ -117,14 +114,12 @@ drawerPanel?.addEventListener('click', event => {
   }
 });
 
-// Close only when tapping the drawer backdrop/outside its panel.
 drawerEl?.addEventListener('pointerdown', event => {
   if (drawerEl.classList.contains('open') && drawerPanel && !drawerPanel.contains(event.target)) {
     closeDrawer();
   }
 });
 
-// Favorite rows inside the modal open their account details.
 document.addEventListener('click', event => {
   const row = event.target.closest('[data-favorite-account]');
   if (!row) return;
