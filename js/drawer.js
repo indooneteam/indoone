@@ -113,6 +113,20 @@ window.showAbout = function () {
   `);
 };
 
+window.showDangerZone = function () {
+  closeDrawer();
+  openModal(`
+    <div class="modal-head"><h2>Danger Zone</h2><button class="close-btn" data-close>×</button></div>
+    <p>These actions can permanently remove Indoone data. Continue only when you are sure.</p>
+    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-local>
+      <span>Delete local data<small>Remove data stored on this device</small></span><b>›</b>
+    </button>
+    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-account>
+      <span>Delete Indoone account<small>Permanently delete your Indoone account</small></span><b>›</b>
+    </button>
+  `);
+};
+
 drawerPanel?.addEventListener('click', event => {
   const item = event.target.closest('[data-action]');
   if (!item || !drawerPanel.contains(item)) return;
@@ -129,13 +143,10 @@ drawerPanel?.addEventListener('click', event => {
     void showTrash();
   } else if (action === 'security') {
     showSecurity();
-  } else if (action === 'backup') {
-    closeDrawer();
-  } else if (action === 'settings') {
-    closeDrawer();
-    showSettings();
   } else if (action === 'about') {
     showAbout();
+  } else if (action === 'danger-zone') {
+    showDangerZone();
   } else if (action === 'lock') {
     closeDrawer();
     lockIndoone();
