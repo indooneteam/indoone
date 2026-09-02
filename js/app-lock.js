@@ -23,8 +23,39 @@ window.showAppLock = function (mode = 'unlock') {
   });
 };
 
+window.showBiometricUnlock = function () {
+  openModal(`<div class="modal-head"><h2>Unlock Indoone</h2></div><div class="token-icon">●</div><p style="text-align:center">Use your fingerprint or device biometric to unlock Indoone.</p><button class="primary" id="biometricUnlockAction">Use Fingerprint</button><button class="secondary" id="pinFallbackAction">Use App PIN</button>`);
+
+  const biometricButton = document.getElementById('biometricUnlockAction');
+  const pinFallbackButton = document.getElementById('pinFallbackAction');
+
+  biometricButton.addEventListener('click', () => {
+    biometricButton.disabled = true;
+    IndooneBiometric.authenticateForUnlock(async pin => {
+      try {
+        const ok = await IndoonePersistence.unlock(pin);
+        if (!ok) throw new Error('Biometric credential is invalid');
+        closeModal();
+        renderAccounts();
+        if (typeof startTOTPRefresh === 'function') startTOTPRefresh();
+        toast('Vault unlocked with fingerprint');
+      } catch (error) {
+        biometricButton.disabled = false;
+        toast(error?.message || 'Biometric unlock failed');
+      }
+    }, message => {
+      biometricButton.disabled = false;
+      toast(message);
+    });
+  });
+
+  pinFallbackButton.addEventListener('click', () => showAppLock('unlock'));
+
+  setTimeout(() => biometricButton.click(), 120);
+};
+
 window.lockIndoone = function () {
   IndoonePersistence.lock();
-  openModal(`<div class="modal-head"><h2>Indoone Locked</h2></div><div class="token-icon">🔒</div><p style="text-align:center">Your accounts are locked and encrypted locally.</p><button class="primary" data-unlock>Unlock</button>`);
-  modal.querySelector('[data-unlock]').addEventListener('click', () => showAppLock('unlock'));
+  if (IndooneBiometric.enabled()) showBiometricUnlock();
+  else showAppLock('unlock');
 };
