@@ -81,7 +81,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value || '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+    return String(value || '').replace(/[&<>'\"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '\"':'&quot;' }[char]));
   }
 
   function setActive(tab) {
@@ -144,21 +144,21 @@
       }
       rows.push(row);
     }
-    return `<div class="connect-qr" aria-label="Indoone pairing code visual">${rows.map(row => [...row].map(cell => `<i class="${cell === '1' ? 'on' : ''}"></i>`).join('')).join('')}</div>`;
+    return `<div class="connect-qr-shell"><div class="connect-qr" aria-label="Indoone pairing code visual">${rows.map(row => [...row].map(cell => `<i class="${cell === '1' ? 'on' : ''}"></i>`).join('')).join('')}<span class="connect-qr-brand" aria-hidden="true">I</span></div></div>`;
   }
 
   window.showConnectQr = function () {
     const name = localDeviceName();
     const code = pairingCode();
-    openModal(`<div class="modal-head"><h2>My QR Code</h2><button class="close-btn" data-close>×</button></div>
+    openModal(`<div class="modal-head"><h2>My QR Code</h2><button type="button" class="close-btn" data-close onclick="event.preventDefault(); closeModal();">×</button></div>
       <div class="connect-qr-wrap">${makePairingVisual(code)}</div>
       <div class="connect-identity"><div class="connect-avatar">I</div><div><b>${escapeHtml(name)}</b><small>Pairing code: ${escapeHtml(code)}</small></div></div>
       <p class="connect-muted">QR pairing UI is ready. Nearby discovery is active in the Android app.</p>
-      <button class="primary" data-close>Done</button>`);
+      <button type="button" class="primary" data-close onclick="event.preventDefault(); closeModal();">Done</button>`);
   };
 
   window.showConnectScanner = function () {
-    openModal(`<div class="modal-head"><h2>Scan to Connect</h2><button class="close-btn" data-close>×</button></div>
+    openModal(`<div class="modal-head"><h2>Scan to Connect</h2><button type="button" class="close-btn" data-close>×</button></div>
       <div class="connect-scanner"><div class="connect-scan-corners"></div><div class="connect-scan-icon">⌁</div></div>
       <p class="connect-muted center">QR scanner will be connected to the native pairing flow next. Nearby discovery can already be tested now.</p>
       <button class="secondary" data-connect-gallery>Choose QR image</button>
