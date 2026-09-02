@@ -36,18 +36,35 @@ jobs:
           path: develop-source
           fetch-depth: 1
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build develop APK for updater
+        run: gradle -p develop-source/android assembleDebug --stacktrace
+
       - name: Build Pages package
         shell: bash
         run: |
           set -euo pipefail
           rm -rf publish
-          mkdir -p publish/develop
+          mkdir -p publish/develop/downloads
           rsync -a --exclude='.git' main-source/ publish/
           rsync -a --exclude='.git' develop-source/ publish/develop/
+          cp develop-source/android/app/build/outputs/apk/debug/app-debug.apk publish/develop/downloads/indoone.apk
           test -f publish/index.html
           test -f publish/develop/index.html
           test -f publish/develop/js/connect.js
-          echo "Main site preserved at root; develop test site packaged at /develop/."
+          test -f publish/develop/update.json
+          test -f publish/develop/downloads/indoone.apk
+          echo "Main site preserved at root; develop test site and updater APK packaged at /develop/."
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
