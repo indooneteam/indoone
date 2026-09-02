@@ -119,8 +119,6 @@
     setStatus('Verifying your account…');
 
     try {
-      // firebaseState().firebase is the initialized app facade, not the Firebase SDK namespace.
-      // The compat SDK exposes EmailAuthProvider on the global firebase namespace.
       const provider = window.firebase?.auth?.EmailAuthProvider;
       const credential = provider?.credential?.(user.email, password);
       if (!credential) throw new Error('Firebase email authentication is unavailable.');
@@ -135,10 +133,31 @@
 
       const profileSnapshot = await db.ref(`users/${liveUser.uid}/profile`).once('value');
       const profile = profileSnapshot.val() || {};
+      const email = String(liveUser.email || profile.email || '').trim().toLowerCase();
       const mobile = String(profile.mobile || '').trim();
 
-      const updates = { [`users/${liveUser.uid}`]: null };
-      if (mobile) updates[`mobileIndex/${encodeURIComponent(mobile)}`] = null;
+      // Clean the current account and any older duplicate profile nodes for the same
+      // authenticated email before removing the Firebase Authentication user.
+      const matchesSnapshot = await db.ref('users')
+        .orderByChild('profile/email')
+        .equalTo(email)
+        .once('value');
+      const matches = matchesSnapshot.val() || {};
+      const updates = {};
+      const mobiles = new Set(mobile ? [mobile] : []);
+
+      Object.entries(matches).forEach(([uid, item]) => {
+        if (!item?.profile?.email || String(item.profile.email).trim().toLowerCase() !== email) return;
+        updates[`users/${uid}`] = null;
+        const matchedMobile = String(item.profile.mobile || '').trim();
+        if (matchedMobile) mobiles.add(matchedMobile);
+      });
+
+      if (!updates[`users/${liveUser.uid}`]) updates[`users/${liveUser.uid}`] = null;
+      mobiles.forEach(value => {
+        updates[`mobileIndex/${encodeURIComponent(value)}`] = null;
+      });
+
       await db.ref().update(updates);
 
       setStatus('Deleting your Firebase account…');
