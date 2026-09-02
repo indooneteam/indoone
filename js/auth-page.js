@@ -25,71 +25,42 @@
     return true;
   }
 
+  function mobileField(id, prefixId, placeholder = '98765 43210') {
+    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix">+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="${placeholder}" /></div>`;
+  }
+
+  function bindMobileInput(input, prefix) {
+    if (!input || input.dataset.indiaMobileBound === 'true') return;
+    input.dataset.indiaMobileBound = 'true';
+
+    input.addEventListener('input', () => {
+      const raw = input.value || '';
+      const isEmail = /[A-Za-z@]/.test(raw);
+      if (prefix) prefix.hidden = isEmail;
+      if (isEmail) return;
+
+      const digits = raw.replace(/\D/g, '').slice(0, 10);
+      input.value = digits;
+    });
+
+    input.addEventListener('paste', () => {
+      setTimeout(() => {
+        const raw = input.value || '';
+        const digits = raw.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(0, 10);
+        input.value = digits;
+        if (prefix) prefix.hidden = false;
+      }, 0);
+    });
+  }
+
   function bindMobileDefaults(root) {
-    // Login: only add +91 after the user starts typing a number.
     const loginInput = root.querySelector('#authIdentifier');
-    if (loginInput && loginInput.dataset.indiaMobileBound !== 'true') {
-      loginInput.dataset.indiaMobileBound = 'true';
+    const loginPrefix = root.querySelector('#loginMobilePrefix');
+    bindMobileInput(loginInput, loginPrefix);
 
-      loginInput.addEventListener('input', () => {
-        const raw = loginInput.value.trim();
-        if (!raw || raw === '+91') {
-          loginInput.value = '';
-          return;
-        }
-
-        // Email input: never add the mobile country code.
-        if (/[A-Za-z@]/.test(raw)) {
-          if (raw.startsWith('+91 ')) loginInput.value = raw.slice(4).trimStart();
-          else if (raw.startsWith('+91')) loginInput.value = raw.slice(3).trimStart();
-          return;
-        }
-
-        // Numeric input: normalize to India country code.
-        const digits = raw.replace(/\D/g, '');
-        loginInput.value = raw.startsWith('+91')
-          ? `+91 ${digits.replace(/^91/, '')}`
-          : `+91 ${digits}`;
-      });
-    }
-
-    // Create Account mobile field keeps its existing +91 default behavior.
     const signupInput = root.querySelector('#signupMobile');
-    if (signupInput && signupInput.dataset.indiaMobileBound !== 'true') {
-      signupInput.dataset.indiaMobileBound = 'true';
-
-      if (!signupInput.value) {
-        signupInput.value = '+91 ';
-        signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
-      }
-
-      signupInput.addEventListener('focus', () => {
-        if (!signupInput.value.trim()) {
-          signupInput.value = '+91 ';
-          signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
-        }
-      });
-
-      signupInput.addEventListener('input', () => {
-        const raw = signupInput.value.trim();
-        if (!raw) {
-          signupInput.value = '+91 ';
-          signupInput.setSelectionRange(signupInput.value.length, signupInput.value.length);
-          return;
-        }
-        if (/[A-Za-z@]/.test(raw)) {
-          if (raw.startsWith('+91 ')) signupInput.value = raw.slice(4).trimStart();
-          else if (raw.startsWith('+91')) signupInput.value = raw.slice(3).trimStart();
-          return;
-        }
-        const digits = raw.replace(/\D/g, '');
-        if (!raw.startsWith('+91')) {
-          signupInput.value = `+91 ${digits}`;
-        } else {
-          signupInput.value = `+91 ${digits.replace(/^91/, '')}`;
-        }
-      });
-    }
+    const signupPrefix = root.querySelector('#signupMobilePrefix');
+    bindMobileInput(signupInput, signupPrefix);
   }
 
   function bindPasswordToggles(root) {
@@ -117,11 +88,11 @@
   }
 
   function showLogin() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label><input id="authIdentifier" autocomplete="username" placeholder="you@example.com or +91..." /></div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label>${mobileField('authIdentifier', 'loginMobilePrefix', 'you@example.com or 98765 43210')}</div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
   }
 
   function showSignup() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label><input id="signupMobile" type="tel" autocomplete="tel" placeholder="98765 43210" /></div><div class="field"><label>PASSWORD</label>${passwordField('signupPassword', 'new-password', 'Create a strong password')}</div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">Your Indoone account is activated after successful email OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label>${mobileField('signupMobile', 'signupMobilePrefix')}</div><div class="field"><label>PASSWORD</label>${passwordField('signupPassword', 'new-password', 'Create a strong password')}</div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">Your Indoone account is activated after successful email OTP verification.</div>`);
   }
 
   async function run(button) {
