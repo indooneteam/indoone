@@ -1,9 +1,10 @@
 {
   "rules": {
     "users": {
+      ".read": "auth != null && query.orderByChild == 'profile/email' && query.equalTo == auth.token.email",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || (newData.val() === null && data.child('profile/email').val() === auth.token.email))",
         "profile": {
           ".validate": "newData.hasChildren(['uid','email','updatedAt']) && newData.child('uid').val() === $uid"
         },
