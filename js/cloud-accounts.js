@@ -8,13 +8,10 @@ window.IndooneCloudAccounts = (() => {
   const accountsPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}/accounts`);
   const trashPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}/trash`);
   const userPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}`);
-
-  // Canonical account storage is keyed by the signed-in Firebase email so the
-  // same account set is available after email/mobile login on another device.
-  const identityEmail = () => String(currentUser().email || '').trim().toLowerCase();
-  const identityKey = () => encodeURIComponent(identityEmail());
-  const sharedAccountsPath = () => window.IndooneFirebase.database.ref(`accountVault/${identityKey()}/accounts`);
-  const sharedTrashPath = () => window.IndooneFirebase.database.ref(`accountVault/${identityKey()}/trash`);
+  const usersByEmailPath = () => {
+    const email = String(currentUser().email || '').trim().toLowerCase();
+    return window.IndooneFirebase.database.ref('users').orderByChild('profile/email').equalTo(email);
+  };
 
   const cleanAccount = account => ({
     id: Number(account.id),
@@ -45,26 +42,21 @@ window.IndooneCloudAccounts = (() => {
     localStorage.removeItem('indoone.vault.meta.v1');
   }
 
+  let purgeTimer = null;
   async function purgeExpiredTrash() {
-    const snapshots = await Promise.all([trashPath().once('value'), sharedTrashPath().once('value')]);
+    const snapshot = await trashPath().once('value');
+    const value = snapshot.val() || {};
     const now = Date.now();
     const removals = [];
-    for (const snapshot of snapshots) {
-      const value = snapshot.val() || {};
-      Object.entries(value).forEach(([id, item]) => {
-        if (!item) return;
-        const purgeAt = Number(item.purgeAt || 0);
-        if (purgeAt && purgeAt <= now) {
-          const ref = snapshot.ref.parent.key === 'accountVault' ? sharedTrashPath().child(id) : trashPath().child(id);
-          removals.push(ref.remove());
-        }
-      });
-    }
+    Object.entries(value).forEach(([id, item]) => {
+      if (!item) return;
+      const purgeAt = Number(item.purgeAt || 0);
+      if (purgeAt && purgeAt <= now) removals.push(trashPath().child(id).remove());
+    });
     await Promise.all(removals);
     return removals.length;
   }
 
-  let purgeTimer = null;
   function startTrashPurgeTimer() {
     if (purgeTimer) return;
     purgeTimer = setInterval(() => purgeExpiredTrash().catch(() => {}), 60 * 60 * 1000);
@@ -74,33 +66,37 @@ window.IndooneCloudAccounts = (() => {
   async function load() {
     clearLegacyLocalVault();
     startTrashPurgeTimer();
-    await purgeExpiredTrash();
 
-    const [uidSnapshot, sharedSnapshot] = await Promise.all([
-      accountsPath().once('value'),
-      sharedAccountsPath().once('value')
-    ]);
-
+    const ownSnapshot = await accountsPath().once('value');
+    const ownValue = ownSnapshot.val() || {};
     const byId = new Map();
-    for (const item of Object.values(uidSnapshot.val() || {})) {
+
+    // Normal case: load the currently signed-in Firebase UID.
+    Object.values(ownValue).forEach(item => {
       if (item) byId.set(Number(item.id), cleanAccount(item));
-    }
-    for (const item of Object.values(sharedSnapshot.val() || {})) {
-      if (!item) continue;
-      const cleaned = cleanAccount(item);
-      const current = byId.get(cleaned.id);
-      if (!current || cleaned.updatedAt >= current.updatedAt) byId.set(cleaned.id, cleaned);
+    });
+
+    // Recovery/compatibility case: the same email may have legacy profile
+    // records under another UID. Firebase rules allow this exact email query.
+    try {
+      const usersSnapshot = await usersByEmailPath().once('value');
+      const users = usersSnapshot.val() || {};
+      Object.values(users).forEach(userNode => {
+        Object.values(userNode?.accounts || {}).forEach(item => {
+          if (!item) return;
+          const account = cleanAccount(item);
+          const current = byId.get(account.id);
+          if (!current || account.updatedAt >= current.updatedAt) byId.set(account.id, account);
+        });
+      });
+    } catch (error) {
+      console.warn('Indoone legacy account lookup skipped:', error);
     }
 
     const accounts = [...byId.values()].sort((a, b) => b.id - a.id);
-
-    // Heal the old per-UID store into the canonical email store.
-    const payload = {};
-    accounts.forEach(account => { payload[String(account.id)] = account; });
-    await sharedAccountsPath().set(payload);
-
     window.indooneState.accounts = accounts;
     window.indooneState.trash = [];
+
     if (typeof renderAccounts === 'function') renderAccounts();
     if (typeof refreshAccountCodes === 'function') await refreshAccountCodes();
     return accounts;
@@ -108,10 +104,7 @@ window.IndooneCloudAccounts = (() => {
 
   async function save(account) {
     const cleaned = cleanAccount(account);
-    await Promise.all([
-      accountsPath().child(String(cleaned.id)).set(cleaned),
-      sharedAccountsPath().child(String(cleaned.id)).set(cleaned)
-    ]);
+    await accountsPath().child(String(cleaned.id)).set(cleaned);
     return cleaned;
   }
 
@@ -121,52 +114,44 @@ window.IndooneCloudAccounts = (() => {
       const cleaned = cleanAccount(account);
       payload[String(cleaned.id)] = cleaned;
     }
-    await Promise.all([accountsPath().set(payload), sharedAccountsPath().set(payload)]);
+    await accountsPath().set(payload);
   }
 
   async function moveToTrash(account) {
     const item = createTrashItem(account);
-    await Promise.all([
-      userPath().update({ [`trash/${item.id}`]: item, [`accounts/${item.id}`]: null }),
-      window.IndooneFirebase.database.ref(`accountVault/${identityKey()}`).update({
-        [`trash/${item.id}`]: item,
-        [`accounts/${item.id}`]: null
-      })
-    ]);
+    await userPath().update({
+      [`trash/${item.id}`]: item,
+      [`accounts/${item.id}`]: null
+    });
     return item;
   }
 
   async function listTrash() {
     await purgeExpiredTrash();
-    const [uidSnapshot, sharedSnapshot] = await Promise.all([trashPath().once('value'), sharedTrashPath().once('value')]);
-    const byId = new Map();
-    for (const item of Object.values(uidSnapshot.val() || {})) if (item) byId.set(Number(item.id), item);
-    for (const item of Object.values(sharedSnapshot.val() || {})) if (item) byId.set(Number(item.id), item);
-    return [...byId.values()].sort((a, b) => Number(b.deletedAt || 0) - Number(a.deletedAt || 0));
+    const snapshot = await trashPath().once('value');
+    const value = snapshot.val() || {};
+    return Object.values(value)
+      .filter(Boolean)
+      .sort((a, b) => Number(b.deletedAt || 0) - Number(a.deletedAt || 0));
   }
 
   async function restoreFromTrash(id) {
     const key = String(Number(id));
-    const sources = [trashPath().child(key), sharedTrashPath().child(key)];
-    let item = null;
-    let source = null;
-    for (const ref of sources) {
-      const snapshot = await ref.once('value');
-      if (snapshot.exists()) { item = snapshot.val(); source = ref; break; }
-    }
+    const ref = trashPath().child(key);
+    const snapshot = await ref.once('value');
+    const item = snapshot.val();
     if (!item) throw new Error('Trash item not found.');
+
     if (Number(item.purgeAt || 0) <= Date.now()) {
-      await Promise.all(sources.map(ref => ref.remove()));
+      await ref.remove();
       throw new Error('This account has expired from Trash.');
     }
+
     const account = cleanAccount(item);
-    await Promise.all([
-      accountsPath().child(key).set(account),
-      sharedAccountsPath().child(key).set(account),
-      source.remove(),
-      trashPath().child(key).remove(),
-      sharedTrashPath().child(key).remove()
-    ]);
+    await userPath().update({
+      [`accounts/${key}`]: account,
+      [`trash/${key}`]: null
+    });
     return account;
   }
 
@@ -176,7 +161,17 @@ window.IndooneCloudAccounts = (() => {
     return moveToTrash(account);
   }
 
-  return { load, save, saveAll, remove, moveToTrash, listTrash, restoreFromTrash, purgeExpiredTrash, clearLegacyLocalVault };
+  return {
+    load,
+    save,
+    saveAll,
+    remove,
+    moveToTrash,
+    listTrash,
+    restoreFromTrash,
+    purgeExpiredTrash,
+    clearLegacyLocalVault
+  };
 })();
 
 IndooneCloudAccounts.clearLegacyLocalVault();
