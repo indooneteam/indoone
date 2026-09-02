@@ -32,7 +32,7 @@
       </button>
       <button type="button" class="nav-btn" id="settingsNav" aria-label="Settings" onclick="showSettings()">
         <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M9.5 3.8h5l.7 2a7.5 7.5 0 0 1 1.5.9l2.1-.3 2.1 0 2.5 4.3-1.4 1.6v1.8l1.4 1.6-2.5 4.3-2.1-.3a7.5 7.5 0 0 1-1.5.9l-.7 2h-5l-.7-2a7.5 7.5 0 0 1-1.5-.9l-2.1.3-2.5-4.3 1.4-1.6v-1.8L2.7 10.7l2.5-4.3 2.1.3a7.5 7.5 0 0 1 1.5.9l.7-2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+          <path d="M9.5 3.8h5l.7 2a7.5 7.5 0 0 1 1.5.9l2.1-.3a7.5 7.5 0 0 1 2.5 4.3l-1.4 1.6v1.8l1.4 1.6-2.5 4.3-2.1-.3a7.5 7.5 0 0 1-1.5.9l-.7 2h-5l-.7-2a7.5 7.5 0 0 1-1.5-.9l-2.1.3-2.5-4.3 1.4-1.6v-1.8L2.7 10.7l2.5-4.3 2.1.3a7.5 7.5 0 0 1 1.5.9l.7-2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
           <circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.7"></circle>
         </svg>
         <span>Settings</span>
@@ -40,7 +40,7 @@
     </nav>
   </main>
 
-  <aside class="drawer" id="drawer" aria-hidden="true"><div class="drawer-backdrop" id="drawerBackdrop"></div><section class="drawer-panel"><div class="drawer-brand"><span class="brand-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><button type="button" class="drawer-item active" data-action="accounts">▦ <span>All Accounts</span><b id="drawerCount">0</b></button><button type="button" class="drawer-item" data-action="favorites">☆ <span>Favorites</span></button><button type="button" class="drawer-item" data-action="trash">♙ <span>Trash</span></button><div class="drawer-divider"></div><button type="button" class="drawer-item" data-action="security">◈ <span>Security</span></button><button type="button" class="drawer-item" data-action="about">ⓘ <span>About</span></button><button type="button" class="drawer-item lock-item" data-action="lock">▣ <span>Lock App</span></button></section></aside>
+  <aside class="drawer" id="drawer" aria-hidden="true"><div class="drawer-backdrop" id="drawerBackdrop"></div><section class="drawer-panel"><div class="drawer-brand"><span class="brand-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><button type="button" class="drawer-item active" data-action="accounts">▦ <span>All Accounts</span><b id="drawerCount">0</b></button><button type="button" class="drawer-item" data-action="favorites">☆ <span>Favorites</span></button><button type="button" class="drawer-item" data-action="trash">♙ <span>Trash</span></button><div class="drawer-divider"></div><button type="button" class="drawer-item" data-action="security">◈ <span>Security</span></button><button type="button" class="drawer-item" data-action="about">ⓘ <span>About</span></button><button type="button" class="drawer-item" data-action="danger-zone">⚠ <span>Danger Zone</span></button><button type="button" class="drawer-item lock-item" data-action="lock">▣ <span>Lock App</span></button></section></aside>
 
   <div class="overlay hidden" id="overlay" onclick="if(event.target===this)closeModal()"><section class="modal" id="modal" role="dialog" aria-modal="true"></section></div>
   <div class="toast" id="toast" role="status"></div>
