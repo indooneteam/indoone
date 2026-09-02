@@ -101,7 +101,8 @@ async function showAuthOrHome(user) {
     if (IndoonePersistence.hasVault()) {
       indooneState.accounts = [];
       renderAccounts();
-      showAppLock('unlock');
+      if (window.IndooneBiometric?.enabled?.()) showBiometricUnlock();
+      else showAppLock('unlock');
     } else {
       renderAccounts();
       if (typeof startDemoTimers === 'function') startDemoTimers();
