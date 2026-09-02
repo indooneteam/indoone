@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 
+import androidx.core.content.pm.PackageInfoCompat;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -42,7 +44,9 @@ public final class UpdateManager {
                     while ((line = reader.readLine()) != null) body.append(line);
                 }
                 JSONObject json = new JSONObject(body.toString());
-                long installedCode = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).longVersionCode;
+                long installedCode = PackageInfoCompat.getLongVersionCode(
+                        activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0)
+                );
                 long remoteCode = json.optLong("versionCode", installedCode);
                 if (remoteCode <= installedCode) return;
                 String versionName = json.optString("versionName", "New version");
