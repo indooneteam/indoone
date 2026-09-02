@@ -11,6 +11,11 @@
           "$accountId": {
             ".validate": "newData.hasChildren(['id','name','secret','digits','period','algorithm','updatedAt']) && newData.child('id').val() === $accountId * 1 && newData.child('digits').val() in [6,8] && newData.child('period').val() in [30,60] && newData.child('algorithm').val() in ['SHA1','SHA256','SHA512']"
           }
+        },
+        "trash": {
+          "$accountId": {
+            ".validate": "newData.hasChildren(['id','name','secret','digits','period','algorithm','updatedAt','deletedAt','purgeAt']) && newData.child('id').val() === $accountId * 1 && newData.child('digits').val() in [6,8] && newData.child('period').val() in [30,60] && newData.child('algorithm').val() in ['SHA1','SHA256','SHA512'] && newData.child('purgeAt').val() > newData.child('deletedAt').val()"
+          }
         }
       }
     },
