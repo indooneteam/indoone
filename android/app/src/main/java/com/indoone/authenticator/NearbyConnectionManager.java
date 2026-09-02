@@ -6,7 +6,6 @@ import android.util.Log;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
-import com.google.android.gms.nearby.connection.ConnectionResolutionStatus;
 import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
 import com.google.android.gms.nearby.connection.DiscoveryOptions;
 import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
@@ -16,9 +15,7 @@ import com.google.android.gms.nearby.connection.Strategy;
 
 import java.nio.charset.StandardCharsets;
 
-/** Small native transport layer for nearby device discovery/pairing.
- *  The JS UI remains independent; this class only exposes nearby events.
- */
+/** Native transport layer for nearby device discovery/pairing. */
 public final class NearbyConnectionManager {
     private static final String TAG = "IndooneNearby";
     public static final String SERVICE_ID = "com.indoone.authenticator.connect";
@@ -95,8 +92,7 @@ public final class NearbyConnectionManager {
         }
 
         @Override public void onConnectionResult(String endpointId, com.google.android.gms.nearby.connection.ConnectionResolution result) {
-            ConnectionResolutionStatus status = result.getStatus();
-            emit("connectionResult", status.isSuccess() ? "connected" : "rejected", endpointId);
+            emit("connectionResult", result.getStatus().isSuccess() ? "connected" : "rejected", endpointId);
         }
 
         @Override public void onDisconnected(String endpointId) {
@@ -112,7 +108,7 @@ public final class NearbyConnectionManager {
         }
 
         @Override public void onPayloadTransferUpdate(String endpointId, com.google.android.gms.nearby.connection.PayloadTransferUpdate update) {
-            // File payload progress will be added in the transfer layer.
+            // File transfer progress will be added in the transfer layer.
         }
     };
 
