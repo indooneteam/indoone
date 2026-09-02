@@ -10,10 +10,14 @@
     return raw.replace(/[^0-9+]/g, '').replace(/^00/, '+');
   };
   const setAuthSession = uid => {
+    localStorage.setItem('indoone_otp_verified_uid', uid);
+    localStorage.setItem('indoone_authenticated_uid', uid);
     sessionStorage.setItem('indoone_otp_verified_uid', uid);
     sessionStorage.setItem('indoone_authenticated_uid', uid);
   };
   const clearAuthSession = () => {
+    localStorage.removeItem('indoone_otp_verified_uid');
+    localStorage.removeItem('indoone_authenticated_uid');
     sessionStorage.removeItem('indoone_otp_verified_uid');
     sessionStorage.removeItem('indoone_authenticated_uid');
   };
