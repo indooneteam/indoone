@@ -37,15 +37,23 @@
     status.textContent = message;
   }
 
+  function setDeleteBusy(busy) {
+    const button = document.getElementById('confirmAccountDelete');
+    if (button) {
+      button.disabled = busy;
+      button.setAttribute('aria-busy', busy ? 'true' : 'false');
+    }
+  }
+
   window.showDangerZone = function () {
     closeDrawer();
     openModal(`
       <div class="modal-head"><h2>Danger Zone</h2><button class="close-btn" data-close>×</button></div>
       <p>These actions can permanently remove Indoone data. Continue only when you are sure.</p>
-      <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" onclick="confirmDeleteLocalData();return false;">
+      <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" onclick="window.confirmDeleteLocalData();return false;">
         <span>Delete local data<small>Remove data stored on this device</small></span><b>›</b>
       </button>
-      <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" onclick="confirmDeleteIndooneAccount();return false;">
+      <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" onclick="window.confirmDeleteIndooneAccount();return false;">
         <span>Delete Indoone account<small>Permanently delete your Indoone account and cloud data</small></span><b>›</b>
       </button>
     `);
@@ -55,13 +63,14 @@
     openModal(`
       <div class="modal-head"><h2>Delete local data?</h2><button class="close-btn" data-close>×</button></div>
       <p>This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.</p>
-      <button type="button" class="primary danger" onclick="executeDeleteLocalData();return false;">Delete local data</button>
+      <button type="button" class="primary danger" id="confirmLocalDelete" onclick="window.executeDeleteLocalData();return false;">Delete local data</button>
       <button type="button" class="secondary" data-close>Cancel</button>
     `);
   };
 
   window.executeDeleteLocalData = async function () {
     try {
+      setStatus('Removing local data…');
       clearLocal();
       const auth = firebaseState().auth;
       if (auth) await auth.signOut();
@@ -80,9 +89,9 @@
       <div class="modal-head"><h2>Delete Indoone account?</h2><button class="close-btn" data-close>×</button></div>
       <p>This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.</p>
       <div class="field"><label>ACCOUNT PASSWORD</label><input id="deleteAccountPassword" type="password" autocomplete="current-password" placeholder="Enter your password"></div>
-      <div class="field"><label>TYPE DELETE TO CONFIRM</label><input id="deleteAccountConfirm" type="text" autocomplete="off" placeholder="DELETE"></div>
+      <div class="field"><label>TYPE DELETE TO CONFIRM</label><input id="deleteAccountConfirm" type="text" autocomplete="off" placeholder="DELETE" autocapitalize="characters" spellcheck="false"></div>
       <div id="accountDeleteStatus" class="auth-status" hidden></div>
-      <button type="button" class="primary danger" id="confirmAccountDelete" onclick="executeDeleteIndooneAccount();return false;">Delete Indoone account</button>
+      <button type="button" class="primary danger" id="confirmAccountDelete" onclick="window.executeDeleteIndooneAccount();return false;">Delete Indoone account</button>
       <button type="button" class="secondary" data-close>Cancel</button>
     `);
   };
@@ -90,30 +99,37 @@
   window.executeDeleteIndooneAccount = async function () {
     const { firebase, auth, db } = firebaseState();
     const user = auth?.currentUser || null;
-    const password = String(document.getElementById('deleteAccountPassword')?.value || '');
-    const confirmation = String(document.getElementById('deleteAccountConfirm')?.value || '').trim();
-    const button = document.getElementById('confirmAccountDelete');
+    const passwordInput = document.getElementById('deleteAccountPassword');
+    const confirmInput = document.getElementById('deleteAccountConfirm');
+    const password = String(passwordInput?.value || '');
+    const confirmation = String(confirmInput?.value || '').trim().toUpperCase();
 
-    if (!password) return toast('Enter your account password');
-    if (confirmation !== 'DELETE') return toast('Type DELETE to confirm');
+    if (!password) {
+      passwordInput?.focus();
+      return toast('Enter your account password');
+    }
+    if (confirmation !== 'DELETE') {
+      confirmInput?.focus();
+      return toast('Type DELETE to confirm');
+    }
     if (!firebase || !auth || !db || !user) return toast('Login session expired. Please login again.');
     if (!user.email) return toast('This account cannot be re-authenticated here.');
 
-    if (button) button.disabled = true;
+    setDeleteBusy(true);
     setStatus('Verifying your account…');
 
     try {
       const provider = firebase.auth?.EmailAuthProvider;
-      if (!provider?.credential) throw new Error('Firebase email authentication is unavailable.');
+      const credential = provider?.credential?.(user.email, password);
+      if (!credential) throw new Error('Firebase email authentication is unavailable.');
 
-      const credential = provider.credential(user.email, password);
       await user.reauthenticateWithCredential(credential);
       await user.reload();
 
       const liveUser = auth.currentUser;
       if (!liveUser || liveUser.uid !== user.uid) throw new Error('Login session expired. Please login again.');
 
-      setStatus('Deleting your Indoone cloud data…');
+      setStatus('Removing your Indoone cloud data…');
 
       const profileSnapshot = await db.ref(`users/${liveUser.uid}/profile`).once('value');
       const profile = profileSnapshot.val() || {};
@@ -131,7 +147,7 @@
       closeModal();
       window.location.reload();
     } catch (error) {
-      if (button) button.disabled = false;
+      setDeleteBusy(false);
       const code = String(error?.code || '');
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
         setStatus('Incorrect account password.', true);
