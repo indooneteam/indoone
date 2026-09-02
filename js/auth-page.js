@@ -26,15 +26,40 @@
   }
 
   function mobileField(id, prefixId, placeholder = '98765 43210') {
-    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" placeholder="${placeholder}" /></div>`;
+    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="${placeholder}" /></div>`;
+  }
+
+  function normalizeMobileFieldValue(input, prefix) {
+    if (!input) return;
+    const raw = String(input.value || '').trim();
+    const isEmail = /[A-Za-z@]/.test(raw);
+    if (isEmail) {
+      if (prefix) prefix.hidden = true;
+      input.classList.remove('has-mobile-prefix');
+      return;
+    }
+
+    const digits = raw.replace(/\D/g, '');
+    let localDigits = digits;
+    if (/^91\d{10}$/.test(digits)) localDigits = digits.slice(2);
+    else if (/^\d{10}$/.test(digits)) localDigits = digits;
+    else localDigits = digits.slice(0, 10);
+
+    input.value = localDigits;
+    const showPrefix = localDigits.length > 0;
+    if (prefix) prefix.hidden = !showPrefix;
+    input.classList.toggle('has-mobile-prefix', showPrefix);
   }
 
   function syncMobilePrefix(input, prefix, rawValue = input?.value || '') {
     if (!input) return;
     const raw = String(rawValue || '');
     const isEmail = /[A-Za-z@]/.test(raw);
-    const digits = raw.replace(/\D/g, '').slice(0, 10);
-    const showPrefix = !isEmail && digits.length > 0;
+    const digits = raw.replace(/\D/g, '');
+    let localDigits = digits;
+    if (/^91\d{10}$/.test(digits)) localDigits = digits.slice(2);
+    else localDigits = digits.slice(0, 10);
+    const showPrefix = !isEmail && localDigits.length > 0;
     if (prefix) prefix.hidden = !showPrefix;
     input.classList.toggle('has-mobile-prefix', showPrefix);
   }
@@ -42,36 +67,12 @@
   function bindMobileInput(input, prefix) {
     if (!input || input.dataset.indiaMobileBound === 'true') return;
     input.dataset.indiaMobileBound = 'true';
-    syncMobilePrefix(input, prefix);
+    normalizeMobileFieldValue(input, prefix);
 
-    input.addEventListener('input', () => {
-      const raw = input.value || '';
-      const isEmail = /[A-Za-z@]/.test(raw);
-      if (isEmail) {
-        if (prefix) prefix.hidden = true;
-        input.classList.remove('has-mobile-prefix');
-        return;
-      }
-
-      const digits = raw.replace(/\D/g, '').slice(0, 10);
-      input.value = digits;
-      syncMobilePrefix(input, prefix, digits);
-    });
-
-    input.addEventListener('paste', () => {
-      setTimeout(() => {
-        const raw = input.value || '';
-        const isEmail = /[A-Za-z@]/.test(raw);
-        if (isEmail) {
-          if (prefix) prefix.hidden = true;
-          input.classList.remove('has-mobile-prefix');
-          return;
-        }
-        const digits = raw.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(0, 10);
-        input.value = digits;
-        syncMobilePrefix(input, prefix, digits);
-      }, 0);
-    });
+    input.addEventListener('input', () => normalizeMobileFieldValue(input, prefix));
+    input.addEventListener('change', () => normalizeMobileFieldValue(input, prefix));
+    input.addEventListener('blur', () => normalizeMobileFieldValue(input, prefix));
+    input.addEventListener('paste', () => setTimeout(() => normalizeMobileFieldValue(input, prefix), 0));
   }
 
   function bindMobileDefaults(root) {
