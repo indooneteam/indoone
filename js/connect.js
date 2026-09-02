@@ -12,6 +12,17 @@
     delete: false,
   });
 
+  const nearby = {
+    endpoints: new Map(),
+    advertising: false,
+    discovering: false,
+    connectedEndpoint: null,
+  };
+
+  function nativeAvailable() {
+    return !!window.IndooneNative;
+  }
+
   function loadDevices() {
     try {
       const value = JSON.parse(localStorage.getItem(DEVICE_KEY) || '[]');
@@ -29,23 +40,44 @@
     return loadDevices().find(device => device.name === name) || null;
   }
 
-  function ensureDevice(name, type = 'phone') {
+  function upsertNearbyDevice(name, endpointId, type = 'phone', connected = false) {
+    const cleanName = name || 'Nearby Indoone Device';
     const devices = loadDevices();
-    let device = devices.find(item => item.name === name);
+    let device = devices.find(item => item.endpointId === endpointId || item.name === cleanName);
     if (!device) {
       device = {
         id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name,
+        endpointId,
+        name: cleanName,
         type,
-        connected: true,
+        connected,
         trusted: false,
         createdAt: Date.now(),
         permissions: defaultPermissions(),
       };
       devices.push(device);
-      saveDevices(devices);
+    } else {
+      device.endpointId = endpointId || device.endpointId;
+      device.name = cleanName;
+      device.type = type;
+      device.connected = connected;
+      device.updatedAt = Date.now();
     }
+    saveDevices(devices);
     return device;
+  }
+
+  function markEndpoint(endpointId, connected) {
+    const devices = loadDevices();
+    let changed = false;
+    devices.forEach(device => {
+      if (device.endpointId === endpointId) {
+        device.connected = connected;
+        device.updatedAt = Date.now();
+        changed = true;
+      }
+    });
+    if (changed) saveDevices(devices);
   }
 
   function escapeHtml(value) {
@@ -63,6 +95,7 @@
     $('connectContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('addBtn')?.removeAttribute('hidden');
+    $('searchWrap')?.removeAttribute('hidden');
   }
 
   function showConnectContent() {
@@ -120,26 +153,97 @@
     openModal(`<div class="modal-head"><h2>My QR Code</h2><button class="close-btn" data-close>×</button></div>
       <div class="connect-qr-wrap">${makePairingVisual(code)}</div>
       <div class="connect-identity"><div class="connect-avatar">I</div><div><b>${escapeHtml(name)}</b><small>Pairing code: ${escapeHtml(code)}</small></div></div>
-      <p class="connect-muted">This is the current device pairing identity. The nearby transport will be attached in the native Connect engine.</p>
+      <p class="connect-muted">QR pairing UI is ready. Nearby discovery is active in the Android app.</p>
       <button class="primary" data-close>Done</button>`);
   };
 
   window.showConnectScanner = function () {
     openModal(`<div class="modal-head"><h2>Scan to Connect</h2><button class="close-btn" data-close>×</button></div>
       <div class="connect-scanner"><div class="connect-scan-corners"></div><div class="connect-scan-icon">⌁</div></div>
-      <p class="connect-muted center">Scanner UI is ready. Native camera/QR pairing will use this entry point.</p>
+      <p class="connect-muted center">QR scanner will be connected to the native pairing flow next. Nearby discovery can already be tested now.</p>
       <button class="secondary" data-connect-gallery>Choose QR image</button>
       <button class="primary" data-close>Cancel</button>`);
   };
 
+  function showNearbyStatus(title, detail, actionHtml = '') {
+    openModal(`<div class="modal-head"><h2>${escapeHtml(title)}</h2><button class="close-btn" data-close>×</button></div>
+      <div class="device-summary"><div class="device-icon large">📡</div><div><b>${escapeHtml(detail)}</b><small>Nearby Connect transport</small></div></div>
+      <div id="nearbyEndpointList" class="nearby-endpoint-list"></div>
+      <p id="nearbyStatusText" class="connect-muted">Starting nearby…</p>
+      ${actionHtml}
+      <button class="secondary" data-nearby-stop>Stop Nearby</button>`);
+    renderNearbyEndpoints();
+  }
+
+  function renderNearbyEndpoints() {
+    const host = $('nearbyEndpointList');
+    if (!host) return;
+    const entries = [...nearby.endpoints.entries()];
+    if (!entries.length) {
+      host.innerHTML = '<div class="connect-empty">No nearby Indoone devices found yet.<br>Keep the other phone close and make sure it is advertising.</div>';
+      return;
+    }
+    host.innerHTML = entries.map(([endpointId, item]) => `<div class="device-card ${item.connected ? 'connected' : ''}" style="display:flex;align-items:center;text-align:left;gap:12px">
+      <div class="device-icon">📱</div><div style="flex:1"><b>${escapeHtml(item.name)}</b><small>${item.connected ? 'Connected • Nearby' : 'Found • Nearby'}</small></div>
+      <button type="button" class="primary nearby-connect-btn" data-nearby-endpoint="${escapeHtml(endpointId)}" data-nearby-name="${escapeHtml(item.name)}">${item.connected ? 'Connected' : 'Connect'}</button>
+    </div>`).join('');
+  }
+
+  function setNearbyStatus(text) {
+    const node = $('nearbyStatusText');
+    if (node) node.textContent = text;
+  }
+
+  function requestNativePermissions() {
+    if (!nativeAvailable() || typeof window.IndooneNative.requestNearbyPermissions !== 'function') return false;
+    window.IndooneNative.requestNearbyPermissions();
+    return true;
+  }
+
+  function startAdvertising() {
+    if (!nativeAvailable()) {
+      toast('Nearby Connect works in the Android app.');
+      return;
+    }
+    showNearbyStatus('This Phone', 'Making this device discoverable');
+    requestNativePermissions();
+    window.IndooneNative.startNearbyAdvertising(localDeviceName());
+    nearby.advertising = true;
+    setNearbyStatus('Advertising started. Keep this screen open for the other phone to discover you.');
+  }
+
+  function startDiscovery() {
+    if (!nativeAvailable()) {
+      toast('Nearby Connect works in the Android app.');
+      return;
+    }
+    showNearbyStatus('Nearby Devices', 'Searching for Indoone devices');
+    requestNativePermissions();
+    window.IndooneNative.startNearbyDiscovery();
+    nearby.discovering = true;
+    setNearbyStatus('Searching… Keep the other phone nearby and advertising.');
+  }
+
+  function stopNearby() {
+    if (nativeAvailable() && typeof window.IndooneNative.stopNearby === 'function') window.IndooneNative.stopNearby();
+    nearby.advertising = false;
+    nearby.discovering = false;
+    nearby.endpoints.clear();
+    closeModal();
+  }
+
   function showConnectionTarget(type) {
     const label = type === 'phone' ? 'Phone' : 'Laptop / PC';
     const icon = type === 'phone' ? '📱' : '💻';
+    const targetHtml = type === 'phone'
+      ? `<button class="primary" data-nearby-mode="advertise">Make My Phone Discoverable</button>
+         <button class="secondary" data-nearby-mode="discover">Find Nearby Phone</button>`
+      : `<button class="primary" data-nearby-mode="discover">Find Nearby Computer</button>`;
     openModal(`<div class="modal-head"><h2>Connect ${label}</h2><button class="close-btn" data-close>×</button></div>
-      <div class="device-summary"><div class="device-icon large">${icon}</div><div><b>Ready to pair</b><small>Nearby ${type === 'phone' ? 'phone-to-phone' : 'phone-to-computer'} connection</small></div></div>
-      <div class="connect-empty" style="margin-top:14px">Bring the other device nearby and use its Indoone QR code. Connection and data access will be requested separately.</div>
-      <button class="primary" onclick="showConnectQr()">Show My QR</button>
-      <button class="secondary" data-connect-action="scanner">Scan Device QR</button>`);
+      <div class="device-summary"><div class="device-icon large">${icon}</div><div><b>Nearby connection</b><small>Connection and data access are handled separately.</small></div></div>
+      <div class="connect-empty" style="margin-top:14px">Choose how this device should participate in the nearby connection.</div>
+      ${targetHtml}
+      <button class="secondary" onclick="showConnectQr()">Show My QR</button>`);
   }
 
   window.showConnectChoice = function () {
@@ -149,6 +253,7 @@
   };
 
   window.showConnectHome = function () {
+    stopNearby();
     $('connectChoicePage')?.setAttribute('hidden', '');
     $('connectHomePage')?.removeAttribute('hidden', '');
   };
@@ -156,7 +261,7 @@
   function renderDevices() {
     const devices = loadDevices();
     if (!devices.length) {
-      return '<div class="connect-empty">No trusted devices yet.<br>Connect a nearby device to see it here.</div>';
+      return '<div class="connect-empty">No connected devices yet.<br>Start a nearby connection to add one.</div>';
     }
     return devices.map(device => `<button type="button" class="device-card ${device.connected ? 'connected' : ''}" data-device-name="${escapeHtml(device.name)}"><div class="device-icon">${device.type === 'computer' ? '💻' : '📱'}</div><div><b>${escapeHtml(device.name)}</b><small>${device.connected ? 'Connected • Nearby' : 'Disconnected'}${device.trusted ? ' • Trusted' : ''}</small></div>${device.connected ? '<span class="device-dot"></span>' : ''}</button>`).join('');
   }
@@ -169,7 +274,8 @@
   };
 
   window.openConnectedDevice = function (name) {
-    const device = getDevice(name) || ensureDevice(name);
+    const device = getDevice(name);
+    if (!device) return showConnectDevices();
     openModal(`<div class="modal-head"><h2>${escapeHtml(device.name)}</h2><button class="close-btn" data-close>×</button></div>
       <div class="device-summary"><div class="device-icon large">${device.type === 'computer' ? '💻' : '📱'}</div><div><b>${device.connected ? 'Connected' : 'Disconnected'}</b><small>Nearby • ${device.trusted ? 'Trusted device' : 'Not trusted yet'}</small></div></div>
       <div class="connect-grid">
@@ -183,7 +289,8 @@
   };
 
   window.showAccessSettings = function (name) {
-    const device = getDevice(name) || ensureDevice(name);
+    const device = getDevice(name);
+    if (!device) return showConnectDevices();
     const p = { ...defaultPermissions(), ...(device.permissions || {}) };
     openModal(`<div class="modal-head"><h2>Access Settings</h2><button class="close-btn" data-close>×</button></div>
       <div class="device-summary"><div class="device-icon large">${device.type === 'computer' ? '💻' : '📱'}</div><div><b>${escapeHtml(device.name)}</b><small>${p.alwaysAllow ? 'Always Allow enabled' : 'Permission required'} </small></div></div>
@@ -213,19 +320,81 @@
     window.showConnectDevices();
   }
 
-  function createLocalDevice(type) {
-    const requestedName = type === 'phone' ? 'Nearby Phone' : 'Nearby Computer';
-    const device = ensureDevice(requestedName, type);
-    device.connected = true;
-    saveDevices(loadDevices().map(item => item.id === device.id ? device : item));
-    toast(`${type === 'phone' ? 'Phone' : 'Laptop / PC'} connection placeholder is ready.`);
-    window.openConnectedDevice(device.name);
-  }
-
   function handleDataAction(action) {
     const labels = { files: 'Shared files', media: 'Photos & videos', send: 'Send files' };
     toast(`${labels[action] || 'Connect'} will use the native transfer engine after pairing.`);
   }
+
+  function handleNearbyEvent(event) {
+    const detail = event.detail || {};
+    const type = detail.type;
+    const message = detail.message || '';
+    const endpointId = detail.endpointId || '';
+    if (type === 'permissions') {
+      toast(message === 'granted' ? 'Nearby permissions granted.' : 'Nearby permissions denied.');
+      return;
+    }
+    if (type === 'advertisingStarted') {
+      nearby.advertising = true;
+      setNearbyStatus('Your phone is discoverable now.');
+      return;
+    }
+    if (type === 'discoveryStarted') {
+      nearby.discovering = true;
+      setNearbyStatus('Searching for nearby Indoone devices…');
+      return;
+    }
+    if (type === 'endpointFound') {
+      const item = { name: message || 'Nearby Indoone Device', connected: false };
+      nearby.endpoints.set(endpointId, item);
+      renderNearbyEndpoints();
+      setNearbyStatus('Nearby device found. Tap Connect to pair.');
+      return;
+    }
+    if (type === 'endpointLost') {
+      nearby.endpoints.delete(message || endpointId);
+      renderNearbyEndpoints();
+      return;
+    }
+    if (type === 'connectionInitiated') {
+      const item = nearby.endpoints.get(endpointId) || { name: message || 'Nearby Indoone Device', connected: false };
+      item.name = message || item.name;
+      nearby.endpoints.set(endpointId, item);
+      renderNearbyEndpoints();
+      setNearbyStatus(`${item.name} is requesting a connection.`);
+      return;
+    }
+    if (type === 'connectionResult') {
+      const item = nearby.endpoints.get(endpointId);
+      if (message === 'connected') {
+        if (item) item.connected = true;
+        const name = item?.name || 'Nearby Indoone Device';
+        const device = upsertNearbyDevice(name, endpointId, deviceType() === 'computer' ? 'phone' : 'phone', true);
+        nearby.connectedEndpoint = endpointId;
+        renderNearbyEndpoints();
+        setNearbyStatus(`${device.name} connected successfully.`);
+        toast(`${device.name} connected.`);
+      } else {
+        setNearbyStatus('Connection was rejected or could not be completed.');
+      }
+      return;
+    }
+    if (type === 'disconnected') {
+      markEndpoint(message || endpointId, false);
+      nearby.connectedEndpoint = null;
+      const item = nearby.endpoints.get(message || endpointId);
+      if (item) item.connected = false;
+      renderNearbyEndpoints();
+      setNearbyStatus('Nearby device disconnected.');
+      return;
+    }
+    if (type === 'error') {
+      setNearbyStatus(message || 'Nearby connection error.');
+      toast(message || 'Nearby connection error.');
+    }
+  }
+
+  window.addEventListener('indoone-nearby', handleNearbyEvent);
 
   document.addEventListener('click', event => {
     const el = event.target.closest('[data-connect-action]');
@@ -247,6 +416,38 @@
       event.stopPropagation();
       if (choice.querySelector('.choice-icon')?.textContent.includes('📱')) showConnectionTarget('phone');
       else showConnectionTarget('computer');
+      return;
+    }
+
+    const nearbyMode = event.target.closest('[data-nearby-mode]');
+    if (nearbyMode) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (nearbyMode.dataset.nearbyMode === 'advertise') startAdvertising();
+      else startDiscovery();
+      return;
+    }
+
+    const nearbyConnect = event.target.closest('[data-nearby-endpoint]');
+    if (nearbyConnect) {
+      event.preventDefault();
+      event.stopPropagation();
+      const endpointId = nearbyConnect.dataset.nearbyEndpoint;
+      const name = nearbyConnect.dataset.nearbyName || 'Nearby Indoone Device';
+      if (nearbyConnect.textContent.includes('Connected')) return;
+      if (nativeAvailable()) {
+        setNearbyStatus(`Connecting to ${name}…`);
+        window.IndooneNative.connectNearbyEndpoint(endpointId, localDeviceName());
+      } else {
+        toast('Nearby Connect works in the Android app.');
+      }
+      return;
+    }
+
+    if (event.target.closest('[data-nearby-stop]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      stopNearby();
       return;
     }
 
