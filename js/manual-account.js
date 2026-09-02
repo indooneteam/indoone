@@ -33,9 +33,11 @@ window.saveAccount = async function () {
       return;
     }
 
+    const zoho = window.IndooneZoho?.detect(prefillProviderIssuer || '', email) || null;
     const account = {
       id: Date.now(), name, email, secret, digits, period, algorithm,
-      favorite: false, icon: name.charAt(0).toUpperCase(), cls: 'google',
+      provider: zoho?.provider || '', service: zoho?.service || '',
+      favorite: false, icon: name.charAt(0).toUpperCase(), cls: zoho ? 'zoho' : 'google',
       updatedAt: Date.now(), seconds: period, code: '------'
     };
     await IndooneCloudAccounts.save(account);
