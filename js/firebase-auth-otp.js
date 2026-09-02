@@ -58,20 +58,28 @@
     return api;
   }
 
-  async function emailForMobile(mobile) {
-    const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(mobile)}`).once('value');
+  async function mobileIdentity(mobile) {
+    const normalizedMobile = normalizeMobile(mobile);
+    const snapshot = await db().ref(`mobileIndex/${encodeURIComponent(normalizedMobile)}`).once('value');
     const value = snapshot.val();
-    if (!value?.email) throw new Error('No Indoone account is linked to this mobile number.');
-    return value.email;
+    if (!value?.email || !value?.uid) {
+      throw new Error('No Indoone account is linked to this mobile number.');
+    }
+    return {
+      mobile: normalizedMobile,
+      email: cleanEmail(value.email),
+      uid: String(value.uid)
+    };
+  }
+
+  async function emailForMobile(mobile) {
+    return (await mobileIdentity(mobile)).email;
   }
 
   async function signupIdentityExists(email, mobile) {
     const normalizedEmail = cleanEmail(email);
     const normalizedMobile = normalizeMobile(mobile);
 
-    // Email: ask Firebase Authentication first. The final createUser call below
-    // remains authoritative and also handles races where another signup happens
-    // between this check and account creation.
     try {
       const methods = await auth().fetchSignInMethodsForEmail(normalizedEmail);
       if (Array.isArray(methods) && methods.length > 0) {
@@ -81,12 +89,8 @@
       if (error?.message === 'An account already exists with this email.') throw error;
       const code = String(error?.code || '');
       if (code === 'auth/email-already-in-use') throw new Error('An account already exists with this email.');
-      // Do not block signup when Firebase enumeration protection/network rules
-      // prevent this preflight check; createUserWithEmailAndPassword is authoritative.
     }
 
-    // Mobile: mobileIndex is the app's uniqueness index. Treat any existing
-    // active entry as a duplicate and stop before sending the signup OTP.
     const mobileSnapshot = await db().ref(`mobileIndex/${encodeURIComponent(normalizedMobile)}`).once('value');
     const mobileValue = mobileSnapshot.val();
     if (mobileValue?.uid || mobileValue?.email) {
@@ -118,12 +122,44 @@
     const password = String(document.getElementById('authPassword')?.value || '');
     if (!identifier || !password) throw new Error('Enter your email/mobile number and password.');
 
-    const email = identifier.includes('@') ? cleanEmail(identifier) : await emailForMobile(normalizeMobile(identifier));
+    const isEmail = identifier.includes('@');
+    let email = '';
+    let mobileLookup = null;
+
+    if (isEmail) {
+      email = cleanEmail(identifier);
+    } else {
+      mobileLookup = await mobileIdentity(identifier);
+      email = mobileLookup.email;
+    }
+
     clearAuthSession();
     window.__indooneAuthPending = true;
 
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      const user = auth().currentUser;
+      if (!user) throw new Error('Login session expired. Please login again.');
+
+      if (mobileLookup && String(user.uid) !== mobileLookup.uid) {
+        await auth().signOut().catch(() => {});
+        throw new Error('This mobile number is not linked to that Indoone account.');
+      }
+
+      const profileSnapshot = await db().ref(`users/${user.uid}/profile`).once('value');
+      const profile = profileSnapshot.val() || {};
+
+      if (mobileLookup) {
+        const savedMobile = normalizeMobile(profile.mobile || '');
+        if (savedMobile !== mobileLookup.mobile) {
+          await auth().signOut().catch(() => {});
+          throw new Error('This mobile number is not linked to that Indoone account.');
+        }
+      } else if (cleanEmail(profile.email || '') && cleanEmail(profile.email) !== email) {
+        await auth().signOut().catch(() => {});
+        throw new Error('The Firebase account profile does not match this email address.');
+      }
+
       const result = await verification().requestLoginOtp(email, 'Indoone user');
       if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
 
@@ -219,8 +255,6 @@
 
     window.__indooneAuthPending = true;
     try {
-      // Re-check both identities after OTP verification so a duplicate created
-      // during the OTP window is rejected before any new Firebase user exists.
       await signupIdentityExists(draft.email, draft.mobile);
 
       const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
