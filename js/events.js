@@ -144,3 +144,20 @@ window.addEventListener('load', async () => {
     renderLoginNow();
   }
 });
+
+// Keep the bottom navigation artwork consistent and crisp on desktop, mobile web,
+// and Android WebView by rebuilding both controls with simple inline SVG icons.
+(function fixBottomNavigationIcons() {
+  const rebuild = () => {
+    const accounts = document.getElementById('accountsNav');
+    const settings = document.getElementById('settingsNav');
+    if (accounts) {
+      accounts.innerHTML = '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"></rect><rect x="14" y="4" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"></rect><rect x="4" y="14" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"></rect><rect x="14" y="14" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"></rect></svg><span>Accounts</span>';
+    }
+    if (settings) {
+      settings.innerHTML = '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5l1.1 1.9a6.9 6.9 0 0 1 1.7.7l2.2-.5 1.7 2.9-1.1 1.9c.2.6.4 1.1.4 1.7l1.1 1.6-1.7 2.9-2.2-.5a6.9 6.9 0 0 1-1.7.7L12 20.5l-3.4-.1-1.1-1.9a6.9 6.9 0 0 1-1.7-.7l-2.2.5-1.7-2.9 1.1-1.9c-.2-.6-.4-1.1-.4-1.7L1.5 10.2l1.7-2.9 2.2.5c.5-.3 1.1-.6 1.7-.7L8.6 5.4 12 3.5Z" transform="translate(1.5 0) scale(.9)" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"></path><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.65"></circle></svg><span>Settings</span>';
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rebuild, { once: true });
+  else rebuild();
+})();
