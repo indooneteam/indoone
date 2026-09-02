@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "profile": {
+          ".validate": "newData.hasChildren(['uid','email','updatedAt']) && newData.child('uid').val() === $uid"
+        },
+        "accounts": {
+          "$accountId": {
+            ".validate": "newData.hasChildren(['id','name','secret','digits','period','algorithm','updatedAt']) && newData.child('id').val() === $accountId * 1 && newData.child('digits').val() in [6,8] && newData.child('period').val() in [30,60] && newData.child('algorithm').val() in ['SHA1','SHA256','SHA512']"
+          }
+        }
+      }
+    },
+    "mobileIndex": {
+      "$mobile": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+}
