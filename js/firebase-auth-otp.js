@@ -65,6 +65,35 @@
     return value.email;
   }
 
+  async function signupIdentityExists(email, mobile) {
+    const normalizedEmail = cleanEmail(email);
+    const normalizedMobile = normalizeMobile(mobile);
+
+    // Email: ask Firebase Authentication first. The final createUser call below
+    // remains authoritative and also handles races where another signup happens
+    // between this check and account creation.
+    try {
+      const methods = await auth().fetchSignInMethodsForEmail(normalizedEmail);
+      if (Array.isArray(methods) && methods.length > 0) {
+        throw new Error('An account already exists with this email.');
+      }
+    } catch (error) {
+      if (error?.message === 'An account already exists with this email.') throw error;
+      const code = String(error?.code || '');
+      if (code === 'auth/email-already-in-use') throw new Error('An account already exists with this email.');
+      // Do not block signup when Firebase enumeration protection/network rules
+      // prevent this preflight check; createUserWithEmailAndPassword is authoritative.
+    }
+
+    // Mobile: mobileIndex is the app's uniqueness index. Treat any existing
+    // active entry as a duplicate and stop before sending the signup OTP.
+    const mobileSnapshot = await db().ref(`mobileIndex/${encodeURIComponent(normalizedMobile)}`).once('value');
+    const mobileValue = mobileSnapshot.val();
+    if (mobileValue?.uid || mobileValue?.email) {
+      throw new Error('An account already exists with this mobile number.');
+    }
+  }
+
   async function syncProfile(user, profile = {}) {
     if (!user) return;
     const now = Date.now();
@@ -165,6 +194,8 @@
     if (!/^\+91\d{10}$/.test(mobile)) throw new Error('Enter a valid 10-digit Indian mobile number.');
     if (password.length < 6) throw new Error('Password should be at least 6 characters.');
 
+    await signupIdentityExists(email, mobile);
+
     const result = await verification().requestSignupOtp(email, 'Indoone user');
     if (!result?.challengeId) throw new Error('OTP service did not return a challenge ID.');
     window.__indooneSignupDraft = { email, mobile, password, challengeId: result.challengeId, createdAt: Date.now() };
@@ -188,6 +219,10 @@
 
     window.__indooneAuthPending = true;
     try {
+      // Re-check both identities after OTP verification so a duplicate created
+      // during the OTP window is rejected before any new Firebase user exists.
+      await signupIdentityExists(draft.email, draft.mobile);
+
       const credential = await auth().createUserWithEmailAndPassword(draft.email, draft.password);
       await syncProfile(credential.user, { email: draft.email, mobile: draft.mobile });
 
