@@ -192,6 +192,9 @@
   window.IndooneAuthUI = { showLogin, showSignup, close };
 
   function init() {
+    // Only show Login automatically when there is no persisted OTP-verified session.
+    // When a session marker exists, Firebase LOCAL persistence + events.js restores Home.
+    if (localStorage.getItem('indoone_otp_verified_uid')) return;
     showLogin();
   }
 
