@@ -2,7 +2,9 @@ name: Deploy Indoone Pages
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -11,35 +13,46 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout main
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
           path: main-source
+          fetch-depth: 1
 
-      - name: Checkout develop
+      - name: Checkout develop branch
         uses: actions/checkout@v4
         with:
           ref: develop
           path: develop-source
+          fetch-depth: 1
 
       - name: Build Pages package
+        shell: bash
         run: |
+          set -euo pipefail
+          rm -rf publish
           mkdir -p publish/develop
-          rsync -a --delete --exclude='.git' main-source/ publish/
-          rsync -a --delete --exclude='.git' develop-source/ publish/develop/
+          rsync -a --exclude='.git' main-source/ publish/
+          rsync -a --exclude='.git' develop-source/ publish/develop/
+          test -f publish/index.html
+          test -f publish/develop/index.html
 
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
