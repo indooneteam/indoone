@@ -55,16 +55,19 @@ window.IndooneQrScanner = (() => {
         if (raw?.toLowerCase().startsWith('otpauth://')) {
           const parsed = TOTP.parseOtpAuth(raw);
           if (!parsed.secret) throw new Error('Missing secret');
+          const zoho = window.IndooneZoho?.detect(parsed.issuer, parsed.label) || null;
           stop();
           showManual({
-            name: parsed.issuer || parsed.label || 'Account',
+            name: zoho?.service || parsed.issuer || parsed.label || 'Account',
             email: parsed.label || '',
             secret: parsed.secret,
             algorithm: parsed.algorithm,
             digits: parsed.digits,
-            period: parsed.period
+            period: parsed.period,
+            provider: zoho?.provider || '',
+            service: zoho?.service || ''
           });
-          toast('QR code detected');
+          toast(zoho ? `Zoho ${zoho.service === 'Zoho Account' ? 'account' : 'service'} detected` : 'QR code detected');
           return;
         }
       }
