@@ -26,50 +26,53 @@
   }
 
   function mobileField(id, prefixId, placeholder = '98765 43210', login = false) {
-    const inputMode = login ? 'text' : 'numeric';
+    const inputMode = login ? 'text' : 'tel';
     const type = login ? 'text' : 'tel';
-    const autocomplete = login ? 'username' : 'off';
-    const maxLength = login ? 320 : 10;
-    const name = login ? 'login-identifier' : 'indoone-signup-mobile';
+    const autocomplete = login ? 'username' : 'tel';
+    const maxLength = login ? 320 : 13;
+    const name = login ? 'login-identifier' : 'phone';
     return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" name="${name}" type="${type}" inputmode="${inputMode}" autocomplete="${autocomplete}" autocapitalize="none" spellcheck="false" maxlength="${maxLength}" placeholder="${placeholder}" /></div>`;
   }
 
-  function syncMobilePrefix(input, prefix, rawValue = input?.value || '') {
+  function normalizeMobileValue(input, prefix, rawValue = input?.value || '') {
     if (!input) return;
     const raw = String(rawValue || '');
     const isEmail = /[A-Za-z@]/.test(raw);
+    if (isEmail) {
+      if (prefix) prefix.hidden = true;
+      input.classList.remove('has-mobile-prefix');
+      return;
+    }
+
     const digits = raw.replace(/\D/g, '');
     const normalizedDigits = /^91\d{10}$/.test(digits) ? digits.slice(2) : digits.slice(0, 10);
-    const showPrefix = !isEmail && normalizedDigits.length > 0;
+    const showPrefix = normalizedDigits.length > 0;
+    input.value = normalizedDigits;
     if (prefix) prefix.hidden = !showPrefix;
     input.classList.toggle('has-mobile-prefix', showPrefix);
-    if (!isEmail) input.value = normalizedDigits;
+  }
+
+  function syncMobilePrefix(input, prefix, rawValue = input?.value || '') {
+    normalizeMobileValue(input, prefix, rawValue);
   }
 
   function bindMobileInput(input, prefix) {
     if (!input || input.dataset.indiaMobileBound === 'true') return;
     input.dataset.indiaMobileBound = 'true';
+
+    const normalize = () => normalizeMobileValue(input, prefix);
     syncMobilePrefix(input, prefix);
-
-    const normalize = () => {
-      const raw = input.value || '';
-      const isEmail = /[A-Za-z@]/.test(raw);
-      if (isEmail) {
-        if (prefix) prefix.hidden = true;
-        input.classList.remove('has-mobile-prefix');
-        return;
-      }
-
-      const digits = raw.replace(/\D/g, '');
-      const normalized = /^91\d{10}$/.test(digits) ? digits.slice(2) : digits.slice(0, 10);
-      input.value = normalized;
-      syncMobilePrefix(input, prefix, normalized);
-    };
 
     input.addEventListener('input', normalize);
     input.addEventListener('change', normalize);
     input.addEventListener('blur', normalize);
+    input.addEventListener('focus', normalize);
     input.addEventListener('paste', () => setTimeout(normalize, 0));
+
+    // Browser password/address autofill may populate the field without firing
+    // an input event. Re-check shortly after the field is mounted so an
+    // autofilled +91XXXXXXXXXX value is displayed as +91 + XXXXXXXXXX.
+    [50, 250, 700].forEach(delay => setTimeout(normalize, delay));
   }
 
   function bindMobileDefaults(root) {
@@ -111,7 +114,7 @@
   }
 
   function showSignup() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" name="indoone-signup-email" type="email" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label>${mobileField('signupMobile', 'signupMobilePrefix')}</div><div class="field"><label>PASSWORD</label>${passwordField('signupPassword', 'new-password', 'Create a strong password')}</div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" name="one-time-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">Your Indoone account is activated after successful email OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">GET STARTED</p><h1>Create your account</h1><p>Securely create an Indoone account for your authenticator vault.</p></div><div class="field"><label>EMAIL ID</label><input id="signupEmail" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="you@example.com" /></div><div class="field"><label>MOBILE NUMBER</label>${mobileField('signupMobile', 'signupMobilePrefix')}</div><div class="field"><label>PASSWORD</label>${passwordField('signupPassword', 'new-password', 'Create a strong password')}</div><button type="button" class="primary auth-action-button" data-auth-action="signup-submit">Send OTP</button><div id="signupOtpArea" hidden><p class="auth-otp-note">OTP sent to <strong id="signupOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="signupOtp" name="one-time-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="signup-verify">Verify &amp; Create Account</button></div><button type="button" class="secondary auth-action-button" data-auth-action="login">Already have an account? Login</button><div class="auth-footer">Your Indoone account is activated after successful email OTP verification.</div>`);
   }
 
   async function run(button) {
