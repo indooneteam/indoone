@@ -1,65 +1,32 @@
-name: Deploy Indoone Pages
+name: Validate Indoone Pages
 
 on:
   push:
     branches:
-      - main
       - develop
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: github-pages
-  cancel-in-progress: false
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: main-source
-          fetch-depth: 1
-
-      - name: Checkout develop branch
+      - name: Checkout develop
         uses: actions/checkout@v4
         with:
           ref: develop
-          path: develop-source
           fetch-depth: 1
 
-      - name: Build Pages package
+      - name: Validate Pages files
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf publish
-          mkdir -p publish/develop
-          rsync -a --exclude='.git' main-source/ publish/
-          rsync -a --exclude='.git' develop-source/ publish/develop/
-          test -f publish/index.html
-          test -f publish/develop/index.html
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: publish
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          test -f index.html
+          test -f style.css
+          test -f bottom-nav-svg.css
+          test -f connect.css
+          test -f js/connect.js
+          test -f js/events.js
+          echo "Indoone develop Pages package is valid."
