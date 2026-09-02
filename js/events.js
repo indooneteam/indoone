@@ -25,9 +25,6 @@ function renderLoginNow() {
   }
 }
 
-// Render the login UI immediately after the DOM is parsed. This prevents the
-// auth-boot visibility gate from leaving the app on a blank screen when an
-// async Firebase startup check is slow or unavailable.
 renderLoginNow();
 
 $('menuBtn').addEventListener('click', toggleMenu);
@@ -54,8 +51,10 @@ async function showAuthOrHome(user) {
   try {
     if (window.__indooneAuthPending) return;
 
-    const verifiedUid = sessionStorage.getItem('indoone_otp_verified_uid');
+    const verifiedUid = localStorage.getItem('indoone_otp_verified_uid');
     if (!user || verifiedUid !== user.uid) {
+      localStorage.removeItem('indoone_otp_verified_uid');
+      localStorage.removeItem('indoone_authenticated_uid');
       sessionStorage.removeItem('indoone_otp_verified_uid');
       sessionStorage.removeItem('indoone_authenticated_uid');
       if (user) await window.IndooneFirebase?.auth?.signOut?.().catch(() => {});
@@ -82,8 +81,10 @@ async function showAuthOrHome(user) {
 
 window.addEventListener('load', async () => {
   const auth = window.IndooneFirebase?.auth;
-  sessionStorage.removeItem('indoone_otp_verified_uid');
-  sessionStorage.removeItem('indoone_authenticated_uid');
+  const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
+  const persistedAuthUid = localStorage.getItem('indoone_authenticated_uid');
+  if (persistedUid) sessionStorage.setItem('indoone_otp_verified_uid', persistedUid);
+  if (persistedAuthUid) sessionStorage.setItem('indoone_authenticated_uid', persistedAuthUid);
   window.__indooneLoginOtp = null;
   window.__indooneSignupDraft = null;
   window.__indooneAuthPending = false;
@@ -93,13 +94,11 @@ window.addEventListener('load', async () => {
     return;
   }
 
-  if (typeof auth.signOut === 'function') await auth.signOut().catch(() => {});
-
   if (typeof auth.onAuthStateChanged === 'function') {
     auth.onAuthStateChanged(user => showAuthOrHome(user));
     setTimeout(() => {
       if (!authResolved && !auth.currentUser) {
-        renderLoginNow();
+        if (persistedUid) renderLoginNow(); else renderLoginNow();
       }
     }, 1500);
   } else {
