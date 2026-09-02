@@ -32,7 +32,15 @@ function renderLoginNow() {
 if (!localStorage.getItem('indoone_otp_verified_uid')) renderLoginNow();
 
 $('menuBtn').addEventListener('click', toggleMenu);
-$('drawerBackdrop').addEventListener('click', closeDrawer);
+$('drawerBackdrop').addEventListener('click', e => {
+  const x = e.clientX;
+  const y = e.clientY;
+  closeDrawer();
+  requestAnimationFrame(() => {
+    const target = document.elementFromPoint(x, y);
+    if (target && !target.closest('#drawer')) target.click();
+  });
+});
 $('brandBtn').addEventListener('click', () => { closeDrawer(); closeModal(); $('accountsNav').click(); });
 $('searchBtn').addEventListener('click', () => { $('searchWrap').hidden = false; $('search').focus(); });
 $('clearSearch').addEventListener('click', () => { $('search').value = ''; indooneState.search = ''; renderAccounts(); });
@@ -57,8 +65,6 @@ async function showAuthOrHome(user) {
 
     const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
 
-    // Firebase can briefly report null while restoring LOCAL persistence.
-    // Keep a previously verified local session intact until the auth state is resolved.
     if (!user) {
       if (persistedUid && !authStateResolved) return;
       localStorage.removeItem('indoone_otp_verified_uid');
@@ -112,7 +118,6 @@ window.addEventListener('load', async () => {
     return;
   }
 
-  // Persistence is initialized in firebase-config.js before this listener is attached.
   try {
     await (window.IndooneFirebase?.persistenceReady || Promise.resolve());
   } catch (error) {
@@ -123,8 +128,6 @@ window.addEventListener('load', async () => {
     auth.onAuthStateChanged(user => showAuthOrHome(user));
     setTimeout(() => {
       if (!authStateResolved && !auth.currentUser) {
-        // Keep the existing local session marker intact while Firebase restores.
-        // The auth-state callback remains the source of truth for opening the app.
         const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
         if (!persistedUid) renderLoginNow();
       }
