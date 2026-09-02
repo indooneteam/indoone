@@ -9,7 +9,13 @@
   <link rel="stylesheet" href="style.css?v=20260901i" />
   <link rel="stylesheet" href="desktop-layout-fix.css?v=20260902a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20260908b" />
-  <link rel="stylesheet" href="connect.css?v=20260913a" />
+  <link rel="stylesheet" href="app/connect/connect.css?v=20260913a" />
+  <link rel="stylesheet" href="app/home/home.css?v=20260914a" />
+  <link rel="stylesheet" href="app/accounts/accounts.css?v=20260914a" />
+  <link rel="stylesheet" href="app/menu/menu.css?v=20260914a" />
+  <link rel="stylesheet" href="app/settings/settings.css?v=20260914a" />
+  <link rel="stylesheet" href="app/auth/auth.css?v=20260914a" />
+  <link rel="stylesheet" href="app/lobby/lobby.css?v=20260914a" />
 </head>
 <body>
   <main class="phone-shell" id="app">
@@ -23,8 +29,7 @@
     <section class="connect-content" id="connectContent" hidden>
       <div id="connectHomePage">
         <div class="connect-hero">
-          <p class="eyebrow">NEARBY DEVICE SHARING</p>
-          <h1>Connect</h1>
+          <p class="eyebrow">NEARBY DEVICE SHARING</p><h1>Connect</h1>
           <p>Pair nearby devices, share files and control exactly what each device can access.</p>
         </div>
         <div class="connect-actions">
@@ -40,9 +45,7 @@
       </div>
       <div class="connect-choice-page" id="connectChoicePage" hidden>
         <button type="button" class="connect-back" data-connect-action="home">‹ Back</button>
-        <p class="eyebrow">NEW CONNECTION</p>
-        <h2>Connect a device</h2>
-        <p>Choose what you want to connect nearby.</p>
+        <p class="eyebrow">NEW CONNECTION</p><h2>Connect a device</h2><p>Choose what you want to connect nearby.</p>
         <div class="connect-choice">
           <button type="button"><span class="choice-icon">📱</span><span><b>Connect another phone</b><small>Phone-to-phone nearby connection</small></span><span class="arrow">›</span></button>
           <button type="button"><span class="choice-icon">💻</span><span><b>Connect laptop / PC</b><small>Phone-to-computer nearby connection</small></span><span class="arrow">›</span></button>
@@ -64,45 +67,41 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js?v=20260902b"></script>
-  <script src="js/firebase-auth.js?v=20260901i"></script>
-  <script src="js/indoverification.js?v=20260902a"></script>
-  <script src="js/firebase-auth-otp.js?v=20260907c"></script>
-  <script src="js/otp-retry-fix.js?v=20260902b"></script>
-  <script src="js/auth-session-persistence.js?v=20260902b"></script>
-  <script src="js/auth-page.js?v=20260902d"></script>
-  <script src="js/core.js?v=20260901i"></script>
-  <script src="js/state.js?v=20260903a"></script>
-  <script src="js/cloud-accounts.js?v=20260905a"></script>
-  <script src="js/totp.js?v=20260901i"></script>
-  <script src="js/zoho-support.js?v=20260909a"></script>
-  <script src="js/vault.js?v=20260901i"></script>
-  <script src="js/encrypted-vault.js?v=20260901i"></script>
-  <script src="js/secure-session.js?v=20260901i"></script>
-  <script src="js/persistence.js?v=20260901i"></script>
-  <script src="js/recovery-pdf.js?v=20260901i"></script>
-  <script src="js/menu.js?v=20260901i"></script>
-  <script src="js/search.js?v=20260902a"></script>
-  <script src="js/add-account.js?v=20260902a"></script>
-  <script src="js/qr-scanner.js?v=20260909a"></script>
-  <script src="js/manual-account.js?v=20260909a"></script>
-  <script src="js/totp-controller.js?v=20260901i"></script>
-  <script src="js/account.js?v=20260904a"></script>
-  <script src="js/account-actions.js?v=20260904a"></script>
-  <script src="js/favorite.js?v=20260901i"></script>
-  <script src="js/settings.js?v=20260902a"></script>
-  <script src="js/biometric.js?v=20260902a"></script>
-  <script src="js/app-lock.js?v=20260902a"></script>
-  <script src="js/navigation.js?v=20260904a"></script>
-  <script src="js/connect.js?v=20260913b"></script>
-  <script src="js/connect-scanner.js?v=20260913c"></script>
-  <script src="js/connect-native.js?v=20260913a"></script>
-  <script src="js/connect-status.js?v=20260913a"></script>
-  <script src="js/update-banner.js?v=20260913a"></script>
-  <script src="js/drawer.js?v=20260906c"></script>
-  <script src="js/danger-zone.js?v=20260906d"></script>
-  <script src="js/logout.js?v=20260907a"></script>
-  <script src="js/events.js?v=20260903a"></script>
-  <script src="js/persistent-auth-restore.js?v=20260902a"></script>
+  <script src="app/auth/firebase-config.js?v=20260914a"></script>
+  <script src="app/auth/firebase-auth.js?v=20260914a"></script>
+  <script src="app/auth/indoverification.js?v=20260914a"></script>
+  <script src="app/auth/firebase-auth-otp.js?v=20260914a"></script>
+  <script src="app/auth/otp-retry-fix.js?v=20260914a"></script>
+  <script src="app/auth/auth-session-persistence.js?v=20260914a"></script>
+  <script src="app/auth/auth-page.js?v=20260914a"></script>
+  <script src="app/shared/core.js?v=20260914a"></script>
+  <script src="app/shared/state.js?v=20260914a"></script>
+  <script src="app/shared/cloud-accounts.js?v=20260914a"></script>
+  <script src="app/shared/encrypted-vault.js?v=20260914a"></script>
+  <script src="app/auth/secure-session.js?v=20260914a"></script>
+  <script src="app/shared/persistence.js?v=20260914a"></script>
+  <script src="app/accounts/recovery-pdf.js?v=20260914a"></script>
+  <script src="app/menu/menu.js?v=20260914a"></script>
+  <script src="app/accounts/search.js?v=20260914a"></script>
+  <script src="app/accounts/add-account.js?v=20260914a"></script>
+  <script src="app/accounts/qr-scanner.js?v=20260914a"></script>
+  <script src="app/accounts/manual-account.js?v=20260914a"></script>
+  <script src="app/accounts/totp-controller.js?v=20260914a"></script>
+  <script src="app/accounts/account.js?v=20260914a"></script>
+  <script src="app/accounts/account-actions.js?v=20260914a"></script>
+  <script src="app/shared/favorite.js?v=20260914a"></script>
+  <script src="app/settings/settings.js?v=20260914a"></script>
+  <script src="app/settings/biometric.js?v=20260914a"></script>
+  <script src="app/settings/app-lock.js?v=20260914a"></script>
+  <script src="app/shared/navigation.js?v=20260914a"></script>
+  <script src="app/connect/connect.js?v=20260914a"></script>
+  <script src="app/connect/connect-scanner.js?v=20260914a"></script>
+  <script src="app/connect/connect-native.js?v=20260914a"></script>
+  <script src="app/connect/nearby-controller.js?v=20260914a"></script>
+  <script src="app/menu/drawer.js?v=20260914a"></script>
+  <script src="app/settings/danger-zone.js?v=20260914a"></script>
+  <script src="app/settings/logout.js?v=20260914a"></script>
+  <script src="app/shared/events.js?v=20260914a"></script>
+  <script src="app/auth/persistent-auth-restore.js?v=20260914a"></script>
 </body>
 </html>

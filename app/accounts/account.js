@@ -1,0 +1,41 @@
+window.openAccount = async function(id){
+  const a=indooneState.accounts.find(x=>x.id===Number(id)); if(!a)return;
+  try { await refreshAccountCodes(); } catch (_) {}
+  const current=indooneState.accounts.find(x=>x.id===Number(id)); if(!current)return;
+  openModal(`<div class="modal-head"><button class="close-btn" data-close>‹</button><h2>${current.name}</h2><button class="close-btn" data-edit>✎</button></div><div class="token"><div class="token-icon">${current.icon}</div><p>${current.email || 'Authenticator account'}</p><div class="token-code" id="modalCode">${current.code || '------'}</div><div class="progress"><span id="modalProgress" style="width:${Math.max(5,(current.seconds||30)/(current.period||30)*100)}%"></span></div><div class="countdown">Code expires in <b id="modalCountdown">${current.seconds ?? current.period ?? 30}s</b></div></div><div class="detail-grid"><div class="detail"><small>TYPE</small><b>TOTP</b></div><div class="detail"><small>PERIOD</small><b>${current.period || 30} seconds</b></div><div class="detail"><small>ALGORITHM</small><b>${current.algorithm || 'SHA1'}</b></div><div class="detail"><small>DIGITS</small><b>${current.digits || 6} digits</b></div></div><button class="primary" data-copy>Copy code</button><button class="secondary danger" data-delete>Delete account</button>`);
+  modal.dataset.accountId=current.id;
+};
+
+window.toggleFavorite=async function(id){
+  const a=indooneState.accounts.find(x=>x.id===Number(id));
+  if(!a)return;
+  const next=!a.favorite;
+  try {
+    if (window.IndooneCloudAccounts?.save) await window.IndooneCloudAccounts.save({...a, favorite:next, updatedAt:Date.now()});
+    a.favorite=next;
+    renderAccounts();
+    toast(next?'Added to favorites':'Removed from favorites');
+  } catch(error){
+    toast(error?.message || 'Could not update favorite');
+  }
+};
+
+window.deleteCurrent=async function(){
+  const id=Number(modal.dataset.accountId);
+  const a=indooneState.accounts.find(x=>x.id===id);
+  if(!a)return;
+  try {
+    if (window.IndooneCloudAccounts?.remove) await window.IndooneCloudAccounts.remove(id);
+    const i=indooneState.accounts.findIndex(x=>x.id===id);
+    if(i>=0) indooneState.accounts.splice(i,1);
+    indooneState.trash=[];
+    renderAccounts();
+    closeModal();
+    toast('Account permanently deleted');
+  } catch(error){
+    toast(error?.message || 'Could not delete account');
+  }
+};
+
+window.editCurrent=function(){const a=indooneState.accounts.find(x=>x.id===Number(modal.dataset.accountId));if(a)showManual(a)};
+window.copyCurrentCode=function(){const a=indooneState.accounts.find(x=>x.id===Number(modal.dataset.accountId));if(a){navigator.clipboard?.writeText(a.code||'');toast('Code copied')}};
