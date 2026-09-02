@@ -60,7 +60,7 @@ public class MainActivity extends FragmentActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
         }
-        ArrayListCompat.request(this, permissions.toArray(new String[0]), NEARBY_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), NEARBY_REQUEST_CODE);
     }
 
     @Override
@@ -77,26 +77,33 @@ public class MainActivity extends FragmentActivity {
     }
 
     public void sendCameraPermissionResult(boolean success, String message) {
-        String safe = message == null ? "" : message.replace("\\", "\\\\").replace("'", "\\'");
+        String safe = escape(message);
         if (webView != null) {
             webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-camera-permission',{detail:{success:" + success + ",message:'" + safe + "'}}));", null);
         }
     }
 
     public void sendBiometricResult(boolean success, String message, String pin) {
-        String safe = message == null ? "" : message.replace("\\", "\\\\").replace("'", "\\'");
-        String safePin = pin == null ? "" : pin.replace("\\", "\\\\").replace("'", "\\'");
+        String safe = escape(message);
+        String safePin = escape(pin);
         if (webView != null) {
             webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null);
         }
     }
 
     public void sendNearbyEvent(String type, String message, String endpointId) {
-        String safeType = escape(message == null ? type : type);
+        sendNearbyEvent(type, message, endpointId, "", false);
+    }
+
+    public void sendNearbyEvent(String type, String message, String endpointId, String authenticationDigits, boolean incoming) {
+        String safeType = escape(type);
         String safeMessage = escape(message);
         String safeEndpoint = escape(endpointId);
+        String safeDigits = escape(authenticationDigits);
         if (webView != null) {
-            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "'}}));", null);
+            webView.evaluateJavascript(
+                    "window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "',authenticationDigits:'" + safeDigits + "',incoming:" + incoming + "}}));",
+                    null);
         }
     }
 
@@ -110,11 +117,5 @@ public class MainActivity extends FragmentActivity {
 
     @Override public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
-    }
-
-    private static final class ArrayListCompat {
-        static void request(MainActivity activity, String[] permissions, int requestCode) {
-            ActivityCompat.requestPermissions(activity, permissions, requestCode);
-        }
     }
 }
