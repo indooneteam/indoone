@@ -58,10 +58,11 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    public void sendBiometricResult(boolean success, String message) {
+    public void sendBiometricResult(boolean success, String message, String pin) {
         String safe = message == null ? "" : message.replace("\\", "\\\\").replace("'", "\\'");
+        String safePin = pin == null ? "" : pin.replace("\\", "\\\\").replace("'", "\\'");
         if (webView != null) {
-            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "'}}));", null);
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null);
         }
     }
 
