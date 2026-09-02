@@ -54,8 +54,8 @@ async function showAuthOrHome(user) {
 
     const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
 
-    // Firebase may briefly report null while restoring LOCAL persistence.
-    // Never delete a persisted verified session during that startup window.
+    // Firebase can briefly report null while restoring LOCAL persistence.
+    // Keep a previously verified local session intact until the auth state is resolved.
     if (!user) {
       if (persistedUid && !authStateResolved) return;
       localStorage.removeItem('indoone_otp_verified_uid');
@@ -109,23 +109,23 @@ window.addEventListener('load', async () => {
     return;
   }
 
+  // Persistence is initialized in firebase-config.js before this listener is attached.
   try {
-    if (window.firebase?.auth?.Auth?.Persistence?.LOCAL) {
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    }
+    await (window.IndooneFirebase?.persistenceReady || Promise.resolve());
   } catch (error) {
-    console.warn('Indoone Firebase local persistence setup failed:', error);
+    console.warn('Indoone Firebase persistence initialization failed:', error);
   }
 
   if (typeof auth.onAuthStateChanged === 'function') {
     auth.onAuthStateChanged(user => showAuthOrHome(user));
     setTimeout(() => {
       if (!authStateResolved && !auth.currentUser) {
-        // Give Firebase LOCAL persistence a little more time to restore.
-        // Do not clear the local verified session here.
-        renderLoginNow();
+        // Keep the existing local session marker intact while Firebase restores.
+        // The auth-state callback remains the source of truth for opening the app.
+        const persistedUid = localStorage.getItem('indoone_otp_verified_uid');
+        if (!persistedUid) renderLoginNow();
       }
-    }, 3000);
+    }, 5000);
   } else {
     renderLoginNow();
   }
