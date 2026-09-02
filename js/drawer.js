@@ -1,31 +1,135 @@
-const drawerEl=document.getElementById('drawer');
-const drawerPanel=drawerEl?.querySelector('.drawer-panel');
-window.toggleMenu=function(){const open=drawerEl.classList.toggle('open');drawerEl.setAttribute('aria-hidden',String(!open));};
-window.closeDrawer=function(){drawerEl.classList.remove('open');drawerEl.setAttribute('aria-hidden','true');};
+const drawerEl = document.getElementById('drawer');
+const drawerPanel = drawerEl?.querySelector('.drawer-panel');
 
-// Close the drawer whenever the user clicks/taps anywhere outside the drawer panel.
-drawerEl?.addEventListener('pointerdown',event=>{
-  if(drawerEl.classList.contains('open')&&drawerPanel&&!drawerPanel.contains(event.target)) closeDrawer();
-});
+window.toggleMenu = function () {
+  const open = drawerEl.classList.toggle('open');
+  drawerEl.setAttribute('aria-hidden', String(!open));
+};
 
-window.showFavorites=async function(){
+window.closeDrawer = function () {
+  drawerEl?.classList.remove('open');
+  drawerEl?.setAttribute('aria-hidden', 'true');
+};
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+window.showFavorites = async function () {
   closeDrawer();
   try {
-    if (window.IndooneCloudAccounts?.load) await window.IndooneCloudAccounts.load();
-    const list=indooneState.accounts.filter(a=>a.favorite);
-    const rows=list.length
-      ? list.map(a=>`<button type="button" class="settings-row" style="width:100%;text-align:left;border:0;background:#fff;" onclick="closeModal();openAccount(${Number(a.id)})"><span>${a.name}<small>${a.email||'Authenticator account'}</small></span><b>${a.code||'------'}</b></button>`).join('')
-      : `<p style="text-align:center;padding:28px 0">No favorite accounts yet.</p>`;
-    openModal(`<div class="modal-head"><h2>Favorites</h2><button class="close-btn" data-close>×</button></div><div id="favoritesList">${rows}</div><button class="primary" data-close>Done</button>`);
-  } catch(error) {
-    toast(error?.message||'Could not load favorites');
+    const cloud = window.IndooneCloudAccounts;
+    if (!cloud?.load) throw new Error('Firebase account storage is unavailable.');
+
+    await cloud.load();
+    const favorites = (window.indooneState?.accounts || []).filter(account => account.favorite);
+
+    const rows = favorites.length
+      ? favorites.map(account => `
+          <button type="button" class="settings-row favorite-list-row" data-favorite-account="${Number(account.id)}">
+            <span>
+              <b>${escapeHtml(account.name)}</b>
+              <small>${escapeHtml(account.email || 'Authenticator account')}</small>
+            </span>
+            <b class="favorite-code">${escapeHtml(account.code || '------')}</b>
+          </button>`).join('')
+      : '<div class="empty-state compact-empty"><div class="empty-icon">☆</div><h3>No favorite accounts</h3><p>Star an account to see it here.</p></div>';
+
+    openModal(`
+      <div class="modal-head">
+        <h2>Favorites</h2>
+        <button type="button" class="close-btn" data-close aria-label="Close">×</button>
+      </div>
+      <div id="favoritesList" class="drawer-list-modal">${rows}</div>
+    `);
+  } catch (error) {
+    toast(error?.message || 'Could not load favorites');
   }
 };
 
-window.showTrash=function(){
+window.showTrash = function () {
   closeDrawer();
-  openModal(`<div class="modal-head"><h2>Trash</h2><button class="close-btn" data-close>×</button></div><div class="empty-state" style="padding:40px 10px"><div class="empty-icon">♙</div><h3>No accounts in trash</h3><p>Deleted accounts are permanently removed from Firebase. Nothing is kept here.</p></div><button class="secondary" data-close>Close</button>`);
+  openModal(`
+    <div class="modal-head">
+      <h2>Trash</h2>
+      <button type="button" class="close-btn" data-close aria-label="Close">×</button>
+    </div>
+    <div class="empty-state compact-empty">
+      <div class="empty-icon">♙</div>
+      <h3>No accounts in trash</h3>
+      <p>Deleted accounts are permanently removed from Firebase.</p>
+    </div>
+  `);
 };
 
-window.showSecurity=function(){closeDrawer();openModal(`<div class="modal-head"><h2>Security</h2><button class="close-btn" data-close>×</button></div><div class="settings-row"><span>Local storage<small>Accounts stay on this device</small></span><b>ON</b></div><div class="settings-row"><span>Cloud sync<small>No server connection</small></span><b>OFF</b></div><div class="settings-row"><span>Network access<small>Not required for TOTP</small></span><b>OFF</b></div>`) };
-window.showAbout=function(){closeDrawer();openModal(`<div class="modal-head"><h2>About Indoone</h2><button class="close-btn" data-close>×</button></div><div class="token-icon">I</div><p style="text-align:center"><b>Indoone Authenticator</b><br>Private, simple and offline-first.</p><div class="detail"><small>VERSION</small><b>1.0.0 Demo</b></div>`) };
+window.showSecurity = function () {
+  closeDrawer();
+  openModal(`
+    <div class="modal-head"><h2>Security</h2><button class="close-btn" data-close>×</button></div>
+    <div class="settings-row"><span>Firebase account storage<small>Authenticator accounts sync to your user account</small></span><b>✓</b></div>
+    <div class="settings-row"><span>Local account storage<small>Not used for permanent account data</small></span><b>✓</b></div>
+  `);
+};
+
+window.showAbout = function () {
+  closeDrawer();
+  openModal(`
+    <div class="modal-head"><h2>About Indoone</h2><button class="close-btn" data-close>×</button></div>
+    <div class="token-icon">I</div>
+    <p style="text-align:center"><b>Indoone Authenticator</b><br>Login-based cloud-synced TOTP authenticator.</p>
+  `);
+};
+
+// Use direct event delegation so Favorites/Trash always open from the drawer,
+// independent of other click handlers in events.js.
+drawerPanel?.addEventListener('click', event => {
+  const item = event.target.closest('[data-action]');
+  if (!item || !drawerPanel.contains(item)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const action = item.dataset.action;
+  if (action === 'accounts') {
+    closeDrawer();
+    document.getElementById('accountsNav')?.click();
+  } else if (action === 'favorites') {
+    showFavorites();
+  } else if (action === 'trash') {
+    showTrash();
+  } else if (action === 'security') {
+    showSecurity();
+  } else if (action === 'backup') {
+    closeDrawer();
+  } else if (action === 'settings') {
+    closeDrawer();
+    showSettings();
+  } else if (action === 'about') {
+    showAbout();
+  } else if (action === 'lock') {
+    closeDrawer();
+    lockIndoone();
+  }
+});
+
+// Close only when tapping the drawer backdrop/outside its panel.
+drawerEl?.addEventListener('pointerdown', event => {
+  if (drawerEl.classList.contains('open') && drawerPanel && !drawerPanel.contains(event.target)) {
+    closeDrawer();
+  }
+});
+
+// Favorite rows inside the modal open their account details.
+document.addEventListener('click', event => {
+  const row = event.target.closest('[data-favorite-account]');
+  if (!row) return;
+  const id = Number(row.dataset.favoriteAccount);
+  if (!id) return;
+  closeModal();
+  openAccount(id);
+});
