@@ -16,13 +16,35 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
 
 function daysLeft(purgeAt) {
   const ms = Math.max(0, Number(purgeAt || 0) - Date.now());
   return Math.max(1, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}
+
+function clearIndooneLocalData() {
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('indoone')) localStorage.removeItem(key);
+    });
+  } catch (_) {}
+
+  try {
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('indoone')) sessionStorage.removeItem(key);
+    });
+  } catch (_) {}
+
+  try { window.IndoonePersistence?.lock?.(); } catch (_) {}
+  try { window.IndoonePersistence?.clear?.(); } catch (_) {}
+  try { window.IndooneBiometric?.disable?.(); } catch (_) {}
+}
+
+function currentFirebaseUser() {
+  return window.IndooneFirebase?.auth?.currentUser || null;
 }
 
 window.showFavorites = async function () {
@@ -122,23 +144,91 @@ window.showDangerZone = function () {
       <span>Delete local data<small>Remove data stored on this device</small></span><b>›</b>
     </button>
     <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-account>
-      <span>Delete Indoone account<small>Permanently delete your Indoone account</small></span><b>›</b>
+      <span>Delete Indoone account<small>Permanently delete your Indoone account and cloud data</small></span><b>›</b>
     </button>
   `);
 };
 
-window.showLogoutOptions = function () {
-  closeDrawer();
+window.confirmDeleteLocalData = function () {
   openModal(`
-    <div class="modal-head"><h2>Log out</h2><button class="close-btn" data-close>×</button></div>
-    <p>Choose where you want to end your Indoone session.</p>
-    <button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-logout-choice="this">
-      <span>Log out on this device<small>Only this device will be signed out.</small></span><b>›</b>
-    </button>
-    <button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-logout-choice="all">
-      <span>Log out on all devices<small>Sign out from every device using this account.</small></span><b>›</b>
-    </button>
+    <div class="modal-head"><h2>Delete local data?</h2><button class="close-btn" data-close>×</button></div>
+    <p>This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.</p>
+    <button type="button" class="primary danger" id="confirmLocalDelete">Delete local data</button>
+    <button type="button" class="secondary" data-close>Cancel</button>
   `);
+  document.getElementById('confirmLocalDelete')?.addEventListener('click', async () => {
+    try {
+      clearIndooneLocalData();
+      await window.IndooneFirebase?.auth?.signOut?.();
+      closeModal();
+      window.location.reload();
+    } catch (error) {
+      toast(error?.message || 'Could not delete local data');
+    }
+  });
+};
+
+window.confirmDeleteIndooneAccount = function () {
+  const user = currentFirebaseUser();
+  if (!user) return toast('Please login first.');
+
+  openModal(`
+    <div class="modal-head"><h2>Delete Indoone account?</h2><button class="close-btn" data-close>×</button></div>
+    <p>This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.</p>
+    <div class="field"><label>ACCOUNT PASSWORD</label><input id="deleteAccountPassword" type="password" autocomplete="current-password" placeholder="Enter your password"></div>
+    <div class="field"><label>TYPE DELETE TO CONFIRM</label><input id="deleteAccountConfirm" type="text" autocomplete="off" placeholder="DELETE"></div>
+    <button type="button" class="primary danger" id="confirmAccountDelete">Delete Indoone account</button>
+    <button type="button" class="secondary" data-close>Cancel</button>
+  `);
+
+  document.getElementById('confirmAccountDelete')?.addEventListener('click', async () => {
+    const password = String(document.getElementById('deleteAccountPassword')?.value || '');
+    const confirmation = String(document.getElementById('deleteAccountConfirm')?.value || '').trim();
+    if (!password) return toast('Enter your account password');
+    if (confirmation !== 'DELETE') return toast('Type DELETE to confirm');
+
+    const firebase = window.IndooneFirebase;
+    const db = firebase?.database;
+    const auth = firebase?.auth;
+    const liveUser = auth?.currentUser;
+    if (!db || !auth || !liveUser) return toast('Login session expired. Please login again.');
+    if (!liveUser.email) return toast('This account cannot be re-authenticated here.');
+
+    const button = document.getElementById('confirmAccountDelete');
+    if (button) button.disabled = true;
+
+    try {
+      const credential = firebase.auth.EmailAuthProvider.credential(liveUser.email, password);
+      await liveUser.reauthenticateWithCredential(credential);
+
+      const profileSnapshot = await db.ref(`users/${liveUser.uid}/profile`).once('value');
+      const profile = profileSnapshot.val() || {};
+      const mobile = String(profile.mobile || '').trim();
+
+      const updates = {
+        [`users/${liveUser.uid}`]: null
+      };
+      if (mobile) updates[`mobileIndex/${encodeURIComponent(mobile)}`] = null;
+      await db.ref().update(updates);
+
+      await liveUser.delete();
+      clearIndooneLocalData();
+      closeModal();
+      window.location.reload();
+    } catch (error) {
+      if (button) button.disabled = false;
+      const code = error?.code || '';
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        toast('Incorrect account password');
+      } else if (code === 'auth/requires-recent-login') {
+        toast('Please login again, then retry account deletion');
+      } else if (code === 'PERMISSION_DENIED') {
+        toast('Could not remove cloud data. Check your connection and try again.');
+      } else {
+        toast(error?.message || 'Could not delete Indoone account');
+      }
+    }
+  });
 };
 
 drawerPanel?.addEventListener('click', event => {
@@ -162,7 +252,9 @@ drawerPanel?.addEventListener('click', event => {
   } else if (action === 'danger-zone') {
     showDangerZone();
   } else if (action === 'logout') {
-    showLogoutOptions();
+    closeDrawer();
+    if (typeof window.showLogoutOptions === 'function') window.showLogoutOptions();
+    else toast('Logout options are unavailable.');
   } else if (action === 'lock') {
     closeDrawer();
     lockIndoone();
@@ -176,6 +268,18 @@ drawerEl?.addEventListener('pointerdown', event => {
 });
 
 document.addEventListener('click', async event => {
+  if (event.target.closest('[data-danger-delete-local]')) {
+    event.preventDefault();
+    confirmDeleteLocalData();
+    return;
+  }
+
+  if (event.target.closest('[data-danger-delete-account]')) {
+    event.preventDefault();
+    confirmDeleteIndooneAccount();
+    return;
+  }
+
   const favoriteRow = event.target.closest('[data-favorite-account]');
   if (favoriteRow) {
     const id = Number(favoriteRow.dataset.favoriteAccount);
@@ -186,31 +290,21 @@ document.addEventListener('click', async event => {
   }
 
   const restoreButton = event.target.closest('[data-trash-restore]');
-  if (restoreButton) {
-    const id = Number(restoreButton.dataset.trashRestore);
-    if (!id) return;
+  if (!restoreButton) return;
+  const id = Number(restoreButton.dataset.trashRestore);
+  if (!id) return;
 
-    restoreButton.disabled = true;
-    try {
-      const restored = await window.IndooneCloudAccounts.restoreFromTrash(id);
-      if (!window.indooneState.accounts.some(account => Number(account.id) === Number(restored.id))) {
-        window.indooneState.accounts.push(restored);
-      }
-      renderAccounts();
-      closeModal();
-      toast('Account restored');
-    } catch (error) {
-      restoreButton.disabled = false;
-      toast(error?.message || 'Could not restore account');
+  restoreButton.disabled = true;
+  try {
+    const restored = await window.IndooneCloudAccounts.restoreFromTrash(id);
+    if (!window.indooneState.accounts.some(account => Number(account.id) === Number(restored.id))) {
+      window.indooneState.accounts.push(restored);
     }
-    return;
-  }
-
-  const logoutChoice = event.target.closest('[data-logout-choice]');
-  if (logoutChoice) {
-    const choice = logoutChoice.dataset.logoutChoice;
+    renderAccounts();
     closeModal();
-    if (choice === 'this') toast('This device logout is ready to connect');
-    if (choice === 'all') toast('All devices logout is ready to connect');
+    toast('Account restored');
+  } catch (error) {
+    restoreButton.disabled = false;
+    toast(error?.message || 'Could not restore account');
   }
 });
