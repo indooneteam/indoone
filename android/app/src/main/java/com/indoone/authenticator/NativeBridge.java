@@ -13,7 +13,6 @@ import androidx.core.content.ContextCompat;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.concurrent.Executor;
 
 import javax.crypto.Cipher;
@@ -84,70 +83,56 @@ public final class NativeBridge {
                 return;
             }
 
-            try {
-                Cipher unlockCipher = null;
-                if (unlockVault) {
-                    if (!hasBiometricSecret()) {
-                        activity.sendBiometricResult(false, "Biometric unlock is not configured", null);
-                        return;
-                    }
-                    SecretKey key = getKey();
-                    if (key == null) {
-                        activity.sendBiometricResult(false, "Biometric unlock is unavailable", null);
-                        return;
-                    }
-                    unlockCipher = Cipher.getInstance("AES/GCM/NoPadding");
-                    GCMParameterSpec spec = new GCMParameterSpec(128, getIv());
-                    unlockCipher.init(Cipher.DECRYPT_MODE, key, spec);
-                }
-
-                final Cipher cipherForPrompt = unlockCipher;
-                Executor executor = ContextCompat.getMainExecutor(activity);
-                BiometricPrompt prompt = new BiometricPrompt(activity, executor,
-                        new BiometricPrompt.AuthenticationCallback() {
-                            @Override
-                            public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-                                String recoveredPin = null;
-                                if (unlockVault) {
-                                    try {
-                                        byte[] plaintext = cipherForPrompt.doFinal(getCiphertext());
-                                        recoveredPin = new String(plaintext, StandardCharsets.UTF_8);
-                                    } catch (Exception error) {
-                                        clearBiometricSecret();
-                                        activity.sendBiometricResult(false, "Biometric credential is unavailable", null);
-                                        return;
-                                    }
-                                }
-                                activity.sendBiometricResult(true, "Biometric authentication successful", recoveredPin);
-                            }
-
-                            @Override
-                            public void onAuthenticationError(int errorCode, CharSequence errString) {
-                                activity.sendBiometricResult(false, String.valueOf(errString), null);
-                            }
-
-                            @Override
-                            public void onAuthenticationFailed() {
-                                activity.sendBiometricResult(false, "Authentication failed", null);
-                            }
-                        });
-
-                BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
-                        .setTitle("Unlock Indoone")
-                        .setSubtitle(unlockVault ? "Use your fingerprint or device credential to unlock" : "Use your biometric or device credential")
-                        .setAllowedAuthenticators(
-                                BiometricManager.Authenticators.BIOMETRIC_STRONG
-                                        | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-                        .build();
-
-                if (cipherForPrompt != null) {
-                    prompt.authenticate(info, new BiometricPrompt.CryptoObject(cipherForPrompt));
-                } else {
-                    prompt.authenticate(info);
-                }
-            } catch (Exception error) {
-                activity.sendBiometricResult(false, "Unable to start biometric authentication", null);
+            if (unlockVault && !hasBiometricSecret()) {
+                activity.sendBiometricResult(false, "Biometric unlock is not configured", null);
+                return;
             }
+
+            Executor executor = ContextCompat.getMainExecutor(activity);
+            BiometricPrompt prompt = new BiometricPrompt(activity, executor,
+                    new BiometricPrompt.AuthenticationCallback() {
+                        @Override
+                        public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                            if (!unlockVault) {
+                                activity.sendBiometricResult(true, "Biometric authentication successful", null);
+                                return;
+                            }
+
+                            try {
+                                SecretKey key = getKey();
+                                if (key == null) throw new IllegalStateException("Missing biometric key");
+                                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                                cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, getIv()));
+                                byte[] plaintext = cipher.doFinal(getCiphertext());
+                                String pin = new String(plaintext, StandardCharsets.UTF_8);
+                                if (!pin.matches("\\d{4,12}")) throw new IllegalStateException("Invalid stored PIN");
+                                activity.sendBiometricResult(true, "Biometric authentication successful", pin);
+                            } catch (Exception error) {
+                                clearBiometricSecret();
+                                activity.sendBiometricResult(false, "Biometric credential is unavailable", null);
+                            }
+                        }
+
+                        @Override
+                        public void onAuthenticationError(int errorCode, CharSequence errString) {
+                            activity.sendBiometricResult(false, String.valueOf(errString), null);
+                        }
+
+                        @Override
+                        public void onAuthenticationFailed() {
+                            activity.sendBiometricResult(false, "Authentication failed", null);
+                        }
+                    });
+
+            BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("Unlock Indoone")
+                    .setSubtitle(unlockVault ? "Use your fingerprint or device credential to unlock" : "Use your biometric or device credential")
+                    .setAllowedAuthenticators(
+                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                                    | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                    .build();
+
+            prompt.authenticate(info);
         });
     }
 
