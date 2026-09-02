@@ -25,8 +25,12 @@
     return true;
   }
 
-  function mobileField(id, prefixId, placeholder = '98765 43210') {
-    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" type="tel" inputmode="numeric" autocomplete="tel" maxlength="15" placeholder="${placeholder}" /></div>`;
+  function mobileField(id, prefixId, placeholder = '98765 43210', login = false) {
+    const inputMode = login ? 'text' : 'numeric';
+    const type = login ? 'text' : 'tel';
+    const autocomplete = login ? 'username' : 'tel';
+    const maxLength = login ? 320 : 10;
+    return `<div class="mobile-field"><span id="${prefixId}" class="mobile-prefix" hidden>+91</span><input id="${id}" type="${type}" inputmode="${inputMode}" autocomplete="${autocomplete}" maxlength="${maxLength}" placeholder="${placeholder}" /></div>`;
   }
 
   function syncMobilePrefix(input, prefix, rawValue = input?.value || '') {
@@ -102,7 +106,7 @@
   }
 
   function showLogin() {
-    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label>${mobileField('authIdentifier', 'loginMobilePrefix', 'you@example.com or 98765 43210')}</div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
+    showShell(`<div class="auth-brand"><span class="auth-mark">I</span><div><strong>Indoone</strong><small>Authenticator</small></div></div><div class="auth-copy"><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Welcome back</h1><p>Sign in to protect and sync your authenticator vault.</p></div><div class="field"><label>EMAIL OR MOBILE NUMBER</label>${mobileField('authIdentifier', 'loginMobilePrefix', 'you@example.com or 98765 43210', true)}</div><div class="field"><label>PASSWORD</label>${passwordField('authPassword', 'current-password', 'Enter your password')}</div><button type="button" class="primary auth-action-button" data-auth-action="login-submit">Send OTP</button><div id="loginOtpArea" class="auth-otp-area" hidden><p class="auth-otp-note">OTP sent to <strong id="loginOtpEmail"></strong></p><div class="field"><label>VERIFICATION OTP</label><input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit OTP" /></div><button type="button" class="primary auth-action-button" data-auth-action="login-verify">Verify &amp; Login</button></div><button type="button" class="secondary auth-action-button" data-auth-action="signup">Create Account</button><div class="auth-footer">Protect your Indoone account with password and email OTP verification.</div>`);
   }
 
   function showSignup() {
