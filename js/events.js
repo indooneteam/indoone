@@ -26,7 +26,10 @@ function renderLoginNow() {
   }
 }
 
-renderLoginNow();
+// Do not render Login during startup when a persistent verified session exists.
+// Firebase LOCAL persistence will restore the real auth user and showAuthOrHome()
+// will take the app directly to Home.
+if (!localStorage.getItem('indoone_otp_verified_uid')) renderLoginNow();
 
 $('menuBtn').addEventListener('click', toggleMenu);
 $('drawerBackdrop').addEventListener('click', closeDrawer);
