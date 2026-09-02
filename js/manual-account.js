@@ -11,28 +11,40 @@ window.saveAccount = async function () {
   const algorithm = document.getElementById('accountAlgorithm')?.value || 'SHA1';
   const editId = Number(modal.querySelector('[data-save-account]')?.dataset.editId || 0);
   if (!name || !secret) return toast('Enter account name and secret key');
+  if (!window.IndooneFirebase?.auth?.currentUser) return toast('Please login first');
+  if (!window.IndooneCloudAccounts) return toast('Cloud storage is unavailable');
+
   try {
     TOTP.base32ToBytes(secret);
     await TOTP.generate(secret, Math.floor(Date.now() / 1000 / period), digits, algorithm);
   } catch (_) {
     return toast('Invalid TOTP secret');
   }
-  if (editId) {
-    const a = indooneState.accounts.find(x => x.id === editId);
-    if (a) Object.assign(a, {name, email, secret, digits, period, algorithm});
-    if (IndoonePersistence.isUnlocked()) await IndoonePersistence.persistCurrent();
+
+  try {
+    if (editId) {
+      const a = indooneState.accounts.find(x => x.id === editId);
+      if (!a) return toast('Account not found');
+      Object.assign(a, {name, email, secret, digits, period, algorithm, updatedAt: Date.now()});
+      await IndooneCloudAccounts.save(a);
+      closeModal();
+      await IndooneTotpController.refreshAll();
+      toast('Account updated and synced');
+      return;
+    }
+
+    const account = {
+      id: Date.now(), name, email, secret, digits, period, algorithm,
+      favorite: false, icon: name.charAt(0).toUpperCase(), cls: 'google',
+      updatedAt: Date.now(), seconds: period, code: '------'
+    };
+    await IndooneCloudAccounts.save(account);
+    indooneState.accounts.push(account);
+    renderAccounts();
     closeModal();
     await IndooneTotpController.refreshAll();
-    toast('Account updated securely');
-    return;
+    toast('Account saved to Firebase');
+  } catch (error) {
+    toast(error?.message || 'Could not save account');
   }
-  indooneState.accounts.push({id:Date.now(),name,email,secret,digits,period,algorithm,favorite:false,icon:name.charAt(0).toUpperCase(),cls:'google',seconds:period,code:'------'});
-  if (!IndoonePersistence.isUnlocked()) {
-    indooneState.accounts.pop();
-    return toast('Create or unlock your vault first');
-  }
-  await IndoonePersistence.persistCurrent();
-  closeModal();
-  await IndooneTotpController.refreshAll();
-  toast('Account encrypted and saved');
 };
