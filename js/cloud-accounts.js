@@ -5,6 +5,12 @@ window.IndooneCloudAccounts = (() => {
     return window.IndooneFirebase.database.ref(`users/${user.uid}/accounts`);
   };
 
+  const trashPath = () => {
+    const user = window.IndooneFirebase?.auth?.currentUser;
+    if (!user) throw new Error('Please login first.');
+    return window.IndooneFirebase.database.ref(`users/${user.uid}/trash`);
+  };
+
   const cleanAccount = account => ({
     id: Number(account.id),
     name: String(account.name || ''),
@@ -19,13 +25,33 @@ window.IndooneCloudAccounts = (() => {
     updatedAt: Number(account.updatedAt || Date.now())
   });
 
+  const cleanTrashItem = account => ({
+    ...cleanAccount(account),
+    deletedAt: Number(account.deletedAt || Date.now()),
+    purgeAt: Number(account.purgeAt || (Number(account.deletedAt || Date.now()) + 30 * 24 * 60 * 60 * 1000))
+  });
+
   function clearLegacyLocalVault() {
     localStorage.removeItem('indoone.vault.blob.v1');
     localStorage.removeItem('indoone.vault.meta.v1');
   }
 
+  async function purgeExpiredTrash() {
+    const snapshot = await trashPath().once('value');
+    const value = snapshot.val() || {};
+    const now = Date.now();
+    const removals = [];
+    Object.entries(value).forEach(([id, item]) => {
+      if (!item) return;
+      const purgeAt = Number(item.purgeAt || 0);
+      if (purgeAt && purgeAt <= now) removals.push(trashPath().child(id).remove());
+    });
+    await Promise.all(removals);
+  }
+
   async function load() {
     clearLegacyLocalVault();
+    await purgeExpiredTrash();
     const snapshot = await accountsPath().once('value');
     const value = snapshot.val() || {};
     const accounts = Object.values(value).filter(Boolean).map(cleanAccount);
@@ -52,11 +78,40 @@ window.IndooneCloudAccounts = (() => {
     await accountsPath().set(payload);
   }
 
-  async function remove(id) {
-    await accountsPath().child(String(Number(id))).remove();
+  async function moveToTrash(account) {
+    const item = cleanTrashItem(account);
+    await trashPath().child(String(item.id)).set(item);
+    await accountsPath().child(String(item.id)).remove();
+    return item;
   }
 
-  return { load, save, saveAll, remove, clearLegacyLocalVault };
+  async function listTrash() {
+    await purgeExpiredTrash();
+    const snapshot = await trashPath().once('value');
+    const value = snapshot.val() || {};
+    return Object.values(value).filter(Boolean).map(cleanTrashItem).sort((a, b) => b.deletedAt - a.deletedAt);
+  }
+
+  async function restoreFromTrash(id) {
+    const ref = trashPath().child(String(Number(id)));
+    const snapshot = await ref.once('value');
+    const item = snapshot.val();
+    if (!item) throw new Error('Trash item not found.');
+    if (Number(item.purgeAt || 0) <= Date.now()) {
+      await ref.remove();
+      throw new Error('This account has expired from Trash.');
+    }
+    const account = cleanAccount(item);
+    await accountsPath().child(String(account.id)).set(account);
+    await ref.remove();
+    return account;
+  }
+
+  async function remove(id) {
+    return moveToTrash({ ...(window.indooneState?.accounts || []).find(a => Number(a.id) === Number(id)), id });
+  }
+
+  return { load, save, saveAll, remove, moveToTrash, listTrash, restoreFromTrash, purgeExpiredTrash, clearLegacyLocalVault };
 })();
 
 IndooneCloudAccounts.clearLegacyLocalVault();
