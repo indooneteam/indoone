@@ -1,0 +1,7 @@
+/* Keep the 430px mobile-style app fully visible on desktop and mobile viewports. */
+html, body { height: 100%; }
+.phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
+@media (min-width: 700px) {
+  .phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
+  .bottom-nav { bottom: 0 !important; }
+}
