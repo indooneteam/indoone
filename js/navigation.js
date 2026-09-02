@@ -4,7 +4,7 @@ window.showFavorites = async function () {
     if (window.IndooneCloudAccounts?.load) await window.IndooneCloudAccounts.load();
     const favorites = (window.indooneState?.accounts || []).filter(a => a.favorite);
     const rows = favorites.length
-      ? favorites.map(a => `<button type="button" class="settings-row" style="width:100%;text-align:left;border:0;background:#fff;" data-favorite-account="${a.id}"><span>${a.name}<small>${a.email || 'Authenticator account'}</small></span><b>${a.code || '------'}</b></button>`).join('')
+      ? favorites.map(a => `<button type="button" class="settings-row" style="width:100%;text-align:left;border:0;background:#fff;" onclick="closeModal();openAccount(${Number(a.id)})"><span>${a.name}<small>${a.email || 'Authenticator account'}</small></span><b>${a.code || '------'}</b></button>`).join('')
       : `<p style="text-align:center;padding:28px 0">No favorite accounts yet.</p>`;
     openModal(`<div class="modal-head"><h2>Favorites</h2><button class="close-btn" data-close>×</button></div><div id="favoritesList">${rows}</div><button class="primary" data-close>Done</button>`);
   } catch (error) {
