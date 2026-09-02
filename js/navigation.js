@@ -23,3 +23,6 @@ window.showSecurity = function () {
 window.showAbout = function () {
   openModal(`<h2>About Indoone</h2><p>Indoone Authenticator — a login-based cloud-synced TOTP authenticator.</p><button class="primary" data-close>Done</button>`);
 };
+
+// Keep Lock App packed with the menu items instead of pinning it to the bottom.
+document.querySelector('.lock-item')?.style.setProperty('margin-top', '0');
