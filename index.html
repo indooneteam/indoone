@@ -28,10 +28,7 @@
     <section class="content" id="content"><div class="page-heading"><div><p class="eyebrow">SECURE &amp; PRIVATE</p><h1>Your accounts</h1></div><button type="button" class="small-btn" id="sortBtn" onclick="handleSortAccounts()">Sort ↕</button></div><div class="account-list" id="accountList"></div><div class="empty-state" id="emptyState" hidden><div class="empty-icon">⌁</div><h3>No accounts found</h3><p>Add an account or try a different search.</p><button type="button" class="primary compact" id="emptyAddBtn">Add account</button></div></section>
     <section class="connect-content" id="connectContent" hidden>
       <div id="connectHomePage">
-        <div class="connect-hero">
-          <p class="eyebrow">NEARBY DEVICE SHARING</p><h1>Connect</h1>
-          <p>Pair nearby devices, share files and control exactly what each device can access.</p>
-        </div>
+        <div class="connect-hero"><p class="eyebrow">NEARBY DEVICE SHARING</p><h1>Connect</h1><p>Pair nearby devices, share files and control exactly what each device can access.</p></div>
         <div class="connect-actions">
           <button type="button" class="connect-action" data-connect-action="qr"><strong>▦</strong><span>QR</span><small>Show my pairing code</small></button>
           <button type="button" class="connect-action" data-connect-action="scanner"><strong>⌗</strong><span>Scanner</span><small>Scan another device</small></button>
@@ -44,8 +41,7 @@
         <div class="connect-empty">Connect two nearby Indoone devices first. File access and transfer will always follow the permissions you approve.</div>
       </div>
       <div class="connect-choice-page" id="connectChoicePage" hidden>
-        <button type="button" class="connect-back" data-connect-action="home">‹ Back</button>
-        <p class="eyebrow">NEW CONNECTION</p><h2>Connect a device</h2><p>Choose what you want to connect nearby.</p>
+        <button type="button" class="connect-back" data-connect-action="home">‹ Back</button><p class="eyebrow">NEW CONNECTION</p><h2>Connect a device</h2><p>Choose what you want to connect nearby.</p>
         <div class="connect-choice">
           <button type="button"><span class="choice-icon">📱</span><span><b>Connect another phone</b><small>Phone-to-phone nearby connection</small></span><span class="arrow">›</span></button>
           <button type="button"><span class="choice-icon">💻</span><span><b>Connect laptop / PC</b><small>Phone-to-computer nearby connection</small></span><span class="arrow">›</span></button>
@@ -77,6 +73,7 @@
   <script src="app/shared/core.js?v=20260914a"></script>
   <script src="app/shared/state.js?v=20260914a"></script>
   <script src="app/shared/cloud-accounts.js?v=20260914a"></script>
+  <script src="app/accounts/totp.js?v=20260914a"></script>
   <script src="app/shared/encrypted-vault.js?v=20260914a"></script>
   <script src="app/auth/secure-session.js?v=20260914a"></script>
   <script src="app/shared/persistence.js?v=20260914a"></script>
