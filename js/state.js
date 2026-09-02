@@ -1,10 +1,4 @@
-const DEMO_ACCOUNTS = [
-  {id:1,name:'Google',email:'personal@gmail.com',secret:'JBSWY3DPEHPK3PXP',digits:6,period:30,algorithm:'SHA1',favorite:true,icon:'G',cls:'google'},
-  {id:2,name:'GitHub',email:'user@github.com',secret:'KRUGS4ZANFZSAYJA',digits:6,period:30,algorithm:'SHA1',favorite:false,icon:'●',cls:'github'},
-  {id:3,name:'Microsoft',email:'account@outlook.com',secret:'ONSWG4TFOQ======',digits:6,period:30,algorithm:'SHA1',favorite:false,icon:'⊞',cls:'microsoft'}
-];
-
-window.indooneState = {accounts: DEMO_ACCOUNTS, search: '', newestFirst: true, trash: []};
+window.indooneState = {accounts: [], search: '', newestFirst: true, trash: []};
 
 window.handleSortAccounts = function () {
   indooneState.newestFirst = !indooneState.newestFirst;
