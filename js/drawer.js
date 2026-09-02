@@ -140,10 +140,10 @@ window.showDangerZone = function () {
   openModal(`
     <div class="modal-head"><h2>Danger Zone</h2><button class="close-btn" data-close>×</button></div>
     <p>These actions can permanently remove Indoone data. Continue only when you are sure.</p>
-    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-local>
+    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-local onclick="confirmDeleteLocalData();return false;">
       <span>Delete local data<small>Remove data stored on this device</small></span><b>›</b>
     </button>
-    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-account>
+    <button type="button" class="settings-row danger" style="width:100%;border:0;background:#fff;text-align:left" data-danger-delete-account onclick="confirmDeleteIndooneAccount();return false;">
       <span>Delete Indoone account<small>Permanently delete your Indoone account and cloud data</small></span><b>›</b>
     </button>
   `);
