@@ -14,8 +14,6 @@
     const otp = String(document.getElementById('loginOtp')?.value || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP.');
 
-    // On an invalid OTP, do not sign out or clear the pending challenge.
-    // This allows another attempt with the same OTP while it remains valid.
     const result = await verificationApi.verifyLoginOtp({
       email: pending.email,
       challengeId: pending.challengeId,
@@ -31,6 +29,8 @@
     const snapshot = await firebaseApi.database.ref(`users/${user.uid}/profile`).once('value');
     await authApi.syncProfile(user, snapshot.val() || { email: pending.email });
 
+    localStorage.setItem('indoone_otp_verified_uid', user.uid);
+    localStorage.setItem('indoone_authenticated_uid', user.uid);
     sessionStorage.setItem('indoone_otp_verified_uid', user.uid);
     sessionStorage.setItem('indoone_authenticated_uid', user.uid);
     window.__indooneAuthPending = false;
