@@ -2,7 +2,7 @@ name: Deploy Indoone Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -21,8 +21,23 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-source
+
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          path: develop-source
+
+      - name: Build Pages package
+        run: |
+          mkdir -p publish/develop
+          rsync -a --delete --exclude='.git' main-source/ publish/
+          rsync -a --delete --exclude='.git' develop-source/ publish/develop/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -30,7 +45,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: publish
 
       - name: Deploy to GitHub Pages
         id: deployment
