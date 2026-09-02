@@ -153,19 +153,20 @@ window.confirmDeleteLocalData = function () {
   openModal(`
     <div class="modal-head"><h2>Delete local data?</h2><button class="close-btn" data-close>×</button></div>
     <p>This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.</p>
-    <button type="button" class="primary danger" id="confirmLocalDelete">Delete local data</button>
+    <button type="button" class="primary danger" id="confirmLocalDelete" onclick="executeDeleteLocalData();return false;">Delete local data</button>
     <button type="button" class="secondary" data-close>Cancel</button>
   `);
-  document.getElementById('confirmLocalDelete')?.addEventListener('click', async () => {
-    try {
-      clearIndooneLocalData();
-      await window.IndooneFirebase?.auth?.signOut?.();
-      closeModal();
-      window.location.reload();
-    } catch (error) {
-      toast(error?.message || 'Could not delete local data');
-    }
-  });
+};
+
+window.executeDeleteLocalData = async function () {
+  try {
+    clearIndooneLocalData();
+    await window.IndooneFirebase?.auth?.signOut?.();
+    closeModal();
+    window.location.reload();
+  } catch (error) {
+    toast(error?.message || 'Could not delete local data');
+  }
 };
 
 window.confirmDeleteIndooneAccount = function () {
@@ -177,58 +178,58 @@ window.confirmDeleteIndooneAccount = function () {
     <p>This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.</p>
     <div class="field"><label>ACCOUNT PASSWORD</label><input id="deleteAccountPassword" type="password" autocomplete="current-password" placeholder="Enter your password"></div>
     <div class="field"><label>TYPE DELETE TO CONFIRM</label><input id="deleteAccountConfirm" type="text" autocomplete="off" placeholder="DELETE"></div>
-    <button type="button" class="primary danger" id="confirmAccountDelete">Delete Indoone account</button>
+    <button type="button" class="primary danger" id="confirmAccountDelete" onclick="executeDeleteIndooneAccount();return false;">Delete Indoone account</button>
     <button type="button" class="secondary" data-close>Cancel</button>
   `);
+};
 
-  document.getElementById('confirmAccountDelete')?.addEventListener('click', async () => {
-    const password = String(document.getElementById('deleteAccountPassword')?.value || '');
-    const confirmation = String(document.getElementById('deleteAccountConfirm')?.value || '').trim();
-    if (!password) return toast('Enter your account password');
-    if (confirmation !== 'DELETE') return toast('Type DELETE to confirm');
+window.executeDeleteIndooneAccount = async function () {
+  const password = String(document.getElementById('deleteAccountPassword')?.value || '');
+  const confirmation = String(document.getElementById('deleteAccountConfirm')?.value || '').trim();
+  if (!password) return toast('Enter your account password');
+  if (confirmation !== 'DELETE') return toast('Type DELETE to confirm');
 
-    const firebase = window.IndooneFirebase;
-    const db = firebase?.database;
-    const auth = firebase?.auth;
-    const liveUser = auth?.currentUser;
-    if (!db || !auth || !liveUser) return toast('Login session expired. Please login again.');
-    if (!liveUser.email) return toast('This account cannot be re-authenticated here.');
+  const firebase = window.IndooneFirebase;
+  const db = firebase?.database;
+  const auth = firebase?.auth;
+  const liveUser = auth?.currentUser;
+  if (!db || !auth || !liveUser) return toast('Login session expired. Please login again.');
+  if (!liveUser.email) return toast('This account cannot be re-authenticated here.');
 
-    const button = document.getElementById('confirmAccountDelete');
-    if (button) button.disabled = true;
+  const button = document.getElementById('confirmAccountDelete');
+  if (button) button.disabled = true;
 
-    try {
-      const credential = firebase.auth.EmailAuthProvider.credential(liveUser.email, password);
-      await liveUser.reauthenticateWithCredential(credential);
+  try {
+    const credential = firebase.auth.EmailAuthProvider.credential(liveUser.email, password);
+    await liveUser.reauthenticateWithCredential(credential);
 
-      const profileSnapshot = await db.ref(`users/${liveUser.uid}/profile`).once('value');
-      const profile = profileSnapshot.val() || {};
-      const mobile = String(profile.mobile || '').trim();
+    const profileSnapshot = await db.ref(`users/${liveUser.uid}/profile`).once('value');
+    const profile = profileSnapshot.val() || {};
+    const mobile = String(profile.mobile || '').trim();
 
-      const updates = {
-        [`users/${liveUser.uid}`]: null
-      };
-      if (mobile) updates[`mobileIndex/${encodeURIComponent(mobile)}`] = null;
-      await db.ref().update(updates);
+    const updates = {
+      [`users/${liveUser.uid}`]: null
+    };
+    if (mobile) updates[`mobileIndex/${encodeURIComponent(mobile)}`] = null;
+    await db.ref().update(updates);
 
-      await liveUser.delete();
-      clearIndooneLocalData();
-      closeModal();
-      window.location.reload();
-    } catch (error) {
-      if (button) button.disabled = false;
-      const code = error?.code || '';
-      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        toast('Incorrect account password');
-      } else if (code === 'auth/requires-recent-login') {
-        toast('Please login again, then retry account deletion');
-      } else if (code === 'PERMISSION_DENIED') {
-        toast('Could not remove cloud data. Check your connection and try again.');
-      } else {
-        toast(error?.message || 'Could not delete Indoone account');
-      }
+    await liveUser.delete();
+    clearIndooneLocalData();
+    closeModal();
+    window.location.reload();
+  } catch (error) {
+    if (button) button.disabled = false;
+    const code = error?.code || '';
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+      toast('Incorrect account password');
+    } else if (code === 'auth/requires-recent-login') {
+      toast('Please login again, then retry account deletion');
+    } else if (code === 'PERMISSION_DENIED') {
+      toast('Could not remove cloud data. Check your connection and try again.');
+    } else {
+      toast(error?.message || 'Could not delete Indoone account');
     }
-  });
+  }
 };
 
 drawerPanel?.addEventListener('click', event => {
@@ -268,18 +269,6 @@ drawerEl?.addEventListener('pointerdown', event => {
 });
 
 document.addEventListener('click', async event => {
-  if (event.target.closest('[data-danger-delete-local]')) {
-    event.preventDefault();
-    confirmDeleteLocalData();
-    return;
-  }
-
-  if (event.target.closest('[data-danger-delete-account]')) {
-    event.preventDefault();
-    confirmDeleteIndooneAccount();
-    return;
-  }
-
   const favoriteRow = event.target.closest('[data-favorite-account]');
   if (favoriteRow) {
     const id = Number(favoriteRow.dataset.favoriteAccount);
