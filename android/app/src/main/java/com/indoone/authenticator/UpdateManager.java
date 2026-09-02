@@ -4,14 +4,11 @@ import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-
-import androidx.core.content.FileProvider;
 
 import org.json.JSONObject;
 
@@ -22,7 +19,6 @@ import java.net.URL;
 
 public final class UpdateManager {
     private static final String UPDATE_URL = "https://indooneteam.github.io/indoone/develop/update.json";
-    private static final int CURRENT_VERSION_CODE = 2;
 
     private final MainActivity activity;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -46,8 +42,9 @@ public final class UpdateManager {
                     while ((line = reader.readLine()) != null) body.append(line);
                 }
                 JSONObject json = new JSONObject(body.toString());
-                int versionCode = json.optInt("versionCode", CURRENT_VERSION_CODE);
-                if (versionCode <= CURRENT_VERSION_CODE) return;
+                long installedCode = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).longVersionCode;
+                long remoteCode = json.optLong("versionCode", installedCode);
+                if (remoteCode <= installedCode) return;
                 String versionName = json.optString("versionName", "New version");
                 String notes = json.optString("notes", "Performance and security improvements.");
                 String downloadUrl = json.optString("downloadUrl", "");
