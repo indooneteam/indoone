@@ -24,7 +24,7 @@ window.showFavorites = async function () {
   closeDrawer();
   try {
     const cloud = window.IndooneCloudAccounts;
-    if (!cloud?.load) throw new Error('Firebase account storage is unavailable.');
+    if (!cloud?.load) throw new Error('Account storage is unavailable.');
 
     await cloud.load();
     const favorites = (window.indooneState?.accounts || []).filter(account => account.favorite);
@@ -56,13 +56,19 @@ window.showTrash = function () {
   closeDrawer();
   openModal(`
     <div class="modal-head">
-      <h2>Trash</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="brand-mark" style="width:36px;height:36px;border-radius:12px;font-size:18px">I</span>
+        <div>
+          <h2 style="margin:0">Trash</h2>
+          <small style="display:block;margin-top:2px;color:#8a8492;font-size:10px;font-weight:600">Indoone</small>
+        </div>
+      </div>
       <button type="button" class="close-btn" aria-label="Close Trash" onclick="closeModal();return false;">×</button>
     </div>
     <div class="empty-state compact-empty">
-      <div class="empty-icon">♙</div>
-      <h3>No accounts in trash</h3>
-      <p>Deleted accounts are permanently removed from Firebase.</p>
+      <div class="empty-icon" style="font-size:26px">⌫</div>
+      <h3>Trash is empty</h3>
+      <p>Deleted accounts are permanently removed.</p>
     </div>
   `);
 };
@@ -71,7 +77,7 @@ window.showSecurity = function () {
   closeDrawer();
   openModal(`
     <div class="modal-head"><h2>Security</h2><button class="close-btn" data-close>×</button></div>
-    <div class="settings-row"><span>Firebase account storage<small>Authenticator accounts sync to your user account</small></span><b>✓</b></div>
+    <div class="settings-row"><span>Cloud account storage<small>Authenticator accounts sync to your Indoone account</small></span><b>✓</b></div>
     <div class="settings-row"><span>Local account storage<small>Not used for permanent account data</small></span><b>✓</b></div>
   `);
 };
