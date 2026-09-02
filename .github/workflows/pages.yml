@@ -1,4 +1,4 @@
-name: Validate Indoone Pages
+name: Deploy Indoone Pages
 
 on:
   push:
@@ -8,25 +8,55 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-develop
+  cancel-in-progress: true
 
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages-develop
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout develop
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-source
+          fetch-depth: 1
+
+      - name: Checkout develop branch
         uses: actions/checkout@v4
         with:
           ref: develop
+          path: develop-source
           fetch-depth: 1
 
-      - name: Validate Pages files
+      - name: Build Pages package
         shell: bash
         run: |
           set -euo pipefail
-          test -f index.html
-          test -f style.css
-          test -f bottom-nav-svg.css
-          test -f connect.css
-          test -f js/connect.js
-          test -f js/events.js
-          echo "Indoone develop Pages package is valid."
+          rm -rf publish
+          mkdir -p publish/develop
+          rsync -a --exclude='.git' main-source/ publish/
+          rsync -a --exclude='.git' develop-source/ publish/develop/
+          test -f publish/index.html
+          test -f publish/develop/index.html
+          test -f publish/develop/js/connect.js
+          echo "Main site preserved at root; develop test site packaged at /develop/."
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: publish
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
