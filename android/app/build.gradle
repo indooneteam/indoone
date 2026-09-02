@@ -7,8 +7,8 @@ android {
         applicationId 'com.indoone.authenticator'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.1'
     }
     buildTypes {
         release {
@@ -43,5 +43,6 @@ tasks.configureEach { task ->
 
 dependencies {
     implementation 'androidx.biometric:biometric:1.2.0-alpha05'
+    implementation 'androidx.core:core:1.13.1'
     implementation 'com.google.android.gms:play-services-nearby:19.5.0'
 }
