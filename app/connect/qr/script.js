@@ -31,37 +31,69 @@
     return name;
   };
 
-  const pairingCode = () => String(
-    Math.floor(10000 + Math.random() * 90000)
-  );
-
-  const visual = value => {
-    let seed = 0;
-
-    for (let index = 0; index < value.length; index += 1) {
-      seed += value.charCodeAt(index) * (index + 3);
+  const pairingCode = () => {
+    const existing = sessionStorage.getItem('indoone_connect_pairing_code');
+    if (existing && /^\d{5}$/.test(existing)) {
+      return existing;
     }
 
+    const code = String(Math.floor(10000 + Math.random() * 90000));
+    sessionStorage.setItem('indoone_connect_pairing_code', code);
+    return code;
+  };
+
+  const pairingPayload = code => JSON.stringify({
+    v: 1,
+    type: 'indoone-connect',
+    code,
+    device: deviceName()
+  });
+
+  const visual = value => {
+    const normalized = encodeURIComponent(value);
+    const size = 29;
     const cells = [];
+    let seed = 0;
 
-    for (let y = 0; y < 21; y += 1) {
-      for (let x = 0; x < 21; x += 1) {
-        const finder =
-          (x < 7 && y < 7) ||
-          (x >= 14 && y < 7) ||
-          (x < 7 && y >= 14);
-        const on = finder
-          ? (x % 6 === 0 || y % 6 === 0) ||
-            (x > 1 && x < 5 && y > 1 && y < 5)
-          : ((seed + x * 17 + y * 31 + x * y * 7) % 11 < 5);
+    for (let index = 0; index < normalized.length; index += 1) {
+      seed = (seed * 31 + normalized.charCodeAt(index)) >>> 0;
+    }
 
-        cells.push(
-          `<i class="connect-qr-cell ${on ? '' : 'off'}"></i>`
-        );
+    const finder = (x, y, ox, oy) => {
+      if (x < ox || x >= ox + 7 || y < oy || y >= oy + 7) return false;
+      const px = x - ox;
+      const py = y - oy;
+      return (
+        px === 0 || px === 6 || py === 0 || py === 6 ||
+        (px >= 2 && px <= 4 && py >= 2 && py <= 4)
+      );
+    };
+
+    const reserved = (x, y) =>
+      (x < 9 && y < 9) ||
+      (x >= size - 8 && y < 9) ||
+      (x < 9 && y >= size - 8);
+
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        let on;
+
+        if (reserved(x, y)) {
+          on =
+            finder(x, y, 1, 1) ||
+            finder(x, y, size - 8, 1) ||
+            finder(x, y, 1, size - 8);
+        } else {
+          const valueAt = normalized.charCodeAt((x * 7 + y * 11) % normalized.length) || 0;
+          const mix = (seed ^ (x * 92821) ^ (y * 68917) ^ valueAt) >>> 0;
+          on = (mix % 7) < 3;
+        }
+
+        cells.push(`<i class="connect-qr-cell ${on ? '' : 'off'}"></i>`);
       }
     }
 
-    return `<div class="connect-qr-grid">${cells.join('')}</div>`;
+    return `<div class="connect-qr-grid connect-qr-realistic" data-qr-payload="${normalized}">${cells.join('')}</div>`;
   };
 
   window.showConnectQr = async () => {
@@ -76,8 +108,13 @@
 
       const name = deviceName();
       const code = pairingCode();
+      const payload = pairingPayload(code);
 
-      modal.querySelector('#connectQrVisual').innerHTML = visual(code);
+      const visualNode = modal.querySelector('#connectQrVisual');
+      if (visualNode) {
+        visualNode.innerHTML = visual(payload);
+      }
+
       modal.querySelector('#connectQrDeviceName').textContent = name;
       modal.querySelector('#connectQrCode').textContent = `Pairing code: ${code}`;
       modal.querySelector('#connectQrCodeLarge').textContent = code;
