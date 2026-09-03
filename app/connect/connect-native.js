@@ -10,7 +10,8 @@
     pendingPairing: null,
     activeEndpointId: '',
     endpointDirections: new Map(),
-    incomingEndpoints: new Map()
+    incomingEndpoints: new Map(),
+    connectedEndpoints: new Set()
   };
 
   if (!native) return;
@@ -85,6 +86,12 @@
           upload: false,
           delete: false,
           alwaysAllow: false
+        },
+        remotePermissions: {
+          photos: false,
+          videos: false,
+          documents: false,
+          files: false
         },
         createdAt: Date.now()
       };
@@ -219,18 +226,23 @@
 
   function openDataPermission(endpointId, device, direction) {
     window.closeModal?.();
-    const source = direction === 'access-to-my-device' ? 'other device' : 'this device';
+    const title = direction === 'access-to-my-device'
+      ? 'Allow access to your data'
+      : 'Choose data you will share';
+    const description = direction === 'access-to-my-device'
+      ? 'Choose exactly which data this connected device may access on your phone.'
+      : 'Choose exactly which data on this phone the connected device may access.';
     const existing = device?.permissions || {};
     const markup = `
       <section class="connect-feature connect-permission-feature">
         <div class="modal-head">
           <div>
             <p class="eyebrow">DEVICE ACCESS</p>
-            <h2>Allow access</h2>
+            <h2>${escapeHtml(title)}</h2>
           </div>
           <button type="button" class="close-btn" data-live-permission-close aria-label="Close permissions">×</button>
         </div>
-        <p class="connect-muted">Choose exactly which data ${source} may access on this phone.</p>
+        <p class="connect-muted">${escapeHtml(description)}</p>
         <div class="permission-list">
           ${[
             ['photos', 'Photos', 'Allow access to approved photos.'],
@@ -261,10 +273,10 @@
 
       current.permissions = {
         ...(current.permissions || {}),
-        photos: Boolean(allowed.includes('photos')),
-        videos: Boolean(allowed.includes('videos')),
-        documents: Boolean(allowed.includes('documents')),
-        files: Boolean(allowed.includes('files'))
+        photos: allowed.includes('photos'),
+        videos: allowed.includes('videos'),
+        documents: allowed.includes('documents'),
+        files: allowed.includes('files')
       };
       current.updatedAt = Date.now();
       saveDevices(devices);
@@ -277,21 +289,22 @@
 
       const permissionMessage = JSON.stringify({
         type: 'indoone-permissions',
-        permissions: current.permissions
+        permissions: {
+          photos: current.permissions.photos,
+          videos: current.permissions.videos,
+          documents: current.permissions.documents,
+          files: current.permissions.files
+        }
       });
 
       try {
         native.sendNearbyText?.(endpointId, permissionMessage);
-      } catch (_) {
-        // Native transport may be unavailable outside Android.
-      }
+      } catch (_) {}
 
       window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
         detail: { permissions: current.permissions, device: current }
       }));
 
-      const status = modal.querySelector('[data-live-permission-status]');
-      if (status) status.textContent = allowed.length ? 'Selected access has been saved.' : 'All file access is denied.';
       notify(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
       window.closeModal?.();
     };
@@ -345,14 +358,14 @@
     state.endpoints.clear();
     state.endpointDirections.clear();
     state.incomingEndpoints.clear();
+    state.connectedEndpoints.clear();
   };
 
   window.addEventListener('indoone-nearby', event => {
     const detail = event.detail || {};
 
     if (detail.type === 'permissions') {
-      const granted = detail.message === 'granted';
-      if (granted) startTransport();
+      if (detail.message === 'granted') startTransport();
       else {
         state.pendingMode = null;
         state.pendingPairing = null;
@@ -364,16 +377,13 @@
     if (detail.type === 'endpointFound') {
       const endpointId = detail.endpointId;
       if (!endpointId) return;
+
       const rawName = detail.message || 'Nearby Indoone Device';
       const codeMatch = rawName.match(/\[(\d{5})\]\s*$/);
       const discoveredCode = codeMatch?.[1] || '';
       const displayName = rawName.replace(/\s*\[\d{5}\]\s*$/, '').trim() || rawName;
-      state.endpoints.set(endpointId, {
-        endpointId,
-        name: displayName,
-        rawName,
-        pairingCode: discoveredCode
-      });
+      const item = { endpointId, name: displayName, rawName, pairingCode: discoveredCode };
+      state.endpoints.set(endpointId, item);
 
       if (state.pendingPairing?.code && discoveredCode === state.pendingPairing.code) {
         state.activeEndpointId = endpointId;
@@ -382,16 +392,6 @@
         state.pendingPairing = null;
         notify(`Found ${displayName}. Connecting nearby…`);
       }
-
-      const list = document.getElementById('nearbyDiscoveryList');
-      if (!list) return;
-      list.innerHTML = [...state.endpoints.values()].map(found => `
-        <div class="device-card connected">
-          <div class="device-icon">${state.targetType === 'computer' ? '💻' : '📱'}</div>
-          <div><b>${escapeHtml(found.name)}</b><small>Nearby • Ready</small></div>
-          <span class="device-dot"></span>
-        </div>
-      `).join('');
       return;
     }
 
@@ -401,15 +401,18 @@
     }
 
     if (detail.type === 'connectionInitiated') {
+      const endpointId = detail.endpointId;
+      if (!endpointId) return;
+
       if (detail.incoming) {
-        state.endpointDirections.set(detail.endpointId, 'access-to-my-device');
-        state.incomingEndpoints.set(detail.endpointId, detail.message || 'Nearby device');
-        notify(`${detail.message || 'Nearby device'} is connecting.`);
-        native.acceptNearbyConnection?.(detail.endpointId);
-      } else {
-        state.endpointDirections.set(detail.endpointId, 'access-other-device');
-        notify(`Connecting to ${detail.message || 'the device'}…`);
+        state.endpointDirections.set(endpointId, 'access-to-my-device');
+        state.incomingEndpoints.set(endpointId, detail.message || 'Nearby device');
+        native.acceptNearbyConnection?.(endpointId);
+        return;
       }
+
+      state.endpointDirections.set(endpointId, 'access-other-device');
+      notify(`Connecting to ${detail.message || 'the device'}…`);
       return;
     }
 
@@ -420,6 +423,9 @@
       }
 
       const endpointId = detail.endpointId;
+      if (!endpointId || state.connectedEndpoints.has(endpointId)) return;
+      state.connectedEndpoints.add(endpointId);
+
       const incomingName = state.incomingEndpoints.get(endpointId);
       const item = state.endpoints.get(endpointId);
       const name = item?.name || incomingName || 'Nearby device';
@@ -442,15 +448,15 @@
         if (!device) return;
 
         device.remotePermissions = {
-          ...(device.remotePermissions || {}),
-          ...message.permissions
+          photos: Boolean(message.permissions?.photos),
+          videos: Boolean(message.permissions?.videos),
+          documents: Boolean(message.permissions?.documents),
+          files: Boolean(message.permissions?.files)
         };
         device.updatedAt = Date.now();
         saveDevices(devices);
         notify('The other device updated its data permissions.');
-      } catch (_) {
-        // Ignore non-JSON payloads.
-      }
+      } catch (_) {}
       return;
     }
 
@@ -459,6 +465,7 @@
       state.activeEndpointId = '';
       state.endpointDirections.delete(detail.endpointId);
       state.incomingEndpoints.delete(detail.endpointId);
+      state.connectedEndpoints.delete(detail.endpointId);
       notify('Nearby device disconnected.');
       return;
     }
