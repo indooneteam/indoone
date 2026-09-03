@@ -4,3 +4,16 @@
 .home-page .account-list{width:100%}
 .home-page .empty-state{text-align:center}
 .home-page .small-btn{white-space:nowrap}
+.add-account-page{width:min(620px,100%);margin:0 auto;padding:8px 0 110px}
+.add-account-page .page-back{border:0;background:none;padding:8px 0;margin:0 0 18px;color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.add-account-page h1{margin:0 0 8px}
+.add-account-page>.field{margin-top:16px}
+.add-account-page>.primary{width:100%;margin-top:22px}
+.add-account-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
+.add-account-option{min-height:150px;padding:20px;border:1px solid #e8e3ec;border-radius:18px;background:#fff;text-align:left;display:flex;flex-direction:column;gap:8px;cursor:pointer;font:inherit}
+.add-account-option>span{font-size:28px;line-height:1}
+.add-account-option strong{font-size:17px}
+.add-account-option small{color:#77717f;line-height:1.45}
+.add-account-import{padding:18px;border:1px solid #eee9f1;border-radius:18px;background:#faf9fc}
+.add-account-import .secondary{width:100%;margin-top:10px}
+@media(max-width:600px){.add-account-options{grid-template-columns:1fr}.add-account-option{min-height:120px}}
