@@ -11,6 +11,23 @@
   min-height: 100%;
 }
 
+body.home-subpage-open .content {
+  overflow: hidden;
+  max-height: calc(100dvh - 76px - 67px);
+}
+
+body.home-subpage-open .home-sub-page {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+body.home-subpage-open .search-wrap:not([hidden]) + .content {
+  max-height: calc(100dvh - 76px - 67px - 60px);
+}
+
 .home-page .page-heading {
   display: flex;
   align-items: center;
