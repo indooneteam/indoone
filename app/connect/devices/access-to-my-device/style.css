@@ -1,0 +1,9 @@
+.access-to-my-device-feature {
+  width: 100%;
+}
+
+.device-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
