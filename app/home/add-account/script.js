@@ -302,6 +302,33 @@
     handleHistory
   };
 
+  window.showAccountsPage = backToHome;
+  window.showManual = function (prefill = {}) {
+    return window.IndooneAddAccount.showManual({
+      push: true,
+      id: Number(prefill.id || 0),
+      prefill
+    });
+  };
+  window.saveAccount = function () {
+    document.getElementById('manualAccountForm')?.requestSubmit();
+  };
+  window.importOtpUri = function () {
+    return window.IndooneAddAccount.showFeature('import', {
+      push: true
+    });
+  };
+  window.IndooneQrScanner = {
+    start() {
+      return window.IndooneAddAccount.showFeature('qr', {
+        push: true
+      });
+    },
+    stop() {
+      window.IndooneAddAccountQr?.stop?.();
+    }
+  };
+
   window.addEventListener('popstate', handleHistory);
   window.addEventListener('hashchange', handleHistory);
 })();
