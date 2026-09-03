@@ -42,9 +42,4 @@
     const timer = setInterval(() => { if (attach()) clearInterval(timer); }, 100);
     setTimeout(() => clearInterval(timer), 10000);
   }
-
-  const nativeScript = document.createElement('script');
-  nativeScript.src = 'js/connect-native.js?v=20260902a';
-  nativeScript.async = false;
-  document.head.appendChild(nativeScript);
 })();
