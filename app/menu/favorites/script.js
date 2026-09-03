@@ -5,8 +5,12 @@ window.initMenuFavorites = async function () {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\"/g, '&quot;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+
+  if (!modal) {
+    return;
+  }
 
   try {
     const cloud = window.IndooneCloudAccounts;
@@ -24,18 +28,18 @@ window.initMenuFavorites = async function () {
       ? favorites.map(account => `
           <button
             type="button"
-            class="settings-row favorite-list-row"
+            class="favorite-account-row"
             data-favorite-account="${Number(account.id)}"
           >
-            <span>
-              <b>${escapeHtml(account.name)}</b>
-              <small>${escapeHtml(account.email || 'Authenticator account')}</small>
+            <span class="favorite-account-main">
+              <span class="favorite-account-name">${escapeHtml(account.name)}</span>
+              <span class="favorite-account-email">${escapeHtml(account.email || 'Authenticator account')}</span>
             </span>
-            <b class="favorite-code">${escapeHtml(account.code || '------')}</b>
+            <span class="favorite-account-code">${escapeHtml(account.code || '------')}</span>
           </button>
         `).join('')
       : `
-          <div class="empty-state compact-empty">
+          <div class="favorite-empty">
             <div class="empty-icon">☆</div>
             <h3>No favorite accounts</h3>
             <p>Star an account to see it here.</p>
@@ -43,13 +47,25 @@ window.initMenuFavorites = async function () {
         `;
 
     modal.innerHTML = `
-      <div class="modal-head">
-        <h2>Favorites</h2>
-        <button type="button" class="close-btn" data-close aria-label="Close Favorites">×</button>
-      </div>
-      <div id="favoritesList" class="drawer-list-modal">
-        ${rows}
-      </div>
+      <section class="menu-feature-shell favorites-feature" data-menu-feature data-menu-section="favorites">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">SAVED ACCOUNTS</p>
+            <h2>Favorites</h2>
+          </div>
+          <button
+            type="button"
+            class="close-btn"
+            data-close
+            aria-label="Close Favorites"
+          >
+            ×
+          </button>
+        </div>
+        <div id="favoritesList" class="favorite-account-list">
+          ${rows}
+        </div>
+      </section>
     `;
 
     modal.querySelectorAll('[data-favorite-account]').forEach(row => {
