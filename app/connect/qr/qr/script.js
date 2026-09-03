@@ -37,9 +37,12 @@
     if (saved) return saved;
 
     const uid = window.IndooneFirebase?.auth?.currentUser?.uid || '';
-    const suffix = uid ? uid.slice(-4).toUpperCase() : Math.random().toString(36).slice(2, 6).toUpperCase();
+    const suffix = uid
+      ? uid.slice(-4).toUpperCase()
+      : Math.random().toString(36).slice(2, 6).toUpperCase();
     const type = /Mobi|Android/i.test(navigator.userAgent) ? 'Phone' : 'Computer';
     const name = `Indoone ${type} ${suffix}`;
+
     localStorage.setItem('indoone_connect_device_name', name);
     return name;
   }
@@ -105,6 +108,7 @@
     generator.addData(value);
     generator.make();
     target.innerHTML = generator.createSvgTag(5, 0);
+
     const svg = target.querySelector('svg');
     if (svg) {
       svg.setAttribute('role', 'img');
@@ -117,7 +121,7 @@
     }
   }
 
-  window.showConnectQr = async () => {
+  async function show() {
     stopAdvertising();
 
     try {
@@ -126,9 +130,14 @@
       if (!modal) return;
 
       pairingCode = createPairingCode();
-      const payload = JSON.stringify({ v: 1, type: 'indoone-connect', code: pairingCode, device: deviceName() });
-      await renderQr(modal.querySelector('#connectQrVisual'), payload);
+      const payload = JSON.stringify({
+        v: 1,
+        type: 'indoone-connect',
+        code: pairingCode,
+        device: deviceName()
+      });
 
+      await renderQr(modal.querySelector('#connectQrVisual'), payload);
       modal.querySelector('#connectQrDeviceName').textContent = deviceName();
       modal.querySelector('#connectQrCode').textContent = `Pairing code: ${pairingCode}`;
       modal.querySelector('#connectQrCodeLarge').textContent = pairingCode;
@@ -156,5 +165,7 @@
       stopAdvertising();
       window.toast?.(error?.message || 'Could not open QR code.');
     }
-  };
+  }
+
+  window.IndooneNestedQr = { show, stopAdvertising };
 })();
