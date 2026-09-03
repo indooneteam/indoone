@@ -1,5 +1,5 @@
 (() => {
-  const SCRIPT_URL = 'app/connect/qr/qr/script.js?v=20260903a';
+  const SCRIPT_URL = 'app/connect/qr/qr/script.js?v=20260903b';
   let loading = null;
 
   window.showConnectQr = async () => {
