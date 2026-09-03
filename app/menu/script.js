@@ -1,99 +1,159 @@
 (() => {
-  const drawerEl = document.getElementById('drawer');
-  const drawerPanel = drawerEl?.querySelector('.drawer-panel');
-  const loaded = new Set();
-  const cssLoaded = new Set();
+  const drawer = document.getElementById('drawer');
+  const panel = drawer?.querySelector('.drawer-panel');
+  const loadedScripts = new Set();
+  const loadedStyles = new Set();
 
-  window.toggleMenu = function () {
-    if (!drawerEl) return;
-    const open = drawerEl.classList.toggle('open');
-    drawerEl.setAttribute('aria-hidden', String(!open));
+  const featureInitializers = {
+    accounts: 'initMenuAccounts',
+    favorites: 'initMenuFavorites',
+    trash: 'initMenuTrash',
+    security: 'initMenuSecurity',
+    about: 'initMenuAbout',
+    lock: 'initMenuLock',
+    'danger-zone': 'initMenuDangerZone',
+    logout: 'initMenuLogout'
   };
 
-  window.closeDrawer = function () {
-    drawerEl?.classList.remove('open');
-    drawerEl?.setAttribute('aria-hidden', 'true');
+  const nestedInitializers = {
+    'danger-zone/delete-local-data': 'initMenuDeleteLocalData',
+    'danger-zone/delete-account': 'initMenuDeleteAccount',
+    'logout/this-device': 'initMenuLogoutThisDevice',
+    'logout/all-devices': 'initMenuLogoutAllDevices'
   };
 
-  async function openPath(path, initName) {
+  function showOverlay() {
+    document.getElementById('overlay')?.classList.remove('hidden');
+  }
+
+  function hideOverlay() {
+    document.getElementById('overlay')?.classList.add('hidden');
+  }
+
+  function getFeatureBase(path) {
+    return `app/menu/${path}`;
+  }
+
+  async function loadStyle(base) {
+    if (loadedStyles.has(base)) return;
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `${base}/style.css?v=20260903d`;
+    document.head.appendChild(link);
+    loadedStyles.add(base);
+  }
+
+  async function loadScript(base) {
+    const src = `${base}/script.js?v=20260903d`;
+
+    if (loadedScripts.has(src)) return;
+
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Menu feature script could not be loaded.'));
+      document.body.appendChild(script);
+    });
+
+    loadedScripts.add(src);
+  }
+
+  async function loadFeatureMarkup(base) {
+    const response = await fetch(`${base}/index.html?v=20260903d`, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('Menu feature could not be loaded.');
+    }
+
     const modal = document.getElementById('modal');
-    if (!modal) return;
+    if (!modal) {
+      throw new Error('Menu modal is unavailable.');
+    }
+
+    modal.innerHTML = await response.text();
+  }
+
+  async function openPath(path, initializerName) {
+    closeDrawer();
+
     try {
-      const base = `app/menu/${path}`;
-      const response = await fetch(`${base}/index.html?v=20260903c`, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Menu feature could not be loaded.');
-      modal.innerHTML = await response.text();
-      if (!cssLoaded.has(base)) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `${base}/style.css?v=20260903c`;
-        document.head.appendChild(link);
-        cssLoaded.add(base);
+      const base = getFeatureBase(path);
+
+      await loadFeatureMarkup(base);
+      await loadStyle(base);
+      await loadScript(base);
+
+      const initializer = window[initializerName];
+      if (typeof initializer !== 'function') {
+        throw new Error('Menu feature initializer is unavailable.');
       }
-      const src = `${base}/script.js?v=20260903c`;
-      if (!loaded.has(src)) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = src;
-          script.onload = resolve;
-          script.onerror = () => reject(new Error('Menu feature script could not be loaded.'));
-          document.body.appendChild(script);
-        });
-        loaded.add(src);
+
+      const result = await initializer();
+
+      if (result === false) {
+        hideOverlay();
+      } else {
+        showOverlay();
       }
-      const keepOverlayOpen = window[initName]?.();
-      const overlay = document.getElementById('overlay');
-      if (keepOverlayOpen === false) overlay?.classList.add('hidden');
-      else overlay?.classList.remove('hidden');
     } catch (error) {
-      toast(error?.message || 'Could not open menu item');
+      hideOverlay();
+      window.toast?.(error?.message || 'Could not open menu item');
     }
   }
 
+  window.toggleMenu = function () {
+    if (!drawer) return;
+
+    const open = !drawer.classList.contains('open');
+    drawer.classList.toggle('open', open);
+    drawer.setAttribute('aria-hidden', String(!open));
+  };
+
+  window.closeDrawer = function () {
+    drawer?.classList.remove('open');
+    drawer?.setAttribute('aria-hidden', 'true');
+  };
+
   window.openMenuFeature = function (feature) {
-    const names = {
-      favorites: 'initMenuFavorites',
-      trash: 'initMenuTrash',
-      security: 'initMenuSecurity',
-      about: 'initMenuAbout',
-      lock: 'initMenuLock',
-      'danger-zone': 'initMenuDangerZone',
-      logout: 'initMenuLogout'
-    };
-    const initName = names[feature];
-    if (!initName) return;
-    closeDrawer();
-    void openPath(feature, initName);
+    const initializerName = featureInitializers[feature];
+    if (!initializerName) return;
+
+    void openPath(feature, initializerName);
   };
 
   window.openMenuNested = function (path) {
-    const last = path.split('/').pop();
-    const map = {
-      'delete-local-data': 'initMenuDeleteLocalData',
-      'delete-account': 'initMenuDeleteAccount',
-      'this-device': 'initMenuLogoutThisDevice',
-      'all-devices': 'initMenuLogoutAllDevices'
-    };
-    const initName = map[last];
-    if (!initName) return;
-    void openPath(path, initName);
+    const initializerName = nestedInitializers[path];
+    if (!initializerName) return;
+
+    void openPath(path, initializerName);
   };
 
-  drawerPanel?.addEventListener('click', event => {
+  panel?.addEventListener('click', event => {
     const item = event.target.closest('[data-action]');
-    if (!item) return;
+    if (!item || !panel.contains(item)) return;
+
     event.preventDefault();
     event.stopPropagation();
+
     const action = item.dataset.action;
+
     if (action === 'accounts') {
       closeDrawer();
       document.getElementById('accountsNav')?.click();
       return;
     }
-    openMenuFeature(action);
+
+    window.openMenuFeature(action);
   });
 
-  drawerEl?.addEventListener('pointerdown', event => {
-    if (drawerEl.classList.contains('open') && drawerPanel && !drawerPanel.contains(event.target)) closeDrawer();
+  drawer?.addEventListener('pointerdown', event => {
+    if (!drawer.classList.contains('open')) return;
+    if (panel && panel.contains(event.target)) return;
+
+    closeDrawer();
   });
 })();
