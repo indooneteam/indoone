@@ -12,8 +12,8 @@
 }
 
 body.home-subpage-open .content {
+  height: calc(100dvh - 76px - 67px);
   overflow: hidden;
-  max-height: calc(100dvh - 76px - 67px);
 }
 
 body.home-subpage-open .home-sub-page {
@@ -25,7 +25,7 @@ body.home-subpage-open .home-sub-page {
 }
 
 body.home-subpage-open .search-wrap:not([hidden]) + .content {
-  max-height: calc(100dvh - 76px - 67px - 60px);
+  height: calc(100dvh - 76px - 67px - 60px);
 }
 
 .home-page .page-heading {
