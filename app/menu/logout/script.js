@@ -1,0 +1,5 @@
+window.initMenuLogout = function () {
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `<div class="modal-head"><h2>Log out</h2><button class="close-btn" data-close>×</button></div><p>Choose where you want to sign out.</p><button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-open-nested="logout/this-device"><span>Log out on this device<small>Sign out only from this device</small></span><b>›</b></button><button type="button" class="settings-row" style="width:100%;border:0;background:#fff;text-align:left" data-open-nested="logout/all-devices"><span>Log out on all devices<small>Sign out everywhere you use Indoone</small></span><b>›</b></button><button type="button" class="secondary" data-close>Cancel</button>`;
+  modal.querySelectorAll('[data-open-nested]').forEach(button => button.addEventListener('click', () => window.openMenuNested(button.dataset.openNested)));
+};
