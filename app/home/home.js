@@ -7,6 +7,9 @@
   let initialized = false;
   let addFeatureReady = null;
 
+  // Install the click handler before shared/events.js captures showAdd().
+  window.showAdd = () => window.IndooneHome?.showAddAccount?.({ push: true });
+
   function setupViews() {
     const page = document.getElementById(CONTENT_ID);
     if (!page || initialized) return;
@@ -26,9 +29,6 @@
     page.appendChild(subPage);
 
     window.addEventListener('popstate', handleHistory);
-    if (window.location.hash === ADD_HASH) {
-      showAddAccount({ push: false });
-    }
   }
 
   function loadAddFeature() {
@@ -98,7 +98,6 @@
 
   function init() {
     setupViews();
-    window.showAdd = () => showAddAccount({ push: true });
     if (window.location.hash === ADD_HASH) showAddAccount({ push: false });
   }
 
