@@ -1,0 +1,37 @@
+<section class="connect-feature connect-permission-feature">
+  <div class="modal-head">
+    <div>
+      <p class="eyebrow">DEVICE ACCESS</p>
+      <h2>Allow access</h2>
+    </div>
+    <button type="button" class="close-btn" data-permission-close aria-label="Close permissions">×</button>
+  </div>
+
+  <p class="connect-muted">
+    Choose exactly which files this connected device may access on this phone.
+  </p>
+
+  <div class="permission-list">
+    <label class="permission-item">
+      <input type="checkbox" data-permission="photos" />
+      <span><b>Photos</b><small>Allow access to approved photos.</small></span>
+    </label>
+    <label class="permission-item">
+      <input type="checkbox" data-permission="videos" />
+      <span><b>Videos</b><small>Allow access to approved videos.</small></span>
+    </label>
+    <label class="permission-item">
+      <input type="checkbox" data-permission="documents" />
+      <span><b>PDF / Documents</b><small>Allow access to approved documents.</small></span>
+    </label>
+    <label class="permission-item">
+      <input type="checkbox" data-permission="files" />
+      <span><b>Files</b><small>Allow access to approved files.</small></span>
+    </label>
+  </div>
+
+  <p id="scannerPermissionStatus" class="connect-muted"></p>
+
+  <button type="button" class="primary" data-permission-save>Allow selected</button>
+  <button type="button" class="secondary" data-permission-deny>Deny all</button>
+</section>
