@@ -4,7 +4,7 @@
   let detector = null;
   let scanning = false;
 
-  const MARKUP_URL = 'app/connect/scanner/scanner/index.html?v=20260903a';
+  const MARKUP_URL = 'app/connect/scanner/scanner/index.html?v=20260904a';
   const PENDING_DEVICE_KEY = 'indoone_connect_pending_device_v1';
 
   async function loadMarkup() {
@@ -47,7 +47,7 @@
       };
 
       window.addEventListener('indoone-nearby', handler);
-      timeoutId = window.setTimeout(() => finish(false), 15000);
+      timeoutId = window.setTimeout(() => finish(false), 60000);
 
       try {
         native.requestNearbyPermissions();
@@ -195,7 +195,7 @@
     try {
       const ready = await ensureNearbyReady();
       if (!ready) {
-        window.toast?.('Turn on Bluetooth and allow Nearby devices access to use the scanner.');
+        window.toast?.('Turn on Bluetooth and Wi-Fi, then allow Nearby devices access to use the scanner.');
         return;
       }
 
