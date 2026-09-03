@@ -61,22 +61,6 @@ $('brandBtn')?.addEventListener('click', () => {
   $('accountsNav')?.click();
 });
 
-bindClickWithoutInlineHandler($('searchBtn'), () => {
-  $('searchWrap').hidden = false;
-  $('search').focus();
-});
-
-$('clearSearch')?.addEventListener('click', () => {
-  $('search').value = '';
-  indooneState.search = '';
-  renderAccounts();
-});
-
-$('search')?.addEventListener('input', event => {
-  indooneState.search = event.target.value.toLowerCase().trim();
-  renderAccounts();
-});
-
 window.handleSortAccounts = function () {
   $('sortBtn').textContent = 'Sort ↕';
   indooneState.newestFirst = !indooneState.newestFirst;
@@ -84,8 +68,10 @@ window.handleSortAccounts = function () {
   toast(indooneState.newestFirst ? 'Newest first' : 'Name A–Z');
 };
 
+$('sortBtn')?.addEventListener('click', window.handleSortAccounts);
 bindClickWithoutInlineHandler($('addBtn'), () => window.showAdd?.());
 $('emptyAddBtn')?.addEventListener('click', () => window.showAdd?.());
+$('lobbyNav')?.addEventListener('click', () => toast('Lobby is planned next'));
 
 $('accountsNav')?.addEventListener('click', () => {
   closeModal();
@@ -157,32 +143,7 @@ overlay?.addEventListener('click', event => {
   }
 
   if (event.target.closest('[data-close]')) {
-    if (window.IndooneQrScanner) {
-      IndooneQrScanner.stop();
-    }
-
     closeModal();
-    return;
-  }
-
-  if (event.target.closest('[data-tab]')) {
-    const tab = event.target.closest('[data-tab]').dataset.tab;
-
-    if (window.IndooneQrScanner) {
-      IndooneQrScanner.stop();
-    }
-
-    if (tab === 'manual') {
-      showManual();
-    } else {
-      showAdd();
-    }
-
-    return;
-  }
-
-  if (event.target.closest('[data-import-uri]')) {
-    importOtpUri();
     return;
   }
 
@@ -202,27 +163,27 @@ overlay?.addEventListener('click', event => {
   }
 
   if (event.target.closest('[data-camera]')) {
-    IndooneQrScanner.start();
+    window.IndooneQrScanner?.start?.();
     return;
   }
 
   if (event.target.closest('[data-save-account]')) {
-    saveAccount();
+    window.saveAccount?.();
     return;
   }
 
   if (event.target.closest('[data-copy]')) {
-    copyCurrentCode();
+    window.copyCurrentCode?.();
     return;
   }
 
   if (event.target.closest('[data-delete]')) {
-    deleteCurrent();
+    window.deleteCurrent?.();
     return;
   }
 
   if (event.target.closest('[data-edit]')) {
-    editCurrent();
+    window.editCurrent?.();
     return;
   }
 
@@ -259,7 +220,7 @@ overlay?.addEventListener('click', event => {
   }
 
   if (event.target.closest('[data-stop-scan]')) {
-    IndooneQrScanner.stop();
+    window.IndooneQrScanner?.stop?.();
     closeModal();
   }
 });
