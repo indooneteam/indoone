@@ -31,18 +31,9 @@
     return name;
   };
 
-  const pairingCode = () => {
-    const base = deviceName()
-      .replace(/[^A-Z0-9]/gi, '')
-      .toUpperCase()
-      .slice(-8);
-    const host = location.hostname
-      .replace(/[^A-Z0-9]/gi, '')
-      .slice(-4)
-      .toUpperCase() || 'LOCAL';
-
-    return `${base}-${host}`.slice(0, 16);
-  };
+  const pairingCode = () => String(
+    Math.floor(10000 + Math.random() * 90000)
+  );
 
   const visual = value => {
     let seed = 0;
