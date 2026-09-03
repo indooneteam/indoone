@@ -1,0 +1,12 @@
+<section class="connect-feature scanner-feature">
+  <div class="modal-head">
+    <div><p class="eyebrow">PAIR ANOTHER DEVICE</p><h2>Scan to Connect</h2></div>
+    <button type="button" class="close-btn" data-scanner-close aria-label="Close scanner">×</button>
+  </div>
+  <div class="scanner-preview"><video id="connectFeatureScanVideo" autoplay playsinline muted></video><div class="scanner-frame"></div><span>Point camera at an Indoone QR</span></div>
+  <p id="connectFeatureScanStatus" class="connect-muted center">Starting camera…</p>
+  <div class="scanner-code-entry"><label for="connectPairingCode">Or enter pairing code</label><div><input id="connectPairingCode" type="text" autocomplete="off" inputmode="text" placeholder="Enter pairing code"><button type="button" class="secondary" data-connect-code>Connect</button></div></div>
+  <input id="connectFeatureImageInput" type="file" accept="image/*" hidden>
+  <button type="button" class="secondary" data-connect-image>Choose QR image</button>
+  <button type="button" class="primary" data-scanner-close>Cancel</button>
+</section>
