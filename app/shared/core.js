@@ -2,6 +2,7 @@ const overlay = document.getElementById('overlay');
 const modal = document.getElementById('modal');
 
 window.openModal = function (html) {
+  if (!modal || !overlay) return;
   modal.innerHTML = html;
   overlay.classList.remove('hidden');
 };
@@ -11,13 +12,18 @@ window.closeOverlay = function (event) {
 };
 
 window.closeModal = function () {
-  overlay.classList.add('hidden');
+  overlay?.classList.add('hidden');
 };
 
 window.showHome = function () {
-  overlay.classList.add('hidden');
-  document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
-  document.querySelector('.bottom-nav button:first-child')?.classList.add('active');
+  overlay?.classList.add('hidden');
+  document.getElementById('connectContent')?.setAttribute('hidden', '');
+  document.getElementById('content')?.removeAttribute('hidden');
+  document.getElementById('addBtn')?.removeAttribute('hidden');
+  document.getElementById('searchWrap')?.removeAttribute('hidden');
+  document.querySelectorAll('.bottom-nav button').forEach(button => button.classList.remove('active'));
+  document.getElementById('accountsNav')?.classList.add('active');
+  window.IndooneHome?.restoreHome?.();
 };
 
 window.toast = function (message) {
