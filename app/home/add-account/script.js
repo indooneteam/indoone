@@ -126,6 +126,16 @@
     window.IndooneHome?.backToHome();
   }
 
+  function goHome() {
+    window.IndooneAddAccountQr?.stop?.();
+    history.replaceState(
+      {},
+      '',
+      window.location.pathname + window.location.search
+    );
+    window.showHome?.();
+  }
+
   function bindMenu(root) {
     root.querySelectorAll('[data-add-action]').forEach(button => {
       button.addEventListener('click', event => {
@@ -299,6 +309,7 @@
       });
     },
     backToHome,
+    goHome,
     handleHistory
   };
 
