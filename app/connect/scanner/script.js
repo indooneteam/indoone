@@ -37,13 +37,27 @@
   const handle = raw => {
     const value = String(raw || '').trim();
     if (!value) {
-      return;
+      return false;
     }
 
     const status = document.getElementById('connectFeatureScanStatus');
 
+    let code = '';
+
     if (value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
-      const code = value.slice(16).trim();
+      code = value.slice(16).trim();
+    } else {
+      try {
+        const payload = JSON.parse(value);
+        if (payload?.type === 'indoone-connect' && /^\d{5}$/.test(String(payload.code || ''))) {
+          code = String(payload.code);
+        }
+      } catch (_) {
+        // Not JSON; continue below.
+      }
+    }
+
+    if (/^\d{5}$/.test(code)) {
       const input = document.getElementById('connectPairingCode');
 
       if (input) {
@@ -53,12 +67,15 @@
       if (status) {
         status.textContent = 'Pairing code detected. Tap Connect.';
       }
-      return;
+
+      return true;
     }
 
     if (status) {
       status.textContent = 'QR detected. This code is not an Indoone pairing code.';
     }
+
+    return false;
   };
 
   async function loop(video) {
@@ -67,12 +84,11 @@
     }
 
     try {
-      if (video.readyState >= 2) {
+      if (video.readyState >= 2 && detector) {
         const codes = await detector.detect(video);
         const raw = codes?.[0]?.rawValue;
 
-        if (raw) {
-          handle(raw);
+        if (raw && handle(raw)) {
           stop();
           return;
         }
@@ -109,15 +125,23 @@
       await video.play();
 
       if ('BarcodeDetector' in window) {
-        detector = new BarcodeDetector({ formats: ['qr_code'] });
-        scanning = true;
-        loop(video);
-
-        if (status) {
-          status.textContent = 'Camera ready. Point it at an Indoone QR.';
+        try {
+          detector = new BarcodeDetector({ formats: ['qr_code'] });
+        } catch (_) {
+          detector = null;
         }
-      } else if (status) {
-        status.textContent = 'Camera is on, but QR decoding is not supported here.';
+      }
+
+      scanning = Boolean(detector);
+
+      if (status) {
+        status.textContent = detector
+          ? 'Camera ready. Point it at an Indoone QR.'
+          : 'Camera is on, but QR decoding is not supported here.';
+      }
+
+      if (scanning) {
+        loop(video);
       }
     } catch (error) {
       if (status) {
@@ -181,11 +205,12 @@
       modal?.querySelector('[data-connect-code]')?.addEventListener('click', () => {
         const code = modal.querySelector('#connectPairingCode')?.value.trim();
 
-        if (!code) {
-          window.toast?.('Enter a pairing code.');
+        if (!/^\d{5}$/.test(code)) {
+          window.toast?.('Enter the 5-digit pairing code.');
           return;
         }
 
+        window.IndooneConnectNative?.pairWithCode?.(code);
         window.toast?.('Pairing code ready for nearby connection.');
       });
 
