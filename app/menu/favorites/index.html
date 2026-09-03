@@ -1,7 +1,29 @@
-<section class="menu-feature-shell" data-menu-feature data-menu-section="favorites">
-  <div class="modal-head">
-    <h2>Favorites</h2>
-    <button type="button" class="close-btn" data-close aria-label="Close Favorites">×</button>
+<section
+  class="menu-feature-shell favorites-feature"
+  data-menu-feature
+  data-menu-section="favorites"
+>
+  <div class="modal-head favorites-head">
+    <div>
+      <p class="eyebrow">SAVED ACCOUNTS</p>
+      <h2>Favorites</h2>
+      <p class="favorites-subtitle">Your starred authenticator accounts</p>
+    </div>
+
+    <button
+      type="button"
+      class="close-btn"
+      data-close
+      aria-label="Close Favorites"
+    >
+      ×
+    </button>
   </div>
-  <div id="favoritesList" class="menu-feature-list"></div>
+
+  <div class="favorites-meta" aria-live="polite">
+    <span class="favorites-meta-icon">★</span>
+    <span id="favoritesCount">0 favorite accounts</span>
+  </div>
+
+  <div id="favoritesList" class="favorite-account-list"></div>
 </section>
