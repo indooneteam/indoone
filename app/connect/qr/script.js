@@ -1,7 +1,7 @@
 (() => {
   const loadMarkup = async () => {
     const response = await fetch(
-      `app/connect/qr/index.html?v=${Date.now()}`,
+      `app/connect/qr/index.html?v=20260917a`,
       { cache: 'no-store' }
     );
 
@@ -12,9 +12,11 @@
     return response.text();
   };
 
-  function deviceName() {
+  const deviceName = () => {
     const saved = localStorage.getItem('indoone_connect_device_name');
-    if (saved) return saved;
+    if (saved) {
+      return saved;
+    }
 
     const uid = window.IndooneFirebase?.auth?.currentUser?.uid || '';
     const suffix = uid
@@ -27,9 +29,9 @@
 
     localStorage.setItem('indoone_connect_device_name', name);
     return name;
-  }
+  };
 
-  function pairingCode() {
+  const pairingCode = () => {
     const base = deviceName()
       .replace(/[^A-Z0-9]/gi, '')
       .toUpperCase()
@@ -40,9 +42,9 @@
       .toUpperCase() || 'LOCAL';
 
     return `${base}-${host}`.slice(0, 16);
-  }
+  };
 
-  function createVisual(value) {
+  const visual = value => {
     let seed = 0;
 
     for (let index = 0; index < value.length; index += 1) {
@@ -58,8 +60,8 @@
           (x >= 14 && y < 7) ||
           (x < 7 && y >= 14);
         const on = finder
-          ? ((x % 6 === 0 || y % 6 === 0) ||
-            (x > 1 && x < 5 && y > 1 && y < 5))
+          ? (x % 6 === 0 || y % 6 === 0) ||
+            (x > 1 && x < 5 && y > 1 && y < 5)
           : ((seed + x * 17 + y * 31 + x * y * 7) % 11 < 5);
 
         cells.push(
@@ -69,39 +71,35 @@
     }
 
     return `<div class="connect-qr-grid">${cells.join('')}</div>`;
-  }
+  };
 
-  async function copyCode(value) {
-    try {
-      await navigator.clipboard.writeText(value);
-      window.toast?.('Pairing code copied.');
-    } catch (_) {
-      window.toast?.(value);
-    }
-  }
-
-  window.showConnectQr = async function () {
+  window.showConnectQr = async () => {
     try {
       const markup = await loadMarkup();
-      window.openModal?.(markup);
+      openModal(markup);
 
       const modal = document.getElementById('modal');
-      if (!modal) return;
+      if (!modal) {
+        return;
+      }
 
       const name = deviceName();
       const code = pairingCode();
-      const visual = modal.querySelector('#connectQrVisual');
-      const nameNode = modal.querySelector('#connectQrDeviceName');
-      const smallCode = modal.querySelector('#connectQrCode');
-      const largeCode = modal.querySelector('#connectQrCodeLarge');
 
-      if (visual) visual.innerHTML = createVisual(code);
-      if (nameNode) nameNode.textContent = name;
-      if (smallCode) smallCode.textContent = `Pairing code: ${code}`;
-      if (largeCode) largeCode.textContent = code;
+      modal.querySelector('#connectQrVisual').innerHTML = visual(code);
+      modal.querySelector('#connectQrDeviceName').textContent = name;
+      modal.querySelector('#connectQrCode').textContent = `Pairing code: ${code}`;
+      modal.querySelector('#connectQrCodeLarge').textContent = code;
 
       modal.querySelectorAll('[data-connect-copy]').forEach(button => {
-        button.addEventListener('click', () => copyCode(code));
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(code);
+            window.toast?.('Pairing code copied.');
+          } catch (_) {
+            window.toast?.(code);
+          }
+        });
       });
 
       modal.querySelectorAll('[data-connect-close]').forEach(button => {
