@@ -61,7 +61,7 @@ jobs:
           cp develop-source/android/app/build/outputs/apk/debug/app-debug.apk publish/develop/downloads/indoone.apk
           test -f publish/index.html
           test -f publish/develop/index.html
-          test -f publish/develop/js/connect.js
+          test -f publish/develop/app/connect/connect.js
           test -f publish/develop/update.json
           test -f publish/develop/downloads/indoone.apk
           echo "Main site preserved at root; develop test site and updater APK packaged at /develop/."
