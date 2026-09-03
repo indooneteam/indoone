@@ -4,6 +4,23 @@
   padding: 8px 0 110px;
 }
 
+.import-page .page-back {
+  width: fit-content;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 0 14px;
+  border: 1px solid #e6e1ea;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .import-form {
   display: grid;
   gap: 16px;
