@@ -5,33 +5,7 @@
   let scanning = false;
 
   const MARKUP_URL = 'app/connect/scanner/scanner/index.html?v=20260903a';
-  const PERMISSION_SCRIPT = 'app/connect/scanner/scanner/permission/script.js?v=20260903a';
-  const PERMISSION_STYLE = 'app/connect/scanner/scanner/permission/style.css?v=20260903a';
   const PENDING_DEVICE_KEY = 'indoone_connect_pending_device_v1';
-
-  async function loadPermissionFeature() {
-    if (!document.querySelector(`link[href^="${PERMISSION_STYLE}"]`)) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = PERMISSION_STYLE;
-      document.head.appendChild(link);
-    }
-
-    if (window.IndooneScannerPermission) return;
-
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = PERMISSION_SCRIPT;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error('Scanner permissions could not be loaded.'));
-      document.head.appendChild(script);
-    });
-  }
-
-  async function showPermissions() {
-    await loadPermissionFeature();
-    await window.IndooneScannerPermission?.show?.();
-  }
 
   async function loadMarkup() {
     const response = await fetch(MARKUP_URL, { cache: 'no-store' });
@@ -97,14 +71,13 @@
     const input = document.getElementById('connectPairingCode');
     if (input) input.value = code;
 
-    window.IndooneConnectNative?.pairWithCode?.(code);
-
-    try {
-      await showPermissions();
-    } catch (error) {
-      window.toast?.(error?.message || 'Could not open permissions.');
+    const paired = window.IndooneConnectNative?.pairWithCode?.(code);
+    if (paired === false) {
+      window.toast?.('Could not start Nearby connection.');
+      return false;
     }
 
+    window.toast?.('QR matched. Waiting for the real Nearby connection…');
     return true;
   }
 
