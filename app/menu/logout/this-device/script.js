@@ -1,19 +1,9 @@
 window.initMenuLogoutThisDevice = function () {
-  const modal = document.getElementById('modal');
+  const confirmButton = document.getElementById('confirmThisDeviceLogout');
 
-  modal.innerHTML = `
-    <div class="modal-head">
-      <h2>Log out on this device</h2>
-      <button class="close-btn" data-close>×</button>
-    </div>
-    <p>This signs you out only from this device.</p>
-    <button type="button" class="primary" id="confirmThisDeviceLogout">
-      Log out on this device
-    </button>
-    <button type="button" class="secondary" data-close>
-      Cancel
-    </button>
-  `;
+  if (!confirmButton) {
+    return;
+  }
 
   const clearLocalSession = () => {
     try {
@@ -45,7 +35,7 @@ window.initMenuLogoutThisDevice = function () {
     } catch (_) {}
   };
 
-  document.getElementById('confirmThisDeviceLogout')?.addEventListener('click', async () => {
+  confirmButton.addEventListener('click', async () => {
     try {
       clearLocalSession();
       await window.IndooneFirebase?.auth?.signOut?.();

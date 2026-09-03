@@ -1,22 +1,9 @@
 window.initMenuLogoutAllDevices = function () {
-  const modal = document.getElementById('modal');
+  const confirmButton = document.getElementById('confirmAllDevicesLogout');
 
-  modal.innerHTML = `
-    <div class="modal-head">
-      <h2>Log out on all devices</h2>
-      <button class="close-btn" data-close>×</button>
-    </div>
-    <p>
-      This signs you out on this device. Remote session revocation requires
-      server-side Firebase Admin support.
-    </p>
-    <button type="button" class="primary" id="confirmAllDevicesLogout">
-      Log out on all devices
-    </button>
-    <button type="button" class="secondary" data-close>
-      Cancel
-    </button>
-  `;
+  if (!confirmButton) {
+    return;
+  }
 
   const clearLocalSession = () => {
     try {
@@ -48,7 +35,7 @@ window.initMenuLogoutAllDevices = function () {
     } catch (_) {}
   };
 
-  document.getElementById('confirmAllDevicesLogout')?.addEventListener('click', async () => {
+  confirmButton.addEventListener('click', async () => {
     try {
       clearLocalSession();
       await window.IndooneFirebase?.auth?.signOut?.();
