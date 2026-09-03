@@ -1,0 +1,9 @@
+.connected-devices-feature {
+  width: 100%;
+}
+
+.connected-devices-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
