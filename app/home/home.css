@@ -1,1 +1,6 @@
-<!-- Feature stylesheet placeholder. Feature rules will live here during migration. -->
+/* Home feature styles. Shared account primitives remain in style.css. */
+.home-page{width:100%}
+.home-page .page-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.home-page .account-list{width:100%}
+.home-page .empty-state{text-align:center}
+.home-page .small-btn{white-space:nowrap}
