@@ -1,5 +1,5 @@
 (() => {
-  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260903a';
+  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260903b';
   const QR_LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
   let qrLibraryPromise = null;
