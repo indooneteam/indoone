@@ -1,5 +1,119 @@
-.menu-feature-shell { display: block; }
-.menu-feature-list { display: grid; gap: 8px; }
-.menu-feature-row { width: 100%; }
-.menu-feature-note { margin: 8px 0 12px; color: #8a8492; font-size: 12px; line-height: 1.5; }
-.menu-feature-actions { display: grid; gap: 8px; margin-top: 12px; }
+.favorites-feature {
+  width: 100%;
+}
+
+.favorites-feature .modal-head {
+  align-items: flex-start;
+}
+
+.favorites-feature .modal-head > div {
+  min-width: 0;
+}
+
+.favorite-account-list {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.favorite-account-row {
+  width: 100%;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 13px;
+  border: 1px solid #ece9f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 16px #2b195208;
+  color: #17151d;
+  text-align: left;
+  cursor: pointer;
+}
+
+.favorite-account-row:hover {
+  border-color: #d9cdf2;
+  background: #fcfbff;
+}
+
+.favorite-account-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.favorite-account-name,
+.favorite-account-email {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-account-name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.favorite-account-email {
+  margin-top: 4px;
+  color: #89838f;
+  font-size: 10px;
+}
+
+.favorite-account-code {
+  flex: none;
+  color: #6331db;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.favorite-empty {
+  padding: 28px 10px 10px;
+  text-align: center;
+}
+
+.favorite-empty .empty-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 12px;
+}
+
+.favorite-empty h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.favorite-empty p {
+  margin: 0;
+  color: #85808b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.menu-feature-shell {
+  display: block;
+}
+
+.menu-feature-list {
+  display: grid;
+  gap: 8px;
+}
+
+.menu-feature-row {
+  width: 100%;
+}
+
+.menu-feature-note {
+  margin: 8px 0 12px;
+  color: #8a8492;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.menu-feature-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
