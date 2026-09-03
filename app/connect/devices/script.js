@@ -24,6 +24,10 @@
     }
   }
 
+  function findDevice(name) {
+    return readDevices().find(device => device.name === name) || null;
+  }
+
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>\"']/g, char => ({
       '&': '&amp;',
@@ -87,8 +91,10 @@
       const modal = document.getElementById('modal');
       if (!modal) return;
 
-      const list = modal.querySelector('#connectDevicesList');
-      renderList(list, readDevices());
+      renderList(
+        modal.querySelector('#connectDevicesList'),
+        readDevices()
+      );
 
       modal.querySelectorAll('[data-devices-close]').forEach(button => {
         button.addEventListener('click', () => window.closeModal?.());
@@ -102,5 +108,39 @@
     } catch (error) {
       window.toast?.(error?.message || 'Could not open Devices.');
     }
+  };
+
+  window.openConnectedDevice = function (name) {
+    const device = findDevice(name);
+
+    if (!device || typeof window.openModal !== 'function') {
+      window.showConnectDevices?.();
+      return;
+    }
+
+    const icon = device.type === 'computer' ? '💻' : '📱';
+    const status = device.connected ? 'Connected' : 'Disconnected';
+
+    window.openModal(`
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">DEVICE</p>
+          <h2>${escapeHtml(device.name)}</h2>
+        </div>
+        <button type="button" class="close-btn" data-close>×</button>
+      </div>
+      <div class="device-summary">
+        <div class="device-icon large">${icon}</div>
+        <div>
+          <b>${status}</b>
+          <small>${device.trusted ? 'Trusted device' : 'Not trusted yet'}</small>
+        </div>
+      </div>
+      <div class="connect-empty">
+        Connection is managed separately from data permissions.
+        Permission management, disconnect and reconnect controls will live here.
+      </div>
+      <button type="button" class="primary" data-close>Done</button>
+    `);
   };
 })();
