@@ -3,6 +3,9 @@
   let raf = 0;
   let detector = null;
   let scanning = false;
+  let pairingCode = '';
+  let pairingPermissionHandler = null;
+  let pairingResultHandler = null;
 
   const load = async () => {
     const response = await fetch(
@@ -15,6 +18,18 @@
     }
 
     return response.text();
+  };
+
+  const stopPairingListeners = () => {
+    if (pairingPermissionHandler) {
+      window.removeEventListener('indoone-nearby', pairingPermissionHandler);
+      pairingPermissionHandler = null;
+    }
+
+    if (pairingResultHandler) {
+      window.removeEventListener('indoone-nearby', pairingResultHandler);
+      pairingResultHandler = null;
+    }
   };
 
   const stop = () => {
@@ -34,6 +49,121 @@
     detector = null;
   };
 
+  const startPairing = code => {
+    const normalized = String(code || '').replace(/\D/g, '');
+    const status = document.getElementById('connectFeatureScanStatus');
+
+    if (!/^\d{5}$/.test(normalized)) {
+      if (status) {
+        status.textContent = 'Enter a valid 5-digit pairing code.';
+      }
+      return false;
+    }
+
+    pairingCode = normalized;
+
+    if (!window.IndooneNative?.startNearbyDiscovery) {
+      if (status) {
+        status.textContent = 'Pairing is available when Indoone Nearby is enabled.';
+      }
+      return false;
+    }
+
+    stopPairingListeners();
+
+    pairingPermissionHandler = event => {
+      const detail = event.detail || {};
+
+      if (detail.type !== 'permissions') {
+        return;
+      }
+
+      if (detail.message !== 'granted') {
+        if (status) {
+          status.textContent = 'Nearby permission is required for pairing.';
+        }
+        stopPairingListeners();
+        return;
+      }
+
+      try {
+        window.IndooneNative.startNearbyDiscovery();
+        if (status) {
+          status.textContent = `Searching for device with code ${pairingCode}…`;
+        }
+      } catch (_) {
+        if (status) {
+          status.textContent = 'Nearby connection is unavailable on this device.';
+        }
+        stopPairingListeners();
+      }
+    };
+
+    pairingResultHandler = event => {
+      const detail = event.detail || {};
+
+      if (detail.type === 'endpointFound') {
+        const name = String(detail.message || '');
+        const match = name.match(/\[(\d{5})\]\s*$/);
+
+        if (!match || match[1] !== pairingCode) {
+          return;
+        }
+
+        try {
+          window.IndooneNative.connectNearbyEndpoint(
+            detail.endpointId,
+            window.__indooneConnectDeviceName || 'Indoone Device'
+          );
+          if (status) {
+            status.textContent = 'Pairing request sent. Waiting for approval…';
+          }
+        } catch (_) {
+          if (status) {
+            status.textContent = 'Could not start the pairing request.';
+          }
+        }
+        return;
+      }
+
+      if (detail.type === 'connectionResult') {
+        if (detail.message === 'connected') {
+          if (status) {
+            status.textContent = 'Connected successfully.';
+          }
+          stopPairingListeners();
+          window.toast?.('Device connected successfully.');
+        } else {
+          if (status) {
+            status.textContent = 'Pairing was rejected or could not be completed.';
+          }
+        }
+        return;
+      }
+
+      if (detail.type === 'error') {
+        if (status) {
+          status.textContent = detail.message || 'Nearby connection error.';
+        }
+      }
+    };
+
+    window.addEventListener('indoone-nearby', pairingPermissionHandler);
+    window.addEventListener('indoone-nearby', pairingResultHandler);
+
+    try {
+      window.IndooneNative.requestNearbyPermissions?.();
+    } catch (_) {
+      stopPairingListeners();
+      if (status) {
+        status.textContent = 'Nearby permission request failed.';
+      }
+      return false;
+    }
+
+    return true;
+  };
+
   const handle = raw => {
     const value = String(raw || '').trim();
     if (!value) {
@@ -41,41 +171,43 @@
     }
 
     const status = document.getElementById('connectFeatureScanStatus');
-
     let code = '';
 
-    if (value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
-      code = value.slice(16).trim();
-    } else {
-      try {
-        const payload = JSON.parse(value);
-        if (payload?.type === 'indoone-connect' && /^\d{5}$/.test(String(payload.code || ''))) {
-          code = String(payload.code);
-        }
-      } catch (_) {
-        // Not JSON; continue below.
+    try {
+      const payload = JSON.parse(value);
+      if (
+        payload?.type === 'indoone-connect' &&
+        /^\d{5}$/.test(String(payload.code || ''))
+      ) {
+        code = String(payload.code);
       }
+    } catch (_) {
+      // Allow the legacy plain pairing payload as well.
     }
 
-    if (/^\d{5}$/.test(code)) {
-      const input = document.getElementById('connectPairingCode');
+    if (!code && value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
+      code = value.slice(16).trim();
+    }
 
-      if (input) {
-        input.value = code;
-      }
-
+    if (!/^\d{5}$/.test(code)) {
       if (status) {
-        status.textContent = 'Pairing code detected. Tap Connect.';
+        status.textContent = 'QR detected. This code is not an Indoone pairing code.';
       }
+      return false;
+    }
 
-      return true;
+    const input = document.getElementById('connectPairingCode');
+    if (input) {
+      input.value = code;
     }
 
     if (status) {
-      status.textContent = 'QR detected. This code is not an Indoone pairing code.';
+      status.textContent = 'Pairing code detected. Starting connection…';
     }
 
-    return false;
+    stop();
+    startPairing(code);
+    return true;
   };
 
   async function loop(video) {
@@ -89,7 +221,6 @@
         const raw = codes?.[0]?.rawValue;
 
         if (raw && handle(raw)) {
-          stop();
           return;
         }
       }
@@ -180,6 +311,7 @@
 
   window.showConnectScanner = async () => {
     stop();
+    stopPairingListeners();
 
     try {
       openModal(await load());
@@ -189,6 +321,8 @@
       modal?.querySelectorAll('[data-scanner-close]').forEach(button => {
         button.addEventListener('click', () => {
           stop();
+          stopPairingListeners();
+          window.IndooneNative?.stopNearby?.();
           window.closeModal?.();
         });
       });
@@ -205,13 +339,7 @@
       modal?.querySelector('[data-connect-code]')?.addEventListener('click', () => {
         const code = modal.querySelector('#connectPairingCode')?.value.trim();
 
-        if (!/^\d{5}$/.test(code)) {
-          window.toast?.('Enter the 5-digit pairing code.');
-          return;
-        }
-
-        window.IndooneConnectNative?.pairWithCode?.(code);
-        window.toast?.('Pairing code ready for nearby connection.');
+        startPairing(code);
       });
 
       await camera();
