@@ -82,8 +82,8 @@
         });
 
         await IndooneCloudAccounts.save(account);
-        window.IndooneAddAccount?.showMenu?.({ push: true });
         await IndooneTotpController.refreshAll();
+        window.IndooneAddAccount?.goHome?.();
         toast('Account updated and synced');
         return;
       }
@@ -114,8 +114,8 @@
 
       await IndooneCloudAccounts.save(account);
       indooneState.accounts.push(account);
-      window.IndooneAddAccount?.showMenu?.({ push: true });
       await IndooneTotpController.refreshAll();
+      window.IndooneAddAccount?.goHome?.();
       toast('Account saved to Firebase');
     } catch (error) {
       toast(error?.message || 'Could not save account');
