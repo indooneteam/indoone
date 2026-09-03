@@ -1,5 +1,7 @@
 window.initMenuFavorites = async function () {
   const modal = document.getElementById('modal');
+  const list = document.getElementById('favoritesList');
+  const count = document.getElementById('favoritesCount');
 
   const escapeHtml = value => String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -8,7 +10,7 @@ window.initMenuFavorites = async function () {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
-  if (!modal) {
+  if (!modal || !list) {
     return;
   }
 
@@ -22,53 +24,47 @@ window.initMenuFavorites = async function () {
     await cloud.load();
 
     const favorites = (window.indooneState?.accounts || [])
-      .filter(account => account.favorite);
+      .filter(account => account.favorite)
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
-    const rows = favorites.length
-      ? favorites.map(account => `
-          <button
-            type="button"
-            class="favorite-account-row"
-            data-favorite-account="${Number(account.id)}"
-          >
-            <span class="favorite-account-main">
-              <span class="favorite-account-name">${escapeHtml(account.name)}</span>
-              <span class="favorite-account-email">${escapeHtml(account.email || 'Authenticator account')}</span>
-            </span>
-            <span class="favorite-account-code">${escapeHtml(account.code || '------')}</span>
-          </button>
-        `).join('')
-      : `
-          <div class="favorite-empty">
-            <div class="empty-icon">☆</div>
-            <h3>No favorite accounts</h3>
-            <p>Star an account to see it here.</p>
-          </div>
-        `;
+    if (count) {
+      count.textContent = `${favorites.length} favorite account${favorites.length === 1 ? '' : 's'}`;
+    }
 
-    modal.innerHTML = `
-      <section class="menu-feature-shell favorites-feature" data-menu-feature data-menu-section="favorites">
-        <div class="modal-head">
-          <div>
-            <p class="eyebrow">SAVED ACCOUNTS</p>
-            <h2>Favorites</h2>
-          </div>
-          <button
-            type="button"
-            class="close-btn"
-            data-close
-            aria-label="Close Favorites"
-          >
-            ×
-          </button>
+    if (!favorites.length) {
+      list.innerHTML = `
+        <div class="favorite-empty">
+          <div class="favorite-empty-icon" aria-hidden="true">★</div>
+          <h3>No favorite accounts</h3>
+          <p>Star an account on the Home page and it will appear here.</p>
         </div>
-        <div id="favoritesList" class="favorite-account-list">
-          ${rows}
-        </div>
-      </section>
-    `;
+      `;
+      return;
+    }
 
-    modal.querySelectorAll('[data-favorite-account]').forEach(row => {
+    list.innerHTML = favorites.map(account => `
+      <button
+        type="button"
+        class="favorite-account-row"
+        data-favorite-account="${Number(account.id)}"
+      >
+        <span class="favorite-account-icon ${escapeHtml(account.cls || '')}">
+          ${escapeHtml(account.icon || '•')}
+        </span>
+
+        <span class="favorite-account-main">
+          <span class="favorite-account-name">${escapeHtml(account.name || 'Authenticator')}</span>
+          <span class="favorite-account-email">${escapeHtml(account.email || 'Authenticator account')}</span>
+        </span>
+
+        <span class="favorite-account-side">
+          <span class="favorite-account-code">${escapeHtml(account.code || '------')}</span>
+          <span class="favorite-account-arrow" aria-hidden="true">›</span>
+        </span>
+      </button>
+    `).join('');
+
+    list.querySelectorAll('[data-favorite-account]').forEach(row => {
       row.addEventListener('click', () => {
         const id = Number(row.dataset.favoriteAccount);
 
