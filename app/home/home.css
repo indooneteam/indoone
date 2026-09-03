@@ -26,6 +26,10 @@
   text-align: center;
 }
 
+.home-page #emptyAddBtn {
+  display: none;
+}
+
 .home-page .small-btn {
   white-space: nowrap;
 }
