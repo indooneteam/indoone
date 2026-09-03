@@ -3,4 +3,5 @@ window.initMenuLock = function () {
   closeModal();
   if (typeof lockIndoone === 'function') lockIndoone();
   else toast('Lock is unavailable.');
+  return false;
 };

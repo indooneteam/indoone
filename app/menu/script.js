@@ -20,17 +20,17 @@
     if (!modal) return;
     try {
       const base = `app/menu/${path}`;
-      const response = await fetch(`${base}/index.html?v=20260903b`, { cache: 'no-store' });
+      const response = await fetch(`${base}/index.html?v=20260903c`, { cache: 'no-store' });
       if (!response.ok) throw new Error('Menu feature could not be loaded.');
       modal.innerHTML = await response.text();
       if (!cssLoaded.has(base)) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = `${base}/style.css?v=20260903b`;
+        link.href = `${base}/style.css?v=20260903c`;
         document.head.appendChild(link);
         cssLoaded.add(base);
       }
-      const src = `${base}/script.js?v=20260903b`;
+      const src = `${base}/script.js?v=20260903c`;
       if (!loaded.has(src)) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
@@ -41,8 +41,10 @@
         });
         loaded.add(src);
       }
-      if (typeof window[initName] === 'function') window[initName]();
-      document.getElementById('overlay')?.classList.remove('hidden');
+      const keepOverlayOpen = window[initName]?.();
+      const overlay = document.getElementById('overlay');
+      if (keepOverlayOpen === false) overlay?.classList.add('hidden');
+      else overlay?.classList.remove('hidden');
     } catch (error) {
       toast(error?.message || 'Could not open menu item');
     }
