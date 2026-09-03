@@ -59,6 +59,41 @@
     window.IndooneNative?.stopNearby?.();
   }
 
+  function ensureNearbyReady() {
+    const native = window.IndooneNative;
+    if (!native?.requestNearbyPermissions) {
+      return Promise.reject(new Error('Nearby device support is unavailable.'));
+    }
+
+    return new Promise(resolve => {
+      let settled = false;
+      let timeoutId = 0;
+
+      const finish = ready => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        window.removeEventListener('indoone-nearby', handler);
+        resolve(ready);
+      };
+
+      const handler = event => {
+        const detail = event.detail || {};
+        if (detail.type !== 'permissions') return;
+        finish(detail.message === 'granted');
+      };
+
+      window.addEventListener('indoone-nearby', handler);
+      timeoutId = window.setTimeout(() => finish(false), 15000);
+
+      try {
+        native.requestNearbyPermissions();
+      } catch (_) {
+        finish(false);
+      }
+    });
+  }
+
   function startAdvertising(code) {
     const native = window.IndooneNative;
     if (!native?.startNearbyAdvertising) return;
@@ -70,7 +105,7 @@
 
       if (detail.message !== 'granted') {
         stopAdvertising();
-        window.toast?.('Nearby permission is required for device pairing.');
+        window.toast?.('Nearby device permission is required for QR pairing.');
         return;
       }
 
@@ -104,6 +139,12 @@
     stopAdvertising();
 
     try {
+      const ready = await ensureNearbyReady();
+      if (!ready) {
+        window.toast?.('Turn on Bluetooth and allow Nearby devices access to show the QR.');
+        return;
+      }
+
       window.openModal?.(await loadMarkup());
       const modal = document.getElementById('modal');
       if (!modal) return;
