@@ -282,24 +282,6 @@
       return;
     }
 
-    const acceptButton = event.target.closest('[data-nearby-accept]');
-    if (acceptButton) {
-      event.preventDefault();
-      const endpointId = acceptButton.dataset.nearbyAccept;
-      state.endpointDirections.set(endpointId, 'access-to-my-device');
-      native.acceptNearbyConnection?.(endpointId);
-      notify('Connection accepted.');
-      return;
-    }
-
-    const rejectButton = event.target.closest('[data-nearby-reject]');
-    if (rejectButton) {
-      event.preventDefault();
-      native.rejectNearbyConnection?.(rejectButton.dataset.nearbyReject);
-      window.closeModal?.();
-      return;
-    }
-
     const stopButton = event.target.closest('[data-nearby-stop]');
     if (stopButton) {
       event.preventDefault();
@@ -411,27 +393,12 @@
 
     if (detail.type === 'connectionInitiated') {
       if (detail.incoming) {
-        openStatus(
-          'Connection request',
-          `
-            <div class="device-summary">
-              <div class="device-icon large">📱</div>
-              <div>
-                <b>${escapeHtml(detail.message || 'Nearby device')}</b>
-                <small>Wants to connect to this device</small>
-              </div>
-            </div>
-            <div class="connect-empty">
-              <b>Verification code: ${escapeHtml(detail.authenticationDigits || '----')}</b><br>
-              Confirm that the code matches on both devices before allowing the connection.
-            </div>
-            <button type="button" class="primary" data-nearby-accept="${escapeHtml(detail.endpointId)}">Allow connection</button>
-            <button type="button" class="secondary" data-nearby-reject="${escapeHtml(detail.endpointId)}">Reject</button>
-          `
-        );
+        state.endpointDirections.set(detail.endpointId, 'access-to-my-device');
+        native.acceptNearbyConnection?.(detail.endpointId);
+        notify(`Connected request from ${detail.message || 'nearby device'} accepted.`);
       } else {
         state.endpointDirections.set(detail.endpointId, 'access-other-device');
-        notify(`Waiting for ${detail.message || 'the device'} to approve the connection.`);
+        notify(`Connecting to ${detail.message || 'the device'}…`);
       }
       return;
     }
@@ -439,7 +406,7 @@
     if (detail.type === 'connectionResult') {
       if (detail.message === 'connected') {
         const item = state.endpoints.get(detail.endpointId);
-        const name = item?.name || (detail.message === 'connected' ? 'Nearby device' : 'Nearby device');
+        const name = item?.name || 'Nearby device';
         const direction = state.endpointDirections.get(detail.endpointId) || 'access-other-device';
 
         rememberConnected(name, detail.endpointId, direction);
@@ -457,13 +424,13 @@
               </div>
             </div>
             <div class="connect-empty">
-              <b>${direction === 'access-to-my-device' ? 'This device can access your selected data after permission is granted.' : 'You can request access to the other device after permission is granted.'}</b>
+              <b>${direction === 'access-to-my-device' ? 'This device will receive data access permission next.' : 'Your data access permission will be selected next.'}</b>
             </div>
             <button type="button" class="primary" data-close>Done</button>
           `
         );
       } else {
-        notify('Nearby connection was rejected or could not be completed.');
+        notify('Nearby connection could not be completed.');
       }
       return;
     }
