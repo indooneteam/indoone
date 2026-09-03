@@ -1,3 +1,76 @@
 <section class="home-account-page" data-feature="home-account">
-  <div class="home-account-content" id="homeAccountContent"></div>
+  <div class="modal-head">
+    <button
+      type="button"
+      class="close-btn"
+      data-close
+      aria-label="Back to accounts"
+    >
+      ‹
+    </button>
+
+    <h2 id="homeAccountName">Account</h2>
+
+    <button
+      type="button"
+      class="close-btn"
+      data-edit
+      aria-label="Edit account"
+    >
+      ✎
+    </button>
+  </div>
+
+  <div class="token">
+    <div class="token-icon" id="homeAccountIcon">A</div>
+    <p id="homeAccountEmail">Authenticator account</p>
+    <div class="token-code" id="homeAccountCode">------</div>
+
+    <div class="progress">
+      <span id="homeAccountProgress"></span>
+    </div>
+
+    <div class="countdown">
+      Code expires in
+      <b id="homeAccountCountdown">30s</b>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail">
+      <small>TYPE</small>
+      <b>TOTP</b>
+    </div>
+
+    <div class="detail">
+      <small>PERIOD</small>
+      <b id="homeAccountPeriod">30 seconds</b>
+    </div>
+
+    <div class="detail">
+      <small>ALGORITHM</small>
+      <b id="homeAccountAlgorithm">SHA1</b>
+    </div>
+
+    <div class="detail">
+      <small>DIGITS</small>
+      <b id="homeAccountDigits">6 digits</b>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="primary"
+    data-copy
+  >
+    Copy code
+  </button>
+
+  <button
+    type="button"
+    class="secondary danger"
+    data-delete
+  >
+    Delete account
+  </button>
 </section>
