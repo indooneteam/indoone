@@ -1,5 +1,23 @@
 window.showAdd = function () {
-  openModal(`<div class="modal-head"><h2>Add Account</h2><button class="close-btn" data-close>×</button></div><div class="tabs"><button class="selected" data-tab="qr">Scan QR Code</button><button data-tab="manual">Enter Setup Key</button></div><div class="qr">▦</div><p style="text-align:center">Scan a TOTP QR code from your account security settings.</p><button class="primary" onclick="IndooneQrScanner.start()">Open Camera Scanner</button><div class="field"><label>OR PASTE OTPAUTH URI</label><input id="otpUri" placeholder="otpauth://totp/..." autocomplete="off"></div><button class="secondary" data-import-uri>Import OTP URI</button><button class="secondary" data-tab="manual">Enter Setup Key Instead</button>`);
+  const content = document.getElementById('content');
+  if (!content) return;
+  closeModal?.();
+  document.getElementById('addBtn')?.setAttribute('hidden', '');
+  content.innerHTML = `
+    <div class="add-account-page">
+      <button type="button" class="page-back" onclick="showAccountsPage()">‹ Back</button>
+      <div class="page-heading"><div><p class="eyebrow">NEW AUTHENTICATOR</p><h1>Add Account</h1><p>Choose how you want to add your TOTP account.</p></div></div>
+      <div class="add-account-options">
+        <button type="button" class="add-account-option" onclick="IndooneQrScanner.start()"><span>▦</span><strong>Scan QR Code</strong><small>Use your camera to scan a TOTP QR code.</small></button>
+        <button type="button" class="add-account-option" onclick="showManual()"><span>⌨</span><strong>Enter Setup Key</strong><small>Enter the secret key and account details manually.</small></button>
+      </div>
+      <div class="field add-account-import"><label>PASTE OTPAUTH URI</label><input id="otpUri" placeholder="otpauth://totp/..." autocomplete="off"><button type="button" class="secondary" data-import-uri>Import OTP URI</button></div>
+    </div>`;
+};
+
+window.showAccountsPage = function () {
+  document.getElementById('addBtn')?.removeAttribute('hidden');
+  document.getElementById('accountsNav')?.click();
 };
 
 window.importOtpUri = function () {
