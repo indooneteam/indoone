@@ -1,11 +1,13 @@
 (() => {
   const native = window.IndooneNative;
   const DEVICE_KEY = 'indoone_connect_devices_v1';
+  const PENDING_DEVICE_KEY = 'indoone_connect_pending_device_v1';
   const state = {
     mode: null,
     targetType: null,
     endpoints: new Map(),
     pendingMode: null,
+    pendingPairing: null,
     activeEndpointId: ''
   };
 
@@ -47,6 +49,7 @@
 
   function saveDevices(devices) {
     localStorage.setItem(DEVICE_KEY, JSON.stringify(devices));
+    window.dispatchEvent(new CustomEvent('indoone-devices-changed'));
   }
 
   function notify(message) {
@@ -65,6 +68,15 @@
     `);
   }
 
+  function readPendingDevice() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(PENDING_DEVICE_KEY) || '');
+      return value && typeof value === 'object' ? value : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   function rememberConnected(name, endpointId) {
     const devices = loadDevices();
     let device = devices.find(item =>
@@ -79,10 +91,13 @@
         type: /computer|laptop|pc/i.test(name) ? 'computer' : 'phone',
         connected: true,
         trusted: false,
+        direction: 'access-to-my-device',
+        color: 'red',
         permissions: {
           photos: false,
           videos: false,
           documents: false,
+          files: false,
           downloads: false,
           upload: false,
           delete: false,
@@ -99,6 +114,7 @@
     }
 
     saveDevices(devices);
+    return device;
   }
 
   function updateDeviceConnection(endpointId, connected) {
@@ -140,12 +156,15 @@
     if (status) {
       status.textContent = mode === 'advertise'
         ? 'Your device is discoverable nearby.'
-        : 'Searching for nearby Indoone devices…';
+        : state.pendingPairing
+          ? 'Looking for the scanned device nearby…'
+          : 'Searching for nearby Indoone devices…';
     }
   }
 
   function beginNearby(mode, targetType) {
     state.endpoints.clear();
+    state.pendingPairing = null;
     state.pendingMode = mode;
     state.targetType = targetType;
 
@@ -203,6 +222,35 @@
     );
   };
 
+  window.IndooneConnectNative = window.IndooneConnectNative || {};
+  window.IndooneConnectNative.pairWithCode = function (code) {
+    const pending = readPendingDevice() || {};
+    const pendingCode = String(code || '').replace(/\D/g, '');
+
+    if (!/^\d{5}$/.test(pendingCode)) {
+      notify('Invalid pairing code.');
+      return false;
+    }
+
+    state.endpoints.clear();
+    state.pendingPairing = {
+      code: pendingCode,
+      name: String(pending.name || ''),
+      type: pending.type === 'computer' ? 'computer' : 'phone'
+    };
+    state.targetType = state.pendingPairing.type;
+    state.pendingMode = 'discover';
+
+    try {
+      native.requestNearbyPermissions?.();
+    } catch (_) {
+      notify('Nearby permissions are required to connect this device.');
+      return false;
+    }
+
+    return true;
+  };
+
   document.addEventListener('click', event => {
     const modeButton = event.target.closest('[data-nearby-mode]');
     if (modeButton) {
@@ -257,6 +305,7 @@
     native.stopNearby?.();
     state.mode = null;
     state.pendingMode = null;
+    state.pendingPairing = null;
     state.endpoints.clear();
   };
 
@@ -277,6 +326,7 @@
         startTransport();
       } else {
         state.pendingMode = null;
+        state.pendingPairing = null;
         notify('Nearby permissions are required.');
       }
       return;
@@ -286,23 +336,37 @@
       const endpointId = detail.endpointId;
       if (!endpointId) return;
 
-      state.endpoints.set(endpointId, {
+      const item = {
         endpointId,
         name: detail.message || 'Nearby Indoone Device'
-      });
+      };
+      state.endpoints.set(endpointId, item);
+
+      if (
+        state.pendingPairing &&
+        state.pendingPairing.name &&
+        item.name === state.pendingPairing.name
+      ) {
+        state.activeEndpointId = endpointId;
+        native.connectNearbyEndpoint(endpointId, deviceName());
+        state.pendingPairing = null;
+        notify(`Found ${item.name}. Connecting nearby…`);
+      }
 
       const list = document.getElementById('nearbyDiscoveryList');
       if (!list) return;
 
       list.innerHTML = [...state.endpoints.values()].map(item => `
-        <button type="button" class="device-card connected" data-nearby-endpoint="${escapeHtml(item.endpointId)}">
+        <div class="device-card connected">
           <div class="device-icon">${state.targetType === 'computer' ? '💻' : '📱'}</div>
           <div>
             <b>${escapeHtml(item.name)}</b>
-            <small>Nearby • Ready to connect</small>
+            <small>Nearby • ${
+              state.pendingPairing ? 'Matching scanned device…' : 'Ready to connect'
+            }</small>
           </div>
           <span class="device-dot"></span>
-        </button>
+        </div>
       `).join('');
       return;
     }
@@ -314,14 +378,14 @@
       if (list) {
         list.innerHTML = state.endpoints.size
           ? [...state.endpoints.values()].map(item => `
-              <button type="button" class="device-card connected" data-nearby-endpoint="${escapeHtml(item.endpointId)}">
+              <div class="device-card connected">
                 <div class="device-icon">📱</div>
                 <div>
                   <b>${escapeHtml(item.name)}</b>
                   <small>Nearby • Ready to connect</small>
                 </div>
                 <span class="device-dot"></span>
-              </button>
+              </div>
             `).join('')
           : '<div class="connect-empty">No nearby Indoone devices found.</div>';
       }
@@ -358,10 +422,11 @@
     if (detail.type === 'connectionResult') {
       if (detail.message === 'connected') {
         const item = state.endpoints.get(detail.endpointId);
-        const name = item?.name || 'Nearby device';
+        const name = item?.name || state.pendingPairing?.name || 'Nearby device';
 
         rememberConnected(name, detail.endpointId);
         state.activeEndpointId = detail.endpointId;
+        state.pendingPairing = null;
         notify(`Connected to ${name}.`);
 
         openStatus(
