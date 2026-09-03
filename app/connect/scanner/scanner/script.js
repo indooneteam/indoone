@@ -7,6 +7,7 @@
   const MARKUP_URL = 'app/connect/scanner/scanner/index.html?v=20260903a';
   const PERMISSION_SCRIPT = 'app/connect/scanner/scanner/permission/script.js?v=20260903a';
   const PERMISSION_STYLE = 'app/connect/scanner/scanner/permission/style.css?v=20260903a';
+  const PENDING_DEVICE_KEY = 'indoone_connect_pending_device_v1';
 
   async function loadPermissionFeature() {
     if (!document.querySelector(`link[href^="${PERMISSION_STYLE}"]`)) {
@@ -47,6 +48,28 @@
     detector = null;
   }
 
+  function rememberScannedDevice(value, code) {
+    let name = 'Connected Indoone Device';
+    let deviceType = 'phone';
+
+    try {
+      const payload = JSON.parse(value);
+      if (payload?.type === 'indoone-connect') {
+        name = String(payload.device || name);
+        deviceType = /computer|laptop|pc/i.test(name) ? 'computer' : 'phone';
+      }
+    } catch (_) {
+      // Scanned value was not a JSON pairing payload.
+    }
+
+    sessionStorage.setItem(PENDING_DEVICE_KEY, JSON.stringify({
+      code,
+      name,
+      type: deviceType,
+      discoveredAt: Date.now()
+    }));
+  }
+
   async function handle(raw) {
     const value = String(raw || '').trim();
     if (!value) return false;
@@ -69,6 +92,7 @@
     if (!/^\d{5}$/.test(code)) return false;
 
     stop();
+    rememberScannedDevice(value, code);
 
     const input = document.getElementById('connectPairingCode');
     if (input) input.value = code;
