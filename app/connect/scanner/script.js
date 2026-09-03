@@ -1,12 +1,12 @@
 (() => {
   let stream = null;
-  let frame = 0;
+  let raf = 0;
   let detector = null;
   let scanning = false;
 
-  async function loadMarkup() {
+  const load = async () => {
     const response = await fetch(
-      `app/connect/scanner/index.html?v=${Date.now()}`,
+      `app/connect/scanner/index.html?v=20260917a`,
       { cache: 'no-store' }
     );
 
@@ -15,46 +15,56 @@
     }
 
     return response.text();
-  }
+  };
 
-  function stopScanner() {
+  const stop = () => {
     scanning = false;
 
-    if (frame) {
-      cancelAnimationFrame(frame);
-      frame = 0;
+    if (raf) {
+      cancelAnimationFrame(raf);
     }
+
+    raf = 0;
 
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
-      stream = null;
     }
 
+    stream = null;
     detector = null;
-  }
+  };
 
-  function handleQr(raw) {
+  const handle = raw => {
     const value = String(raw || '').trim();
-    if (!value) return;
+    if (!value) {
+      return;
+    }
 
     const status = document.getElementById('connectFeatureScanStatus');
 
     if (value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
-      const code = value.slice('INDOONE_CONNECT:'.length).trim();
+      const code = value.slice(16).trim();
       const input = document.getElementById('connectPairingCode');
 
-      if (input) input.value = code;
-      if (status) status.textContent = 'Pairing code detected. Tap Connect.';
+      if (input) {
+        input.value = code;
+      }
+
+      if (status) {
+        status.textContent = 'Pairing code detected. Tap Connect.';
+      }
       return;
     }
 
     if (status) {
-      status.textContent = 'QR detected. This is not an Indoone pairing code.';
+      status.textContent = 'QR detected. This code is not an Indoone pairing code.';
     }
-  }
+  };
 
-  async function scanLoop(video) {
-    if (!scanning) return;
+  async function loop(video) {
+    if (!scanning) {
+      return;
+    }
 
     try {
       if (video.readyState >= 2) {
@@ -62,31 +72,33 @@
         const raw = codes?.[0]?.rawValue;
 
         if (raw) {
-          handleQr(raw);
-          stopScanner();
+          handle(raw);
+          stop();
           return;
         }
       }
     } catch (_) {
-      // Keep scanning after a transient detector error.
+      // Continue scanning after transient detector errors.
     }
 
-    frame = requestAnimationFrame(() => scanLoop(video));
+    raf = requestAnimationFrame(() => loop(video));
   }
 
-  async function startCamera() {
+  async function camera() {
     const status = document.getElementById('connectFeatureScanStatus');
     const video = document.getElementById('connectFeatureScanVideo');
 
-    if (!video) return;
-
     if (!navigator.mediaDevices?.getUserMedia) {
-      if (status) status.textContent = 'Camera is not available on this device.';
+      if (status) {
+        status.textContent = 'Camera is not available on this device.';
+      }
       return;
     }
 
     try {
-      window.IndooneNative?.requestCameraPermission?.();
+      if (window.IndooneNative?.requestCameraPermission) {
+        window.IndooneNative.requestCameraPermission();
+      }
 
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' } },
@@ -96,29 +108,31 @@
       video.srcObject = stream;
       await video.play();
 
-      if (!('BarcodeDetector' in window)) {
+      if ('BarcodeDetector' in window) {
+        detector = new BarcodeDetector({ formats: ['qr_code'] });
+        scanning = true;
+        loop(video);
+
         if (status) {
-          status.textContent = 'Camera is on, but QR decoding is not supported here.';
+          status.textContent = 'Camera ready. Point it at an Indoone QR.';
         }
-        return;
+      } else if (status) {
+        status.textContent = 'Camera is on, but QR decoding is not supported here.';
       }
-
-      detector = new BarcodeDetector({ formats: ['qr_code'] });
-      scanning = true;
-
-      if (status) status.textContent = 'Camera ready. Point it at an Indoone QR.';
-      scanLoop(video);
     } catch (error) {
       if (status) {
-        status.textContent = error?.name === 'NotAllowedError'
-          ? 'Camera permission denied.'
-          : 'Unable to open camera.';
+        status.textContent =
+          error?.name === 'NotAllowedError'
+            ? 'Camera permission denied.'
+            : 'Unable to open camera.';
       }
     }
   }
 
-  async function scanImage(file) {
-    if (!file) return;
+  async function image(file) {
+    if (!file) {
+      return;
+    }
 
     if (!('BarcodeDetector' in window)) {
       window.toast?.('Image QR scanning is not supported here.');
@@ -132,40 +146,39 @@
 
       const imageDetector = new BarcodeDetector({ formats: ['qr_code'] });
       const codes = await imageDetector.detect(image);
-      handleQr(codes?.[0]?.rawValue);
+      handle(codes?.[0]?.rawValue);
+
       URL.revokeObjectURL(image.src);
     } catch (_) {
       window.toast?.('Could not read that QR image.');
     }
   }
 
-  window.showConnectScanner = async function () {
-    stopScanner();
+  window.showConnectScanner = async () => {
+    stop();
 
     try {
-      const markup = await loadMarkup();
-      window.openModal?.(markup);
+      openModal(await load());
 
       const modal = document.getElementById('modal');
-      if (!modal) return;
 
-      modal.querySelectorAll('[data-scanner-close]').forEach(button => {
+      modal?.querySelectorAll('[data-scanner-close]').forEach(button => {
         button.addEventListener('click', () => {
-          stopScanner();
+          stop();
           window.closeModal?.();
         });
       });
 
-      modal.querySelector('[data-connect-image]')?.addEventListener('click', () => {
+      modal?.querySelector('[data-connect-image]')?.addEventListener('click', () => {
         modal.querySelector('#connectFeatureImageInput')?.click();
       });
 
-      modal.querySelector('#connectFeatureImageInput')?.addEventListener(
+      modal?.querySelector('#connectFeatureImageInput')?.addEventListener(
         'change',
-        event => scanImage(event.target.files?.[0])
+        event => image(event.target.files?.[0])
       );
 
-      modal.querySelector('[data-connect-code]')?.addEventListener('click', () => {
+      modal?.querySelector('[data-connect-code]')?.addEventListener('click', () => {
         const code = modal.querySelector('#connectPairingCode')?.value.trim();
 
         if (!code) {
@@ -173,16 +186,10 @@
           return;
         }
 
-        window.dispatchEvent(new CustomEvent('indoone-connect-code', {
-          detail: { code }
-        }));
-
-        const status = modal.querySelector('#connectFeatureScanStatus');
-        if (status) status.textContent = 'Pairing code ready for nearby connection.';
-        window.toast?.('Pairing code ready.');
+        window.toast?.('Pairing code ready for nearby connection.');
       });
 
-      await startCamera();
+      await camera();
     } catch (error) {
       window.toast?.(error?.message || 'Could not open scanner.');
     }
