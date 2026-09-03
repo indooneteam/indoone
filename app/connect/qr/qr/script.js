@@ -1,8 +1,6 @@
 (() => {
   const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260903a';
   const QR_LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
-  const PERMISSION_SCRIPT = 'app/connect/qr/qr/permission/script.js?v=20260903a';
-  const PERMISSION_STYLE = 'app/connect/qr/qr/permission/style.css?v=20260903a';
 
   let qrLibraryPromise = null;
   let pairingCode = '';
@@ -69,37 +67,18 @@
     permissionHandler = event => {
       const detail = event.detail || {};
       if (detail.type !== 'permissions') return;
+
       if (detail.message !== 'granted') {
         stopAdvertising();
         window.toast?.('Nearby permission is required for device pairing.');
         return;
       }
+
       native.startNearbyAdvertising(`${deviceName()} [${code}]`);
     };
 
     window.addEventListener('indoone-nearby', permissionHandler);
     native.requestNearbyPermissions?.();
-  }
-
-  async function showPermissions() {
-    if (!document.querySelector(`link[href^="${PERMISSION_STYLE}"]`)) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = PERMISSION_STYLE;
-      document.head.appendChild(link);
-    }
-
-    if (!window.IndooneQrPermission) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = PERMISSION_SCRIPT;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('QR permissions could not be loaded.'));
-        document.head.appendChild(script);
-      });
-    }
-
-    await window.IndooneQrPermission?.show?.();
   }
 
   async function renderQr(target, value) {
@@ -159,8 +138,6 @@
           window.closeModal?.();
         });
       });
-
-      await showPermissions();
     } catch (error) {
       stopAdvertising();
       window.toast?.(error?.message || 'Could not open QR code.');
