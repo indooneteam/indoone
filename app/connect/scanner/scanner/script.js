@@ -22,6 +22,41 @@
     detector = null;
   }
 
+  function ensureNearbyReady() {
+    const native = window.IndooneNative;
+    if (!native?.requestNearbyPermissions) {
+      return Promise.reject(new Error('Nearby device support is unavailable.'));
+    }
+
+    return new Promise(resolve => {
+      let settled = false;
+      let timeoutId = 0;
+
+      const finish = ready => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        window.removeEventListener('indoone-nearby', handler);
+        resolve(ready);
+      };
+
+      const handler = event => {
+        const detail = event.detail || {};
+        if (detail.type !== 'permissions') return;
+        finish(detail.message === 'granted');
+      };
+
+      window.addEventListener('indoone-nearby', handler);
+      timeoutId = window.setTimeout(() => finish(false), 15000);
+
+      try {
+        native.requestNearbyPermissions();
+      } catch (_) {
+        finish(false);
+      }
+    });
+  }
+
   function rememberScannedDevice(value, code) {
     let name = 'Connected Indoone Device';
     let deviceType = 'phone';
@@ -158,6 +193,12 @@
     stop();
 
     try {
+      const ready = await ensureNearbyReady();
+      if (!ready) {
+        window.toast?.('Turn on Bluetooth and allow Nearby devices access to use the scanner.');
+        return;
+      }
+
       window.openModal?.(await loadMarkup());
       const modal = document.getElementById('modal');
       if (!modal) return;
