@@ -8,7 +8,8 @@
     endpoints: new Map(),
     pendingMode: null,
     pendingPairing: null,
-    activeEndpointId: ''
+    activeEndpointId: '',
+    endpointDirections: new Map()
   };
 
   if (!native) return;
@@ -77,7 +78,7 @@
     }
   }
 
-  function rememberConnected(name, endpointId) {
+  function rememberConnected(name, endpointId, direction = 'access-other-device') {
     const devices = loadDevices();
     let device = devices.find(item =>
       item.endpointId === endpointId || item.name === name
@@ -91,8 +92,8 @@
         type: /computer|laptop|pc/i.test(name) ? 'computer' : 'phone',
         connected: true,
         trusted: false,
-        direction: 'access-to-my-device',
-        color: 'red',
+        direction,
+        color: direction === 'access-to-my-device' ? 'red' : 'green',
         permissions: {
           photos: false,
           videos: false,
@@ -110,6 +111,8 @@
       device.name = name;
       device.endpointId = endpointId;
       device.connected = true;
+      device.direction = direction;
+      device.color = direction === 'access-to-my-device' ? 'red' : 'green';
       device.updatedAt = Date.now();
     }
 
@@ -273,6 +276,7 @@
       if (!item) return;
 
       state.activeEndpointId = endpointId;
+      state.endpointDirections.set(endpointId, 'access-other-device');
       native.connectNearbyEndpoint(endpointId, deviceName());
       notify(`Connection request sent to ${item.name}.`);
       return;
@@ -281,7 +285,10 @@
     const acceptButton = event.target.closest('[data-nearby-accept]');
     if (acceptButton) {
       event.preventDefault();
-      native.acceptNearbyConnection?.(acceptButton.dataset.nearbyAccept);
+      const endpointId = acceptButton.dataset.nearbyAccept;
+      state.endpointDirections.set(endpointId, 'access-to-my-device');
+      native.acceptNearbyConnection?.(endpointId);
+      notify('Connection accepted.');
       return;
     }
 
@@ -307,6 +314,7 @@
     state.pendingMode = null;
     state.pendingPairing = null;
     state.endpoints.clear();
+    state.endpointDirections.clear();
   };
 
   window.addEventListener('indoone-nearby', event => {
@@ -336,33 +344,42 @@
       const endpointId = detail.endpointId;
       if (!endpointId) return;
 
+      const rawName = detail.message || 'Nearby Indoone Device';
+      const codeMatch = rawName.match(/\[(\d{5})\]\s*$/);
+      const discoveredCode = codeMatch?.[1] || '';
+      const displayName = rawName.replace(/\s*\[\d{5}\]\s*$/, '').trim() || rawName;
       const item = {
         endpointId,
-        name: detail.message || 'Nearby Indoone Device'
+        name: displayName,
+        rawName,
+        pairingCode: discoveredCode
       };
       state.endpoints.set(endpointId, item);
 
       if (
         state.pendingPairing &&
-        state.pendingPairing.name &&
-        item.name === state.pendingPairing.name
+        state.pendingPairing.code &&
+        discoveredCode === state.pendingPairing.code
       ) {
         state.activeEndpointId = endpointId;
+        state.endpointDirections.set(endpointId, 'access-other-device');
         native.connectNearbyEndpoint(endpointId, deviceName());
         state.pendingPairing = null;
-        notify(`Found ${item.name}. Connecting nearby…`);
+        notify(`Found ${displayName}. Connecting nearby…`);
       }
 
       const list = document.getElementById('nearbyDiscoveryList');
       if (!list) return;
 
-      list.innerHTML = [...state.endpoints.values()].map(item => `
+      list.innerHTML = [...state.endpoints.values()].map(found => `
         <div class="device-card connected">
           <div class="device-icon">${state.targetType === 'computer' ? '💻' : '📱'}</div>
           <div>
-            <b>${escapeHtml(item.name)}</b>
+            <b>${escapeHtml(found.name)}</b>
             <small>Nearby • ${
-              state.pendingPairing ? 'Matching scanned device…' : 'Ready to connect'
+              state.pendingPairing
+                ? (found.pairingCode === state.pendingPairing.code ? 'Matched scanned device' : 'Waiting for match')
+                : 'Ready to connect'
             }</small>
           </div>
           <span class="device-dot"></span>
@@ -392,41 +409,41 @@
       return;
     }
 
-    if (detail.type === 'connectionInitiated' && detail.incoming) {
-      openStatus(
-        'Connection request',
-        `
-          <div class="device-summary">
-            <div class="device-icon large">📱</div>
-            <div>
-              <b>${escapeHtml(detail.message || 'Nearby device')}</b>
-              <small>Wants to connect to this device</small>
+    if (detail.type === 'connectionInitiated') {
+      if (detail.incoming) {
+        openStatus(
+          'Connection request',
+          `
+            <div class="device-summary">
+              <div class="device-icon large">📱</div>
+              <div>
+                <b>${escapeHtml(detail.message || 'Nearby device')}</b>
+                <small>Wants to connect to this device</small>
+              </div>
             </div>
-          </div>
-          <div class="connect-empty">
-            <b>Verification code: ${escapeHtml(detail.authenticationDigits || '----')}</b><br>
-            Confirm that the code matches on both devices before accepting.
-          </div>
-          <button type="button" class="primary" data-nearby-accept="${escapeHtml(detail.endpointId)}">Accept connection</button>
-          <button type="button" class="secondary" data-nearby-reject="${escapeHtml(detail.endpointId)}">Reject</button>
-        `
-      );
-      return;
-    }
-
-    if (detail.type === 'connectionInitiated' && !detail.incoming) {
-      notify(`Waiting for ${detail.message || 'the device'} to approve the connection.`);
+            <div class="connect-empty">
+              <b>Verification code: ${escapeHtml(detail.authenticationDigits || '----')}</b><br>
+              Confirm that the code matches on both devices before allowing the connection.
+            </div>
+            <button type="button" class="primary" data-nearby-accept="${escapeHtml(detail.endpointId)}">Allow connection</button>
+            <button type="button" class="secondary" data-nearby-reject="${escapeHtml(detail.endpointId)}">Reject</button>
+          `
+        );
+      } else {
+        state.endpointDirections.set(detail.endpointId, 'access-other-device');
+        notify(`Waiting for ${detail.message || 'the device'} to approve the connection.`);
+      }
       return;
     }
 
     if (detail.type === 'connectionResult') {
       if (detail.message === 'connected') {
         const item = state.endpoints.get(detail.endpointId);
-        const name = item?.name || state.pendingPairing?.name || 'Nearby device';
+        const name = item?.name || (detail.message === 'connected' ? 'Nearby device' : 'Nearby device');
+        const direction = state.endpointDirections.get(detail.endpointId) || 'access-other-device';
 
-        rememberConnected(name, detail.endpointId);
+        rememberConnected(name, detail.endpointId, direction);
         state.activeEndpointId = detail.endpointId;
-        state.pendingPairing = null;
         notify(`Connected to ${name}.`);
 
         openStatus(
@@ -440,7 +457,7 @@
               </div>
             </div>
             <div class="connect-empty">
-              Connection is ready. Data access remains separate and requires explicit permission.
+              <b>${direction === 'access-to-my-device' ? 'This device can access your selected data after permission is granted.' : 'You can request access to the other device after permission is granted.'}</b>
             </div>
             <button type="button" class="primary" data-close>Done</button>
           `
@@ -454,6 +471,7 @@
     if (detail.type === 'disconnected') {
       updateDeviceConnection(detail.endpointId, false);
       state.activeEndpointId = '';
+      state.endpointDirections.delete(detail.endpointId);
       notify('Nearby device disconnected.');
       return;
     }
