@@ -1,10 +1,9 @@
 (() => {
-  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260903b';
+  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260904a';
   const QR_LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
   let qrLibraryPromise = null;
   let pairingCode = '';
-  let permissionHandler = null;
 
   async function loadMarkup() {
     const response = await fetch(MARKUP_URL, { cache: 'no-store' });
@@ -52,10 +51,6 @@
   }
 
   function stopAdvertising() {
-    if (permissionHandler) {
-      window.removeEventListener('indoone-nearby', permissionHandler);
-      permissionHandler = null;
-    }
     window.IndooneNative?.stopNearby?.();
   }
 
@@ -84,7 +79,7 @@
       };
 
       window.addEventListener('indoone-nearby', handler);
-      timeoutId = window.setTimeout(() => finish(false), 15000);
+      timeoutId = window.setTimeout(() => finish(false), 60000);
 
       try {
         native.requestNearbyPermissions();
@@ -92,28 +87,6 @@
         finish(false);
       }
     });
-  }
-
-  function startAdvertising(code) {
-    const native = window.IndooneNative;
-    if (!native?.startNearbyAdvertising) return;
-
-    stopAdvertising();
-    permissionHandler = event => {
-      const detail = event.detail || {};
-      if (detail.type !== 'permissions') return;
-
-      if (detail.message !== 'granted') {
-        stopAdvertising();
-        window.toast?.('Nearby device permission is required for QR pairing.');
-        return;
-      }
-
-      native.startNearbyAdvertising(`${deviceName()} [${code}]`);
-    };
-
-    window.addEventListener('indoone-nearby', permissionHandler);
-    native.requestNearbyPermissions?.();
   }
 
   async function renderQr(target, value) {
@@ -141,7 +114,7 @@
     try {
       const ready = await ensureNearbyReady();
       if (!ready) {
-        window.toast?.('Turn on Bluetooth and allow Nearby devices access to show the QR.');
+        window.toast?.('Turn on Bluetooth and Wi-Fi, then allow Nearby devices access to show the QR.');
         return;
       }
 
@@ -162,7 +135,13 @@
       modal.querySelector('#connectQrCode').textContent = `Pairing code: ${pairingCode}`;
       modal.querySelector('#connectQrCodeLarge').textContent = pairingCode;
 
-      startAdvertising(pairingCode);
+      try {
+        window.IndooneNative?.startNearbyAdvertising?.(`${deviceName()} [${pairingCode}]`);
+      } catch (_) {
+        stopAdvertising();
+        window.toast?.('Could not start Nearby advertising.');
+        return;
+      }
 
       modal.querySelector('[data-qr-copy]')?.addEventListener('click', async () => {
         try {
