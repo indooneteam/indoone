@@ -1,1 +1,15 @@
-/* Login feature styles. */
+/* Login feature styles. Shared primitives remain in style.css. */
+.auth-login-page{min-height:100vh;width:100%;display:flex;flex-direction:column;justify-content:center;padding:48px 22px;background:linear-gradient(180deg,#fff 0%,#fbfaff 100%)}
+.auth-login-page .auth-brand{margin:0 auto 44px;width:min(460px,100%)}
+.auth-login-page .auth-copy{width:min(460px,100%);margin:0 auto 20px}
+.auth-login-page .auth-copy h1{margin:0 0 8px;font-size:34px;letter-spacing:-1px}
+.auth-login-page .auth-copy p:last-child{margin:0;color:#77717f;font-size:14px;line-height:1.6}
+.auth-login-page .field,.auth-login-page>.primary,.auth-login-page>.secondary,.auth-login-page>.auth-footer,.auth-login-page>#loginOtpArea{width:min(460px,100%);margin-left:auto;margin-right:auto}
+.auth-login-page .field{margin-top:14px;margin-bottom:0}
+.auth-login-page>.primary{margin-top:20px}
+.auth-login-page>.secondary{margin-top:10px}
+.auth-login-page>#loginOtpArea{margin-top:6px}
+.auth-login-page>#loginOtpArea .field{margin-top:12px}
+.auth-login-page>#loginOtpArea .primary{margin-top:4px}
+.auth-login-page>#loginOtpArea .secondary{margin-top:9px}
+@media(min-width:700px){.auth-login-page{padding:64px 34px}.auth-login-page .auth-brand{margin-bottom:52px}.auth-login-page .auth-copy h1{font-size:38px}}
