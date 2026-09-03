@@ -1,9 +1,11 @@
 (() => {
   const CONTENT_ID = 'content';
   const ADD_HASH = '#home/add-account';
+  const ADD_SCRIPT = 'app/home/add-account/add-account.js?v=20260915b';
   let homeView = null;
   let subPage = null;
   let initialized = false;
+  let addFeatureReady = null;
 
   function setupViews() {
     const page = document.getElementById(CONTENT_ID);
@@ -25,11 +27,25 @@
 
     window.addEventListener('popstate', handleHistory);
     if (window.location.hash === ADD_HASH) {
-      window.IndooneHome.showAddAccount({ push: false });
+      showAddAccount({ push: false });
     }
   }
 
+  function loadAddFeature() {
+    if (window.IndooneAddAccount?.render) return Promise.resolve();
+    if (addFeatureReady) return addFeatureReady;
+    addFeatureReady = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = ADD_SCRIPT;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Add Account feature could not be loaded.'));
+      document.head.appendChild(script);
+    });
+    return addFeatureReady;
+  }
+
   function restoreAccountView() {
+    setupViews();
     if (!homeView) return;
     homeView.hidden = false;
     if (subPage) subPage.hidden = true;
@@ -47,7 +63,7 @@
 
   function handleHistory() {
     if (window.location.hash === ADD_HASH) {
-      window.IndooneHome.showAddAccount({ push: false });
+      showAddAccount({ push: false });
       return;
     }
     restoreAccountView();
@@ -61,8 +77,13 @@
     subPage.hidden = false;
     document.getElementById('addBtn')?.setAttribute('hidden', '');
     document.body.classList.add('home-subpage-open');
-    if (window.IndooneAddAccount?.render) {
+    try {
+      await loadAddFeature();
       await window.IndooneAddAccount.render(subPage);
+    } catch (error) {
+      subPage.innerHTML = `<section class="add-account-page"><button type="button" class="add-account-back" data-add-action="back"><span class="back-icon">‹</span><span>Back</span></button><h1>Add Account</h1><p>Unable to load this page.</p></section>`;
+      console.error('Indoone Add Account feature failed:', error);
+      subPage.querySelector('[data-add-action="back"]')?.addEventListener('click', () => backToHome(), { once: true });
     }
   }
 
@@ -77,6 +98,8 @@
 
   function init() {
     setupViews();
+    window.showAdd = () => showAddAccount({ push: true });
+    if (window.location.hash === ADD_HASH) showAddAccount({ push: false });
   }
 
   window.IndooneHome = { init, showAddAccount, backToHome, restoreAccountView };
