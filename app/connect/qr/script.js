@@ -3,6 +3,8 @@
   const QR_LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
   let qrLibraryPromise = null;
+  let pairingCode = '';
+  let pairingPermissionHandler = null;
 
   const loadMarkup = async () => {
     const response = await fetch(MARKUP_URL, { cache: 'no-store' });
@@ -99,7 +101,61 @@
     }
   }
 
+  function stopAdvertising() {
+    if (pairingPermissionHandler) {
+      window.removeEventListener('indoone-nearby', pairingPermissionHandler);
+      pairingPermissionHandler = null;
+    }
+
+    window.IndooneNative?.stopNearby?.();
+  }
+
+  function startAdvertising(code) {
+    const native = window.IndooneNative;
+
+    if (!native?.startNearbyAdvertising) {
+      return false;
+    }
+
+    stopAdvertising();
+
+    const advertisedName = `${deviceName()} [${code}]`;
+
+    pairingPermissionHandler = event => {
+      const detail = event.detail || {};
+
+      if (detail.type !== 'permissions') {
+        return;
+      }
+
+      if (detail.message !== 'granted') {
+        stopAdvertising();
+        window.toast?.('Nearby permission is required for device pairing.');
+        return;
+      }
+
+      try {
+        native.startNearbyAdvertising(advertisedName);
+      } catch (_) {
+        window.toast?.('Nearby connection is unavailable on this device.');
+      }
+    };
+
+    window.addEventListener('indoone-nearby', pairingPermissionHandler);
+
+    try {
+      native.requestNearbyPermissions?.();
+    } catch (_) {
+      stopAdvertising();
+      return false;
+    }
+
+    return true;
+  }
+
   window.showConnectQr = async () => {
+    stopAdvertising();
+
     try {
       const markup = await loadMarkup();
       openModal(markup);
@@ -110,8 +166,8 @@
       }
 
       const name = deviceName();
-      const code = createPairingCode();
-      const payload = pairingPayload(code);
+      pairingCode = createPairingCode();
+      const payload = pairingPayload(pairingCode);
       const visualNode = modal.querySelector('#connectQrVisual');
 
       if (!visualNode) {
@@ -121,24 +177,30 @@
       await renderQr(visualNode, payload);
 
       modal.querySelector('#connectQrDeviceName').textContent = name;
-      modal.querySelector('#connectQrCode').textContent = `Pairing code: ${code}`;
-      modal.querySelector('#connectQrCodeLarge').textContent = code;
+      modal.querySelector('#connectQrCode').textContent = `Pairing code: ${pairingCode}`;
+      modal.querySelector('#connectQrCodeLarge').textContent = pairingCode;
+
+      startAdvertising(pairingCode);
 
       modal.querySelectorAll('[data-connect-copy]').forEach(button => {
         button.addEventListener('click', async () => {
           try {
-            await navigator.clipboard.writeText(code);
+            await navigator.clipboard.writeText(pairingCode);
             window.toast?.('Pairing code copied.');
           } catch (_) {
-            window.toast?.(code);
+            window.toast?.(pairingCode);
           }
         });
       });
 
       modal.querySelectorAll('[data-connect-close]').forEach(button => {
-        button.addEventListener('click', () => window.closeModal?.());
+        button.addEventListener('click', () => {
+          stopAdvertising();
+          window.closeModal?.();
+        });
       });
     } catch (error) {
+      stopAdvertising();
       window.toast?.(error?.message || 'Could not open QR code.');
     }
   };
