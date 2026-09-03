@@ -46,15 +46,20 @@ window.clearSearchAccounts = function () {
 };
 
 function bindSearchControls() {
-  const input = document.getElementById('search');
-  const clear = document.getElementById('clearSearch');
+  let input = document.getElementById('search');
+  let clear = document.getElementById('clearSearch');
 
   if (!input || !clear || input.dataset.indooneSearchBound === 'true') {
     return;
   }
 
-  input.dataset.indooneSearchBound = 'true';
+  input = input.cloneNode(true);
+  clear = clear.cloneNode(true);
 
+  document.getElementById('search')?.replaceWith(input);
+  document.getElementById('clearSearch')?.replaceWith(clear);
+
+  input.dataset.indooneSearchBound = 'true';
   input.setAttribute('type', 'text');
 
   input.addEventListener('input', filterAccounts);
