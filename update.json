@@ -1,6 +1,6 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1",
+  "versionCode": 3,
+  "versionName": "1.2",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Nearby Connect improvements, permission handling, and automatic update support."
+  "notes": "Nearby Connect improvements, Bluetooth/Wi-Fi readiness, and automatic updates."
 }
