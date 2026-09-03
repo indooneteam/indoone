@@ -1,6 +1,6 @@
 (() => {
-  const MARKUP_URL = 'app/home/add-account/qr/index.html?v=20260903e';
-  const STYLE_URL = 'app/home/add-account/qr/style.css?v=20260903e';
+  const MARKUP_URL = 'app/home/add-account/qr/index.html?v=20260903g';
+  const STYLE_URL = 'app/home/add-account/qr/style.css?v=20260903g';
   const FALLBACK_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
 
   let stream = null;
@@ -52,20 +52,50 @@
       return Promise.resolve(true);
     }
 
-    return new Promise(resolve => {
-      permissionWaiter = resolve;
-      window.IndooneNative.requestCameraPermission();
+    if (permissionWaiter) {
+      return permissionWaiter.promise;
+    }
+
+    let resolvePermission;
+    const promise = new Promise(resolve => {
+      resolvePermission = resolve;
     });
+
+    permissionWaiter = {
+      promise,
+      resolve: resolvePermission
+    };
+
+    try {
+      window.IndooneNative.requestCameraPermission();
+    } catch (_) {
+      permissionWaiter = null;
+      return Promise.resolve(true);
+    }
+
+    window.setTimeout(() => {
+      if (!permissionWaiter || permissionWaiter.promise !== promise) {
+        return;
+      }
+
+      permissionWaiter = null;
+      resolvePermission(true);
+    }, 3000);
+
+    return promise;
   }
 
   function handleCameraPermission(event) {
-    const resolve = permissionWaiter;
+    const waiter = permissionWaiter;
     permissionWaiter = null;
-    resolve?.(Boolean(event.detail?.success));
+
+    if (waiter) {
+      waiter.resolve(Boolean(event.detail?.success));
+    }
   }
 
   function loadFallbackDecoder() {
-    if (window.jsQR) {
+    if (typeof window.jsQR === 'function') {
       return Promise.resolve(window.jsQR);
     }
 
@@ -99,15 +129,13 @@
 
   function prepareFallbackCanvas() {
     canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 480;
     context = canvas.getContext('2d', {
       willReadFrequently: true
     });
   }
 
   function readFallbackCode() {
-    if (!video || !context || !window.jsQR) {
+    if (!video || !context || typeof window.jsQR !== 'function') {
       return '';
     }
 
@@ -118,7 +146,7 @@
       return '';
     }
 
-    const scale = Math.min(1, 640 / width, 480 / height);
+    const scale = Math.min(1, 800 / width, 600 / height);
     const targetWidth = Math.max(1, Math.floor(width * scale));
     const targetHeight = Math.max(1, Math.floor(height * scale));
 
@@ -228,13 +256,87 @@
     }
   }
 
-  async function start() {
-    setStatus('Checking camera…');
+  async function openCamera() {
+    setStatus('Opening camera…');
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus('Camera is not available on this device.');
-      return;
+      throw new Error('Camera is not available on this device.');
     }
+
+    video = document.getElementById('addAccountQrVideo');
+
+    if (!video) {
+      throw new Error('QR camera view is unavailable.');
+    }
+
+    const constraints = {
+      video: {
+        facingMode: {
+          ideal: 'environment'
+        },
+        width: {
+          ideal: 1280
+        },
+        height: {
+          ideal: 720
+        }
+      },
+      audio: false
+    };
+
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        break;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) {
+          await new Promise(resolve => window.setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    if (!stream) {
+      if (lastError?.name === 'NotAllowedError') {
+        throw new Error('Camera permission was denied.');
+      }
+
+      throw new Error('Unable to open the camera.');
+    }
+
+    video.srcObject = stream;
+    await video.play();
+
+    active = true;
+    setStatus('Scanning for a TOTP QR code…');
+
+    if ('BarcodeDetector' in window) {
+      try {
+        detector = new BarcodeDetector({ formats: ['qr_code'] });
+      } catch (_) {
+        detector = null;
+      }
+    }
+
+    if (!detector) {
+      prepareFallbackCanvas();
+      setStatus('Scanning for a TOTP QR code…');
+
+      try {
+        await loadFallbackDecoder();
+      } catch (_) {
+        setStatus('Camera is ready, but QR decoding is unavailable in this browser.');
+      }
+    }
+
+    animationFrame = requestAnimationFrame(scanLoop);
+  }
+
+  async function start() {
+    stop();
+    setStatus('Checking camera…');
 
     const permissionGranted = await requestCameraPermission();
 
@@ -243,48 +345,11 @@
       return;
     }
 
-    video = document.getElementById('addAccountQrVideo');
-
-    if (!video) {
-      setStatus('QR camera view is unavailable.');
-      return;
-    }
-
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: {
-            ideal: 'environment'
-          }
-        },
-        audio: false
-      });
-
-      video.srcObject = stream;
-      await video.play();
-      active = true;
-
-      if ('BarcodeDetector' in window) {
-        detector = new BarcodeDetector({
-          formats: ['qr_code']
-        });
-        setStatus('Scanning for a TOTP QR code…');
-      } else {
-        setStatus('Starting QR scanner…');
-        await loadFallbackDecoder();
-        prepareFallbackCanvas();
-        setStatus('Scanning for a TOTP QR code…');
-      }
-
-      animationFrame = requestAnimationFrame(scanLoop);
+      await openCamera();
     } catch (error) {
       stop();
-
-      setStatus(
-        error?.name === 'NotAllowedError'
-          ? 'Camera permission was denied.'
-          : error?.message || 'Unable to open the camera.'
-      );
+      setStatus(error?.message || 'Unable to open the camera.');
     }
   }
 
@@ -312,11 +377,6 @@
     detector = null;
     canvas = null;
     context = null;
-
-    if (permissionWaiter) {
-      permissionWaiter(false);
-      permissionWaiter = null;
-    }
   }
 
   function backToMenu() {
@@ -360,15 +420,11 @@
             <span>Back</span>
           </button>
           <h1>Scan QR Code</h1>
-          <p>Unable to load the QR scanner.</p>
+          <p>${error?.message || 'Unable to load the QR scanner.'}</p>
         </section>
       `;
-
       bind(mount);
-      console.error(
-        'Indoone Add Account QR feature failed:',
-        error
-      );
+      console.error('Indoone Add Account QR feature failed:', error);
     }
   }
 
@@ -379,6 +435,7 @@
 
   window.IndooneAddAccountQr = {
     render,
+    start,
     stop
   };
 })();
