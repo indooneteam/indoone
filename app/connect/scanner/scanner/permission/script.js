@@ -28,9 +28,16 @@
           permissions[name] = true;
         });
 
-        localStorage.setItem(PERMISSION_KEY, JSON.stringify(permissions));
-        const status = modal.querySelector('#scannerPermissionStatus');
+        localStorage.setItem(PERMISSION_KEY, JSON.stringify({
+          permissions,
+          savedAt: Date.now()
+        }));
 
+        window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
+          detail: { permissions }
+        }));
+
+        const status = modal.querySelector('#scannerPermissionStatus');
         if (status) {
           status.textContent = allowed.length
             ? 'Selected access has been saved for this device.'
@@ -38,15 +45,22 @@
         }
 
         window.toast?.(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
+
+        if (allowed.length) {
+          window.closeModal?.();
+        }
       };
 
-      modal.querySelector('[data-permission-save]')?.addEventListener('click', () => {
+      modal.querySelector('[data-permission-save]')?.addEventListener('click', event => {
+        event.preventDefault();
         const allowed = [...modal.querySelectorAll('[data-permission]:checked')]
-          .map(input => input.dataset.permission);
+          .map(input => input.dataset.permission)
+          .filter(Boolean);
         save(allowed);
       });
 
-      modal.querySelector('[data-permission-deny]')?.addEventListener('click', () => {
+      modal.querySelector('[data-permission-deny]')?.addEventListener('click', event => {
+        event.preventDefault();
         modal.querySelectorAll('[data-permission]').forEach(input => {
           input.checked = false;
         });
