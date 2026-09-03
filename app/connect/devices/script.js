@@ -31,7 +31,17 @@
       const devices = JSON.parse(
         localStorage.getItem(DEVICE_KEY) || '[]'
       );
-      return Array.isArray(devices) ? devices : [];
+      const list = Array.isArray(devices) ? devices : [];
+      const cleaned = list.filter(device =>
+        !String(device?.endpointId || '').startsWith('pairing-') &&
+        !String(device?.id || '').startsWith('scanner-')
+      );
+
+      if (cleaned.length !== list.length) {
+        localStorage.setItem(DEVICE_KEY, JSON.stringify(cleaned));
+      }
+
+      return cleaned;
     } catch (_) {
       return [];
     }
@@ -79,27 +89,32 @@
       .join('');
   };
 
+  const render = modal => {
+    const list = modal?.querySelector('#connectDevicesList');
+    if (list) {
+      list.innerHTML = renderDevices(read());
+    }
+
+    modal?.querySelectorAll('[data-device-name]').forEach(button => {
+      button.addEventListener('click', () => {
+        window.openConnectedDevice?.(button.dataset.deviceName);
+      });
+    });
+  };
+
   window.showConnectDevices = async () => {
     try {
       openModal(await load());
 
       const modal = document.getElementById('modal');
-      const list = modal?.querySelector('#connectDevicesList');
-      const devices = read();
-
-      if (list) {
-        list.innerHTML = renderDevices(devices);
-      }
+      render(modal);
 
       modal?.querySelectorAll('[data-devices-close]').forEach(button => {
         button.addEventListener('click', () => window.closeModal?.());
       });
 
-      modal?.querySelectorAll('[data-device-name]').forEach(button => {
-        button.addEventListener('click', () => {
-          window.openConnectedDevice?.(button.dataset.deviceName);
-        });
-      });
+      const refresh = () => render(document.getElementById('modal'));
+      window.addEventListener('indoone-devices-changed', refresh);
     } catch (error) {
       window.toast?.(error?.message || 'Could not open Devices.');
     }
