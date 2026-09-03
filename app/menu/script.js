@@ -3,6 +3,7 @@
   const panel = drawer?.querySelector('.drawer-panel');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
+  const ASSET_VERSION = '20260903f';
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
@@ -39,13 +40,13 @@
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `${base}/style.css?v=20260903d`;
+    link.href = `${base}/style.css?v=${ASSET_VERSION}`;
     document.head.appendChild(link);
     loadedStyles.add(base);
   }
 
   async function loadScript(base) {
-    const src = `${base}/script.js?v=20260903d`;
+    const src = `${base}/script.js?v=${ASSET_VERSION}`;
 
     if (loadedScripts.has(src)) return;
 
@@ -61,7 +62,7 @@
   }
 
   async function loadFeatureMarkup(base) {
-    const response = await fetch(`${base}/index.html?v=20260903d`, {
+    const response = await fetch(`${base}/index.html?v=${ASSET_VERSION}`, {
       cache: 'no-store'
     });
 
