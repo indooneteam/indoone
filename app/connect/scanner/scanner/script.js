@@ -51,11 +51,13 @@
     const value = String(raw || '').trim();
     if (!value) return false;
 
-    let code = '';
+    let code = /^\d{5}$/.test(value) ? value : '';
 
-    if (value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
+    if (!code && value.toUpperCase().startsWith('INDOONE_CONNECT:')) {
       code = value.slice(16).trim();
-    } else {
+    }
+
+    if (!code) {
       try {
         const payload = JSON.parse(value);
         if (payload?.type === 'indoone-connect') code = String(payload.code || '');
@@ -72,8 +74,6 @@
     if (input) input.value = code;
 
     window.IndooneConnectNative?.pairWithCode?.(code);
-    const status = document.getElementById('connectFeatureScanStatus');
-    if (status) status.textContent = 'Pairing started. Choose permissions.';
 
     try {
       await showPermissions();
@@ -157,7 +157,7 @@
     }
   }
 
-  window.showConnectScanner = async () => {
+  async function show() {
     stop();
 
     try {
@@ -193,5 +193,7 @@
     } catch (error) {
       window.toast?.(error?.message || 'Could not open scanner.');
     }
-  };
+  }
+
+  window.IndooneNestedScanner = { show, stop };
 })();
