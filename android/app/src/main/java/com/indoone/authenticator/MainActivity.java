@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -21,6 +22,7 @@ public class MainActivity extends FragmentActivity {
     private static final int CAMERA_REQUEST_CODE = 41;
     private static final int NEARBY_REQUEST_CODE = 42;
     private static final int BLUETOOTH_ENABLE_REQUEST_CODE = 43;
+    private static final int WIFI_ENABLE_REQUEST_CODE = 44;
     private WebView webView;
     private NearbyConnectionManager nearbyConnectionManager;
     private UpdateManager updateManager;
@@ -73,7 +75,7 @@ public class MainActivity extends FragmentActivity {
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S_V2
                 && checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
         }
@@ -98,8 +100,7 @@ public class MainActivity extends FragmentActivity {
 
             if (!adapter.isEnabled()) {
                 try {
-                    Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(intent, BLUETOOTH_ENABLE_REQUEST_CODE);
+                    startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), BLUETOOTH_ENABLE_REQUEST_CODE);
                 } catch (Exception error) {
                     sendNearbyEvent("error", "bluetoothEnableUnavailable", error.getMessage());
                 }
@@ -107,18 +108,35 @@ public class MainActivity extends FragmentActivity {
             }
         }
 
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        if (wifiManager == null) {
+            sendNearbyEvent("permissions", "denied", "");
+            return;
+        }
+
+        if (!wifiManager.isWifiEnabled()) {
+            try {
+                Intent wifiIntent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                        ? new Intent(Settings.Panel.ACTION_WIFI)
+                        : new Intent(Settings.ACTION_WIFI_SETTINGS);
+                startActivityForResult(wifiIntent, WIFI_ENABLE_REQUEST_CODE);
+            } catch (Exception error) {
+                try {
+                    startActivityForResult(new Intent(Settings.ACTION_WIFI_SETTINGS), WIFI_ENABLE_REQUEST_CODE);
+                } catch (Exception fallbackError) {
+                    sendNearbyEvent("error", "wifiEnableUnavailable", fallbackError.getMessage());
+                }
+            }
+            return;
+        }
+
         sendNearbyEvent("permissions", "granted", "");
     }
 
     @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == BLUETOOTH_ENABLE_REQUEST_CODE) {
-            boolean enabled = resultCode == RESULT_OK;
-            if (enabled) {
-                sendNearbyEvent("permissions", "granted", "");
-            } else {
-                sendNearbyEvent("permissions", "denied", "");
-            }
+        if (requestCode == BLUETOOTH_ENABLE_REQUEST_CODE || requestCode == WIFI_ENABLE_REQUEST_CODE) {
+            ensureNearbyTransportReady();
         }
     }
 
