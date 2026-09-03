@@ -1,0 +1,9 @@
+.my-devices-feature {
+  width: 100%;
+}
+
+.my-devices-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
