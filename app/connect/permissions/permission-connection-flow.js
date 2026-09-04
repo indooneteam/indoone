@@ -1,7 +1,9 @@
 (() => {
   const PENDING_KEY = 'indoone_connect_permission_draft_v1';
+  const DEVICE_KEY = 'indoone_connect_devices_v1';
   const drafts = new Map();
   const connectionMeta = new Map();
+  const openEndpoints = new Set();
 
   const escapeHtml = value => String(value || '').replace(/[&<>\"']/g, char => ({
     '&': '&amp;',
@@ -18,9 +20,7 @@
       const value = all?.[endpointId];
       if (value) drafts.set(endpointId, value);
       return value || null;
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
   function saveDraft(endpointId, draft) {
@@ -41,35 +41,55 @@
     } catch (_) {}
   }
 
-  function permissionPageAlreadyOpen() {
-    const modal = document.getElementById('modal');
-    return Boolean(modal?.querySelector('[data-live-permission-save], [data-bilateral-permission-save]'));
+  function updateLocalPermissions(endpointId, permissions) {
+    try {
+      const devices = JSON.parse(localStorage.getItem(DEVICE_KEY) || '[]');
+      if (!Array.isArray(devices)) return;
+      const device = devices.find(item => item.endpointId === endpointId);
+      if (!device) return;
+      device.permissions = {
+        ...(device.permissions || {}),
+        photos: Boolean(permissions.photos),
+        videos: Boolean(permissions.videos),
+        documents: Boolean(permissions.documents),
+        files: Boolean(permissions.files)
+      };
+      device.updatedAt = Date.now();
+      localStorage.setItem(DEVICE_KEY, JSON.stringify(devices));
+      window.dispatchEvent(new CustomEvent('indoone-devices-changed'));
+    } catch (_) {}
+  }
+
+  function sendPermissions(endpointId, permissions) {
+    const message = JSON.stringify({
+      type: 'indoone-permissions',
+      permissions: {
+        photos: Boolean(permissions.photos),
+        videos: Boolean(permissions.videos),
+        documents: Boolean(permissions.documents),
+        files: Boolean(permissions.files)
+      }
+    });
+    try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
   }
 
   function openPermissionPage(endpointId, deviceName, direction) {
-    if (permissionPageAlreadyOpen()) return;
+    endpointId = String(endpointId || '').trim();
+    if (!endpointId || openEndpoints.has(endpointId)) return;
+    const modal = document.getElementById('modal');
+    if (modal?.querySelector('[data-live-permission-save], [data-bilateral-permission-save]')) return;
 
-    const existingDraft = loadDraft(endpointId) || {
-      photos: false,
-      videos: false,
-      documents: false,
-      files: false
-    };
-
-    const title = direction === 'incoming'
-      ? 'Allow access to your data'
-      : 'Choose data you will share';
+    openEndpoints.add(endpointId);
+    const existingDraft = loadDraft(endpointId) || { photos: false, videos: false, documents: false, files: false };
+    const title = direction === 'incoming' ? 'Allow access to your data' : 'Choose data you will share';
     const description = direction === 'incoming'
-      ? `${deviceName} is connected to this device. Choose exactly what it may access.`
+      ? `${deviceName} is connecting to this device. Choose exactly what it may access.`
       : `Choose exactly what ${deviceName} may access from this device.`;
 
-    const markup = `
+    window.openModal?.(`
       <section class="connect-feature connect-permission-feature" data-bilateral-permission="${escapeHtml(endpointId)}">
         <div class="modal-head">
-          <div>
-            <p class="eyebrow">DEVICE ACCESS</p>
-            <h2>${escapeHtml(title)}</h2>
-          </div>
+          <div><p class="eyebrow">DEVICE ACCESS</p><h2>${escapeHtml(title)}</h2></div>
           <button type="button" class="close-btn" data-bilateral-permission-close aria-label="Close permissions">×</button>
         </div>
         <p class="connect-muted">${escapeHtml(description)}</p>
@@ -86,15 +106,14 @@
             </label>
           `).join('')}
         </div>
-        <p class="connect-muted" data-bilateral-permission-status>Nearby connection is established. Choose and save what this device may access.</p>
+        <p class="connect-muted" data-bilateral-permission-status>Choose what this device may access, then save.</p>
         <button type="button" class="primary" data-bilateral-permission-save>Allow selected</button>
         <button type="button" class="secondary" data-bilateral-permission-deny>Deny all</button>
       </section>
-    `;
+    `);
 
-    window.openModal?.(markup);
-    const modal = document.getElementById('modal');
-    if (!modal) return;
+    const currentModal = document.getElementById('modal');
+    if (!currentModal) { openEndpoints.delete(endpointId); return; }
 
     const save = allowed => {
       const draft = {
@@ -105,33 +124,26 @@
         savedAt: Date.now()
       };
       saveDraft(endpointId, draft);
-
-      const message = JSON.stringify({
-        type: 'indoone-permissions',
-        permissions: {
-          photos: draft.photos,
-          videos: draft.videos,
-          documents: draft.documents,
-          files: draft.files
-        }
-      });
-
-      try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
-      window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
-        detail: { endpointId, permissions: draft }
-      }));
+      updateLocalPermissions(endpointId, draft);
+      sendPermissions(endpointId, draft);
+      window.dispatchEvent(new CustomEvent('indoone-permissions-saved', { detail: { endpointId, permissions: draft } }));
       window.toast?.(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
       window.closeModal?.();
+      openEndpoints.delete(endpointId);
     };
 
-    modal.querySelector('[data-bilateral-permission-save]')?.addEventListener('click', () => {
-      const allowed = [...modal.querySelectorAll('[data-bilateral-permission]:checked')]
+    currentModal.querySelector('[data-bilateral-permission-save]')?.addEventListener('click', () => {
+      const allowed = [...currentModal.querySelectorAll('[data-bilateral-permission]:checked')]
         .map(input => input.dataset.bilateralPermission)
         .filter(key => ['photos', 'videos', 'documents', 'files'].includes(key));
       save(allowed);
     });
-    modal.querySelector('[data-bilateral-permission-deny]')?.addEventListener('click', () => save([]));
-    modal.querySelector('[data-bilateral-permission-close]')?.addEventListener('click', () => window.closeModal?.());
+    currentModal.querySelector('[data-bilateral-permission-deny]')?.addEventListener('click', () => save([]));
+    currentModal.querySelector('[data-bilateral-permission-close]')?.addEventListener('click', () => {
+      openEndpoints.delete(endpointId);
+      clearDraft(endpointId);
+      window.closeModal?.();
+    });
   }
 
   window.addEventListener('indoone-nearby', event => {
@@ -140,35 +152,26 @@
     if (!endpointId) return;
 
     if (detail.type === 'connectionInitiated') {
-      connectionMeta.set(endpointId, {
+      const meta = {
         name: String(detail.message || 'Nearby device'),
         direction: detail.incoming ? 'incoming' : 'outgoing'
-      });
+      };
+      connectionMeta.set(endpointId, meta);
+      window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 0);
       return;
     }
 
     if (detail.type === 'connectionResult' && detail.message === 'connected') {
       const meta = connectionMeta.get(endpointId) || { name: 'Nearby device', direction: 'outgoing' };
       window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 0);
-
       const draft = loadDraft(endpointId);
-      if (draft) {
-        const message = JSON.stringify({
-          type: 'indoone-permissions',
-          permissions: {
-            photos: Boolean(draft.photos),
-            videos: Boolean(draft.videos),
-            documents: Boolean(draft.documents),
-            files: Boolean(draft.files)
-          }
-        });
-        try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
-      }
+      if (draft) sendPermissions(endpointId, draft);
       return;
     }
 
     if (detail.type === 'disconnected') {
       clearDraft(endpointId);
+      openEndpoints.delete(endpointId);
       connectionMeta.delete(endpointId);
     }
   });

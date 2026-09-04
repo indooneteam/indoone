@@ -27,7 +27,6 @@
   const deviceName = () => {
     const saved = localStorage.getItem('indoone_connect_device_name');
     if (saved) return saved;
-
     const uid = window.IndooneFirebase?.auth?.currentUser?.uid || '';
     const suffix = uid ? uid.slice(-4).toUpperCase() : Math.random().toString(36).slice(2, 6).toUpperCase();
     const mobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -40,9 +39,7 @@
     try {
       const value = JSON.parse(localStorage.getItem(DEVICE_KEY) || '[]');
       return Array.isArray(value) ? value : [];
-    } catch (_) {
-      return [];
-    }
+    } catch (_) { return []; }
   };
 
   const saveDevices = devices => {
@@ -54,19 +51,12 @@
 
   function openStatus(title, body) {
     if (typeof window.openModal !== 'function') return;
-    window.openModal(`
-      <div class="modal-head">
-        <h2>${escapeHtml(title)}</h2>
-        <button type="button" class="close-btn" data-close>×</button>
-      </div>
-      ${body}
-    `);
+    window.openModal(`<div class="modal-head"><h2>${escapeHtml(title)}</h2><button type="button" class="close-btn" data-close>×</button></div>${body}`);
   }
 
   function rememberConnected(name, endpointId, direction = 'access-other-device') {
     const devices = loadDevices();
     let device = devices.find(item => item.endpointId === endpointId || item.name === name);
-
     if (!device) {
       device = {
         id: `nearby-${Date.now()}`,
@@ -77,22 +67,8 @@
         trusted: false,
         direction,
         color: direction === 'access-to-my-device' ? 'red' : 'green',
-        permissions: {
-          photos: false,
-          videos: false,
-          documents: false,
-          files: false,
-          downloads: false,
-          upload: false,
-          delete: false,
-          alwaysAllow: false
-        },
-        remotePermissions: {
-          photos: false,
-          videos: false,
-          documents: false,
-          files: false
-        },
+        permissions: { photos: false, videos: false, documents: false, files: false, downloads: false, upload: false, delete: false, alwaysAllow: false },
+        remotePermissions: { photos: false, videos: false, documents: false, files: false },
         createdAt: Date.now()
       };
       devices.push(device);
@@ -104,17 +80,13 @@
       device.color = direction === 'access-to-my-device' ? 'red' : 'green';
       device.updatedAt = Date.now();
     }
-
     saveDevices(devices);
     return device;
   }
 
   function updateDeviceConnection(endpointId, connected) {
     const devices = loadDevices();
-    const next = devices.map(device => device.endpointId === endpointId
-      ? { ...device, connected, updatedAt: Date.now() }
-      : device
-    );
+    const next = devices.map(device => device.endpointId === endpointId ? { ...device, connected, updatedAt: Date.now() } : device);
     saveDevices(next);
   }
 
@@ -123,7 +95,6 @@
     const mode = state.pendingMode;
     state.pendingMode = null;
     state.mode = mode;
-
     try {
       if (mode === 'advertise') native.startNearbyAdvertising(deviceName());
       else native.startNearbyDiscovery();
@@ -131,14 +102,11 @@
       notify('Nearby connection is unavailable on this device.');
       return;
     }
-
     const status = document.getElementById('nearbyStatus');
     if (status) {
       status.textContent = mode === 'advertise'
         ? 'Your device is discoverable nearby.'
-        : state.pendingPairing
-          ? 'Looking for the scanned device nearby…'
-          : 'Searching for nearby Indoone devices…';
+        : state.pendingPairing ? 'Looking for the scanned device nearby…' : 'Searching for nearby Indoone devices…';
     }
   }
 
@@ -147,192 +115,41 @@
     state.pendingPairing = null;
     state.pendingMode = mode;
     state.targetType = targetType;
-
     const isAdvertise = mode === 'advertise';
     openStatus(
       isAdvertise ? 'Waiting for connection' : 'Nearby devices',
       isAdvertise
-        ? `
-          <div class="device-summary">
-            <div class="device-icon large">${targetType === 'computer' ? '💻' : '📱'}</div>
-            <div>
-              <b>${escapeHtml(deviceName())}</b>
-              <small>Waiting for a nearby connection</small>
-            </div>
-          </div>
-          <div class="connect-empty">Keep this device open. Another Indoone device can connect to it.</div>
-          <div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div>
-          <button type="button" class="secondary" data-nearby-stop>Stop</button>
-        `
-        : `
-          <div id="nearbyDiscoveryList">
-            <div class="connect-empty">Scanning for nearby Indoone devices…</div>
-          </div>
-          <div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div>
-          <button type="button" class="secondary" data-nearby-stop>Stop</button>
-        `
+        ? `<div class="device-summary"><div class="device-icon large">${targetType === 'computer' ? '💻' : '📱'}</div><div><b>${escapeHtml(deviceName())}</b><small>Waiting for a nearby connection</small></div></div><div class="connect-empty">Keep this device open. Another Indoone device can connect to it.</div><div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div><button type="button" class="secondary" data-nearby-stop>Stop</button>`
+        : `<div id="nearbyDiscoveryList"><div class="connect-empty">Scanning for nearby Indoone devices…</div></div><div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div><button type="button" class="secondary" data-nearby-stop>Stop</button>`
     );
-
     native.requestNearbyPermissions?.();
   }
 
   window.startNearbyConnection = function (targetType = 'phone') {
     const label = targetType === 'computer' ? 'Laptop / PC' : 'Phone';
     const icon = targetType === 'computer' ? '💻' : '📱';
-    openStatus(
-      `Connect ${label}`,
-      `
-        <div class="device-summary">
-          <div class="device-icon large">${icon}</div>
-          <div><b>Nearby connection</b><small>Connection and data access are separate.</small></div>
-        </div>
-        <div class="connect-empty">Keep both devices nearby. One device searches while the other is discoverable.</div>
-        <button type="button" class="primary" data-nearby-mode="discover">Find nearby ${label}</button>
-        <button type="button" class="secondary" data-nearby-mode="advertise">Make this device discoverable</button>
-        <button type="button" class="secondary" data-close>Cancel</button>
-      `
-    );
+    openStatus(`Connect ${label}`, `<div class="device-summary"><div class="device-icon large">${icon}</div><div><b>Nearby connection</b><small>Connection and data access are separate.</small></div></div><div class="connect-empty">Keep both devices nearby. One device searches while the other is discoverable.</div><button type="button" class="primary" data-nearby-mode="discover">Find nearby ${label}</button><button type="button" class="secondary" data-nearby-mode="advertise">Make this device discoverable</button><button type="button" class="secondary" data-close>Cancel</button>`);
   };
 
   window.IndooneConnectNative = window.IndooneConnectNative || {};
   window.IndooneConnectNative.pairWithCode = function (code) {
-    const pending = (() => {
-      try { return JSON.parse(sessionStorage.getItem('indoone_connect_pending_device_v1') || '') || {}; }
-      catch (_) { return {}; }
-    })();
+    const pending = (() => { try { return JSON.parse(sessionStorage.getItem('indoone_connect_pending_device_v1') || '') || {}; } catch (_) { return {}; } })();
     const pendingCode = String(code || '').replace(/\D/g, '');
-    if (!/^\d{5}$/.test(pendingCode)) {
-      notify('Invalid pairing code.');
-      return false;
-    }
-
+    if (!/^\d{5}$/.test(pendingCode)) { notify('Invalid pairing code.'); return false; }
     state.endpoints.clear();
-    state.pendingPairing = {
-      code: pendingCode,
-      name: String(pending.name || ''),
-      type: pending.type === 'computer' ? 'computer' : 'phone'
-    };
+    state.pendingPairing = { code: pendingCode, name: String(pending.name || ''), type: pending.type === 'computer' ? 'computer' : 'phone' };
     state.targetType = state.pendingPairing.type;
     state.pendingMode = 'discover';
-
-    try {
-      native.requestNearbyPermissions?.();
-    } catch (_) {
-      notify('Nearby permissions are required to connect this device.');
-      return false;
-    }
+    try { native.requestNearbyPermissions?.(); } catch (_) { notify('Nearby permissions are required to connect this device.'); return false; }
     return true;
   };
 
-  function openDataPermission(endpointId, device, direction) {
-    window.closeModal?.();
-    const title = direction === 'access-to-my-device'
-      ? 'Allow access to your data'
-      : 'Choose data you will share';
-    const description = direction === 'access-to-my-device'
-      ? 'Choose exactly which data this connected device may access on your phone.'
-      : 'Choose exactly which data on this phone the connected device may access.';
-    const existing = device?.permissions || {};
-    const markup = `
-      <section class="connect-feature connect-permission-feature">
-        <div class="modal-head">
-          <div>
-            <p class="eyebrow">DEVICE ACCESS</p>
-            <h2>${escapeHtml(title)}</h2>
-          </div>
-          <button type="button" class="close-btn" data-live-permission-close aria-label="Close permissions">×</button>
-        </div>
-        <p class="connect-muted">${escapeHtml(description)}</p>
-        <div class="permission-list">
-          ${[
-            ['photos', 'Photos', 'Allow access to approved photos.'],
-            ['videos', 'Videos', 'Allow access to approved videos.'],
-            ['documents', 'PDF / Documents', 'Allow access to approved documents.'],
-            ['files', 'Files', 'Allow access to approved files.']
-          ].map(([key, label, text]) => `
-            <label class="permission-item">
-              <input type="checkbox" data-live-permission="${key}" ${existing[key] ? 'checked' : ''} />
-              <span><b>${label}</b><small>${text}</small></span>
-            </label>
-          `).join('')}
-        </div>
-        <p class="connect-muted" data-live-permission-status></p>
-        <button type="button" class="primary" data-live-permission-save>Allow selected</button>
-        <button type="button" class="secondary" data-live-permission-deny>Deny all</button>
-      </section>
-    `;
-
-    window.openModal?.(markup);
-    const modal = document.getElementById('modal');
-    if (!modal) return;
-
-    const save = allowed => {
-      const devices = loadDevices();
-      const current = devices.find(item => item.endpointId === endpointId);
-      if (!current) return;
-
-      current.permissions = {
-        ...(current.permissions || {}),
-        photos: allowed.includes('photos'),
-        videos: allowed.includes('videos'),
-        documents: allowed.includes('documents'),
-        files: allowed.includes('files')
-      };
-      current.updatedAt = Date.now();
-      saveDevices(devices);
-
-      localStorage.setItem(PERMISSION_KEY, JSON.stringify({
-        endpointId,
-        permissions: current.permissions,
-        savedAt: Date.now()
-      }));
-
-      const permissionMessage = JSON.stringify({
-        type: 'indoone-permissions',
-        permissions: {
-          photos: current.permissions.photos,
-          videos: current.permissions.videos,
-          documents: current.permissions.documents,
-          files: current.permissions.files
-        }
-      });
-
-      try {
-        native.sendNearbyText?.(endpointId, permissionMessage);
-      } catch (_) {}
-
-      window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
-        detail: { permissions: current.permissions, device: current }
-      }));
-
-      notify(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
-      window.closeModal?.();
-    };
-
-    modal.querySelector('[data-live-permission-save]')?.addEventListener('click', () => {
-      const allowed = [...modal.querySelectorAll('[data-live-permission]:checked')]
-        .map(input => input.dataset.livePermission)
-        .filter(Boolean);
-      save(allowed);
-    });
-
-    modal.querySelector('[data-live-permission-deny]')?.addEventListener('click', () => save([]));
-    modal.querySelector('[data-live-permission-close]')?.addEventListener('click', () => window.closeModal?.());
-  }
-
   document.addEventListener('click', event => {
     const modeButton = event.target.closest('[data-nearby-mode]');
-    if (modeButton) {
-      event.preventDefault();
-      event.stopPropagation();
-      beginNearby(modeButton.dataset.nearbyMode === 'advertise' ? 'advertise' : 'discover', state.targetType || 'phone');
-      return;
-    }
-
+    if (modeButton) { event.preventDefault(); event.stopPropagation(); beginNearby(modeButton.dataset.nearbyMode === 'advertise' ? 'advertise' : 'discover', state.targetType || 'phone'); return; }
     const endpointButton = event.target.closest('[data-nearby-endpoint]');
     if (endpointButton) {
-      event.preventDefault();
-      event.stopPropagation();
+      event.preventDefault(); event.stopPropagation();
       const endpointId = endpointButton.dataset.nearbyEndpoint;
       const item = state.endpoints.get(endpointId);
       if (!item) return;
@@ -341,13 +158,8 @@
       native.connectNearbyEndpoint(endpointId, deviceName());
       notify(`Connection request sent to ${item.name}.`);
     }
-
     const stopButton = event.target.closest('[data-nearby-stop]');
-    if (stopButton) {
-      event.preventDefault();
-      native.stopNearby?.();
-      window.closeModal?.();
-    }
+    if (stopButton) { event.preventDefault(); native.stopNearby?.(); window.closeModal?.(); }
   }, true);
 
   window.stopNearby = function () {
@@ -363,28 +175,19 @@
 
   window.addEventListener('indoone-nearby', event => {
     const detail = event.detail || {};
-
     if (detail.type === 'permissions') {
       if (detail.message === 'granted') startTransport();
-      else {
-        state.pendingMode = null;
-        state.pendingPairing = null;
-        notify('Nearby permissions are required.');
-      }
+      else { state.pendingMode = null; state.pendingPairing = null; notify('Nearby permissions are required.'); }
       return;
     }
-
     if (detail.type === 'endpointFound') {
       const endpointId = detail.endpointId;
       if (!endpointId) return;
-
       const rawName = detail.message || 'Nearby Indoone Device';
       const codeMatch = rawName.match(/\[(\d{5})\]\s*$/);
       const discoveredCode = codeMatch?.[1] || '';
       const displayName = rawName.replace(/\s*\[\d{5}\]\s*$/, '').trim() || rawName;
-      const item = { endpointId, name: displayName, rawName, pairingCode: discoveredCode };
-      state.endpoints.set(endpointId, item);
-
+      state.endpoints.set(endpointId, { endpointId, name: displayName, rawName, pairingCode: discoveredCode });
       if (state.pendingPairing?.code && discoveredCode === state.pendingPairing.code) {
         state.activeEndpointId = endpointId;
         state.endpointDirections.set(endpointId, 'access-other-device');
@@ -394,59 +197,42 @@
       }
       return;
     }
-
-    if (detail.type === 'endpointLost') {
-      state.endpoints.delete(detail.endpointId);
-      return;
-    }
-
+    if (detail.type === 'endpointLost') { state.endpoints.delete(detail.endpointId); return; }
     if (detail.type === 'connectionInitiated') {
       const endpointId = detail.endpointId;
       if (!endpointId) return;
-
       if (detail.incoming) {
         state.endpointDirections.set(endpointId, 'access-to-my-device');
         state.incomingEndpoints.set(endpointId, detail.message || 'Nearby device');
         native.acceptNearbyConnection?.(endpointId);
-        return;
+      } else {
+        state.endpointDirections.set(endpointId, 'access-other-device');
+        notify(`Connecting to ${detail.message || 'the device'}…`);
       }
-
-      state.endpointDirections.set(endpointId, 'access-other-device');
-      notify(`Connecting to ${detail.message || 'the device'}…`);
       return;
     }
-
     if (detail.type === 'connectionResult') {
-      if (detail.message !== 'connected') {
-        notify('Nearby connection could not be completed.');
-        return;
-      }
-
+      if (detail.message !== 'connected') { notify('Nearby connection could not be completed.'); return; }
       const endpointId = detail.endpointId;
       if (!endpointId || state.connectedEndpoints.has(endpointId)) return;
       state.connectedEndpoints.add(endpointId);
-
       const incomingName = state.incomingEndpoints.get(endpointId);
       const item = state.endpoints.get(endpointId);
       const name = item?.name || incomingName || 'Nearby device';
       const direction = state.endpointDirections.get(endpointId) || 'access-other-device';
-      const device = rememberConnected(name, endpointId, direction);
+      rememberConnected(name, endpointId, direction);
       state.activeEndpointId = endpointId;
-
       notify(`Connected to ${name}.`);
-      openDataPermission(endpointId, device, direction);
+      // The dedicated bilateral permission module owns the permission UI.
       return;
     }
-
     if (detail.type === 'payload') {
       try {
         const message = JSON.parse(detail.message || '{}');
         if (message.type !== 'indoone-permissions') return;
-
         const devices = loadDevices();
         const device = devices.find(item => item.endpointId === detail.endpointId);
         if (!device) return;
-
         device.remotePermissions = {
           photos: Boolean(message.permissions?.photos),
           videos: Boolean(message.permissions?.videos),
@@ -459,7 +245,6 @@
       } catch (_) {}
       return;
     }
-
     if (detail.type === 'disconnected') {
       updateDeviceConnection(detail.endpointId, false);
       state.activeEndpointId = '';
@@ -469,7 +254,6 @@
       notify('Nearby device disconnected.');
       return;
     }
-
     if (detail.type === 'error') notify(detail.message || 'Nearby connection error.');
   });
 })();
