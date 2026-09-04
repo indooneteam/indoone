@@ -14,11 +14,11 @@
     <p class="eyebrow">ACCOUNT RECOVERY</p>
     <h1>Forgot password?</h1>
     <p>
-      Enter your Indoone account email to continue resetting your password.
+      Verify your email with the OTP, then choose a new password.
     </p>
   </div>
 
-  <div class="field">
+  <div class="field" id="forgotPasswordEmailField">
     <label>EMAIL ID</label>
     <input
       id="forgotPasswordEmail"
@@ -65,6 +65,45 @@
       id="forgotPasswordVerify"
     >
       Verify OTP
+    </button>
+  </div>
+
+  <div
+    id="forgotPasswordResetArea"
+    hidden
+  >
+    <p class="auth-otp-note">
+      OTP verified. Choose a new password for your Indoone account.
+    </p>
+
+    <div class="field">
+      <label>NEW PASSWORD</label>
+      <input
+        id="forgotPasswordNewPassword"
+        type="password"
+        autocomplete="new-password"
+        minlength="6"
+        placeholder="Enter new password"
+      />
+    </div>
+
+    <div class="field">
+      <label>CONFIRM PASSWORD</label>
+      <input
+        id="forgotPasswordConfirmPassword"
+        type="password"
+        autocomplete="new-password"
+        minlength="6"
+        placeholder="Confirm new password"
+      />
+    </div>
+
+    <button
+      type="button"
+      class="primary"
+      id="forgotPasswordSave"
+    >
+      Save Password
     </button>
   </div>
 
