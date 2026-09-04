@@ -139,6 +139,11 @@
       subPage.hidden = true;
     }
 
+    if (window.location.hash === ADD_HASH) {
+      history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+
+    window.IndoonePageState?.set('home');
     document.getElementById('addBtn')?.removeAttribute('hidden');
     document.body.classList.remove('home-subpage-open');
 
@@ -183,6 +188,8 @@
     if (!subPage) {
       return;
     }
+
+    window.IndoonePageState?.set('add-account');
 
     if (push) {
       openAddHistory();
