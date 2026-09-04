@@ -222,8 +222,9 @@
       const direction = state.endpointDirections.get(endpointId) || 'access-other-device';
       rememberConnected(name, endpointId, direction);
       state.activeEndpointId = endpointId;
+      window.closeModal?.();
       notify(`Connected to ${name}.`);
-      // The dedicated bilateral permission module owns the permission UI.
+      // Permission UI opens from the bilateral connection-result listener.
       return;
     }
     if (detail.type === 'payload') {
