@@ -1,6 +1,6 @@
 (() => {
   const MARKUP_URL = 'app/connect/pair/index.html?v=20260904a';
-  const STYLE_URL = 'app/connect/pair/style.css?v=20260904a';
+  const STYLE_URL = 'app/connect/pair/style.css?v=20260904b';
   let markupPromise = null;
 
   function loadStyle(){
@@ -33,12 +33,13 @@
     });
   }
 
-  async function show(){
+  async function show({ remember = true } = {}){
     const mount = document.getElementById('connectContent');
     const home = document.getElementById('connectHomePage');
     const choice = document.getElementById('connectChoicePage');
     if(!mount) return;
 
+    if (remember) window.IndoonePageState?.set('pair');
     home?.setAttribute('hidden','');
     choice?.setAttribute('hidden','');
 
