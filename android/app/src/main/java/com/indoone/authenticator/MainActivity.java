@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.WindowManager;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -72,10 +73,15 @@ public class MainActivity extends FragmentActivity {
         webView.postDelayed(() -> updateManager.checkForUpdate(), 1800);
     }
 
+    public void setSecureScreen(boolean enabled) {
+        if (enabled) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
+    }
+
     private void loadWebApp() {
-        // Debug APKs use the deployed develop site so HTML/CSS/JS changes can be tested
-        // without rebuilding/reinstalling the APK. Native Android APIs and system dialogs
-        // still come from this APK through IndooneNative.
         if (BuildConfig.DEBUG) {
             webView.loadUrl(DEBUG_WEB_URL + "?debug=" + System.currentTimeMillis());
             return;
