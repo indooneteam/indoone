@@ -10,13 +10,14 @@
   function updateMobilePrefix(input) {
     if (!input) return;
 
-    const isEmailLike = /[A-Za-z@]/.test(String(input.value || ''));
+    const value = String(input.value || '');
+    const isEmailLike = /[A-Za-z@]/.test(value);
     const prefixId =
       input.id === 'authIdentifier'
         ? 'loginMobilePrefix'
         : 'signupMobilePrefix';
     const prefix = document.getElementById(prefixId);
-    const hasMobileInput = !isEmailLike && /\d/.test(String(input.value || ''));
+    const hasMobileInput = !isEmailLike && /\d/.test(value);
 
     if (prefix) {
       prefix.hidden = !hasMobileInput;
@@ -30,47 +31,36 @@
 
     window.__indooneMobileInputStabilityFixInstalled = true;
 
-    document.addEventListener(
-      'input',
-      event => {
-        const input = event.target;
+    // Presentation-only listener. Never rewrite the value, selection, focus,
+    // type, or inputmode, and never cancel propagation from the input element.
+    document.addEventListener('input', event => {
+      const input = event.target;
 
-        if (!(input instanceof HTMLInputElement)) return;
-        if (input.id !== 'authIdentifier' && input.id !== 'signupMobile') {
-          return;
-        }
+      if (!(input instanceof HTMLInputElement)) return;
+      if (input.id !== 'authIdentifier' && input.id !== 'signupMobile') {
+        return;
+      }
 
+      updateMobilePrefix(input);
+    });
+
+    document.addEventListener('paste', event => {
+      const input = event.target;
+
+      if (!(input instanceof HTMLInputElement)) return;
+      if (input.id !== 'authIdentifier' && input.id !== 'signupMobile') {
+        return;
+      }
+
+      window.setTimeout(() => {
         updateMobilePrefix(input);
-
-        // Stop the older live normalizer in auth-page.js from rewriting the
-        // user's value and moving or clearing the cursor while typing.
-        event.stopImmediatePropagation();
-      },
-      true
-    );
-
-    document.addEventListener(
-      'paste',
-      event => {
-        const input = event.target;
-
-        if (!(input instanceof HTMLInputElement)) return;
-        if (input.id !== 'authIdentifier' && input.id !== 'signupMobile') {
-          return;
-        }
-
-        event.stopImmediatePropagation();
-
-        window.setTimeout(() => {
-          updateMobilePrefix(input);
-        }, 0);
-      },
-      true
-    );
+      }, 0);
+    });
   }
 
   authApi.verifyLoginOtp = async function verifyLoginOtpWithoutClearingChallenge() {
     const pending = window.__indooneLoginOtp;
+
     if (!pending?.challengeId) {
       throw new Error('Please request a new OTP.');
     }
@@ -95,6 +85,7 @@
     }
 
     const user = firebaseApi.auth?.currentUser;
+
     if (!user) {
       throw new Error('Login session expired. Please login again.');
     }
