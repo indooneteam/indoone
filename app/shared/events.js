@@ -62,8 +62,21 @@
   }
 
   async function restoreSavedPage() {
+    const hash = window.location.hash || '';
+
+    // URL routes are authoritative for nested Add Account pages. Restore them
+    // through the same Home/Add Account router so refresh never falls back to
+    // the Accounts page first and later races to correct itself.
+    if (hash === '#home/add-account' || hash.startsWith('#home/add-account/')) {
+      try {
+        await window.IndooneHome?.showAddAccount?.({ push: false });
+        return;
+      } catch (error) {
+        console.warn('Add Account route restore failed:', error);
+      }
+    }
+
     const page = window.IndoonePageState?.get?.() || 'home';
-    if (window.location.hash === '#home/add-account') return;
 
     switch (page) {
       case 'settings':
