@@ -48,10 +48,11 @@
     window.closeModal?.();
     showConnectContent();
     showConnectHome({ remember: false });
+    setActive('connect');
   };
 
   window.showConnectChoice = function ({ remember = true } = {}) {
-    if (remember) window.IndoonePageState?.set('connect');
+    if (remember) window.IndoonePageState?.set('connect-choice');
     window.closeModal?.();
     showConnectContent();
     setConnectPage('choice');
