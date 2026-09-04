@@ -30,7 +30,6 @@
       button.querySelectorAll('.nav-icon').forEach(node => node.remove());
       button.insertBefore(makeIcon(type, 'nav-icon'), button.firstChild);
     });
-
     document.querySelectorAll('.lobby-status-icon').forEach(el => {
       el.textContent = '';
       el.appendChild(makeIcon('lobby', 'ui-svg-icon lobby-svg-icon'));
@@ -40,7 +39,6 @@
   window.IndooneNavigationIcons = { apply, icons: ICONS };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true });
   else apply();
-
   if (typeof MutationObserver !== 'undefined') {
     let queued = false;
     const observer = new MutationObserver(() => {
