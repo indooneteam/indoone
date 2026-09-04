@@ -1,5 +1,6 @@
 (() => {
   const VERIFIED_KEY = 'indoone_otp_verified_uid';
+  const ADD_ROUTE_PREFIX = '#home/add-account';
   let attached = false;
   let loading = false;
   let verificationWatch = null;
@@ -8,7 +9,19 @@
 
   async function restoreNestedPageRoute() {
     const hash = window.location.hash || '';
-    if (!hash.startsWith('#home/add-account')) return;
+    if (!hash.startsWith(ADD_ROUTE_PREFIX)) return;
+
+    const savedPage = window.IndoonePageState?.get?.() || 'home';
+
+    // Do not resurrect an Add Account child page just because an old hash is
+    // still present. Restore it only when the saved page says the user really
+    // refreshed while inside Add Account.
+    if (savedPage !== 'add-account') {
+      history.replaceState({}, '', window.location.pathname + window.location.search);
+      window.IndooneHome?.restoreHome?.();
+      return;
+    }
+
     try {
       await window.IndooneHome?.showAddAccount?.({ push: false });
     } catch (error) {
