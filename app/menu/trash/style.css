@@ -3,3 +3,51 @@
 .menu-feature-row { width: 100%; }
 .menu-feature-note { margin: 8px 0 12px; color: #8a8492; font-size: 12px; line-height: 1.5; }
 .menu-feature-actions { display: grid; gap: 8px; margin-top: 12px; }
+
+.trash-swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  touch-action: pan-y;
+}
+
+.trash-swipe-delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 96px;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  background: #d83f45;
+}
+
+.trash-permanent-btn {
+  width: 96px;
+  border: 0;
+  background: #d83f45;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trash-swipe-card {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  min-height: 66px;
+  padding: 13px;
+  background: #fff;
+  transition: transform .18s ease;
+  will-change: transform;
+}
+
+.trash-swipe-open .trash-swipe-card {
+  transform: translateX(-96px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trash-swipe-card {
+    transition: none;
+  }
+}
