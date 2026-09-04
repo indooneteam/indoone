@@ -1,9 +1,12 @@
 package com.indoone.authenticator;
 
 import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -18,11 +21,10 @@ import java.net.URL;
 
 public final class UpdateManager {
     private static final String UPDATE_URL = "https://indooneteam.github.io/indoone/develop/update.json";
-    private static final String INDUS_APPSTORE_PACKAGE = "com.indus.appstore";
-    private static final String INDUS_SEARCH_URL = "https://www.indusappstore.com/search/?ts=Indoone";
 
     private final MainActivity activity;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private long downloadId = -1;
 
     public UpdateManager(MainActivity activity) {
         this.activity = activity;
@@ -54,45 +56,95 @@ public final class UpdateManager {
 
                 String versionName = json.optString("versionName", "New version");
                 String notes = json.optString("notes", "Performance and security improvements.");
-                String storeUrl = json.optString("storeUrl", INDUS_SEARCH_URL);
-                if (storeUrl.isEmpty()) storeUrl = INDUS_SEARCH_URL;
+                String downloadUrl = json.optString("downloadUrl", "");
+                if (downloadUrl.isEmpty()) return;
 
-                final String resolvedStoreUrl = storeUrl;
-                mainHandler.post(() -> showUpdateDialog(versionName, notes, resolvedStoreUrl));
+                mainHandler.post(() -> showUpdateDialog(versionName, notes, downloadUrl));
             } catch (Exception ignored) {
                 // Update checks must never block or break app startup.
             }
         }).start();
     }
 
-    private void showUpdateDialog(String versionName, String notes, String storeUrl) {
+    private void showUpdateDialog(String versionName, String notes, String downloadUrl) {
         new AlertDialog.Builder(activity)
                 .setTitle("New Indoone update")
-                .setMessage("Version " + versionName + " is available.\n\n" + notes + "\n\nUpdate through the Indus Appstore to keep Android's trusted app-store installation flow.")
+                .setMessage("Version " + versionName + " is available.\n\n" + notes + "\n\nThe APK will be downloaded and handed to Android's installed package handler.")
                 .setNegativeButton("Later", null)
-                .setPositiveButton("Update", (dialog, which) -> openIndusStore(storeUrl))
+                .setPositiveButton("Update", (dialog, which) -> downloadAndOpenWithSystem(downloadUrl))
                 .setCancelable(true)
                 .show();
     }
 
-    private void openIndusStore(String storeUrl) {
+    private void downloadAndOpenWithSystem(String downloadUrl) {
         try {
-            PackageManager packageManager = activity.getPackageManager();
-            Intent storeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(storeUrl));
-            storeIntent.setPackage(INDUS_APPSTORE_PACKAGE);
-            if (storeIntent.resolveActivity(packageManager) != null) {
-                activity.startActivity(storeIntent);
+            DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl));
+            request.setTitle("Indoone update");
+            request.setDescription("Downloading the latest Indoone APK");
+            request.setMimeType("application/vnd.android.package-archive");
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, "indoone-update.apk");
+            downloadId = manager.enqueue(request);
+            waitForDownload(manager);
+        } catch (Exception error) {
+            showError("Could not start the update download.");
+        }
+    }
+
+    private void waitForDownload(DownloadManager manager) {
+        mainHandler.postDelayed(() -> {
+            try (Cursor cursor = manager.query(new DownloadManager.Query().setFilterById(downloadId))) {
+                if (cursor == null || !cursor.moveToFirst()) {
+                    showError("The update download could not be found.");
+                    return;
+                }
+
+                int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    Uri uri = manager.getUriForDownloadedFile(downloadId);
+                    if (uri == null) {
+                        showError("The downloaded update file is unavailable.");
+                        return;
+                    }
+                    openSystemPackageHandler(uri);
+                    return;
+                }
+
+                if (status == DownloadManager.STATUS_FAILED) {
+                    showError("The APK download failed. Please try again.");
+                    return;
+                }
+            } catch (Exception error) {
+                showError("Could not open the downloaded update.");
                 return;
             }
+            waitForDownload(manager);
+        }, 700);
+    }
 
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(storeUrl));
-            activity.startActivity(browserIntent);
+    private void openSystemPackageHandler(Uri apkUri) {
+        try {
+            Intent installIntent = new Intent(Intent.ACTION_VIEW);
+            installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(installIntent);
         } catch (Exception error) {
-            new AlertDialog.Builder(activity)
-                    .setTitle("Update unavailable")
-                    .setMessage("Please open the Indus Appstore and update Indoone from its app listing.")
-                    .setPositiveButton("OK", null)
-                    .show();
+            try {
+                Intent fallback = new Intent(Intent.ACTION_VIEW, apkUri);
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(fallback);
+            } catch (Exception fallbackError) {
+                showError("No Android app is available to open and install this APK.");
+            }
         }
+    }
+
+    private void showError(String message) {
+        mainHandler.post(() -> new AlertDialog.Builder(activity)
+                .setTitle("Update unavailable")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show());
     }
 }
