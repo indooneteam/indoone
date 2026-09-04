@@ -1,0 +1,167 @@
+(() => {
+  const PENDING_KEY = 'indoone_connect_permission_draft_v1';
+  const drafts = new Map();
+
+  const escapeHtml = value => String(value || '').replace(/[&<>\"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+
+  function loadDraft(endpointId) {
+    if (drafts.has(endpointId)) return drafts.get(endpointId);
+    try {
+      const all = JSON.parse(sessionStorage.getItem(PENDING_KEY) || '{}');
+      const value = all?.[endpointId];
+      if (value) drafts.set(endpointId, value);
+      return value || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveDraft(endpointId, draft) {
+    drafts.set(endpointId, draft);
+    try {
+      const all = JSON.parse(sessionStorage.getItem(PENDING_KEY) || '{}');
+      all[endpointId] = draft;
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  function clearDraft(endpointId) {
+    drafts.delete(endpointId);
+    try {
+      const all = JSON.parse(sessionStorage.getItem(PENDING_KEY) || '{}');
+      delete all[endpointId];
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  function openPermissionPage(endpointId, deviceName, direction) {
+    const existingDraft = loadDraft(endpointId) || {
+      photos: false,
+      videos: false,
+      documents: false,
+      files: false
+    };
+
+    const title = direction === 'incoming'
+      ? 'Allow access to your data'
+      : 'Choose data you will share';
+    const description = direction === 'incoming'
+      ? `${deviceName} is connecting to this device. Choose exactly what it may access.`
+      : `Choose exactly what ${deviceName} may access from this device.`;
+
+    const markup = `
+      <section class="connect-feature connect-permission-feature" data-bilateral-permission="${escapeHtml(endpointId)}">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">DEVICE ACCESS</p>
+            <h2>${escapeHtml(title)}</h2>
+          </div>
+          <button type="button" class="close-btn" data-bilateral-permission-close aria-label="Close permissions">×</button>
+        </div>
+        <p class="connect-muted">${escapeHtml(description)}</p>
+        <div class="permission-list">
+          ${[
+            ['photos', 'Photos'],
+            ['videos', 'Videos'],
+            ['documents', 'PDF / Documents'],
+            ['files', 'Files']
+          ].map(([key, label]) => `
+            <label class="permission-item">
+              <input type="checkbox" data-bilateral-permission="${key}" ${existingDraft[key] ? 'checked' : ''} />
+              <span><b>${label}</b><small>Allow access to approved ${label.toLowerCase()}.</small></span>
+            </label>
+          `).join('')}
+        </div>
+        <p class="connect-muted" data-bilateral-permission-status>Connection is being established. Your selection will be sent securely after Nearby connects.</p>
+        <button type="button" class="primary" data-bilateral-permission-save>Allow selected</button>
+        <button type="button" class="secondary" data-bilateral-permission-deny>Deny all</button>
+      </section>
+    `;
+
+    window.openModal?.(markup);
+    const modal = document.getElementById('modal');
+    if (!modal) return;
+
+    const save = allowed => {
+      const draft = {
+        photos: allowed.includes('photos'),
+        videos: allowed.includes('videos'),
+        documents: allowed.includes('documents'),
+        files: allowed.includes('files'),
+        savedAt: Date.now()
+      };
+      saveDraft(endpointId, draft);
+
+      const message = JSON.stringify({
+        type: 'indoone-permissions',
+        permissions: {
+          photos: draft.photos,
+          videos: draft.videos,
+          documents: draft.documents,
+          files: draft.files
+        }
+      });
+
+      // Sending is safe to attempt now when the connection is already up;
+      // the connection-result handler below retries once Nearby reports success.
+      try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
+      window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
+        detail: { endpointId, permissions: draft }
+      }));
+      window.toast?.(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
+
+      const status = modal.querySelector('[data-bilateral-permission-status]');
+      if (status) status.textContent = 'Permissions saved for this connection.';
+      window.closeModal?.();
+    };
+
+    modal.querySelector('[data-bilateral-permission-save]')?.addEventListener('click', () => {
+      const allowed = [...modal.querySelectorAll('[data-bilateral-permission]:checked')]
+        .map(input => input.dataset.bilateralPermission)
+        .filter(key => ['photos', 'videos', 'documents', 'files'].includes(key));
+      save(allowed);
+    });
+    modal.querySelector('[data-bilateral-permission-deny]')?.addEventListener('click', () => save([]));
+    modal.querySelector('[data-bilateral-permission-close]')?.addEventListener('click', () => window.closeModal?.());
+  }
+
+  window.addEventListener('indoone-nearby', event => {
+    const detail = event.detail || {};
+    const endpointId = String(detail.endpointId || '').trim();
+    if (!endpointId) return;
+
+    if (detail.type === 'connectionInitiated') {
+      const direction = detail.incoming ? 'incoming' : 'outgoing';
+      const name = String(detail.message || 'Nearby device');
+      // Show the permission screen independently on both devices as soon as
+      // the Nearby handshake starts. No data is exposed until the connection
+      // is actually established and the selection has been exchanged.
+      window.setTimeout(() => openPermissionPage(endpointId, name, direction), 0);
+      return;
+    }
+
+    if (detail.type === 'connectionResult' && detail.message === 'connected') {
+      const draft = loadDraft(endpointId);
+      if (!draft) return;
+      const message = JSON.stringify({
+        type: 'indoone-permissions',
+        permissions: {
+          photos: Boolean(draft.photos),
+          videos: Boolean(draft.videos),
+          documents: Boolean(draft.documents),
+          files: Boolean(draft.files)
+        }
+      });
+      try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
+      clearDraft(endpointId);
+    }
+
+    if (detail.type === 'disconnected') clearDraft(endpointId);
+  });
+})();
