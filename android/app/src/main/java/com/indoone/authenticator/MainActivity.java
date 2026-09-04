@@ -218,13 +218,13 @@ public class MainActivity extends FragmentActivity {
 
     public void sendCameraPermissionResult(boolean success, String message) {
         String safe = escape(message);
-        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-camera-permission',{detail:{success:" + success + ",message:'" + safe + "'}}));", null);
+        if (webView != null) runOnUiThread(() -> webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-camera-permission',{detail:{success:" + success + ",message:'" + safe + "'}}));", null));
     }
 
     public void sendBiometricResult(boolean success, String message, String pin) {
         String safe = escape(message);
         String safePin = escape(pin);
-        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null);
+        if (webView != null) runOnUiThread(() -> webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-biometric-result',{detail:{success:" + success + ",message:'" + safe + "',pin:'" + safePin + "'}}));", null));
     }
 
     public void sendNearbyEvent(String type, String message, String endpointId) {
@@ -236,7 +236,7 @@ public class MainActivity extends FragmentActivity {
         String safeMessage = escape(message);
         String safeEndpoint = escape(endpointId);
         String safeDigits = escape(authenticationDigits);
-        if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "',authenticationDigits:'" + safeDigits + "',incoming:" + incoming + "'}}));", null);
+        if (webView != null) runOnUiThread(() -> webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('indoone-nearby',{detail:{type:'" + safeType + "',message:'" + safeMessage + "',endpointId:'" + safeEndpoint + "',authenticationDigits:'" + safeDigits + "',incoming:" + incoming + "'}}));", null));
     }
 
     public NearbyConnectionManager getNearbyConnectionManager() { return nearbyConnectionManager; }
