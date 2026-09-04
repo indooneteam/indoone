@@ -1,10 +1,12 @@
 (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
   let busy = false;
+
   const $ = id => document.getElementById(id);
 
   function setStatus(message = '', error = false) {
     const node = $('authStatus');
+
     if (!node) return;
 
     node.textContent = message;
@@ -89,8 +91,8 @@
     return digits.slice(0, 10);
   }
 
-  // This function is intentionally read-only while the user is typing.
-  // It only updates the visual +91 prefix and never rewrites input.value.
+  // Mobile input handling must be visual-only. Never rewrite value, selection,
+  // focus, type, or inputmode while an IME/keyboard is composing text.
   function syncMobilePrefix(input, prefix) {
     if (!input || !prefix) return;
 
@@ -102,8 +104,7 @@
       return;
     }
 
-    const digits = normalizedMobileDigits(raw);
-    const showPrefix = digits.length > 0;
+    const showPrefix = normalizedMobileDigits(raw).length > 0;
 
     prefix.hidden = !showPrefix;
     input.classList.toggle('has-mobile-prefix', showPrefix);
@@ -114,10 +115,8 @@
 
     input.dataset.indiaMobileBound = 'true';
 
-    // Do not modify input.value, selection, focus, or type during typing.
-    // Mobile IMEs can close the keyboard or lose entered digits when an
-    // input handler replaces the value on every keystroke.
     input.addEventListener('input', () => {
+      // Only update presentation. The input's value remains browser/IME owned.
       syncMobilePrefix(input, prefix);
     });
   }
@@ -147,6 +146,7 @@
           event.stopPropagation();
 
           const input = $(button.dataset.passwordToggle);
+
           if (!input) return;
 
           const showing = input.type === 'text';
@@ -278,96 +278,98 @@
   }
 
   function showSignup() {
-    showShell(`
-      <div class="auth-brand">
-        <span class="auth-mark">I</span>
-        <div>
-          <strong>Indoone</strong>
-          <small>Authenticator</small>
+    showShell(
+      window.IndooneSignupFeature?.html?.() || `
+        <div class="auth-brand">
+          <span class="auth-mark">I</span>
+          <div>
+            <strong>Indoone</strong>
+            <small>Authenticator</small>
+          </div>
         </div>
-      </div>
 
-      <div class="auth-copy">
-        <p class="eyebrow">GET STARTED</p>
-        <h1>Create your account</h1>
-        <p>
-          Securely create an Indoone account for your authenticator vault.
-        </p>
-      </div>
-
-      <div class="field">
-        <label>EMAIL ID</label>
-        <input
-          id="signupEmail"
-          name="email"
-          type="email"
-          autocomplete="email"
-          autocapitalize="none"
-          spellcheck="false"
-          placeholder="you@example.com"
-        />
-      </div>
-
-      <div class="field">
-        <label>MOBILE NUMBER</label>
-        ${mobileField('signupMobile', 'signupMobilePrefix')}
-      </div>
-
-      <div class="field">
-        <label>PASSWORD</label>
-        ${passwordField(
-          'signupPassword',
-          'new-password',
-          'Create a strong password'
-        )}
-      </div>
-
-      <button
-        type="button"
-        class="primary auth-action-button"
-        data-auth-action="signup-submit"
-      >
-        Send OTP
-      </button>
-
-      <div id="signupOtpArea" hidden>
-        <p class="auth-otp-note">
-          OTP sent to <strong id="signupOtpEmail"></strong>
-        </p>
+        <div class="auth-copy">
+          <p class="eyebrow">GET STARTED</p>
+          <h1>Create your account</h1>
+          <p>
+            Securely create an Indoone account for your authenticator vault.
+          </p>
+        </div>
 
         <div class="field">
-          <label>VERIFICATION OTP</label>
+          <label>EMAIL ID</label>
           <input
-            id="signupOtp"
-            name="one-time-code"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            maxlength="6"
-            placeholder="Enter 6-digit OTP"
+            id="signupEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="you@example.com"
           />
+        </div>
+
+        <div class="field">
+          <label>MOBILE NUMBER</label>
+          ${mobileField('signupMobile', 'signupMobilePrefix')}
+        </div>
+
+        <div class="field">
+          <label>PASSWORD</label>
+          ${passwordField(
+            'signupPassword',
+            'new-password',
+            'Create a strong password'
+          )}
         </div>
 
         <button
           type="button"
           class="primary auth-action-button"
-          data-auth-action="signup-verify"
+          data-auth-action="signup-submit"
         >
-          Verify &amp; Create Account
+          Send OTP
         </button>
-      </div>
 
-      <button
-        type="button"
-        class="secondary auth-action-button"
-        data-auth-action="login"
-      >
-        Already have an account? Login
-      </button>
+        <div id="signupOtpArea" hidden>
+          <p class="auth-otp-note">
+            OTP sent to <strong id="signupOtpEmail"></strong>
+          </p>
 
-      <div class="auth-footer">
-        Your Indoone account is activated after successful email OTP verification.
-      </div>
-    `);
+          <div class="field">
+            <label>VERIFICATION OTP</label>
+            <input
+              id="signupOtp"
+              name="one-time-code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="Enter 6-digit OTP"
+            />
+          </div>
+
+          <button
+            type="button"
+            class="primary auth-action-button"
+            data-auth-action="signup-verify"
+          >
+            Verify &amp; Create Account
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="secondary auth-action-button"
+          data-auth-action="login"
+        >
+          Already have an account? Login
+        </button>
+
+        <div class="auth-footer">
+          Your Indoone account is activated after successful email OTP verification.
+        </div>
+      `
+    );
   }
 
   async function showForgotPassword() {
@@ -385,6 +387,7 @@
       await window.IndooneForgotPassword.load(root);
 
       const back = root.querySelector('#forgotPasswordBack');
+
       if (back) {
         back.addEventListener('click', event => {
           event.preventDefault();
@@ -427,10 +430,11 @@
     const auth = window.IndooneFirebaseAuth;
 
     if (!auth) {
-      return setStatus(
+      setStatus(
         'Authentication service is still loading. Please try again.',
         true
       );
+      return;
     }
 
     busy = true;
@@ -518,12 +522,17 @@
     }
   }
 
-  window.IndooneAuthUI = {
+  const api = {
     showLogin,
     showSignup,
     showForgotPassword,
     close
   };
+
+  // Publish the canonical implementation separately so auth-ui.js can safely
+  // act as a legacy facade without ever creating a competing event bridge.
+  window.__indooneCanonicalAuthUI = api;
+  window.IndooneAuthUI = api;
 
   function init() {
     if (localStorage.getItem('indoone_otp_verified_uid')) return;
