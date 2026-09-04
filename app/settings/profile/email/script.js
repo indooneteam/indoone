@@ -1,6 +1,7 @@
-window.showChangeEmail = function () {
+window.showChangeEmail = function ({ remember = true } = {}) {
   const modal = document.getElementById('modal');
   if (!modal) return;
+  if (remember) window.IndoonePageState?.set('email');
   fetch('app/settings/profile/email/index.html?v=20260904b', { cache: 'no-store' })
     .then(r => r.ok ? r.text() : Promise.reject(new Error('Email page could not be loaded.')))
     .then(html => {
