@@ -1,4 +1,21 @@
 /* Shared authentication layout helpers. */
-.indoone-auth-screen .mobile-field{position:relative;width:100%;}
-.indoone-auth-screen .mobile-field .mobile-prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);z-index:2;color:#5f5966;font-size:13px;line-height:1;pointer-events:none;}
-.indoone-auth-screen .mobile-field input.has-mobile-prefix{padding-left:42px!important;}
+.indoone-auth-screen .mobile-field {
+  position: relative;
+  width: 100%;
+}
+
+.indoone-auth-screen .mobile-field .mobile-prefix {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: #5f5966;
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.indoone-auth-screen .mobile-field input.has-mobile-prefix {
+  padding-left: 42px !important;
+}
