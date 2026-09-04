@@ -7,9 +7,7 @@
   ];
 
   function rowMarkup(item, biometricOn) {
-    if (item.toggle) {
-      return `<div class="settings-row"><span>${item.title}<small>${item.subtitle}</small></span><button class="toggle ${biometricOn ? 'on' : ''}" id="biometricToggle" aria-label="Toggle biometric unlock"></button></div>`;
-    }
+    if (item.toggle) return `<div class="settings-row"><span>${item.title}<small>${item.subtitle}</small></span><button class="toggle ${biometricOn ? 'on' : ''}" id="biometricToggle" aria-label="Toggle biometric unlock"></button></div>`;
     const subtitle = typeof item.subtitle === 'function' ? item.subtitle() : item.subtitle;
     return `<button type="button" class="settings-row settings-row-button" data-settings-action="${item.id}"><span>${item.title}<small>${subtitle}</small></span><span class="settings-arrow">›</span></button>`;
   }
@@ -34,13 +32,22 @@
       toast('Biometric unlock disabled');
       return;
     }
-    if (!window.IndooneBiometric?.supported?.()) {
-      toast('Biometric unlock is available in the Android app');
-      return;
-    }
+    if (!window.IndooneBiometric?.supported?.()) return toast('Biometric unlock is available in the Android app');
     IndooneBiometric.enableForCurrentVault(
       () => { button.classList.add('on'); toast('Biometric unlock enabled'); },
       message => toast(message || 'Biometric authentication cancelled')
     );
+  };
+
+  window.showAboutSettings = async function () {
+    try {
+      const response = await fetch('app/settings/about/index.html?v=20260922a', { cache: 'no-store' });
+      if (!response.ok) throw new Error('About page could not be loaded.');
+      const modal = document.getElementById('modal');
+      if (!modal) throw new Error('Settings modal is unavailable.');
+      modal.innerHTML = await response.text();
+    } catch (error) {
+      toast(error?.message || 'Could not open About Indoone');
+    }
   };
 })();
