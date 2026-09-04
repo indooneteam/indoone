@@ -1,6 +1,6 @@
 (() => {
-  const MARKUP_URL = 'app/connect/pair/index.html?v=20260904a';
-  const STYLE_URL = 'app/connect/pair/style.css?v=20260904b';
+  const MARKUP_URL = 'app/connect/pair/index.html?v=20260904e';
+  const STYLE_URL = 'app/connect/pair/style.css?v=20260904c';
   let markupPromise = null;
 
   function loadStyle(){
@@ -51,7 +51,7 @@
     }catch(error){
       const existing = mount.querySelector('.connect-pair-page');
       if(existing) existing.remove();
-      mount.insertAdjacentHTML('beforeend', `<section class="connect-pair-page"><button type="button" class="connect-back" data-pair-action="home">‹ Back</button><p class="eyebrow">DEVICE PAIRING</p><h2>Pair</h2><p class="connect-pair-copy">Pair page could not be loaded.</p></section>`);
+      mount.insertAdjacentHTML('beforeend', `<section class="connect-pair-page"><button type="button" class="connect-back" data-pair-action="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>Back</span></button><p class="eyebrow">DEVICE PAIRING</p><h2>Pair</h2><p class="connect-pair-copy">Pair page could not be loaded.</p></section>`);
       bind(mount.querySelector('.connect-pair-page'));
       console.error('Indoone Pair page failed:', error);
     }
