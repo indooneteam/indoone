@@ -34,6 +34,13 @@ public class MainActivity extends FragmentActivity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
+        // Indoone is a fixed phone-style UI. Prevent browser-like pinch/double-tap zoom.
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        s.setLoadWithOverviewMode(false);
+        s.setUseWideViewPort(false);
+        s.setTextZoom(100);
         nearbyConnectionManager = new NearbyConnectionManager(this);
         updateManager = new UpdateManager(this);
         webView.addJavascriptInterface(new NativeBridge(this), "IndooneNative");
