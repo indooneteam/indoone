@@ -1,6 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const overlay = $('overlay');
+  const ADD_ROUTE_PREFIX = '#home/add-account';
   let authResolved = false;
   let authGateRunning = false;
   let authStateResolved = false;
@@ -61,24 +62,32 @@
     window.showSettings?.({ remember: false });
   }
 
+  function clearStaleAddAccountRoute() {
+    if (!window.location.hash.startsWith(ADD_ROUTE_PREFIX)) return;
+    history.replaceState({}, '', window.location.pathname + window.location.search);
+  }
+
   async function restoreSavedPage() {
     const hash = window.location.hash || '';
+    const savedPage = window.IndoonePageState?.get?.() || 'home';
 
-    // URL routes are authoritative for nested Add Account pages. Restore them
-    // through the same Home/Add Account router so refresh never falls back to
-    // the Accounts page first and later races to correct itself.
-    if (hash === '#home/add-account' || hash.startsWith('#home/add-account/')) {
-      try {
-        await window.IndooneHome?.showAddAccount?.({ push: false });
-        return;
-      } catch (error) {
-        console.warn('Add Account route restore failed:', error);
+    // A nested Add Account hash is restored only when the persisted page state
+    // says the user was actually inside Add Account. This prevents a stale hash
+    // from reopening Enter Setup Key after the user is already back on Home.
+    if (hash.startsWith(ADD_ROUTE_PREFIX)) {
+      if (savedPage === 'add-account') {
+        try {
+          await window.IndooneHome?.showAddAccount?.({ push: false });
+          return;
+        } catch (error) {
+          console.warn('Add Account route restore failed:', error);
+        }
+      } else {
+        clearStaleAddAccountRoute();
       }
     }
 
-    const page = window.IndoonePageState?.get?.() || 'home';
-
-    switch (page) {
+    switch (savedPage) {
       case 'settings':
         showSettingsPanel({ remember: false });
         break;
@@ -105,6 +114,10 @@
       case 'pair':
         window.showConnect?.({ remember: false });
         await window.showConnectPair?.({ remember: false });
+        break;
+      case 'add-account':
+        // Only an explicit Add Account page state should keep this route open.
+        await window.IndooneHome?.showAddAccount?.({ push: false });
         break;
       case 'home':
       default:
