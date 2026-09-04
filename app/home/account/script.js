@@ -158,14 +158,11 @@
     const account = findAccount(id);
 
     if (!account) {
+      toast('Account not found');
       return;
     }
 
-    window.IndooneAddAccount?.showManual?.({
-      push: true,
-      id: account.id,
-      prefill: account
-    });
+    return window.IndooneAccountEdit?.open?.(account);
   }
 
   async function copyCurrentCode() {
