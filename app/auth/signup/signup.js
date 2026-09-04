@@ -34,18 +34,6 @@
     node.dataset.error = error ? 'true' : 'false';
   }
 
-  function normalizeMobile() {
-    const input = $('signupMobile');
-    const prefix = $('signupMobilePrefix');
-    if (!input) return;
-    const raw = String(input.value || '');
-    const digits = raw.replace(/\D/g, '');
-    const local = /^91\d{10}$/.test(digits) ? digits.slice(2) : digits.slice(0, 10);
-    input.value = local;
-    if (prefix) prefix.hidden = local.length === 0;
-    input.classList.toggle('has-mobile-prefix', local.length > 0);
-  }
-
   function bindPassword() {
     const button = document.querySelector('[data-signup-password-toggle]');
     if (!button || button.dataset.bound === 'true') return;
@@ -63,8 +51,6 @@
   }
 
   function bind(root) {
-    const mobile = root.querySelector('#signupMobile');
-    if (mobile) ['input', 'change', 'blur', 'focus'].forEach(type => mobile.addEventListener(type, normalizeMobile));
     bindPassword();
     root.querySelectorAll('button[data-signup-action]').forEach(button => {
       button.addEventListener('click', event => {
