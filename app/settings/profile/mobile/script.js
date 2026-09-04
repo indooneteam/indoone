@@ -1,6 +1,8 @@
-window.showChangeMobile = function () {
+window.showChangeMobile = function ({ remember = true } = {}) {
   const modal = document.getElementById('modal');
   if (!modal) return;
+
+  if (remember) window.IndoonePageState?.set('mobile');
 
   fetch('app/settings/profile/mobile/index.html?v=20260904c', { cache: 'no-store' })
     .then(response => response.ok ? response.text() : Promise.reject(new Error('Mobile page could not be loaded.')))
@@ -91,7 +93,7 @@ window.showChangeMobile = function () {
 
           await db.ref().update(updates);
           toast('Mobile number updated.');
-          window.showProfile?.();
+          window.showProfile?.({ remember: false });
         } catch (error) {
           toast(error?.message || 'Could not change mobile number.');
         } finally {
