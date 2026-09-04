@@ -1,6 +1,13 @@
 (() => {
   const get = id => document.getElementById(id);
 
+  // Load the connection-permission bridge early so both sides receive a
+  // permission screen as soon as the Nearby handshake starts.
+  const permissionScript = document.createElement('script');
+  permissionScript.src = 'app/connect/permissions/permission-connection-flow.js?v=20260904a';
+  permissionScript.async = false;
+  document.head.appendChild(permissionScript);
+
   function setActive(tab) {
     get('accountsNav')?.classList.toggle('active', tab === 'accounts');
     get('lobbyNav')?.classList.toggle('active', tab === 'lobby');
@@ -25,7 +32,7 @@
 
   function showConnectHome() {
     get('connectChoicePage')?.setAttribute('hidden', '');
-    get('connectHomePage')?.removeAttribute('hidden', '');
+    get('connectHomePage')?.removeAttribute('hidden');
   }
 
   window.showConnect = function () {
