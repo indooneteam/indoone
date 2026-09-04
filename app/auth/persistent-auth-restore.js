@@ -6,6 +6,16 @@
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+  async function restoreNestedPageRoute() {
+    const hash = window.location.hash || '';
+    if (!hash.startsWith('#home/add-account')) return;
+    try {
+      await window.IndooneHome?.showAddAccount?.({ push: false });
+    } catch (error) {
+      console.warn('Nested Add Account route restore failed:', error);
+    }
+  }
+
   async function restoreAccounts(user) {
     if (!user || loading) return false;
     const verifiedUid = localStorage.getItem(VERIFIED_KEY);
@@ -58,6 +68,7 @@
         startDemoTimers();
       }
 
+      await restoreNestedPageRoute();
       return true;
     } catch (error) {
       console.warn('Persistent Firebase account restore failed:', error);
