@@ -46,8 +46,10 @@ body.home-subpage-open .home-sub-page {
 }
 
 .home-page .page-heading h1 {
-  font-size: 26px;
-  line-height: 1.15;
+  margin: 0;
+  font-size: 19px !important;
+  line-height: 1.2;
+  letter-spacing: -0.25px;
 }
 
 .home-page .account-list {
@@ -64,16 +66,4 @@ body.home-subpage-open .home-sub-page {
 
 .home-page .small-btn {
   white-space: nowrap;
-}
-
-@media (max-width: 430px) {
-  .home-page .page-heading h1 {
-    font-size: 23px;
-  }
-}
-
-@media (max-width: 360px) {
-  .home-page .page-heading h1 {
-    font-size: 21px;
-  }
 }
