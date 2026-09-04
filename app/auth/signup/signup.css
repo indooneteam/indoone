@@ -1,14 +1,82 @@
 /* Signup feature styles. Shared primitives remain in style.css. */
-.auth-signup-page{min-height:100vh;width:100%;display:flex;flex-direction:column;justify-content:center;padding:48px 22px;background:linear-gradient(180deg,#fff 0%,#fbfaff 100%)}
-.auth-signup-page .auth-brand{margin:0 auto 44px;width:min(460px,100%)}
-.auth-signup-page .auth-copy{width:min(460px,100%);margin:0 auto 20px}
-.auth-signup-page .auth-copy h1{margin:0 0 8px;font-size:34px;letter-spacing:-1px}
-.auth-signup-page .auth-copy p:last-child{margin:0;color:#77717f;font-size:14px;line-height:1.6}
-.auth-signup-page .field,.auth-signup-page>.primary,.auth-signup-page>.secondary,.auth-signup-page>.auth-footer,.auth-signup-page>#signupOtpArea{width:min(460px,100%);margin-left:auto;margin-right:auto}
-.auth-signup-page .field{margin-top:14px;margin-bottom:0}
-.auth-signup-page>.primary{margin-top:20px}
-.auth-signup-page>.secondary{margin-top:10px}
-.auth-signup-page>#signupOtpArea{margin-top:6px}
-.auth-signup-page>#signupOtpArea .field{margin-top:12px}
-.auth-signup-page>#signupOtpArea .primary{margin-top:4px}
-@media(min-width:700px){.auth-signup-page{padding:64px 34px}.auth-signup-page .auth-brand{margin-bottom:52px}.auth-signup-page .auth-copy h1{font-size:38px}}
+.auth-signup-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 22px;
+  background: linear-gradient(180deg, #fff 0%, #fbfaff 100%);
+}
+
+.auth-signup-page .auth-brand {
+  margin: 0 auto 44px;
+  width: min(460px, 100%);
+}
+
+.auth-signup-page .auth-copy {
+  width: min(460px, 100%);
+  margin: 0 auto 20px;
+}
+
+.auth-signup-page .auth-copy h1 {
+  margin: 0 0 8px;
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+
+.auth-signup-page .auth-copy p:last-child {
+  margin: 0;
+  color: #77717f;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.auth-signup-page .field,
+.auth-signup-page > .primary,
+.auth-signup-page > .secondary,
+.auth-signup-page > .auth-footer,
+.auth-signup-page > #signupOtpArea {
+  width: min(460px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-signup-page .field {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.auth-signup-page > .primary {
+  margin-top: 20px;
+}
+
+.auth-signup-page > .secondary {
+  margin-top: 10px;
+}
+
+.auth-signup-page > #signupOtpArea {
+  margin-top: 6px;
+}
+
+.auth-signup-page > #signupOtpArea .field {
+  margin-top: 12px;
+}
+
+.auth-signup-page > #signupOtpArea .primary {
+  margin-top: 4px;
+}
+
+@media (min-width: 700px) {
+  .auth-signup-page {
+    padding: 64px 34px;
+  }
+
+  .auth-signup-page .auth-brand {
+    margin-bottom: 52px;
+  }
+
+  .auth-signup-page .auth-copy h1 {
+    font-size: 38px;
+  }
+}
