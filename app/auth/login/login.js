@@ -67,6 +67,12 @@
 
       <button
         type="button"
+        class="link-button auth-action-button"
+        data-auth-action="forgot-password"
+      >Forgot password?</button>
+
+      <button
+        type="button"
         class="primary auth-action-button"
         data-auth-action="login-submit"
       >Send OTP</button>
