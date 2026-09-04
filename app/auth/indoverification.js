@@ -20,8 +20,7 @@
         const response = await fetch(`${API_BASE}${path}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-Indo-App-Id': APP_ID
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(payload),
           signal: controller.signal
