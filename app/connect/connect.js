@@ -1,8 +1,8 @@
 (() => {
   const get = id => document.getElementById(id);
 
-  // Use the same visual language as the app's shared navigation icons:
-  // 24x24 viewBox, 1.8px stroke, no fill, rounded caps/joins, currentColor.
+  // Match the app-wide icon language used by navigation-icons.js:
+  // outline icons, 1.8px stroke, round caps/joins, currentColor.
   const svgIcons = {
     pair: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.2 13.8 13.8 10.2a3.7 3.7 0 0 1 5.1.1 3.7 3.7 0 0 1 0 5.2l-2.2 2.2a3.7 3.7 0 0 1-5.2 0"/><path d="M13.8 10.2 10.2 13.8a3.7 3.7 0 0 1-5.1-.1 3.7 3.7 0 0 1 0-5.2l2.2-2.2a3.7 3.7 0 0 1 5.2 0"/></svg>',
     connect: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>',
@@ -31,15 +31,15 @@
   function installConnectIcons() {
     document.querySelectorAll('.connect-action').forEach((button, index) => {
       const icon = button.querySelector('strong');
-      if (index === 0) putIcon(icon, 'pair', 23);
-      if (index === 1) putIcon(icon, 'connect', 23);
-      if (index === 2) putIcon(icon, 'devices', 23);
+      if (index === 0) putIcon(icon, 'pair');
+      if (index === 1) putIcon(icon, 'connect');
+      if (index === 2) putIcon(icon, 'devices');
     });
 
     putIcon(document.querySelector('.connect-status-icon'), 'nearby', 22);
 
     document.querySelectorAll('.connect-choice .choice-icon').forEach((icon, index) => {
-      putIcon(icon, index === 0 ? 'phone' : 'laptop', 23);
+      putIcon(icon, index === 0 ? 'phone' : 'laptop');
     });
 
     document.querySelectorAll('.connect-choice .arrow').forEach(arrow => putIcon(arrow, 'chevron', 18));
@@ -91,6 +91,8 @@
 
   window.showConnectHome = function ({ remember = true } = {}) {
     if (remember) window.IndoonePageState?.set('connect');
+    window.closeModal?.();
+    window.closeDrawer?.();
     showConnectContent();
     showConnectHome({ remember: false });
     setActive('connect');
