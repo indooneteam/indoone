@@ -1,5 +1,5 @@
 (() => {
-  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260904a';
+  const MARKUP_URL = 'app/connect/qr/qr/index.html?v=20260919a';
   const QR_LIBRARY_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
   let qrLibraryPromise = null;
@@ -54,42 +54,44 @@
     window.IndooneNative?.stopNearby?.();
   }
 
-  function ensureNearbyReady() {
-    const native = window.IndooneNative;
-    if (!native?.requestNearbyPermissions) {
-      return Promise.reject(new Error('Nearby device support is unavailable.'));
-    }
-
+  function waitForNearbyEvent(timeoutMs = 12000) {
     return new Promise(resolve => {
       let settled = false;
-      let timeoutId = 0;
-
       const finish = ready => {
         if (settled) return;
         settled = true;
-        if (timeoutId) window.clearTimeout(timeoutId);
+        window.clearTimeout(timeoutId);
         window.removeEventListener('indoone-nearby', handler);
         resolve(ready);
       };
-
       const handler = event => {
         const detail = event.detail || {};
-        if (detail.type !== 'permissions') return;
-        finish(detail.message === 'granted');
+        if (detail.type === 'permissions') finish(detail.message === 'granted');
       };
-
       window.addEventListener('indoone-nearby', handler);
-      timeoutId = window.setTimeout(() => finish(false), 60000);
-
-      try {
-        native.requestNearbyPermissions();
-      } catch (_) {
-        finish(false);
-      }
+      const timeoutId = window.setTimeout(() => finish(false), timeoutMs);
     });
   }
 
+  async function ensureNearbyReady() {
+    const native = window.IndooneNative;
+    if (!native?.requestNearbyPermissions) throw new Error('Nearby device support is unavailable.');
+
+    if (typeof native.isNearbyReady === 'function' && native.isNearbyReady()) return true;
+
+    const result = waitForNearbyEvent();
+    try {
+      native.requestNearbyPermissions();
+    } catch (_) {
+      return false;
+    }
+
+    if (typeof native.isNearbyReady === 'function' && native.isNearbyReady()) return true;
+    return result;
+  }
+
   async function renderQr(target, value) {
+    if (!target) throw new Error('QR display area could not be found.');
     const qr = await loadQrLibrary();
     const generator = qr(0, 'M');
     generator.addData(value);
@@ -109,9 +111,8 @@
   }
 
   async function show() {
-    stopAdvertising();
-
     try {
+      stopAdvertising();
       const ready = await ensureNearbyReady();
       if (!ready) {
         window.toast?.('Turn on Bluetooth and Wi-Fi, then allow Nearby devices access to show the QR.');
@@ -120,20 +121,19 @@
 
       window.openModal?.(await loadMarkup());
       const modal = document.getElementById('modal');
-      if (!modal) return;
+      if (!modal) throw new Error('QR window could not be opened.');
 
       pairingCode = createPairingCode();
-      const payload = JSON.stringify({
-        v: 1,
-        type: 'indoone-connect',
-        code: pairingCode,
-        device: deviceName()
-      });
+      const payload = JSON.stringify({ v: 1, type: 'indoone-connect', code: pairingCode, device: deviceName() });
 
       await renderQr(modal.querySelector('#connectQrVisual'), payload);
-      modal.querySelector('#connectQrDeviceName').textContent = deviceName();
-      modal.querySelector('#connectQrCode').textContent = `Pairing code: ${pairingCode}`;
-      modal.querySelector('#connectQrCodeLarge').textContent = pairingCode;
+      const deviceNode = modal.querySelector('#connectQrDeviceName');
+      const codeNode = modal.querySelector('#connectQrCode');
+      const largeCodeNode = modal.querySelector('#connectQrCodeLarge');
+      if (!deviceNode || !codeNode || !largeCodeNode) throw new Error('QR window is missing required elements.');
+      deviceNode.textContent = deviceName();
+      codeNode.textContent = `Pairing code: ${pairingCode}`;
+      largeCodeNode.textContent = pairingCode;
 
       try {
         window.IndooneNative?.startNearbyAdvertising?.(`${deviceName()} [${pairingCode}]`);
@@ -160,6 +160,7 @@
       });
     } catch (error) {
       stopAdvertising();
+      window.closeModal?.();
       window.toast?.(error?.message || 'Could not open QR code.');
     }
   }
