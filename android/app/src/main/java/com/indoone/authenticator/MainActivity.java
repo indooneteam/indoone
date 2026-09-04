@@ -30,6 +30,7 @@ public class MainActivity extends FragmentActivity {
     private static final int BLUETOOTH_ENABLE_REQUEST_CODE = 43;
     private static final int WIFI_ENABLE_REQUEST_CODE = 44;
     private static final String APP_BASE_URL = "https://indooneteam.github.io/indoone/develop/";
+    private static final String DEBUG_WEB_URL = APP_BASE_URL;
     private WebView webView;
     private NearbyConnectionManager nearbyConnectionManager;
     private UpdateManager updateManager;
@@ -66,9 +67,20 @@ public class MainActivity extends FragmentActivity {
                 });
             }
         });
-        loadBundledWebApp();
+        loadWebApp();
         setContentView(webView);
         webView.postDelayed(() -> updateManager.checkForUpdate(), 1800);
+    }
+
+    private void loadWebApp() {
+        // Debug APKs use the deployed develop site so HTML/CSS/JS changes can be tested
+        // without rebuilding/reinstalling the APK. Native Android APIs and system dialogs
+        // still come from this APK through IndooneNative.
+        if (BuildConfig.DEBUG) {
+            webView.loadUrl(DEBUG_WEB_URL + "?debug=" + System.currentTimeMillis());
+            return;
+        }
+        loadBundledWebApp();
     }
 
     private void loadBundledWebApp() {
@@ -88,7 +100,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     private WebResourceResponse serveBundledAsset(Uri uri) {
-        if (uri == null) return null;
+        if (uri == null || BuildConfig.DEBUG) return null;
         String url = uri.toString();
         if (!url.startsWith(APP_BASE_URL)) return null;
 
