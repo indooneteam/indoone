@@ -80,7 +80,7 @@
 
   async function ensureAccountsLoaded() {
     if (!homeView || !window.IndooneCloudAccounts?.load) return;
-    if (window.location.hash === ADD_HASH) return;
+    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) return;
 
     const user = window.IndooneFirebase?.auth?.currentUser;
     if (!user) return;
@@ -139,7 +139,10 @@
       subPage.hidden = true;
     }
 
-    if (window.location.hash === ADD_HASH) {
+    // Returning to Home always clears the full Add Account route, including
+    // nested feature hashes such as /manual, /qr, and /import. This prevents
+    // a later browser refresh from restoring an Add Account child page.
+    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) {
       history.replaceState({}, '', window.location.pathname + window.location.search);
     }
 
@@ -252,7 +255,7 @@
       console.warn('Indoone Home screenshot protection unavailable:', error);
     });
 
-    if (window.location.hash === ADD_HASH) {
+    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) {
       showAddAccount({
         push: false
       });
