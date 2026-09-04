@@ -1,7 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4",
+  "versionCode": 6,
+  "versionName": "1.5",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "storeUrl": "https://www.indusappstore.com/search/?ts=Indoone",
-  "notes": "Android WebView fixes, fixed app scale, navigation/button fixes, and Nearby Connect readiness. Updates now open through the Indus Appstore when it is installed."
+  "notes": "Android system APK handler for updates, fixed app scale, navigation/button fixes, and Nearby Connect readiness."
 }
