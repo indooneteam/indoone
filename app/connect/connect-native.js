@@ -204,11 +204,13 @@
       if (detail.incoming) {
         state.endpointDirections.set(endpointId, 'access-to-my-device');
         state.incomingEndpoints.set(endpointId, detail.message || 'Nearby device');
-        native.acceptNearbyConnection?.(endpointId);
       } else {
         state.endpointDirections.set(endpointId, 'access-other-device');
-        notify(`Connecting to ${detail.message || 'the device'}…`);
       }
+      // Nearby requires both sides to accept before onConnectionResult reports success.
+      // Accept on both incoming and outgoing sides; the permission screen is still opened only after the real connection succeeds.
+      native.acceptNearbyConnection?.(endpointId);
+      if (!detail.incoming) notify(`Connecting to ${detail.message || 'the device'}…`);
       return;
     }
     if (detail.type === 'connectionResult') {
