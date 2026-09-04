@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "versionName": "1.5",
+  "versionCode": 7,
+  "versionName": "1.6",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Android system APK handler for updates, fixed app scale, navigation/button fixes, and Nearby Connect readiness."
+  "notes": "OTP service connectivity fix and latest main app improvements."
 }
