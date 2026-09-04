@@ -35,7 +35,7 @@
     if (remember) window.IndoonePageState?.set('home');
     closeDrawer();
     closeModal();
-    window.showConnectHome?.();
+    window.showConnectHome?.({ remember: false });
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
@@ -54,7 +54,7 @@
     $('searchWrap')?.setAttribute('hidden', '');
     $('settingsNav')?.classList.add('active');
     $('accountsNav')?.classList.remove('active');
-    window.showSettings?.();
+    window.showSettings?.({ remember: false });
   }
 
   async function restoreSavedPage() {
@@ -81,6 +81,9 @@
         break;
       case 'connect':
         window.showConnect?.({ remember: false });
+        break;
+      case 'connect-choice':
+        window.showConnectChoice?.({ remember: false });
         break;
       case 'pair':
         window.showConnect?.({ remember: false });
