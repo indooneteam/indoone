@@ -29,6 +29,36 @@
   const deviceName = () =>
     localStorage.getItem('indoone_connect_device_name') || 'Indoone Device';
 
+  function waitForNearbyReady(timeoutMs = 60000) {
+    if (!window.IndooneNative?.requestNearbyPermissions) {
+      return Promise.reject(new Error('Nearby Connect works in the Android app.'));
+    }
+
+    return new Promise(resolve => {
+      let settled = false;
+      let timeoutId = 0;
+      const finish = ready => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        window.removeEventListener('indoone-nearby', handler);
+        resolve(ready);
+      };
+      const handler = event => {
+        const detail = event.detail || {};
+        if (detail.type !== 'permissions') return;
+        finish(detail.message === 'granted');
+      };
+      window.addEventListener('indoone-nearby', handler);
+      timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+      try {
+        window.IndooneNative.requestNearbyPermissions();
+      } catch (_) {
+        finish(false);
+      }
+    });
+  }
+
   function render() {
     const host = document.getElementById('connectFeatureNearbyList');
     if (!host) {
@@ -103,18 +133,26 @@
       button.addEventListener('click', () => window.closeModal?.());
     });
 
-    modal?.querySelector('[data-device-start]')?.addEventListener('click', () => {
+    modal?.querySelector('[data-device-start]')?.addEventListener('click', async () => {
       const status = modal.querySelector('#connectFeatureNearbyStatus');
 
-      if (window.IndooneNative) {
-        window.IndooneNative.requestNearbyPermissions?.();
-        window.IndooneNative.startNearbyDiscovery?.();
+      if (!window.IndooneNative) {
+        if (status) status.textContent = 'Nearby Connect works in the Android app.';
+        return;
+      }
 
-        if (status) {
-          status.textContent = 'Searching for nearby Indoone devices…';
-        }
-      } else if (status) {
-        status.textContent = 'Nearby Connect works in the Android app.';
+      if (status) status.textContent = 'Requesting Nearby permissions…';
+      const ready = await waitForNearbyReady();
+      if (!ready) {
+        if (status) status.textContent = 'Turn on Bluetooth and Wi-Fi, then allow Nearby devices access.';
+        return;
+      }
+
+      try {
+        window.IndooneNative.startNearbyDiscovery?.();
+        if (status) status.textContent = 'Searching for nearby Indoone devices…';
+      } catch (_) {
+        if (status) status.textContent = 'Nearby discovery could not be started.';
       }
     });
 
