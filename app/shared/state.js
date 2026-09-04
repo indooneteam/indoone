@@ -24,7 +24,8 @@ window.refreshAccountCodes = async function () {
 
 window.renderAccounts = function () {
   const {accounts, search, newestFirst} = indooneState;
-  let list = accounts.filter(a => `${a.name} ${a.email}`.toLowerCase().includes(search));
+  // Search matches only the account/service name, not the email address.
+  let list = accounts.filter(a => String(a.name || '').toLowerCase().includes(search));
   list = [...list].sort(newestFirst ? (a,b)=>b.id-a.id : (a,b)=>a.name.localeCompare(b.name));
   const listEl = document.getElementById('accountList');
   listEl.innerHTML = list.map(a => `<article class="account" data-id="${a.id}" tabindex="0"><div class="service-icon ${a.cls}">${a.icon}</div><div class="account-info"><b>${a.name}</b><span>${a.email}</span><strong>${a.code || '------'}</strong></div><button class="fav ${a.favorite?'active':''}" data-fav="${a.id}" aria-label="Favorite">${a.favorite?'★':'☆'}</button><div class="timer">${a.seconds ?? 30}</div></article>`).join('');
