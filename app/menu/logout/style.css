@@ -34,7 +34,7 @@
   transition: border-color .15s ease, background .15s ease, transform .15s ease;
 }
 
-.menu-feature-row::before {
+.menu-feature-icon {
   width: 42px;
   height: 42px;
   display: grid;
@@ -42,19 +42,20 @@
   border-radius: 13px;
   background: #f1ecff;
   color: #6835d5;
-  font-size: 18px;
-  font-weight: 800;
 }
 
-.menu-feature-row:first-child::before {
-  content: '⌂';
+.menu-feature-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.menu-feature-row:nth-child(2)::before {
-  content: '⇥';
-}
-
-.menu-feature-row > span {
+.menu-feature-row > span:not(.menu-feature-icon) {
   min-width: 0;
   display: block;
   margin: 0 !important;
@@ -65,7 +66,7 @@
   font-weight: 800 !important;
 }
 
-.menu-feature-row > span small {
+.menu-feature-row > span:not(.menu-feature-icon) small {
   display: block;
   margin-top: 4px;
   color: #89838f !important;
