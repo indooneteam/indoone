@@ -10,6 +10,7 @@
   function makeIcon(type, className) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('class', className);
+    svg.setAttribute('data-shared-nav-icon', type);
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
@@ -27,10 +28,15 @@
     Object.entries(navMap).forEach(([id, type]) => {
       const button = document.getElementById(id);
       if (!button) return;
-      button.querySelectorAll('.nav-icon').forEach(node => node.remove());
-      button.insertBefore(makeIcon(type, 'nav-icon'), button.firstChild);
+      const current = button.querySelector('[data-shared-nav-icon]');
+      if (!current) {
+        button.querySelectorAll('.nav-icon').forEach(node => node.remove());
+        button.insertBefore(makeIcon(type, 'nav-icon'), button.firstChild);
+      }
     });
+
     document.querySelectorAll('.lobby-status-icon').forEach(el => {
+      if (el.querySelector('[data-shared-nav-icon="lobby"]')) return;
       el.textContent = '';
       el.appendChild(makeIcon('lobby', 'ui-svg-icon lobby-svg-icon'));
     });
@@ -39,6 +45,7 @@
   window.IndooneNavigationIcons = { apply, icons: ICONS };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, { once: true });
   else apply();
+
   if (typeof MutationObserver !== 'undefined') {
     let queued = false;
     const observer = new MutationObserver(() => {
