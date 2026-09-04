@@ -20,7 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class UpdateManager {
-    private static final String UPDATE_URL = "https://indooneteam.github.io/indoone/develop/update.json";
+    private static final String UPDATE_URL = "https://indooneteam.github.io/indoone/develop/update.json?ts=";
 
     private final MainActivity activity;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -32,10 +32,15 @@ public final class UpdateManager {
 
     public void checkForUpdate() {
         new Thread(() -> {
+            HttpURLConnection connection = null;
             try {
-                HttpURLConnection connection = (HttpURLConnection) new URL(UPDATE_URL).openConnection();
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
+                String requestUrl = UPDATE_URL + System.currentTimeMillis();
+                connection = (HttpURLConnection) new URL(requestUrl).openConnection();
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Cache-Control", "no-cache");
+                connection.setRequestProperty("Pragma", "no-cache");
                 connection.setRequestMethod("GET");
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return;
 
@@ -43,15 +48,13 @@ public final class UpdateManager {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) body.append(line);
-                } finally {
-                    connection.disconnect();
                 }
 
                 JSONObject json = new JSONObject(body.toString());
                 long installedCode = PackageInfoCompat.getLongVersionCode(
                         activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0)
                 );
-                long remoteCode = json.optLong("versionCode", installedCode);
+                long remoteCode = json.optLong("versionCode", 0);
                 if (remoteCode <= installedCode) return;
 
                 String versionName = json.optString("versionName", "New version");
@@ -62,6 +65,8 @@ public final class UpdateManager {
                 mainHandler.post(() -> showUpdateDialog(versionName, notes, downloadUrl));
             } catch (Exception ignored) {
                 // Update checks must never block or break app startup.
+            } finally {
+                if (connection != null) connection.disconnect();
             }
         }).start();
     }
@@ -69,7 +74,7 @@ public final class UpdateManager {
     private void showUpdateDialog(String versionName, String notes, String downloadUrl) {
         new AlertDialog.Builder(activity)
                 .setTitle("New Indoone update")
-                .setMessage("Version " + versionName + " is available.\n\n" + notes + "\n\nThe APK will be downloaded and handed to Android's installed package handler.")
+                .setMessage("Version " + versionName + " is available.\n\n" + notes + "\n\nThe APK will be downloaded and Android will ask for installation permission when required.")
                 .setNegativeButton("Later", null)
                 .setPositiveButton("Update", (dialog, which) -> downloadAndOpenWithSystem(downloadUrl))
                 .setCancelable(true)
@@ -79,7 +84,7 @@ public final class UpdateManager {
     private void downloadAndOpenWithSystem(String downloadUrl) {
         try {
             DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl));
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl + (downloadUrl.contains("?") ? "&" : "?") + "ts=" + System.currentTimeMillis()));
             request.setTitle("Indoone update");
             request.setDescription("Downloading the latest Indoone APK");
             request.setMimeType("application/vnd.android.package-archive");
