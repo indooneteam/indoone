@@ -1,6 +1,7 @@
 (() => {
   const PENDING_KEY = 'indoone_connect_permission_draft_v1';
   const drafts = new Map();
+  const connectionMeta = new Map();
 
   const escapeHtml = value => String(value || '').replace(/[&<>\"']/g, char => ({
     '&': '&amp;',
@@ -40,7 +41,14 @@
     } catch (_) {}
   }
 
+  function permissionPageAlreadyOpen() {
+    const modal = document.getElementById('modal');
+    return Boolean(modal?.querySelector('[data-live-permission-save], [data-bilateral-permission-save]'));
+  }
+
   function openPermissionPage(endpointId, deviceName, direction) {
+    if (permissionPageAlreadyOpen()) return;
+
     const existingDraft = loadDraft(endpointId) || {
       photos: false,
       videos: false,
@@ -131,10 +139,17 @@
     const endpointId = String(detail.endpointId || '').trim();
     if (!endpointId) return;
 
+    if (detail.type === 'connectionInitiated') {
+      connectionMeta.set(endpointId, {
+        name: String(detail.message || 'Nearby device'),
+        direction: detail.incoming ? 'incoming' : 'outgoing'
+      });
+      return;
+    }
+
     if (detail.type === 'connectionResult' && detail.message === 'connected') {
-      const name = String(detail.messageName || detail.deviceName || 'Nearby device');
-      const direction = detail.incoming ? 'incoming' : 'outgoing';
-      window.setTimeout(() => openPermissionPage(endpointId, name, direction), 0);
+      const meta = connectionMeta.get(endpointId) || { name: 'Nearby device', direction: 'outgoing' };
+      window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 0);
 
       const draft = loadDraft(endpointId);
       if (draft) {
@@ -152,6 +167,9 @@
       return;
     }
 
-    if (detail.type === 'disconnected') clearDraft(endpointId);
+    if (detail.type === 'disconnected') {
+      clearDraft(endpointId);
+      connectionMeta.delete(endpointId);
+    }
   });
 })();
