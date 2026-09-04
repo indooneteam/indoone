@@ -41,7 +41,6 @@ public class MainActivity extends FragmentActivity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        // Indoone is a fixed phone-style UI. Prevent browser-like pinch/double-tap zoom.
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
@@ -129,8 +128,29 @@ public class MainActivity extends FragmentActivity {
         return null;
     }
 
+    public boolean isCameraPermissionGranted() {
+        return checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public boolean isNearbyTransportReady() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) return false;
+            BluetoothManager manager = getSystemService(BluetoothManager.class);
+            BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+            if (adapter == null || !adapter.isEnabled()) return false;
+        } else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S_V2
+                && checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) return false;
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        return wifiManager != null && wifiManager.isWifiEnabled();
+    }
+
     public void requestCameraPermission() {
-        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+        if (isCameraPermissionGranted()) {
             sendCameraPermissionResult(true, "Camera permission already granted");
             return;
         }
@@ -139,31 +159,17 @@ public class MainActivity extends FragmentActivity {
 
     public void requestNearbyPermissions() {
         java.util.ArrayList<String> permissions = new java.util.ArrayList<>();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.BLUETOOTH_SCAN);
-            }
-            if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
-            }
-            if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
-            }
-        } else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        }
-
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+        } else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S_V2
-                && checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) {
-            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
-        }
-
+                && checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES) != PackageManager.PERMISSION_GRANTED) permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
         if (!permissions.isEmpty()) {
             ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), NEARBY_REQUEST_CODE);
             return;
         }
-
         ensureNearbyTransportReady();
     }
 
@@ -171,52 +177,31 @@ public class MainActivity extends FragmentActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             BluetoothManager manager = getSystemService(BluetoothManager.class);
             BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
-
-            if (adapter == null) {
-                sendNearbyEvent("permissions", "denied", "");
-                return;
-            }
-
+            if (adapter == null) { sendNearbyEvent("permissions", "denied", ""); return; }
             if (!adapter.isEnabled()) {
-                try {
-                    startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), BLUETOOTH_ENABLE_REQUEST_CODE);
-                } catch (Exception error) {
-                    sendNearbyEvent("error", "bluetoothEnableUnavailable", error.getMessage());
-                }
+                try { startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), BLUETOOTH_ENABLE_REQUEST_CODE); }
+                catch (Exception error) { sendNearbyEvent("error", "bluetoothEnableUnavailable", error.getMessage()); }
                 return;
             }
         }
-
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        if (wifiManager == null) {
-            sendNearbyEvent("permissions", "denied", "");
-            return;
-        }
-
+        if (wifiManager == null) { sendNearbyEvent("permissions", "denied", ""); return; }
         if (!wifiManager.isWifiEnabled()) {
             try {
-                Intent wifiIntent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-                        ? new Intent(Settings.Panel.ACTION_WIFI)
-                        : new Intent(Settings.ACTION_WIFI_SETTINGS);
+                Intent wifiIntent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? new Intent(Settings.Panel.ACTION_WIFI) : new Intent(Settings.ACTION_WIFI_SETTINGS);
                 startActivityForResult(wifiIntent, WIFI_ENABLE_REQUEST_CODE);
             } catch (Exception error) {
-                try {
-                    startActivityForResult(new Intent(Settings.ACTION_WIFI_SETTINGS), WIFI_ENABLE_REQUEST_CODE);
-                } catch (Exception fallbackError) {
-                    sendNearbyEvent("error", "wifiEnableUnavailable", fallbackError.getMessage());
-                }
+                try { startActivityForResult(new Intent(Settings.ACTION_WIFI_SETTINGS), WIFI_ENABLE_REQUEST_CODE); }
+                catch (Exception fallbackError) { sendNearbyEvent("error", "wifiEnableUnavailable", fallbackError.getMessage()); }
             }
             return;
         }
-
         sendNearbyEvent("permissions", "granted", "");
     }
 
     @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == BLUETOOTH_ENABLE_REQUEST_CODE || requestCode == WIFI_ENABLE_REQUEST_CODE) {
-            ensureNearbyTransportReady();
-        }
+        if (requestCode == BLUETOOTH_ENABLE_REQUEST_CODE || requestCode == WIFI_ENABLE_REQUEST_CODE) ensureNearbyTransportReady();
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -227,11 +212,7 @@ public class MainActivity extends FragmentActivity {
         } else if (requestCode == NEARBY_REQUEST_CODE) {
             boolean granted = grantResults.length > 0;
             for (int result : grantResults) granted &= result == PackageManager.PERMISSION_GRANTED;
-            if (granted) {
-                ensureNearbyTransportReady();
-            } else {
-                sendNearbyEvent("permissions", "denied", "");
-            }
+            if (granted) ensureNearbyTransportReady(); else sendNearbyEvent("permissions", "denied", "");
         }
     }
 
