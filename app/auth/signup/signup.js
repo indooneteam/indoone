@@ -1,7 +1,4 @@
 (() => {
-  const $ = id => document.getElementById(id);
-  let busy = false;
-
   function mobileField() {
     return `
       <div class="mobile-field">
@@ -38,7 +35,7 @@
         <button
           type="button"
           class="password-toggle"
-          data-signup-password-toggle
+          data-password-toggle="signupPassword"
           aria-label="Show password"
           title="Show password"
         >◉</button>
@@ -90,7 +87,7 @@
       <button
         type="button"
         class="primary auth-action-button"
-        data-signup-action="submit"
+        data-auth-action="signup-submit"
       >
         Send OTP
       </button>
@@ -115,7 +112,7 @@
         <button
           type="button"
           class="primary auth-action-button"
-          data-signup-action="verify"
+          data-auth-action="signup-verify"
         >
           Verify &amp; Create Account
         </button>
@@ -124,7 +121,7 @@
       <button
         type="button"
         class="secondary auth-action-button"
-        data-signup-action="login"
+        data-auth-action="login"
       >
         Already have an account? Login
       </button>
@@ -135,141 +132,8 @@
     `;
   }
 
-  function showShell(markup) {
-    const overlay = $('overlay');
-    const modal = $('modal');
-    if (!overlay || !modal) return false;
-
-    overlay.classList.remove('hidden');
-    overlay.classList.add('indoone-auth-screen');
-    document.body.classList.add('auth-open', 'auth-pending');
-
-    modal.innerHTML = `
-      <div class="auth-page auth-signup-page">
-        ${markup}
-        <div
-          id="authStatus"
-          class="auth-status"
-          hidden
-          aria-live="polite"
-        ></div>
-      </div>
-    `;
-
-    bind(modal);
-    return true;
-  }
-
-  function status(message = '', error = false) {
-    const node = $('authStatus');
-    if (!node) return;
-
-    node.textContent = message;
-    node.hidden = !message;
-    node.dataset.error = error ? 'true' : 'false';
-  }
-
-  function bindPassword() {
-    const button = document.querySelector('[data-signup-password-toggle]');
-    if (!button || button.dataset.bound === 'true') return;
-
-    button.dataset.bound = 'true';
-
-    button.addEventListener('click', event => {
-      event.preventDefault();
-
-      const input = $('signupPassword');
-      if (!input) return;
-
-      const showing = input.type === 'text';
-      input.type = showing ? 'password' : 'text';
-      button.textContent = showing ? '◉' : '◌';
-      button.setAttribute(
-        'aria-label',
-        showing ? 'Show password' : 'Hide password'
-      );
-      input.focus();
-    });
-  }
-
-  function bind(root) {
-    bindPassword();
-
-    root
-      .querySelectorAll('button[data-signup-action]')
-      .forEach(button => {
-        button.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          void run(button);
-        });
-      });
-  }
-
-  async function run(button) {
-    if (!button || busy || button.disabled) return;
-
-    const action = button.dataset.signupAction;
-
-    if (action === 'login') {
-      return window.IndooneAuthUI?.showLogin?.();
-    }
-
-    const auth = window.IndooneFirebaseAuth;
-    if (!auth) {
-      return status(
-        'Authentication service is still loading. Please try again.',
-        true
-      );
-    }
-
-    busy = true;
-    const previous = button.textContent;
-
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    status('');
-
-    try {
-      if (action === 'submit') {
-        button.textContent = 'Sending OTP…';
-        await auth.startSignup();
-        button.textContent = 'Resend OTP';
-        status('OTP sent. Enter the code from your email.');
-      } else if (action === 'verify') {
-        button.textContent = 'Verifying…';
-        await auth.finishSignupAfterOtp();
-      }
-    } catch (error) {
-      const message =
-        typeof auth.errorMessage === 'function'
-          ? auth.errorMessage(error)
-          : error?.message || 'Authentication failed.';
-
-      status(message, true);
-      console.error('Indoone signup action failed:', error);
-    } finally {
-      if (button.isConnected) {
-        if (
-          button.dataset.signupAction === 'submit' &&
-          button.textContent === 'Resend OTP'
-        ) {
-          button.disabled = false;
-        }
-
-        if (button.textContent !== 'Resend OTP') {
-          button.textContent = previous;
-        }
-
-        button.removeAttribute('aria-busy');
-      }
-
-      busy = false;
-    }
-  }
-
   window.IndooneSignupFeature = {
     html,
-    show: () => showShell(html())
+    show: () => window.IndooneAuthUI?.showSignup?.()
   };
 })();
