@@ -36,6 +36,11 @@ public final class NativeBridge {
     @JavascriptInterface public void authenticateBiometricUnlock() { authenticate(true); }
 
     @JavascriptInterface
+    public void setSecureScreen(boolean enabled) {
+        activity.runOnUiThread(() -> activity.setSecureScreen(enabled));
+    }
+
+    @JavascriptInterface
     public boolean hasBiometricSecret() {
         SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         return prefs.contains(PREF_CIPHERTEXT) && prefs.contains(PREF_IV) && getKey() != null;
