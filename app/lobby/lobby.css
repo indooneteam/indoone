@@ -1,1 +1,31 @@
-<!-- Feature stylesheet placeholder. Feature rules will live here during migration. -->
+.lobby-status-page {
+  text-align: center;
+  padding: 20px 4px 4px;
+}
+
+.lobby-status-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: #f3edff;
+  color: #703be2;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.lobby-status-page .eyebrow {
+  margin-bottom: 6px;
+}
+
+.lobby-status-page h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.lobby-status-page p:not(.eyebrow) {
+  max-width: 310px;
+  margin: 10px auto 4px;
+}
