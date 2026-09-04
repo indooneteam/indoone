@@ -57,15 +57,19 @@
 }
 
 .connect-action strong {
-  width: 42px;
-  height: 42px;
+  width: 23px;
+  height: 23px;
   display: grid;
   place-items: center;
-  border-radius: 13px;
-  background: #eef5ff;
-  color: #2376eb;
-  font-size: 20px;
+  border-radius: 0;
+  background: transparent;
+  color: #413c48;
+  font-size: 0;
   margin-bottom: 11px;
+}
+
+.connect-action:hover strong {
+  color: #6230d6;
 }
 
 .connect-action span {
@@ -115,13 +119,18 @@
 }
 
 .connect-status-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 23px;
+  height: 23px;
+  border-radius: 0;
   display: grid;
   place-items: center;
-  background: #eaf3ff;
-  color: #2779ea;
+  background: transparent;
+  color: #413c48;
+}
+
+.connect-status-icon svg {
+  width: 21px;
+  height: 21px;
 }
 
 .connect-status b {
@@ -164,14 +173,24 @@
 }
 
 .connect-choice .choice-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 23px;
+  height: 23px;
+  border-radius: 0;
   display: grid;
   place-items: center;
-  background: #eef5ff;
-  color: #2877ea;
-  font-size: 21px;
+  background: transparent;
+  color: #413c48;
+  font-size: 0;
+  flex: none;
+}
+
+.connect-choice .choice-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.connect-choice button:hover .choice-icon {
+  color: #6230d6;
 }
 
 .connect-choice b {
@@ -187,9 +206,23 @@
 }
 
 .connect-choice .arrow {
+  width: 18px;
+  height: 18px;
   margin-left: auto;
-  color: #aaa3b0;
-  font-size: 17px;
+  color: #413c48;
+  display: grid;
+  place-items: center;
+  font-size: 0;
+  flex: none;
+}
+
+.connect-choice .arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.connect-choice button:hover .arrow {
+  color: #6230d6;
 }
 
 .device-card {
