@@ -6,15 +6,15 @@ window.IndooneRecoveryPdf = (() => {
   const b64 = bytes => {
     let s = '';
 
-    new Uint8Array(bytes).forEach(b => {
-      s += String.fromCharCode(b);
+    new Uint8Array(bytes).forEach(byte => {
+      s += String.fromCharCode(byte);
     });
 
     return btoa(s);
   };
 
-  const unb64 = s =>
-    Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const unb64 = value =>
+    Uint8Array.from(atob(value), char => char.charCodeAt(0));
 
   async function derive(pin, salt) {
     const material = await crypto.subtle.importKey(
@@ -108,52 +108,46 @@ window.IndooneRecoveryPdf = (() => {
       'RECOVERY_PAYLOAD_BEGIN'
     ];
 
-    for (let i = 0; i < payload.length; i += 90) {
-      lines.push(payload.slice(i, i + 90));
+    for (let index = 0; index < payload.length; index += 90) {
+      lines.push(payload.slice(index, index + 90));
     }
 
     lines.push('RECOVERY_PAYLOAD_END');
 
     let stream = 'BT /F1 9 Tf 40 800 Td 12 TL ';
 
-    lines.forEach((line, i) => {
+    lines.forEach((line, index) => {
       stream += `(${esc(line)}) Tj`;
 
-      if (i < lines.length - 1) {
+      if (index < lines.length - 1) {
         stream += ' T* ';
       }
     });
 
     stream += ' ET';
 
-    const objects = [];
-
-    objects.push('<< /Type /Catalog /Pages 2 0 R >>');
-    objects.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-    objects.push(
-      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>'
-    );
-    objects.push(
-      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
-    );
-    objects.push(
+    const objects = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
       `<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`
-    );
+    ];
 
     let pdf = '%PDF-1.4\n';
     const offsets = [0];
 
-    objects.forEach((obj, i) => {
+    objects.forEach((object, index) => {
       offsets.push(pdf.length);
-      pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`;
+      pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
     });
 
     const xref = pdf.length;
 
     pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
 
-    for (let i = 1; i < offsets.length; i++) {
-      pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+    for (let index = 1; index < offsets.length; index++) {
+      pdf += `${String(offsets[index]).padStart(10, '0')} 00000 n \n`;
     }
 
     pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
@@ -165,11 +159,11 @@ window.IndooneRecoveryPdf = (() => {
 
   function download(blob, filename = 'indoone-recovery.pdf') {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const anchor = document.createElement('a');
 
-    a.href = url;
-    a.download = filename;
-    a.click();
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
 
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
@@ -196,16 +190,22 @@ window.IndooneRecoveryPdf = (() => {
     localStorage.removeItem(KEY);
   }
 
+  function verifyPin(value) {
+    return Promise.resolve(
+      window.IndooneSecureSession?.verifyPin?.(value) === true
+    );
+  }
+
   function extractPayload(text) {
-    const m = text.match(
+    const match = text.match(
       /RECOVERY_PAYLOAD_BEGIN([\s\S]*?)RECOVERY_PAYLOAD_END/
     );
 
-    if (!m) {
+    if (!match) {
       throw new Error('Recovery payload not found');
     }
 
-    return JSON.parse(m[1].replace(/[\r\n ]/g, ''));
+    return JSON.parse(match[1].replace(/[\r\n ]/g, ''));
   }
 
   async function restoreFromFile(file, pin) {
@@ -220,6 +220,7 @@ window.IndooneRecoveryPdf = (() => {
     create,
     isReady,
     clearReady,
+    verifyPin,
     restoreFromFile
   };
 })();
