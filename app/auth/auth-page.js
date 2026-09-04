@@ -15,6 +15,7 @@
   function showShell(html) {
     const overlay = $('overlay');
     const modal = $('modal');
+
     if (!overlay || !modal) return false;
 
     overlay.classList.remove('hidden');
@@ -36,6 +37,7 @@
     bindButtons(modal);
     bindMobileDefaults(modal);
     bindPasswordToggles(modal);
+
     return true;
   }
 
@@ -73,46 +75,37 @@
     `;
   }
 
-  function normalizeMobileValue(input, prefix, rawValue = input?.value || '') {
-    if (!input) return;
+  function isEmailLike(value) {
+    return /[A-Za-z@]/.test(String(value || ''));
+  }
 
-    const raw = String(rawValue || '');
-    const isEmailLike = /[A-Za-z@]/.test(raw);
+  function normalizedMobileDigits(value) {
+    const digits = String(value || '').replace(/\D/g, '');
 
-    if (isEmailLike) {
-      if (prefix) prefix.hidden = true;
+    if (/^91\d{10}$/.test(digits)) {
+      return digits.slice(2);
+    }
+
+    return digits.slice(0, 10);
+  }
+
+  // This function is intentionally read-only while the user is typing.
+  // It only updates the visual +91 prefix and never rewrites input.value.
+  function syncMobilePrefix(input, prefix) {
+    if (!input || !prefix) return;
+
+    const raw = String(input.value || '');
+
+    if (isEmailLike(raw)) {
+      prefix.hidden = true;
       input.classList.remove('has-mobile-prefix');
       return;
     }
 
-    const digits = raw.replace(/\D/g, '');
-    const normalizedDigits = /^91\d{10}$/.test(digits)
-      ? digits.slice(2)
-      : digits.slice(0, 10);
-    const showPrefix = normalizedDigits.length > 0;
+    const digits = normalizedMobileDigits(raw);
+    const showPrefix = digits.length > 0;
 
-    if (raw !== normalizedDigits) {
-      const cursor =
-        typeof input.selectionStart === 'number'
-          ? input.selectionStart
-          : raw.length;
-      const digitsBeforeCursor = raw
-        .slice(0, cursor)
-        .replace(/\D/g, '').length;
-
-      input.value = normalizedDigits;
-
-      const nextCursor = Math.min(
-        normalizedDigits.length,
-        digitsBeforeCursor
-      );
-
-      try {
-        input.setSelectionRange(nextCursor, nextCursor);
-      } catch {}
-    }
-
-    if (prefix) prefix.hidden = !showPrefix;
+    prefix.hidden = !showPrefix;
     input.classList.toggle('has-mobile-prefix', showPrefix);
   }
 
@@ -121,12 +114,12 @@
 
     input.dataset.indiaMobileBound = 'true';
 
-    const sync = () => normalizeMobileValue(input, prefix);
-
-    input.addEventListener('input', sync);
-    input.addEventListener('paste', () => setTimeout(sync, 0));
-
-    sync();
+    // Do not modify input.value, selection, focus, or type during typing.
+    // Mobile IMEs can close the keyboard or lose entered digits when an
+    // input handler replaces the value on every keystroke.
+    input.addEventListener('input', () => {
+      syncMobilePrefix(input, prefix);
+    });
   }
 
   function bindMobileDefaults(root) {
@@ -432,6 +425,7 @@
     if (action === 'forgot-password') return showForgotPassword();
 
     const auth = window.IndooneFirebaseAuth;
+
     if (!auth) {
       return setStatus(
         'Authentication service is still loading. Please try again.',
