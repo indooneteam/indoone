@@ -2,7 +2,7 @@
   const CONTENT_ID = 'content';
   const ADD_HASH = '#home/add-account';
   const ADD_SCRIPT = 'app/home/add-account/script.js?v=20260916a';
-  const SCREENSHOT_SCRIPT = 'app/home/screenshot-protection.js?v=20260904a';
+  const SCREENSHOT_SCRIPT = 'app/home/screenshot-protection.js?v=20260904b';
 
   let homeView = null;
   let subPage = null;
