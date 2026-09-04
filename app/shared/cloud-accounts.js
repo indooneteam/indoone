@@ -71,13 +71,10 @@ window.IndooneCloudAccounts = (() => {
     const ownValue = ownSnapshot.val() || {};
     const byId = new Map();
 
-    // Normal case: load the currently signed-in Firebase UID.
     Object.values(ownValue).forEach(item => {
       if (item) byId.set(Number(item.id), cleanAccount(item));
     });
 
-    // Recovery/compatibility case: the same email may have legacy profile
-    // records under another UID. Firebase rules allow this exact email query.
     try {
       const usersSnapshot = await usersByEmailPath().once('value');
       const users = usersSnapshot.val() || {};
@@ -155,6 +152,16 @@ window.IndooneCloudAccounts = (() => {
     return account;
   }
 
+  async function permanentlyDeleteFromTrash(id) {
+    const key = String(Number(id));
+    if (!key || key === '0') throw new Error('Invalid Trash account.');
+    const ref = trashPath().child(key);
+    const snapshot = await ref.once('value');
+    if (!snapshot.exists()) throw new Error('Trash item not found.');
+    await ref.remove();
+    return true;
+  }
+
   async function remove(id) {
     const account = (window.indooneState?.accounts || []).find(a => Number(a.id) === Number(id));
     if (!account) throw new Error('Account not found.');
@@ -169,6 +176,7 @@ window.IndooneCloudAccounts = (() => {
     moveToTrash,
     listTrash,
     restoreFromTrash,
+    permanentlyDeleteFromTrash,
     purgeExpiredTrash,
     clearLegacyLocalVault
   };
