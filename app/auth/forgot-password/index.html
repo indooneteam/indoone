@@ -1,17 +1,78 @@
-<section class="forgot-password-page" data-feature="forgot-password">
+<section
+  class="forgot-password-page"
+  data-feature="forgot-password"
+>
   <div class="auth-brand">
     <span class="auth-mark">I</span>
-    <div><strong>Indoone</strong><small>Authenticator</small></div>
+    <div>
+      <strong>Indoone</strong>
+      <small>Authenticator</small>
+    </div>
   </div>
+
   <div class="auth-copy">
     <p class="eyebrow">ACCOUNT RECOVERY</p>
     <h1>Forgot password?</h1>
-    <p>Enter your Indoone account email to continue resetting your password.</p>
+    <p>
+      Enter your Indoone account email to continue resetting your password.
+    </p>
   </div>
+
   <div class="field">
     <label>EMAIL ID</label>
-    <input id="forgotPasswordEmail" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="you@example.com" />
+    <input
+      id="forgotPasswordEmail"
+      type="email"
+      autocomplete="email"
+      autocapitalize="none"
+      spellcheck="false"
+      placeholder="you@example.com"
+    />
   </div>
-  <button type="button" class="primary" id="forgotPasswordContinue">Continue</button>
-  <button type="button" class="secondary" id="forgotPasswordBack">Back to Login</button>
+
+  <button
+    type="button"
+    class="primary"
+    id="forgotPasswordContinue"
+  >
+    Continue
+  </button>
+
+  <div
+    id="forgotPasswordOtpArea"
+    hidden
+  >
+    <p class="auth-otp-note">
+      OTP sent to <strong id="forgotPasswordEmailLabel"></strong>
+    </p>
+
+    <div class="field">
+      <label>VERIFICATION OTP</label>
+      <input
+        id="forgotPasswordOtp"
+        name="one-time-code"
+        type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        maxlength="6"
+        placeholder="Enter 6-digit OTP"
+      />
+    </div>
+
+    <button
+      type="button"
+      class="primary"
+      id="forgotPasswordVerify"
+    >
+      Verify OTP
+    </button>
+  </div>
+
+  <button
+    type="button"
+    class="secondary"
+    id="forgotPasswordBack"
+  >
+    Back to Login
+  </button>
 </section>
