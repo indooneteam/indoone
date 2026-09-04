@@ -86,6 +86,14 @@
     });
   }
 
+  function resetForgotPassword({ email, resetToken, newPassword }) {
+    return request('/api/auth/forgot-password/reset-password', {
+      email,
+      resetToken,
+      newPassword
+    });
+  }
+
   function resendOtp(email, purpose) {
     return request('/api/auth/resend-otp', { email, purpose });
   }
@@ -101,6 +109,7 @@
     verifyLoginOtp,
     requestForgotPasswordOtp,
     verifyForgotPasswordOtp,
+    resetForgotPassword,
     resendOtp
   };
 })();
