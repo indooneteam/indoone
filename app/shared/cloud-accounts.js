@@ -155,10 +155,24 @@ window.IndooneCloudAccounts = (() => {
   async function permanentlyDeleteFromTrash(id) {
     const key = String(Number(id));
     if (!key || key === '0') throw new Error('Invalid Trash account.');
-    const ref = trashPath().child(key);
-    const snapshot = await ref.once('value');
+
+    const trashRef = trashPath().child(key);
+    const snapshot = await trashRef.once('value');
     if (!snapshot.exists()) throw new Error('Trash item not found.');
-    await ref.remove();
+
+    // Remove every current-user location in one atomic Firebase update so the
+    // item cannot remain in Trash or reappear in the Accounts collection.
+    await userPath().update({
+      [`trash/${key}`]: null,
+      [`accounts/${key}`]: null
+    });
+
+    if (window.indooneState?.trash) {
+      window.indooneState.trash = window.indooneState.trash.filter(
+        item => Number(item?.id) !== Number(id)
+      );
+    }
+
     return true;
   }
 
