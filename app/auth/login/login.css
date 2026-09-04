@@ -8,6 +8,8 @@
 .auth-login-page .field{margin-top:14px;margin-bottom:0}
 .auth-login-page>.primary{margin-top:20px}
 .auth-login-page>.secondary{margin-top:10px}
+.auth-login-page>.link-button{display:block;width:min(460px,100%);margin:10px auto 0;padding:0;border:0;background:none;color:#6A35D9;font:inherit;font-size:13px;font-weight:800;text-align:right;cursor:pointer}
+.auth-login-page>.link-button:hover{text-decoration:underline}
 .auth-login-page>#loginOtpArea{margin-top:6px}
 .auth-login-page>#loginOtpArea .field{margin-top:12px}
 .auth-login-page>#loginOtpArea .primary{margin-top:4px}
