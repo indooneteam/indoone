@@ -213,6 +213,7 @@ function applySvgIconStyles() {
     .connect-choice .choice-icon .ui-svg-icon{width:22px;height:22px;}
     .connect-choice .arrow .ui-svg-icon{width:18px;height:18px;}
     .connect-back{display:inline-flex!important;align-items:center;gap:6px;}
+    .connect-back::before{content:none!important;}
     .connect-back .ui-svg-icon{width:16px;height:16px;}
   `;
   document.head.appendChild(style);
@@ -229,4 +230,19 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', applyAllSvgIcons, { once: true });
 } else {
   applyAllSvgIcons();
+}
+
+// Pages such as Pair/Connect/Logout are loaded into the modal after startup.
+// Re-apply only when the DOM actually changes so dynamically inserted controls use the same SVG set.
+if (typeof MutationObserver !== 'undefined') {
+  let iconObserverQueued = false;
+  const iconObserver = new MutationObserver(() => {
+    if (iconObserverQueued) return;
+    iconObserverQueued = true;
+    queueMicrotask(() => {
+      iconObserverQueued = false;
+      applyAllSvgIcons();
+    });
+  });
+  iconObserver.observe(document.body, { childList: true, subtree: true });
 }
