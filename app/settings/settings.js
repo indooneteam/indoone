@@ -1,12 +1,9 @@
 (() => {
   const SETTINGS = [
-    { id: 'app-lock', title: 'App Lock', subtitle: 'PIN', action: () => window.showAppLock?.() },
+    { id: 'app-lock', title: 'App Lock', subtitle: 'PIN' },
     { id: 'biometric', title: 'Biometric Unlock', subtitle: 'Fingerprint / device credential', toggle: true },
-    { id: 'auto-lock', title: 'Auto-Lock', subtitle: () => {
-      const value = window.IndooneAutoLock?.minutes?.() ?? 0;
-      return value ? `After ${value} minute${value === 1 ? '' : 's'}` : 'Never';
-    }, action: () => window.showAutoLock?.() },
-    { id: 'about', title: 'About Indoone', subtitle: 'Version 1.8', action: () => window.showAboutSettings?.() }
+    { id: 'auto-lock', title: 'Auto-Lock', subtitle: () => { const value = window.IndooneAutoLock?.minutes?.() ?? 0; return value ? `After ${value} minute${value === 1 ? '' : 's'}` : 'Never'; } },
+    { id: 'about', title: 'About Indoone', subtitle: 'Version 1.8' }
   ];
 
   function rowMarkup(item, biometricOn) {
@@ -45,9 +42,5 @@
       () => { button.classList.add('on'); toast('Biometric unlock enabled'); },
       message => toast(message || 'Biometric authentication cancelled')
     );
-  };
-
-  window.showAboutSettings = function () {
-    openModal(`<div class="modal-head"><h2>About Indoone</h2><button class="close-btn" data-close>×</button></div><div class="about-mark">I</div><h3 class="about-title">Indoone Authenticator</h3><p class="about-copy">Private authenticator with an encrypted local vault, cloud sync and secure device pairing.</p><div class="about-meta"><span>Version</span><b>1.8</b></div><div class="about-meta"><span>Storage</span><b>Encrypted vault</b></div><button class="primary" data-close>Done</button>`);
   };
 })();
