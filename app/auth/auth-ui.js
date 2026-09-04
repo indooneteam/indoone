@@ -1,45 +1,26 @@
 (() => {
   // Compatibility facade for older callers.
-  // The canonical auth implementation lives in auth-page.js.
-  // Keep this file so existing imports/callers continue to work without
-  // installing a second click bridge or a second authentication UI.
+  // auth-page.js is the canonical implementation. This file deliberately
+  // keeps the legacy entry point without installing a second auth UI or
+  // global click handler.
 
-  function delegate(method, ...args) {
-    const ui = window.IndooneAuthUI;
+  function delegate(method, args) {
+    const ui = window.__indooneCanonicalAuthUI;
 
-    if (!ui || ui[method] === delegate[method]) return false;
+    if (!ui || typeof ui[method] !== 'function') return false;
 
     return ui[method](...args);
   }
 
-  function showLogin(...args) {
-    return delegate('showLogin', ...args);
-  }
+  const compatibilityUI = {
+    showLogin: (...args) => delegate('showLogin', args),
+    showSignup: (...args) => delegate('showSignup', args),
+    showForgotPassword: (...args) => delegate('showForgotPassword', args),
+    close: (...args) => delegate('close', args)
+  };
 
-  function showSignup(...args) {
-    return delegate('showSignup', ...args);
-  }
-
-  function showForgotPassword(...args) {
-    return delegate('showForgotPassword', ...args);
-  }
-
-  function close(...args) {
-    return delegate('close', ...args);
-  }
-
-  showLogin.showLogin = showLogin;
-  showSignup.showSignup = showSignup;
-  showForgotPassword.showForgotPassword = showForgotPassword;
-  close.close = close;
-
-  // Do not replace the canonical UI when auth-page.js has already loaded.
-  if (!window.IndooneAuthUI) {
-    window.IndooneAuthUI = {
-      showLogin,
-      showSignup,
-      showForgotPassword,
-      close
-    };
+  // Never overwrite the canonical UI if auth-page.js has already loaded.
+  if (!window.__indooneCanonicalAuthUI) {
+    window.IndooneAuthUI = compatibilityUI;
   }
 })();
