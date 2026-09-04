@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "1.7",
+  "versionCode": 9,
+  "versionName": "1.8",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
   "notes": "Connect permission flow, Nearby fixes, and app stability improvements."
 }
