@@ -21,7 +21,8 @@
     }
   }
 
-  window.showProfile = function () {
+  window.showProfile = function ({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('profile');
     const modal = document.getElementById('modal');
     if (!modal) return;
     void fetch('app/settings/profile/index.html?v=20260904a', { cache: 'no-store' })
