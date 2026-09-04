@@ -2,5 +2,6 @@
   "versionCode": 5,
   "versionName": "1.4",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Disable browser-style zoom and keep the fixed app UI at the intended phone scale."
+  "storeUrl": "https://www.indusappstore.com/search/?ts=Indoone",
+  "notes": "Android WebView fixes, fixed app scale, navigation/button fixes, and Nearby Connect readiness. Updates now open through the Indus Appstore when it is installed."
 }
