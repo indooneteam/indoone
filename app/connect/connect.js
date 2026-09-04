@@ -29,21 +29,33 @@
     get('connectContent')?.removeAttribute('hidden');
   }
 
-  function showConnectHome() {
+  function showConnectHome({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('connect');
     setConnectPage('home');
   }
 
-  window.showConnect = function () {
+  window.showConnect = function ({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('connect');
     window.closeModal?.();
     window.closeDrawer?.();
     showConnectContent();
-    showConnectHome();
+    showConnectHome({ remember: false });
     setActive('connect');
   };
 
-  window.showConnectHome = function () {
+  window.showConnectHome = function ({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('connect');
     window.closeModal?.();
-    showConnectHome();
+    showConnectContent();
+    showConnectHome({ remember: false });
+  };
+
+  window.showConnectChoice = function ({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('connect');
+    window.closeModal?.();
+    showConnectContent();
+    setConnectPage('choice');
+    setActive('connect');
   };
 
   document.addEventListener('click', event => {
