@@ -41,6 +41,8 @@
     $('addBtn')?.removeAttribute('hidden');
     $('searchWrap')?.removeAttribute('hidden');
     $('accountsNav')?.classList.add('active');
+    $('lobbyNav')?.classList.remove('active');
+    $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
     window.IndooneHome?.restoreHome?.();
   }
@@ -54,6 +56,8 @@
     $('searchWrap')?.setAttribute('hidden', '');
     $('settingsNav')?.classList.add('active');
     $('accountsNav')?.classList.remove('active');
+    $('lobbyNav')?.classList.remove('active');
+    $('connectNav')?.classList.remove('active');
     window.showSettings?.({ remember: false });
   }
 
