@@ -18,7 +18,7 @@
     const content = document.getElementById('content');
     const subPage = document.getElementById('homeSubPage');
     const accountsNav = document.getElementById('accountsNav');
-    return !!content && !content.hidden && !!accountsNav?.classList.contains('active') && !subPage?.hidden;
+    return !!content && !content.hidden && !!accountsNav?.classList.contains('active') && !!subPage?.hidden;
   }
 
   function sync() {
@@ -87,6 +87,8 @@
     });
     const content = document.getElementById('content');
     if (content) observer.observe(content, { attributes: true, attributeFilter: ['hidden'] });
+    const subPage = document.getElementById('homeSubPage');
+    if (subPage) observer.observe(subPage, { attributes: true, attributeFilter: ['hidden'] });
   }
 
   function init() {
