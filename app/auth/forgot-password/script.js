@@ -1,8 +1,9 @@
 window.IndooneForgotPassword = (() => {
-  const MARKUP_URL = 'app/auth/forgot-password/index.html?v=20260904b';
+  const MARKUP_URL = 'app/auth/forgot-password/index.html?v=20260904c';
   let state = {
     email: '',
-    challengeId: ''
+    challengeId: '',
+    resetToken: ''
   };
 
   function setStatus(root, message = '', error = false) {
@@ -22,7 +23,8 @@ window.IndooneForgotPassword = (() => {
       'auth/invalid-email': 'Enter a valid email address.',
       'auth/user-not-found': 'No Indoone account was found.',
       'auth/too-many-requests': 'Too many attempts. Please try again later.',
-      'auth/network-request-failed': 'Network error. Check your connection and try again.'
+      'auth/network-request-failed': 'Network error. Check your connection and try again.',
+      'auth/weak-password': 'Password should be at least 6 characters.'
     };
 
     return map[error?.code] || error?.message || 'Unable to continue password recovery.';
@@ -44,6 +46,13 @@ window.IndooneForgotPassword = (() => {
     button.disabled = false;
     button.removeAttribute('aria-busy');
     if (previousText) button.textContent = previousText;
+  }
+
+  function hideEmailStep(root) {
+    const emailField = root.querySelector('#forgotPasswordEmailField');
+    const continueButton = root.querySelector('#forgotPasswordContinue');
+    if (emailField) emailField.hidden = true;
+    if (continueButton) continueButton.hidden = true;
   }
 
   async function requestOtp(root, button) {
@@ -73,7 +82,8 @@ window.IndooneForgotPassword = (() => {
 
       state = {
         email,
-        challengeId: result.challengeId
+        challengeId: result.challengeId,
+        resetToken: ''
       };
 
       const otpArea = root.querySelector('#forgotPasswordOtpArea');
@@ -132,32 +142,93 @@ window.IndooneForgotPassword = (() => {
         otp
       });
 
-      if (result?.verified === false) {
+      if (result?.verified === false || !result?.resetToken) {
         throw new Error(result?.error || 'OTP verification failed.');
       }
 
-      const auth = window.IndooneFirebase?.auth;
-      if (!auth?.sendPasswordResetEmail) {
-        throw new Error('Password reset service is unavailable. Please try again.');
-      }
-
-      await auth.sendPasswordResetEmail(state.email);
-
-      setStatus(
-        root,
-        'OTP verified. Password reset link sent to your email.'
-      );
+      state.resetToken = result.resetToken;
 
       const otpArea = root.querySelector('#forgotPasswordOtpArea');
-      if (otpArea) otpArea.hidden = true;
+      const resetArea = root.querySelector('#forgotPasswordResetArea');
+      const newPassword = root.querySelector('#forgotPasswordNewPassword');
+      const emailInput = root.querySelector('#forgotPasswordEmail');
 
-      state = {
-        email: '',
-        challengeId: ''
-      };
+      if (otpArea) otpArea.hidden = true;
+      if (resetArea) resetArea.hidden = false;
+      if (emailInput) emailInput.disabled = true;
+      hideEmailStep(root);
+      setStatus(root, 'OTP verified. Enter your new password.');
+      newPassword?.focus();
     } catch (error) {
       setStatus(root, errorMessage(error), true);
       console.error('Forgot Password OTP verification failed:', error);
+    } finally {
+      clearBusy(button, previousText);
+    }
+  }
+
+  async function resetPassword(root, button) {
+    const newPasswordInput = root.querySelector('#forgotPasswordNewPassword');
+    const confirmPasswordInput = root.querySelector('#forgotPasswordConfirmPassword');
+    const verification = window.IndooneIndoVerification;
+    const newPassword = String(newPasswordInput?.value || '');
+    const confirmPassword = String(confirmPasswordInput?.value || '');
+
+    if (!state.email || !state.resetToken) {
+      setStatus(root, 'Please verify the OTP first.', true);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setStatus(root, 'Password should be at least 6 characters.', true);
+      newPasswordInput?.focus();
+      return;
+    }
+
+    if (newPassword.length > 4096) {
+      setStatus(root, 'Password is too long.', true);
+      newPasswordInput?.focus();
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setStatus(root, 'Passwords do not match.', true);
+      confirmPasswordInput?.focus();
+      return;
+    }
+
+    if (!verification?.resetForgotPassword) {
+      setStatus(root, 'Password reset service is unavailable. Please try again.', true);
+      return;
+    }
+
+    const previousText = setBusy(button, 'Saving…');
+    setStatus(root);
+
+    try {
+      const result = await verification.resetForgotPassword({
+        email: state.email,
+        resetToken: state.resetToken,
+        newPassword
+      });
+
+      if (!result?.ok) {
+        throw new Error(result?.error || 'Unable to change your password.');
+      }
+
+      const resetArea = root.querySelector('#forgotPasswordResetArea');
+      if (resetArea) resetArea.hidden = true;
+      newPasswordInput.value = '';
+      confirmPasswordInput.value = '';
+      setStatus(root, 'Password changed successfully. You can now log in with your new password.');
+      state = {
+        email: '',
+        challengeId: '',
+        resetToken: ''
+      };
+    } catch (error) {
+      setStatus(root, errorMessage(error), true);
+      console.error('Forgot Password reset failed:', error);
     } finally {
       clearBusy(button, previousText);
     }
@@ -168,8 +239,9 @@ window.IndooneForgotPassword = (() => {
 
     const continueButton = root.querySelector('#forgotPasswordContinue');
     const verifyButton = root.querySelector('#forgotPasswordVerify');
+    const saveButton = root.querySelector('#forgotPasswordSave');
 
-    if (!continueButton || !verifyButton) return;
+    if (!continueButton || !verifyButton || !saveButton) return;
 
     root.dataset.forgotPasswordBound = 'true';
 
@@ -183,6 +255,12 @@ window.IndooneForgotPassword = (() => {
       event.preventDefault();
       event.stopPropagation();
       void verifyOtp(root, verifyButton);
+    });
+
+    saveButton.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      void resetPassword(root, saveButton);
     });
 
     const emailInput = root.querySelector('#forgotPasswordEmail');
@@ -200,6 +278,13 @@ window.IndooneForgotPassword = (() => {
       if (event.key !== 'Enter') return;
       event.preventDefault();
       void verifyOtp(root, verifyButton);
+    });
+
+    const confirmPasswordInput = root.querySelector('#forgotPasswordConfirmPassword');
+    confirmPasswordInput?.addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      void resetPassword(root, saveButton);
     });
   }
 
