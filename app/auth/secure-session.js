@@ -28,6 +28,11 @@ window.IndooneSecureSession = (() => {
       }
 
       return pin;
+    },
+
+    verifyPin(value) {
+      if (locked || !pin) return false;
+      return pin === String(value);
     }
   };
 })();
