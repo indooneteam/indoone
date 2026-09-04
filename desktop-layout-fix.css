@@ -5,3 +5,37 @@ html, body { height: 100%; }
   .phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
   .bottom-nav { bottom: 0 !important; }
 }
+
+/* Keep menu, Indoone branding, and account search on one straight top row. */
+.topbar {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+}
+.topbar-left {
+  display: contents !important;
+}
+.topbar-left .menu-top-btn {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+.topbar-left .brand {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: center !important;
+  margin: 0 !important;
+}
+.top-actions {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  display: flex !important;
+}
+@media (max-width: 360px) {
+  .topbar {
+    column-gap: 4px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
