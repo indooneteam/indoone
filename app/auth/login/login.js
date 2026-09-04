@@ -2,7 +2,11 @@
   function mobileField() {
     return `
       <div class="mobile-field">
-        <span id="loginMobilePrefix" class="mobile-prefix" hidden>+91</span>
+        <span
+          id="loginMobilePrefix"
+          class="mobile-prefix"
+          hidden
+        >+91</span>
         <input
           id="authIdentifier"
           name="login-identifier"
@@ -67,9 +71,19 @@
 
       <button
         type="button"
+        class="link-button auth-action-button"
+        data-auth-action="forgot-password"
+      >
+        Forgot password?
+      </button>
+
+      <button
+        type="button"
         class="primary auth-action-button"
         data-auth-action="login-submit"
-      >Send OTP</button>
+      >
+        Send OTP
+      </button>
 
       <div id="loginOtpArea" class="auth-otp-area" hidden>
         <p class="auth-otp-note">
@@ -92,14 +106,18 @@
           type="button"
           class="primary auth-action-button"
           data-auth-action="login-verify"
-        >Verify &amp; Login</button>
+        >
+          Verify &amp; Login
+        </button>
       </div>
 
       <button
         type="button"
         class="secondary auth-action-button"
         data-auth-action="signup"
-      >Create Account</button>
+      >
+        Create Account
+      </button>
 
       <div class="auth-footer">
         Protect your Indoone account with password and email OTP verification.
