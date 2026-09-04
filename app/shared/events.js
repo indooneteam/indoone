@@ -16,6 +16,33 @@
   function renderLoginNow() {
     try {
       if (window.IndooneAuthUI?.showLogin) {
+        const overlayNode = $('overlay');
+        const modal = $('modal');
+        const authOpen = document.body.classList.contains('auth-open');
+        const activeInput = document.activeElement;
+        const authInputFocused =
+          !!activeInput &&
+          !!activeInput.closest?.('#modal') &&
+          !!activeInput.matches?.('input, textarea, [contenteditable="true"]');
+
+        // Never rebuild the auth DOM while the user is interacting with it.
+        // Replacing modal.innerHTML destroys the focused input, which closes
+        // the mobile keyboard and clears the partially entered value.
+        if (
+          authOpen &&
+          overlayNode &&
+          !overlayNode.classList.contains('hidden') &&
+          modal?.querySelector('.auth-page')
+        ) {
+          markAuthReady();
+          return true;
+        }
+
+        if (authInputFocused) {
+          markAuthReady();
+          return true;
+        }
+
         window.IndooneAuthUI.showLogin();
         markAuthReady();
         return true;
