@@ -1,11 +1,24 @@
 (() => {
   function currentUser() { return window.IndooneFirebase?.auth?.currentUser || null; }
-  function renderProfile() {
+
+  async function renderProfile() {
     const user = currentUser();
     const email = document.getElementById('profileEmail');
     const phone = document.getElementById('profilePhone');
+
     if (email) email.textContent = user?.email || 'Email not available';
-    if (phone) phone.textContent = user?.phoneNumber || 'Mobile number not set';
+    if (phone) phone.textContent = 'Mobile number not set';
+    if (!user || !phone) return;
+
+    try {
+      const db = window.IndooneFirebase?.database;
+      if (!db) return;
+      const snapshot = await db.ref(`users/${user.uid}/profile/mobile`).once('value');
+      const mobile = window.IndooneFirebaseAuthBase?.normalizeMobile?.(snapshot.val() || '') || String(snapshot.val() || '');
+      phone.textContent = mobile || 'Mobile number not set';
+    } catch (_) {
+      phone.textContent = 'Mobile number not available';
+    }
   }
 
   window.showProfile = function () {
@@ -15,7 +28,7 @@
       .then(response => response.ok ? response.text() : Promise.reject(new Error('Profile page could not be loaded.')))
       .then(html => {
         modal.innerHTML = html;
-        renderProfile();
+        void renderProfile();
         modal.querySelector('[data-profile-action="mobile"]')?.addEventListener('click', () => window.showChangeMobile?.());
         modal.querySelector('[data-profile-action="email"]')?.addEventListener('click', () => window.showChangeEmail?.());
         document.getElementById('overlay')?.classList.remove('hidden');
