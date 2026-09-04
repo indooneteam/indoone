@@ -3,6 +3,9 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.indoone.authenticator'
     compileSdk 35
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId 'com.indoone.authenticator'
         versionCode 9
