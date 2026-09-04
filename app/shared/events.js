@@ -31,7 +31,8 @@
     element.addEventListener('click', handler);
   }
 
-  function showAccounts() {
+  function showAccounts({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('home');
     closeDrawer();
     closeModal();
     window.showConnectHome?.();
@@ -44,7 +45,8 @@
     window.IndooneHome?.restoreHome?.();
   }
 
-  function showSettingsPanel() {
+  function showSettingsPanel({ remember = true } = {}) {
+    if (remember) window.IndoonePageState?.set('settings');
     closeDrawer();
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
@@ -53,6 +55,42 @@
     $('settingsNav')?.classList.add('active');
     $('accountsNav')?.classList.remove('active');
     window.showSettings?.();
+  }
+
+  async function restoreSavedPage() {
+    const page = window.IndoonePageState?.get?.() || 'home';
+    if (window.location.hash === '#home/add-account') return;
+
+    switch (page) {
+      case 'settings':
+        showSettingsPanel({ remember: false });
+        break;
+      case 'profile':
+        showSettingsPanel({ remember: false });
+        window.showProfile?.({ remember: false });
+        break;
+      case 'mobile':
+        showSettingsPanel({ remember: false });
+        window.showProfile?.({ remember: false });
+        window.showChangeMobile?.({ remember: false });
+        break;
+      case 'email':
+        showSettingsPanel({ remember: false });
+        window.showProfile?.({ remember: false });
+        window.showChangeEmail?.({ remember: false });
+        break;
+      case 'connect':
+        window.showConnect?.({ remember: false });
+        break;
+      case 'pair':
+        window.showConnect?.({ remember: false });
+        await window.showConnectPair?.({ remember: false });
+        break;
+      case 'home':
+      default:
+        showAccounts({ remember: false });
+        break;
+    }
   }
 
   if (!localStorage.getItem('indoone_otp_verified_uid')) renderLoginNow();
@@ -161,6 +199,7 @@
       sessionStorage.setItem('indoone_otp_verified_uid', persistedUid);
       sessionStorage.setItem('indoone_authenticated_uid', persistedUid);
       await loadFirebaseAccounts();
+      await restoreSavedPage();
       if (typeof startDemoTimers === 'function') startDemoTimers();
     } catch (error) {
       console.error('Indoone auth gate error:', error);
