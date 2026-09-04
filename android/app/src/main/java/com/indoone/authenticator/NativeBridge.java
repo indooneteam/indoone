@@ -61,6 +61,8 @@ public final class NativeBridge {
     @JavascriptInterface public void clearBiometricSecret() { activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply(); }
     @JavascriptInterface public void requestCameraPermission() { activity.requestCameraPermission(); }
     @JavascriptInterface public void requestNearbyPermissions() { activity.requestNearbyPermissions(); }
+    @JavascriptInterface public boolean isCameraReady() { return activity.isCameraPermissionGranted(); }
+    @JavascriptInterface public boolean isNearbyReady() { return activity.isNearbyTransportReady(); }
 
     @JavascriptInterface
     public void startNearbyAdvertising(String deviceName) {
