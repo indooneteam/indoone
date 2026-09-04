@@ -43,6 +43,7 @@
   margin-left: 0;
   font-size: 23px;
   line-height: 1;
+  transform: translateY(4px);
 }
 
 .topbar .top-actions {
