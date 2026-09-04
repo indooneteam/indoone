@@ -7,6 +7,7 @@
   let subPage = null;
   let initialized = false;
   let addFeatureReady = null;
+  let accountLoadPromise = null;
 
   window.showAdd = () => {
     window.IndooneHome?.showAddAccount?.({
@@ -41,6 +42,36 @@
     page.appendChild(subPage);
 
     window.addEventListener('popstate', handleHistory);
+    window.addEventListener('pageshow', () => {
+      void ensureAccountsLoaded();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) void ensureAccountsLoaded();
+    });
+  }
+
+  async function ensureAccountsLoaded() {
+    if (!homeView || !window.IndooneCloudAccounts?.load) return;
+    if (window.location.hash === ADD_HASH) return;
+
+    const user = window.IndooneFirebase?.auth?.currentUser;
+    if (!user) return;
+
+    if (accountLoadPromise) return accountLoadPromise;
+
+    accountLoadPromise = (async () => {
+      try {
+        await window.IndooneCloudAccounts.load();
+        if (typeof renderAccounts === 'function') renderAccounts();
+        if (typeof refreshAccountCodes === 'function') await refreshAccountCodes();
+      } catch (error) {
+        console.warn('Indoone Home account load failed:', error);
+      } finally {
+        accountLoadPromise = null;
+      }
+    })();
+
+    return accountLoadPromise;
   }
 
   function loadAddFeature() {
@@ -90,6 +121,8 @@
     if (typeof refreshAccountCodes === 'function') {
       refreshAccountCodes();
     }
+
+    void ensureAccountsLoaded();
   }
 
   function openAddHistory() {
@@ -182,14 +215,18 @@
       showAddAccount({
         push: false
       });
+      return;
     }
+
+    void ensureAccountsLoaded();
   }
 
   window.IndooneHome = {
     init,
     showAddAccount,
     backToHome,
-    restoreHome
+    restoreHome,
+    ensureAccountsLoaded
   };
 
   if (document.readyState === 'loading') {
