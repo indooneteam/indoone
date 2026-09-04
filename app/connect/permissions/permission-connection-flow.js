@@ -6,7 +6,7 @@
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '"': '&quot;',
+    '\"': '&quot;',
     "'": '&#39;'
   }[char]));
 
@@ -52,7 +52,7 @@
       ? 'Allow access to your data'
       : 'Choose data you will share';
     const description = direction === 'incoming'
-      ? `${deviceName} is connecting to this device. Choose exactly what it may access.`
+      ? `${deviceName} is connected to this device. Choose exactly what it may access.`
       : `Choose exactly what ${deviceName} may access from this device.`;
 
     const markup = `
@@ -78,7 +78,7 @@
             </label>
           `).join('')}
         </div>
-        <p class="connect-muted" data-bilateral-permission-status>Connection is being established. Your selection will be sent securely after Nearby connects.</p>
+        <p class="connect-muted" data-bilateral-permission-status>Nearby connection is established. Choose and save what this device may access.</p>
         <button type="button" class="primary" data-bilateral-permission-save>Allow selected</button>
         <button type="button" class="secondary" data-bilateral-permission-deny>Deny all</button>
       </section>
@@ -108,16 +108,11 @@
         }
       });
 
-      // Sending is safe to attempt now when the connection is already up;
-      // the connection-result handler below retries once Nearby reports success.
       try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
       window.dispatchEvent(new CustomEvent('indoone-permissions-saved', {
         detail: { endpointId, permissions: draft }
       }));
       window.toast?.(allowed.length ? 'Permissions saved.' : 'All permissions denied.');
-
-      const status = modal.querySelector('[data-bilateral-permission-status]');
-      if (status) status.textContent = 'Permissions saved for this connection.';
       window.closeModal?.();
     };
 
@@ -136,30 +131,25 @@
     const endpointId = String(detail.endpointId || '').trim();
     if (!endpointId) return;
 
-    if (detail.type === 'connectionInitiated') {
-      const direction = detail.incoming ? 'incoming' : 'outgoing';
-      const name = String(detail.message || 'Nearby device');
-      // Show the permission screen independently on both devices as soon as
-      // the Nearby handshake starts. No data is exposed until the connection
-      // is actually established and the selection has been exchanged.
-      window.setTimeout(() => openPermissionPage(endpointId, name, direction), 0);
-      return;
-    }
-
     if (detail.type === 'connectionResult' && detail.message === 'connected') {
+      const name = String(detail.messageName || detail.deviceName || 'Nearby device');
+      const direction = detail.incoming ? 'incoming' : 'outgoing';
+      window.setTimeout(() => openPermissionPage(endpointId, name, direction), 0);
+
       const draft = loadDraft(endpointId);
-      if (!draft) return;
-      const message = JSON.stringify({
-        type: 'indoone-permissions',
-        permissions: {
-          photos: Boolean(draft.photos),
-          videos: Boolean(draft.videos),
-          documents: Boolean(draft.documents),
-          files: Boolean(draft.files)
-        }
-      });
-      try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
-      clearDraft(endpointId);
+      if (draft) {
+        const message = JSON.stringify({
+          type: 'indoone-permissions',
+          permissions: {
+            photos: Boolean(draft.photos),
+            videos: Boolean(draft.videos),
+            documents: Boolean(draft.documents),
+            files: Boolean(draft.files)
+          }
+        });
+        try { window.IndooneNative?.sendNearbyText?.(endpointId, message); } catch (_) {}
+      }
+      return;
     }
 
     if (detail.type === 'disconnected') clearDraft(endpointId);
