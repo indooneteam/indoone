@@ -74,6 +74,18 @@
     return request('/api/auth/login/verify-otp', { email, challengeId, otp, name });
   }
 
+  function requestForgotPasswordOtp(email) {
+    return request('/api/auth/forgot-password/request-otp', { email });
+  }
+
+  function verifyForgotPasswordOtp({ email, challengeId, otp }) {
+    return request('/api/auth/forgot-password/verify-otp', {
+      email,
+      challengeId,
+      otp
+    });
+  }
+
   function resendOtp(email, purpose) {
     return request('/api/auth/resend-otp', { email, purpose });
   }
@@ -87,6 +99,8 @@
     sendSignupWelcome,
     requestLoginOtp,
     verifyLoginOtp,
+    requestForgotPasswordOtp,
+    verifyForgotPasswordOtp,
     resendOtp
   };
 })();
