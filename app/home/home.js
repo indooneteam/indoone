@@ -2,12 +2,14 @@
   const CONTENT_ID = 'content';
   const ADD_HASH = '#home/add-account';
   const ADD_SCRIPT = 'app/home/add-account/script.js?v=20260916a';
+  const SCREENSHOT_SCRIPT = 'app/home/screenshot-protection.js?v=20260904a';
 
   let homeView = null;
   let subPage = null;
   let initialized = false;
   let addFeatureReady = null;
   let accountLoadPromise = null;
+  let screenshotFeatureReady = null;
 
   window.showAdd = () => {
     window.IndooneHome?.showAddAccount?.({
@@ -44,10 +46,36 @@
     window.addEventListener('popstate', handleHistory);
     window.addEventListener('pageshow', () => {
       void ensureAccountsLoaded();
+      window.IndooneHomeScreenshot?.sync?.();
     });
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) void ensureAccountsLoaded();
+      if (!document.hidden) {
+        void ensureAccountsLoaded();
+        window.IndooneHomeScreenshot?.sync?.();
+      }
     });
+  }
+
+  function loadScreenshotFeature() {
+    if (window.IndooneHomeScreenshot?.sync) {
+      return Promise.resolve();
+    }
+
+    if (screenshotFeatureReady) {
+      return screenshotFeatureReady;
+    }
+
+    screenshotFeatureReady = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = SCREENSHOT_SCRIPT;
+      script.onload = resolve;
+      script.onerror = () => {
+        reject(new Error('Home screenshot protection feature could not be loaded.'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return screenshotFeatureReady;
   }
 
   async function ensureAccountsLoaded() {
@@ -123,6 +151,7 @@
     }
 
     void ensureAccountsLoaded();
+    void loadScreenshotFeature().then(() => window.IndooneHomeScreenshot?.sync?.()).catch(() => {});
   }
 
   function openAddHistory() {
@@ -163,6 +192,7 @@
     subPage.hidden = false;
     document.getElementById('addBtn')?.setAttribute('hidden', '');
     document.body.classList.add('home-subpage-open');
+    window.IndooneHomeScreenshot?.sync?.();
 
     try {
       await loadAddFeature();
@@ -210,6 +240,10 @@
 
   function init() {
     setupViews();
+
+    void loadScreenshotFeature().then(() => window.IndooneHomeScreenshot?.sync?.()).catch(error => {
+      console.warn('Indoone Home screenshot protection unavailable:', error);
+    });
 
     if (window.location.hash === ADD_HASH) {
       showAddAccount({
