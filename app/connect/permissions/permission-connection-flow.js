@@ -83,7 +83,7 @@
     const existingDraft = loadDraft(endpointId) || { photos: false, videos: false, documents: false, files: false };
     const title = direction === 'incoming' ? 'Allow access to your data' : 'Choose data you will share';
     const description = direction === 'incoming'
-      ? `${deviceName} is connecting to this device. Choose exactly what it may access.`
+      ? `${deviceName} is connected to this device. Choose exactly what it may access.`
       : `Choose exactly what ${deviceName} may access from this device.`;
 
     window.openModal?.(`
@@ -106,7 +106,7 @@
             </label>
           `).join('')}
         </div>
-        <p class="connect-muted" data-bilateral-permission-status>Choose what this device may access, then save.</p>
+        <p class="connect-muted" data-bilateral-permission-status>Nearby connection is established. Choose what this device may access, then save.</p>
         <button type="button" class="primary" data-bilateral-permission-save>Allow selected</button>
         <button type="button" class="secondary" data-bilateral-permission-deny>Deny all</button>
       </section>
@@ -146,24 +146,25 @@
     });
   }
 
+  window.IndoonePermissionConnectionFlowLoaded = true;
+
   window.addEventListener('indoone-nearby', event => {
     const detail = event.detail || {};
     const endpointId = String(detail.endpointId || '').trim();
     if (!endpointId) return;
 
     if (detail.type === 'connectionInitiated') {
-      const meta = {
+      connectionMeta.set(endpointId, {
         name: String(detail.message || 'Nearby device'),
         direction: detail.incoming ? 'incoming' : 'outgoing'
-      };
-      connectionMeta.set(endpointId, meta);
-      window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 0);
+      });
       return;
     }
 
-    if (detail.type === 'connectionResult' && detail.message === 'connected') {
+    if (detail.type === 'connectionResult') {
+      if (detail.message !== 'connected') return;
       const meta = connectionMeta.get(endpointId) || { name: 'Nearby device', direction: 'outgoing' };
-      window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 0);
+      window.setTimeout(() => openPermissionPage(endpointId, meta.name, meta.direction), 50);
       const draft = loadDraft(endpointId);
       if (draft) sendPermissions(endpointId, draft);
       return;
