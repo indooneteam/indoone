@@ -1,17 +1,19 @@
 (() => {
   const get = id => document.getElementById(id);
 
+  // Use the same visual language as the app's shared navigation icons:
+  // 24x24 viewBox, 1.8px stroke, no fill, rounded caps/joins, currentColor.
   const svgIcons = {
-    pair: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5 13.5 10.5a3.5 3.5 0 0 1 5 5l-2 2a3.5 3.5 0 0 1-5 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 10.5-3 3a3.5 3.5 0 0 1-5-5l2-2a3.5 3.5 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    connect: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="m8 7-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m16 7 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    devices: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="12" height="15" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="8" y="9" width="13" height="10" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    nearby: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5a11.2 11.2 0 0 1 16 0M7.2 13.5a6.8 6.8 0 0 1 9.6 0M10.3 16.5a2.4 2.4 0 0 1 3.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.25" fill="currentColor"/></svg>',
-    phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.8" width="11" height="18.4" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 18.2h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    laptop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="11" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 18h17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.5 18 10 20h4l.5-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-    chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    pair: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.2 13.8 13.8 10.2a3.7 3.7 0 0 1 5.1.1 3.7 3.7 0 0 1 0 5.2l-2.2 2.2a3.7 3.7 0 0 1-5.2 0"/><path d="M13.8 10.2 10.2 13.8a3.7 3.7 0 0 1-5.1-.1 3.7 3.7 0 0 1 0-5.2l2.2-2.2a3.7 3.7 0 0 1 5.2 0"/></svg>',
+    connect: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>',
+    devices: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="11" height="16" rx="2"/><rect x="9" y="8" width="11" height="11" rx="2"/><path d="M7 17h2"/></svg>',
+    nearby: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5a11 11 0 0 1 16 0M7.2 13.5a6.7 6.7 0 0 1 9.6 0M10.5 16.5a2.2 2.2 0 0 1 3 0"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/></svg>',
+    phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10 18h4"/></svg>',
+    laptop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="11" rx="1.5"/><path d="M3.5 18h17M9.5 18 10 20h4l.5-2"/></svg>',
+    chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>'
   };
 
-  function putIcon(node, name, size = 22) {
+  function putIcon(node, name, size = 23) {
     if (!node || !svgIcons[name]) return;
     node.innerHTML = svgIcons[name];
     const svg = node.firstElementChild;
@@ -19,17 +21,22 @@
     svg.style.width = `${size}px`;
     svg.style.height = `${size}px`;
     svg.style.display = 'block';
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.8');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
   }
 
   function installConnectIcons() {
     document.querySelectorAll('.connect-action').forEach((button, index) => {
       const icon = button.querySelector('strong');
-      if (index === 0) putIcon(icon, 'pair', 22);
-      if (index === 1) putIcon(icon, 'connect', 22);
-      if (index === 2) putIcon(icon, 'devices', 22);
+      if (index === 0) putIcon(icon, 'pair', 23);
+      if (index === 1) putIcon(icon, 'connect', 23);
+      if (index === 2) putIcon(icon, 'devices', 23);
     });
 
-    putIcon(document.querySelector('.connect-status-icon'), 'nearby', 21);
+    putIcon(document.querySelector('.connect-status-icon'), 'nearby', 22);
 
     document.querySelectorAll('.connect-choice .choice-icon').forEach((icon, index) => {
       putIcon(icon, index === 0 ? 'phone' : 'laptop', 23);
@@ -84,7 +91,6 @@
 
   window.showConnectHome = function ({ remember = true } = {}) {
     if (remember) window.IndoonePageState?.set('connect');
-    window.closeModal?.();
     showConnectContent();
     showConnectHome({ remember: false });
     setActive('connect');
