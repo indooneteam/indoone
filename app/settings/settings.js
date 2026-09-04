@@ -12,10 +12,11 @@
 
   const ICONS = {
     profile: '<circle cx="12" cy="8" r="3.1"></circle><path d="M5.5 19.5c.8-3.1 3.1-4.8 6.5-4.8s5.7 1.7 6.5 4.8"></path>',
-    lock: '<rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8" cy="10" d2="7" fill="none"></path><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>',
+    lock: '<rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>',
     biometric: '<path d="M8 7.5A4.5 4.5 0 0 1 12.5 3 4.5 4.5 0 0 1 17 7.5M6 10a6 6 0 0 1 12 0M8.5 12.5a3.5 3.5 0 0 1 7 0M10.5 15v1.5a1.5 1.5 0 0 1-3 0v-1.2M13.5 15v3a1.5 1.5 0 0 1-3 0v-1.5M16 13v4a2 2 0 0 1-4 0v-1"></path>',
     timer: '<circle cx="12" cy="13" r="7"></circle><path d="M12 13V9M9.5 3.5h5M12 6v-2.5M18 7l1.5-1.5"></path>',
-    info: '<circle cx="12" cy="12" r="8"></circle><path d="M12 10.5v5M12 7.5h.01"></path>'
+    info: '<circle cx="12" cy="12" r="8"></circle><path d="M12 10.5v5M12 7.5h.01"></path>',
+    next: '<path d="m9 5 7 7-7 7"></path>'
   };
 
   function makeIcon(type) {
