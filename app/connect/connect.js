@@ -8,6 +8,12 @@
     get('settingsNav')?.classList.toggle('active', tab === 'settings');
   }
 
+  function setConnectPage(page) {
+    get('connectHomePage')?.toggleAttribute('hidden', page !== 'home');
+    get('connectChoicePage')?.toggleAttribute('hidden', page !== 'choice');
+    get('connectContent')?.querySelectorAll('.connect-pair-page').forEach(node => node.remove());
+  }
+
   function showAccounts() {
     get('connectContent')?.setAttribute('hidden', '');
     get('content')?.removeAttribute('hidden');
@@ -24,8 +30,7 @@
   }
 
   function showConnectHome() {
-    get('connectChoicePage')?.setAttribute('hidden', '');
-    get('connectHomePage')?.removeAttribute('hidden');
+    setConnectPage('home');
   }
 
   window.showConnect = function () {
@@ -47,28 +52,29 @@
 
     const name = action.dataset.connectAction;
 
+    if (name === 'pair') {
+      event.preventDefault();
+      return window.showConnectPair?.();
+    }
+
     if (name === 'qr') {
       event.preventDefault();
-      window.showConnectQr?.();
-      return;
+      return window.showConnectQr?.();
     }
 
     if (name === 'scanner') {
       event.preventDefault();
-      window.showConnectScanner?.();
-      return;
+      return window.showConnectScanner?.();
     }
 
     if (name === 'connect') {
       event.preventDefault();
-      window.showConnectChoice?.();
-      return;
+      return window.showConnectChoice?.();
     }
 
     if (name === 'devices') {
       event.preventDefault();
-      window.showConnectDevices?.();
-      return;
+      return window.showConnectDevices?.();
     }
 
     if (name === 'home') {
