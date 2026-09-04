@@ -1,1 +1,5 @@
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}.nav-icon{width:23px;height:23px;display:block;flex:none;fill:currentColor;color:inherit}.nav-btn span{line-height:1}.nav-btn:not(.active) .nav-icon{opacity:.78}.nav-btn:focus-visible{outline:2px solid #9a6be8;outline-offset:-4px;border-radius:10px}
+
+/* Lobby icon is owned by app/lobby/icon.svg and uses a mask so active/inactive
+   navigation states inherit the same currentColor as every other nav icon. */
+.lobby-nav-icon{width:23px;height:23px;display:block;flex:none;background:currentColor;opacity:.78;-webkit-mask:url('app/lobby/icon.svg') center/contain no-repeat;mask:url('app/lobby/icon.svg') center/contain no-repeat}.nav-btn.active .lobby-nav-icon{opacity:1}.nav-btn:not(.active) .lobby-nav-icon{opacity:.78}
