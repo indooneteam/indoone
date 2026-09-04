@@ -1,6 +1,12 @@
 <section class="settings-subpage">
   <div class="modal-head"><h2>Change mobile number</h2><button class="close-btn" type="button" data-close>×</button></div>
-  <p>Enter the new mobile number for your Indoone account.</p>
-  <div class="field"><label>Mobile number</label><input id="changeMobileNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91 98765 43210"></div>
-  <button class="primary" id="saveMobileNumber">Continue</button>
+  <p>Verify your new mobile number with Firebase SMS before it is saved to your account.</p>
+  <div class="field"><label>New mobile number</label><input id="changeMobileNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91 98765 43210"></div>
+  <div class="field"><label>Current password</label><input id="changeMobilePassword" type="password" autocomplete="current-password" placeholder="Enter your current password"></div>
+  <div id="mobileRecaptcha" class="mobile-recaptcha"></div>
+  <button class="primary" id="saveMobileNumber">Send SMS code</button>
+  <div id="mobileOtpArea" hidden>
+    <div class="field"><label>SMS verification code</label><input id="changeMobileOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
+    <button class="primary" id="verifyMobileNumber">Verify &amp; change number</button>
+  </div>
 </section>
