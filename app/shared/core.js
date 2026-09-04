@@ -14,6 +14,12 @@ window.IndoonePageState = window.IndoonePageState || {
   }
 };
 
+function clearHomeSubRoute() {
+  const hash = window.location.hash || '';
+  if (!hash.startsWith('#home/add-account')) return;
+  history.replaceState({}, '', window.location.pathname + window.location.search);
+}
+
 window.openModal = function (html) {
   if (!modal || !overlay) return;
   modal.innerHTML = html;
@@ -29,6 +35,10 @@ window.closeModal = function () {
 };
 
 window.showHome = function () {
+  // Home is a canonical root route. Never leave an Add Account child hash
+  // behind when switching back to Home, because that hash would be restored
+  // on the next refresh.
+  clearHomeSubRoute();
   window.IndoonePageState?.set('home');
   overlay?.classList.add('hidden');
   document.getElementById('connectContent')?.setAttribute('hidden', '');
