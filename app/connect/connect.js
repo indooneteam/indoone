@@ -1,26 +1,5 @@
 (() => {
   const get = id => document.getElementById(id);
-  const PERMISSION_FLOW_URL = 'app/connect/permissions/permission-connection-flow.js?v=20260920a';
-  let permissionFlowLoading = null;
-
-  function loadPermissionFlow() {
-    if (window.IndoonePermissionConnectionFlowLoaded) return Promise.resolve();
-    if (permissionFlowLoading) return permissionFlowLoading;
-    permissionFlowLoading = new Promise(resolve => {
-      const script = document.createElement('script');
-      script.src = PERMISSION_FLOW_URL;
-      script.async = true;
-      script.onload = () => {
-        window.IndoonePermissionConnectionFlowLoaded = true;
-        resolve();
-      };
-      script.onerror = () => resolve();
-      document.head.appendChild(script);
-    });
-    return permissionFlowLoading;
-  }
-
-  void loadPermissionFlow();
 
   function setActive(tab) {
     get('accountsNav')?.classList.toggle('active', tab === 'accounts');
