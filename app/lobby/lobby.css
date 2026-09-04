@@ -14,6 +14,17 @@
   color: #703be2;
   font-size: 30px;
   font-weight: 800;
+  -webkit-mask: none;
+  mask: none;
+}
+
+.lobby-status-icon-source {
+  width: 32px;
+  height: 32px;
+  display: block;
+  background: currentColor;
+  -webkit-mask: url('icon.svg') center/contain no-repeat;
+  mask: url('icon.svg') center/contain no-repeat;
 }
 
 .lobby-status-page .eyebrow {
