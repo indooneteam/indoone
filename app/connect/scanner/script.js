@@ -1,5 +1,5 @@
 (() => {
-  const SCRIPT_URL = 'app/connect/scanner/scanner/script.js?v=20260903a';
+  const SCRIPT_URL = 'app/connect/scanner/scanner/script.js?v=20260919a';
   let loading = null;
 
   window.showConnectScanner = async () => {
