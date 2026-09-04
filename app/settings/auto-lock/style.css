@@ -1,0 +1,1 @@
+.settings-choice-list{display:grid;gap:8px}.settings-choice{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid #e6e0ee;border-radius:12px;background:#fff;color:#2c2733;text-align:left}.settings-choice.selected{border-color:#cbb8ec;background:#faf7ff;color:#5c2ac7}.settings-choice b{font-weight:700}
