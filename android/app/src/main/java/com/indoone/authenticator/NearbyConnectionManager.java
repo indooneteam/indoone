@@ -31,6 +31,7 @@ public final class NearbyConnectionManager {
         this.activity = activity;
         Context context = activity.getApplicationContext();
         this.client = Nearby.getConnectionsClient(context);
+        this.client.registerPayloadListener(payloadCallback);
     }
 
     public void startAdvertising(String deviceName) {
