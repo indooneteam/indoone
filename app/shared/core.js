@@ -1,6 +1,19 @@
 const overlay = document.getElementById('overlay');
 const modal = document.getElementById('modal');
 
+window.IndoonePageState = window.IndoonePageState || {
+  key: 'indoone_current_page',
+  set(page) {
+    try { sessionStorage.setItem(this.key, String(page || 'home')); } catch (_) {}
+  },
+  get() {
+    try { return sessionStorage.getItem(this.key) || ''; } catch (_) { return ''; }
+  },
+  clear() {
+    try { sessionStorage.removeItem(this.key); } catch (_) {}
+  }
+};
+
 window.openModal = function (html) {
   if (!modal || !overlay) return;
   modal.innerHTML = html;
@@ -16,6 +29,7 @@ window.closeModal = function () {
 };
 
 window.showHome = function () {
+  window.IndoonePageState?.set('home');
   overlay?.classList.add('hidden');
   document.getElementById('connectContent')?.setAttribute('hidden', '');
   document.getElementById('content')?.removeAttribute('hidden');
