@@ -1,14 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Indoone splash logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Indoone splash logo</title>
+  <desc id="desc">Dark premium purple circle with white I and two lavender leaves above it.</desc>
   <defs>
-    <linearGradient id="bg" x1="74" y1="54" x2="440" y2="458" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#5E2CE2"/>
-      <stop offset="1" stop-color="#9346ED"/>
+    <radialGradient id="circle" cx="34%" cy="24%" r="90%">
+      <stop offset="0" stop-color="#4A32A8"/>
+      <stop offset="0.48" stop-color="#24115E"/>
+      <stop offset="1" stop-color="#10052F"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#B68CFF"/>
+      <stop offset="1" stop-color="#F1E8FF"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="#FFFFFF"/>
-  <rect x="88" y="88" width="336" height="336" rx="88" fill="url(#bg)"/>
-  <path fill="#FFFFFF" d="M250 144h64v142c0 39-21 69-58 87l-29-51c15-9 23-21 23-39V144Z"/>
-  <path fill="#FFFFFF" d="M158 144h146v52H158z"/>
-  <path fill="#FFFFFF" d="M158 318h184v50H158z"/>
-  <path fill="#DCC9FF" d="M318 198c45 16 68 45 68 83 0 30-17 55-49 73-5-39-19-66-54-87 8-29 19-52 35-69Z"/>
+  <circle cx="256" cy="278" r="176" fill="url(#circle)" stroke="#6D4AE8" stroke-width="8"/>
+  <circle cx="256" cy="278" r="166" fill="none" stroke="#8D6BFF" stroke-opacity=".28" stroke-width="4"/>
+  <path d="M181 118 C168 82 193 50 244 42 C246 78 225 108 181 118 Z" fill="url(#leaf)"/>
+  <path d="M261 108 C281 59 325 41 377 56 C360 103 322 128 261 108 Z" fill="url(#leaf)"/>
+  <path d="M239 186 H283 V325 C283 347 275 365 257 378 C239 365 231 347 231 325 V186 Z" fill="#FFF"/>
+  <path d="M196 186 H288 V216 H196 Z" fill="#FFF"/>
+  <path d="M198 327 H290 V356 H198 Z" fill="#FFF"/>
+  <path d="M216 216 H257 V327 H216 Z" fill="#FFF" opacity=".97"/>
 </svg>
