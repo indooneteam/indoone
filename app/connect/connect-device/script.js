@@ -27,30 +27,51 @@
     );
 
   const deviceName = () =>
-    localStorage.getItem('indoone_connect_device_name') || 'Indoone Device';
+    localStorage.getItem('indoone_connect_device_name') ||
+    'Indoone Device';
 
   function waitForNearbyReady(timeoutMs = 60000) {
     if (!window.IndooneNative?.requestNearbyPermissions) {
-      return Promise.reject(new Error('Nearby Connect works in the Android app.'));
+      return Promise.reject(
+        new Error('Nearby Connect works in the Android app.')
+      );
     }
 
     return new Promise(resolve => {
       let settled = false;
       let timeoutId = 0;
+
       const finish = ready => {
         if (settled) return;
+
         settled = true;
-        if (timeoutId) window.clearTimeout(timeoutId);
-        window.removeEventListener('indoone-nearby', handler);
+
+        if (timeoutId) {
+          window.clearTimeout(timeoutId);
+        }
+
+        window.removeEventListener(
+          'indoone-nearby',
+          handler
+        );
         resolve(ready);
       };
+
       const handler = event => {
         const detail = event.detail || {};
         if (detail.type !== 'permissions') return;
         finish(detail.message === 'granted');
       };
-      window.addEventListener('indoone-nearby', handler);
-      timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+
+      window.addEventListener(
+        'indoone-nearby',
+        handler
+      );
+      timeoutId = window.setTimeout(
+        () => finish(false),
+        timeoutMs
+      );
+
       try {
         window.IndooneNative.requestNearbyPermissions();
       } catch (_) {
@@ -60,7 +81,10 @@
   }
 
   function render() {
-    const host = document.getElementById('connectFeatureNearbyList');
+    const host = document.getElementById(
+      'connectFeatureNearbyList'
+    );
+
     if (!host) {
       return;
     }
@@ -120,46 +144,81 @@
         </button>
       </div>
 
-      <div id="connectFeatureNearbyList" class="device-nearby-list"></div>
+      <div
+        id="connectFeatureNearbyList"
+        class="device-nearby-list"
+      ></div>
 
-      <p id="connectFeatureNearbyStatus" class="connect-muted">
+      <p
+        id="connectFeatureNearbyStatus"
+        class="connect-muted"
+      >
         Ready to search.
       </p>
     `);
 
     const modal = document.getElementById('modal');
 
-    modal?.querySelectorAll('[data-device-flow-close]').forEach(button => {
-      button.addEventListener('click', () => window.closeModal?.());
-    });
+    modal
+      ?.querySelectorAll('[data-device-flow-close]')
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => window.closeModal?.()
+        );
+      });
 
-    modal?.querySelector('[data-device-start]')?.addEventListener('click', async () => {
-      const status = modal.querySelector('#connectFeatureNearbyStatus');
+    modal
+      ?.querySelector('[data-device-start]')
+      ?.addEventListener('click', async () => {
+        const status = modal.querySelector(
+          '#connectFeatureNearbyStatus'
+        );
 
-      if (!window.IndooneNative) {
-        if (status) status.textContent = 'Nearby Connect works in the Android app.';
-        return;
-      }
+        if (!window.IndooneNative) {
+          if (status) {
+            status.textContent =
+              'Nearby Connect works in the Android app.';
+          }
+          return;
+        }
 
-      if (status) status.textContent = 'Requesting Nearby permissions…';
-      const ready = await waitForNearbyReady();
-      if (!ready) {
-        if (status) status.textContent = 'Turn on Bluetooth and Wi-Fi, then allow Nearby devices access.';
-        return;
-      }
+        if (status) {
+          status.textContent =
+            'Requesting Nearby permissions…';
+        }
 
-      try {
-        window.IndooneNative.startNearbyDiscovery?.();
-        if (status) status.textContent = 'Searching for nearby Indoone devices…';
-      } catch (_) {
-        if (status) status.textContent = 'Nearby discovery could not be started.';
-      }
-    });
+        const ready = await waitForNearbyReady();
 
-    modal?.querySelector('[data-device-show-qr]')?.addEventListener(
-      'click',
-      () => window.showConnectQr?.()
-    );
+        if (!ready) {
+          if (status) {
+            status.textContent =
+              'Turn on Bluetooth and Wi-Fi, then allow Nearby devices access.';
+          }
+          return;
+        }
+
+        try {
+          window.IndooneNative.startNearbyDiscovery?.();
+
+          if (status) {
+            status.textContent =
+              'Searching for nearby Indoone devices…';
+          }
+        } catch (_) {
+          if (status) {
+            status.textContent =
+              'Nearby discovery could not be started.';
+          }
+        }
+      });
+
+    modal
+      ?.querySelector('[data-device-show-qr]')
+      ?.addEventListener(
+        'click',
+        () => window.showConnectQr?.()
+      );
 
     render();
   }
@@ -170,17 +229,26 @@
 
       const modal = document.getElementById('modal');
 
-      modal?.querySelectorAll('[data-device-connect-close]').forEach(button => {
-        button.addEventListener('click', () => window.closeModal?.());
-      });
-
-      modal?.querySelectorAll('[data-device-target]').forEach(button => {
-        button.addEventListener('click', () => {
-          target(button.dataset.deviceTarget);
+      modal
+        ?.querySelectorAll('[data-device-connect-close]')
+        .forEach(button => {
+          button.addEventListener(
+            'click',
+            () => window.closeModal?.()
+          );
         });
-      });
+
+      modal
+        ?.querySelectorAll('[data-device-target]')
+        .forEach(button => {
+          button.addEventListener('click', () => {
+            target(button.dataset.deviceTarget);
+          });
+        });
     } catch (error) {
-      window.toast?.(error?.message || 'Could not open Connect.');
+      window.toast?.(
+        error?.message || 'Could not open Connect.'
+      );
     }
   };
 
@@ -188,25 +256,39 @@
     const detail = event.detail || {};
 
     if (detail.type === 'endpointFound') {
-      endpoints.set(detail.endpointId || detail.message, {
-        name: detail.message || 'Nearby Indoone Device'
-      });
+      endpoints.set(
+        detail.endpointId || detail.message,
+        {
+          name:
+            detail.message || 'Nearby Indoone Device'
+        }
+      );
       render();
     }
 
     if (detail.type === 'endpointLost') {
-      endpoints.delete(detail.endpointId || detail.message);
+      endpoints.delete(
+        detail.endpointId || detail.message
+      );
       render();
     }
 
-    if (detail.type === 'connectionResult' && detail.message === 'connected') {
+    if (
+      detail.type === 'connectionResult' &&
+      detail.message === 'connected'
+    ) {
       const item = endpoints.get(detail.endpointId);
-      window.toast?.(`${item?.name || 'Nearby device'} connected.`);
+      window.toast?.(
+        `${item?.name || 'Nearby device'} connected.`
+      );
     }
   });
 
   document.addEventListener('click', event => {
-    const button = event.target.closest('[data-nearby-endpoint]');
+    const button = event.target.closest(
+      '[data-nearby-endpoint]'
+    );
+
     if (!button) {
       return;
     }
@@ -216,9 +298,14 @@
     const endpointId = button.dataset.nearbyEndpoint;
 
     if (window.IndooneNative?.connectNearbyEndpoint) {
-      window.IndooneNative.connectNearbyEndpoint(endpointId, deviceName());
+      window.IndooneNative.connectNearbyEndpoint(
+        endpointId,
+        deviceName()
+      );
     } else {
-      window.toast?.('Nearby Connect works in the Android app.');
+      window.toast?.(
+        'Nearby Connect works in the Android app.'
+      );
     }
   });
 })();
