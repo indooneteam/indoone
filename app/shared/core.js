@@ -122,7 +122,7 @@ window.toast = function (message) {
 };
 
 // Load the centralized branding connector after the base DOM helpers are ready.
-// It replaces every .brand-mark and .auth-mark with the shared logo asset,
+// It replaces every .brand-mark and .auth-mark with the shared master logo,
 // including auth modals that are created later at runtime.
 (() => {
   const existing = document.querySelector('script[data-indoone-branding]');
@@ -130,7 +130,7 @@ window.toast = function (message) {
   if (existing) return;
 
   const script = document.createElement('script');
-  script.src = 'assets/branding/branding.js?v=20260906a';
+  script.src = 'assets/branding/branding.js?v=20260906b';
   script.async = false;
   script.dataset.indooneBranding = 'true';
   document.head.appendChild(script);
