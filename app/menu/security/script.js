@@ -9,31 +9,15 @@ window.initMenuSecurity = function () {
       <button
         class="close-btn"
         data-close
+        aria-label="Close Security"
       >
         ×
       </button>
     </div>
     <div class="settings-row">
       <span>
-        Cloud account storage
-        <small>
-          Authenticator accounts sync to your Indoone account
-        </small>
+        When creating an account, the user provides email or mobile, password, and OTP. OTP is securely verified via IndoVerification system. Upon verification, the account is created securely in Firebase. During login, email or mobile, password, and OTP are entered again. The app features auto-lock, app lock, and biometric. Once enabled, the app is secure. Additionally, the accounts page prevents screenshots. This ensures complete security.
       </span>
-      <b>
-        ✓
-      </b>
-    </div>
-    <div class="settings-row">
-      <span>
-        Local account storage
-        <small>
-          Not used for permanent account data
-        </small>
-      </span>
-      <b>
-        ✓
-      </b>
     </div>
   `;
 };
