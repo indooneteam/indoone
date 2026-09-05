@@ -1,17 +1,26 @@
 window.IndooneAutoLock = (() => {
   const KEY = 'indoone.settings.auto_lock_minutes.v1';
-  const DEFAULT = 0;
+  const DEFAULT = 5;
   let lastActivity = Date.now();
   let lockInProgress = false;
 
+  function appLockEnabled() {
+    return Boolean(window.IndoonePersistence?.hasAppLock?.());
+  }
+
   function minutes() {
-    const value = Number.parseInt(
-      localStorage.getItem(KEY) || String(DEFAULT),
-      10
-    );
+    if (!appLockEnabled()) return 0;
+
+    const raw = localStorage.getItem(KEY);
+    if (raw === null) {
+      localStorage.setItem(KEY, String(DEFAULT));
+      return DEFAULT;
+    }
+
+    const value = Number.parseInt(raw, 10);
 
     return Number.isFinite(value) &&
-      [0, 1, 5, 15].includes(value)
+      [1, 5, 15].includes(value)
       ? value
       : DEFAULT;
   }
@@ -19,15 +28,17 @@ window.IndooneAutoLock = (() => {
   function setMinutes(value) {
     const next = Number.parseInt(value, 10);
 
-    localStorage.setItem(
-      KEY,
-      String(
-        [0, 1, 5, 15].includes(next)
-          ? next
-          : DEFAULT
-      )
-    );
+    if (!appLockEnabled()) {
+      localStorage.setItem(KEY, String(DEFAULT));
+      touch();
+      return;
+    }
 
+    const safeValue = [1, 5, 15].includes(next)
+      ? next
+      : DEFAULT;
+
+    localStorage.setItem(KEY, String(safeValue));
     touch();
   }
 
@@ -40,6 +51,7 @@ window.IndooneAutoLock = (() => {
 
     if (
       !limit ||
+      !appLockEnabled() ||
       lockInProgress ||
       window.IndooneSecureSession?.isLocked?.()
     ) {
@@ -87,17 +99,30 @@ window.IndooneAutoLock = (() => {
   window.showAutoLock = function () {
     const current = minutes();
 
+    if (!appLockEnabled()) {
+      openModal(`
+        <div class="modal-head">
+          <h2>Auto-Lock</h2>
+          <button class="close-btn" data-close>×</button>
+        </div>
+        <p>
+          Auto-Lock becomes available after App Lock is enabled.
+        </p>
+      `);
+      return;
+    }
+
     openModal(`
       <div class="modal-head">
         <h2>Auto-Lock</h2>
         <button class="close-btn" data-close>×</button>
       </div>
       <p>
-        Automatically lock the encrypted vault when Indoone has been inactive.
+        Automatically lock Indoone after it has been inactive.
       </p>
       <div class="settings-choice-list">
         ${
-          [0, 1, 5, 15]
+          [1, 5, 15]
             .map(
               value => `
                 <button
@@ -108,11 +133,7 @@ window.IndooneAutoLock = (() => {
                   data-auto-lock="${value}"
                 >
                   <span>
-                    ${
-                      value === 0
-                        ? 'Never'
-                        : `After ${value} minute${value === 1 ? '' : 's'}`
-                    }
+                    After ${value} minute${value === 1 ? '' : 's'}
                   </span>
                   <b>
                     ${current === value ? '✓' : '›'}
@@ -135,11 +156,9 @@ window.IndooneAutoLock = (() => {
             closeModal();
 
             toast(
-              minutes()
-                ? `Auto-Lock set to ${minutes()} minute${
-                    minutes() === 1 ? '' : 's'
-                  }`
-                : 'Auto-Lock disabled'
+              `Auto-Lock set to ${minutes()} minute${
+                minutes() === 1 ? '' : 's'
+              }`
             );
           }
         )
