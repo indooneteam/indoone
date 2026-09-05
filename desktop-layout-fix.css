@@ -39,3 +39,5 @@ html, body { height: 100%; }
     padding-right: 10px !important;
   }
 }
+
+@import url("app/shared/responsive-compact.css");
