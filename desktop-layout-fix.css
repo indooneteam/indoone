@@ -1,5 +1,13 @@
 @import url("app/shared/responsive-compact.css");
 
+/* Keep the app in its 430px mobile layout on every viewport. */
+.phone-shell {
+  width: min(430px, 100vw) !important;
+  max-width: 430px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 /* Keep the 430px mobile-style app fully visible on desktop and mobile viewports. */
 html, body { height: 100%; }
 .phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
