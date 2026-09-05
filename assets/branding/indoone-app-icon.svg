@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Indoone app icon">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="96" x2="904" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5E2CE2"/>
+      <stop offset="1" stop-color="#9346ED"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
+  <path fill="#FFFFFF" d="M500 222h128v365c0 100-53 177-149 225l-57-103c45-25 78-59 78-122V222Z"/>
+  <path fill="#FFFFFF" d="M275 222h301v104H275z"/>
+  <path fill="#FFFFFF" d="M275 653h380v99H275z"/>
+  <path fill="#DCC9FF" d="M636 327c110 39 166 111 166 202 0 74-42 135-119 180-13-95-45-161-132-213 20-69 46-125 85-169Z"/>
+</svg>
