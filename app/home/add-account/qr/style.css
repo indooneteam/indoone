@@ -48,7 +48,12 @@
   inset: 18%;
   border: 3px solid #fff;
   border-radius: 20px;
-  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 0 0 999px rgba(
+    0,
+    0,
+    0,
+    0.24
+  );
   pointer-events: none;
 }
 
