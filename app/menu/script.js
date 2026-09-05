@@ -25,6 +25,54 @@
     'logout/all-devices': 'initMenuLogoutAllDevices'
   };
 
+  function ensureLegalMenuItems() {
+    if (!panel) return;
+
+    const securityItem = panel.querySelector(
+      '[data-action="security"]'
+    );
+    const aboutItem = panel.querySelector(
+      '[data-action="about"]'
+    );
+
+    if (!securityItem || !aboutItem) return;
+
+    if (!panel.querySelector('[data-action="terms-of-use"]')) {
+      const termsItem = document.createElement('button');
+      termsItem.type = 'button';
+      termsItem.className = 'drawer-item';
+      termsItem.dataset.action = 'terms-of-use';
+      termsItem.innerHTML = `
+        <span aria-hidden="true">▤</span>
+        <span>Terms of Use</span>
+      `;
+      securityItem.insertAdjacentElement(
+        'afterend',
+        termsItem
+      );
+    }
+
+    if (!panel.querySelector('[data-action="privacy-policy"]')) {
+      const privacyItem = document.createElement('button');
+      privacyItem.type = 'button';
+      privacyItem.className = 'drawer-item';
+      privacyItem.dataset.action = 'privacy-policy';
+      privacyItem.innerHTML = `
+        <span aria-hidden="true">▥</span>
+        <span>Privacy Policy</span>
+      `;
+      const termsItem = panel.querySelector(
+        '[data-action="terms-of-use"]'
+      );
+      termsItem?.insertAdjacentElement(
+        'afterend',
+        privacyItem
+      );
+    }
+  }
+
+  ensureLegalMenuItems();
+
   function showOverlay() {
     document.getElementById('overlay')?.classList.remove('hidden');
   }
