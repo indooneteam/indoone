@@ -19,15 +19,24 @@ window.initMenuTrash = async function () {
       ? trash.map(item => {
           const left = daysLeft(item.purgeAt);
           return `
-            <div class="trash-swipe-wrap" data-trash-id="${Number(item.id)}">
+            <div
+              class="trash-swipe-wrap"
+              data-trash-id="${Number(item.id)}"
+            >
               <div class="trash-swipe-delete">
-                <button type="button" class="trash-permanent-btn" data-trash-delete="${Number(item.id)}">
+                <button
+                  type="button"
+                  class="trash-permanent-btn"
+                  data-trash-delete="${Number(item.id)}"
+                >
                   Delete
                 </button>
               </div>
               <div class="settings-row trash-list-row trash-swipe-card">
                 <span>
-                  <b>${escapeHtml(item.name)}</b>
+                  <b>
+                    ${escapeHtml(item.name)}
+                  </b>
                   <small>
                     ${escapeHtml(item.email || 'Authenticator account')} ·
                     ${left} day${left === 1 ? '' : 's'} left
@@ -46,8 +55,15 @@ window.initMenuTrash = async function () {
         }).join('')
       : `
           <div class="empty-state compact-empty">
-            <div class="empty-icon" style="font-size:27px">⌫</div>
-            <h3>Trash is empty</h3>
+            <div
+              class="empty-icon"
+              style="font-size:27px"
+            >
+              ⌫
+            </div>
+            <h3>
+              Trash is empty
+            </h3>
             <p>
               Deleted accounts stay here for 30 days. Swipe left on an account
               to permanently delete it sooner.
@@ -57,13 +73,19 @@ window.initMenuTrash = async function () {
 
     modal.innerHTML = `
       <div class="modal-head">
-        <div style="display:flex;align-items:center;gap:10px">
+        <div
+          style="display:flex;align-items:center;gap:10px"
+        >
           <span
             class="brand-mark"
             style="width:36px;height:36px;border-radius:12px;font-size:18px"
           >I</span>
           <div>
-            <h2 style="margin:0">Trash</h2>
+            <h2
+              style="margin:0"
+            >
+              Trash
+            </h2>
             <small
               style="display:block;margin-top:2px;color:#8a8492;font-size:10px;font-weight:600"
             >
@@ -71,9 +93,19 @@ window.initMenuTrash = async function () {
             </small>
           </div>
         </div>
-        <button type="button" class="close-btn" data-close aria-label="Close Trash">×</button>
+        <button
+          type="button"
+          class="close-btn"
+          data-close
+          aria-label="Close Trash"
+        >
+          ×
+        </button>
       </div>
-      <div id="trashList" class="drawer-list-modal">
+      <div
+        id="trashList"
+        class="drawer-list-modal"
+      >
         ${rows}
       </div>
     `;
@@ -88,7 +120,9 @@ window.initMenuTrash = async function () {
         try {
           const restored = await window.IndooneCloudAccounts.restoreFromTrash(id);
           const accounts = window.indooneState?.accounts || [];
-          if (!accounts.some(account => Number(account.id) === Number(restored.id))) accounts.push(restored);
+          if (!accounts.some(
+            account => Number(account.id) === Number(restored.id)
+          )) accounts.push(restored);
           window.renderAccounts?.();
           await refresh();
           toast('Account restored');
@@ -103,7 +137,9 @@ window.initMenuTrash = async function () {
       button.addEventListener('click', async () => {
         const id = Number(button.dataset.trashDelete);
         if (!id) return;
-        const confirmed = window.confirm('Permanently delete this account? This cannot be undone.');
+        const confirmed = window.confirm(
+          'Permanently delete this account? This cannot be undone.'
+        );
         if (!confirmed) return;
         button.disabled = true;
         try {
