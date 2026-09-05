@@ -49,14 +49,16 @@ window.initMenuDeleteLocalData = function () {
     } catch (_) {}
   };
 
-  document.getElementById('confirmLocalDelete')?.addEventListener('click', async () => {
-    try {
-      clearLocal();
-      await window.IndooneFirebase?.auth?.signOut?.();
-      closeModal();
-      window.location.reload();
-    } catch (error) {
-      toast(error?.message || 'Could not delete local data');
-    }
-  });
+  document
+    .getElementById('confirmLocalDelete')
+    ?.addEventListener('click', async () => {
+      try {
+        clearLocal();
+        await window.IndooneFirebase?.auth?.signOut?.();
+        closeModal();
+        window.location.reload();
+      } catch (error) {
+        toast(error?.message || 'Could not delete local data');
+      }
+    });
 };
