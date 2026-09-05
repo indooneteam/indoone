@@ -1,0 +1,241 @@
+/* Compact responsive layout for smaller Android screens. */
+html,
+body,
+#app {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.phone-shell,
+.content,
+.connect-content,
+.settings-content,
+.overlay,
+.modal,
+.drawer-panel {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas,
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+@media (max-width: 430px) {
+  .phone-shell {
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar {
+    grid-template-columns: 36px minmax(0, 1fr) 36px !important;
+    height: 68px !important;
+    padding: 12px 12px 7px !important;
+    column-gap: 4px !important;
+  }
+
+  .topbar-left .brand {
+    min-width: 0;
+    max-width: 100%;
+    gap: 7px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .topbar-left .brand strong {
+    font-size: 17px;
+  }
+
+  .topbar-left .brand-mark {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    font-size: 17px;
+  }
+
+  .icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .search-wrap,
+  .content,
+  .connect-content {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .page-heading {
+    gap: 8px;
+  }
+
+  .page-heading h1,
+  .connect-hero h1,
+  .settings-page-head h1 {
+    font-size: 22px;
+  }
+
+  .account {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .service-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .account-info {
+    min-width: 0;
+  }
+
+  .account-info b,
+  .account-info span,
+  .account-info strong {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .account-info strong {
+    font-size: 20px;
+  }
+
+  .timer {
+    flex: 0 0 31px;
+    width: 31px;
+    height: 31px;
+  }
+
+  .bottom-nav {
+    height: 60px !important;
+  }
+
+  .fab {
+    right: 13px !important;
+    bottom: 72px !important;
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .drawer-panel {
+    width: min(292px, 86vw) !important;
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+
+  .overlay {
+    padding: 8px !important;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 18px !important;
+    border-radius: 20px !important;
+  }
+
+  .modal h2 {
+    font-size: 19px;
+  }
+
+  .modal p {
+    font-size: 12px;
+  }
+
+  .field {
+    margin: 9px 0;
+  }
+
+  .field input,
+  .field select {
+    height: 43px;
+    font-size: 12px;
+  }
+
+  .primary {
+    height: 45px;
+  }
+
+  .secondary {
+    height: 43px;
+  }
+
+  .connect-actions,
+  .connect-choice,
+  .settings-option-row,
+  .settings-row-toggle {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .topbar {
+    grid-template-columns: 33px minmax(0, 1fr) 33px !important;
+    height: 64px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .topbar-left .brand strong {
+    font-size: 16px;
+  }
+
+  .topbar-left .brand-mark {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    font-size: 16px;
+  }
+
+  .icon-btn {
+    width: 33px !important;
+    height: 33px !important;
+    font-size: 20px !important;
+  }
+
+  .search-wrap,
+  .content,
+  .connect-content {
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+
+  .account {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .service-icon {
+    width: 39px;
+    height: 39px;
+    border-radius: 11px;
+    font-size: 17px;
+  }
+
+  .account-info strong {
+    font-size: 18px;
+  }
+
+  .timer {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+    font-size: 8px;
+  }
+
+  .modal {
+    padding: 15px !important;
+    border-radius: 18px !important;
+  }
+}
