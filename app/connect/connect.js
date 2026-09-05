@@ -43,8 +43,10 @@
   function putIcon(node, name, size = 23) {
     if (!node || !svgIcons[name]) return;
     node.innerHTML = svgIcons[name];
+
     const svg = node.firstElementChild;
     if (!svg) return;
+
     svg.style.width = `${size}px`;
     svg.style.height = `${size}px`;
     svg.style.display = 'block';
@@ -60,6 +62,7 @@
       .querySelectorAll('.connect-action')
       .forEach((button, index) => {
         const icon = button.querySelector('strong');
+
         if (index === 0) putIcon(icon, 'pair');
         if (index === 1) putIcon(icon, 'connect');
         if (index === 2) putIcon(icon, 'devices');
@@ -85,15 +88,34 @@
   }
 
   function setActive(tab) {
-    get('accountsNav')?.classList.toggle('active', tab === 'accounts');
-    get('lobbyNav')?.classList.toggle('active', tab === 'lobby');
-    get('connectNav')?.classList.toggle('active', tab === 'connect');
-    get('settingsNav')?.classList.toggle('active', tab === 'settings');
+    get('accountsNav')?.classList.toggle(
+      'active',
+      tab === 'accounts'
+    );
+    get('lobbyNav')?.classList.toggle(
+      'active',
+      tab === 'lobby'
+    );
+    get('connectNav')?.classList.toggle(
+      'active',
+      tab === 'connect'
+    );
+    get('settingsNav')?.classList.toggle(
+      'active',
+      tab === 'settings'
+    );
   }
 
   function setConnectPage(page) {
-    get('connectHomePage')?.toggleAttribute('hidden', page !== 'home');
-    get('connectChoicePage')?.toggleAttribute('hidden', page !== 'choice');
+    get('connectHomePage')?.toggleAttribute(
+      'hidden',
+      page !== 'home'
+    );
+    get('connectChoicePage')?.toggleAttribute(
+      'hidden',
+      page !== 'choice'
+    );
+
     get('connectContent')
       ?.querySelectorAll('.connect-pair-page')
       .forEach(node => node.remove());
@@ -116,13 +138,19 @@
   }
 
   function showConnectHome({ remember = true } = {}) {
-    if (remember) window.IndoonePageState?.set('connect');
+    if (remember) {
+      window.IndoonePageState?.set('connect');
+    }
+
     setConnectPage('home');
     installConnectIcons();
   }
 
   window.showConnect = function ({ remember = true } = {}) {
-    if (remember) window.IndoonePageState?.set('connect');
+    if (remember) {
+      window.IndoonePageState?.set('connect');
+    }
+
     window.closeModal?.();
     window.closeDrawer?.();
     showConnectContent();
@@ -131,7 +159,10 @@
   };
 
   window.showConnectHome = function ({ remember = true } = {}) {
-    if (remember) window.IndoonePageState?.set('connect');
+    if (remember) {
+      window.IndoonePageState?.set('connect');
+    }
+
     window.closeModal?.();
     window.closeDrawer?.();
     showConnectContent();
@@ -140,7 +171,10 @@
   };
 
   window.showConnectChoice = function ({ remember = true } = {}) {
-    if (remember) window.IndoonePageState?.set('connect-choice');
+    if (remember) {
+      window.IndoonePageState?.set('connect-choice');
+    }
+
     window.closeModal?.();
     showConnectContent();
     setConnectPage('choice');
