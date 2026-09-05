@@ -1,16 +1,36 @@
 window.IndooneCloudAccounts = (() => {
   const currentUser = () => {
     const user = window.IndooneFirebase?.auth?.currentUser;
-    if (!user) throw new Error('Please login first.');
+    if (!user) {
+      throw new Error('Please login first.');
+    }
     return user;
   };
 
-  const accountsPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}/accounts`);
-  const trashPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}/trash`);
-  const userPath = () => window.IndooneFirebase.database.ref(`users/${currentUser().uid}`);
+  const accountsPath = () =>
+    window.IndooneFirebase.database.ref(
+      `users/${currentUser().uid}/accounts`
+    );
+
+  const trashPath = () =>
+    window.IndooneFirebase.database.ref(
+      `users/${currentUser().uid}/trash`
+    );
+
+  const userPath = () =>
+    window.IndooneFirebase.database.ref(
+      `users/${currentUser().uid}`
+    );
+
   const usersByEmailPath = () => {
-    const email = String(currentUser().email || '').trim().toLowerCase();
-    return window.IndooneFirebase.database.ref('users').orderByChild('profile/email').equalTo(email);
+    const email = String(currentUser().email || '')
+      .trim()
+      .toLowerCase();
+
+    return window.IndooneFirebase.database
+      .ref('users')
+      .orderByChild('profile/email')
+      .equalTo(email);
   };
 
   const cleanAccount = account => ({
@@ -22,7 +42,10 @@ window.IndooneCloudAccounts = (() => {
     period: Number(account.period || 30),
     algorithm: String(account.algorithm || 'SHA1'),
     favorite: !!account.favorite,
-    icon: String(account.icon || String(account.name || '?').charAt(0).toUpperCase()),
+    icon: String(
+      account.icon ||
+        String(account.name || '?').charAt(0).toUpperCase()
+    ),
     cls: String(account.cls || 'google'),
     updatedAt: Number(account.updatedAt || Date.now())
   });
@@ -30,6 +53,7 @@ window.IndooneCloudAccounts = (() => {
   const createTrashItem = account => {
     const cleaned = cleanAccount(account);
     const deletedAt = Date.now();
+
     return {
       ...cleaned,
       deletedAt,
@@ -43,23 +67,37 @@ window.IndooneCloudAccounts = (() => {
   }
 
   let purgeTimer = null;
+
   async function purgeExpiredTrash() {
     const snapshot = await trashPath().once('value');
     const value = snapshot.val() || {};
     const now = Date.now();
     const removals = [];
+
     Object.entries(value).forEach(([id, item]) => {
       if (!item) return;
+
       const purgeAt = Number(item.purgeAt || 0);
-      if (purgeAt && purgeAt <= now) removals.push(trashPath().child(id).remove());
+
+      if (purgeAt && purgeAt <= now) {
+        removals.push(
+          trashPath().child(id).remove()
+        );
+      }
     });
+
     await Promise.all(removals);
     return removals.length;
   }
 
   function startTrashPurgeTimer() {
     if (purgeTimer) return;
-    purgeTimer = setInterval(() => purgeExpiredTrash().catch(() => {}), 60 * 60 * 1000);
+
+    purgeTimer = setInterval(
+      () => purgeExpiredTrash().catch(() => {}),
+      60 * 60 * 1000
+    );
+
     purgeExpiredTrash().catch(() => {});
   }
 
@@ -72,64 +110,103 @@ window.IndooneCloudAccounts = (() => {
     const byId = new Map();
 
     Object.values(ownValue).forEach(item => {
-      if (item) byId.set(Number(item.id), cleanAccount(item));
+      if (item) {
+        byId.set(
+          Number(item.id),
+          cleanAccount(item)
+        );
+      }
     });
 
     try {
       const usersSnapshot = await usersByEmailPath().once('value');
       const users = usersSnapshot.val() || {};
+
       Object.values(users).forEach(userNode => {
         Object.values(userNode?.accounts || {}).forEach(item => {
           if (!item) return;
+
           const account = cleanAccount(item);
           const current = byId.get(account.id);
-          if (!current || account.updatedAt >= current.updatedAt) byId.set(account.id, account);
+
+          if (
+            !current ||
+            account.updatedAt >= current.updatedAt
+          ) {
+            byId.set(account.id, account);
+          }
         });
       });
     } catch (error) {
-      console.warn('Indoone legacy account lookup skipped:', error);
+      console.warn(
+        'Indoone legacy account lookup skipped:',
+        error
+      );
     }
 
-    const accounts = [...byId.values()].sort((a, b) => b.id - a.id);
+    const accounts = [...byId.values()].sort(
+      (a, b) => b.id - a.id
+    );
+
     window.indooneState.accounts = accounts;
     window.indooneState.trash = [];
 
-    if (typeof renderAccounts === 'function') renderAccounts();
-    if (typeof refreshAccountCodes === 'function') await refreshAccountCodes();
+    if (typeof renderAccounts === 'function') {
+      renderAccounts();
+    }
+
+    if (typeof refreshAccountCodes === 'function') {
+      await refreshAccountCodes();
+    }
+
     return accounts;
   }
 
   async function save(account) {
     const cleaned = cleanAccount(account);
-    await accountsPath().child(String(cleaned.id)).set(cleaned);
+
+    await accountsPath()
+      .child(String(cleaned.id))
+      .set(cleaned);
+
     return cleaned;
   }
 
   async function saveAll(accounts) {
     const payload = {};
+
     for (const account of accounts) {
       const cleaned = cleanAccount(account);
       payload[String(cleaned.id)] = cleaned;
     }
+
     await accountsPath().set(payload);
   }
 
   async function moveToTrash(account) {
     const item = createTrashItem(account);
+
     await userPath().update({
       [`trash/${item.id}`]: item,
       [`accounts/${item.id}`]: null
     });
+
     return item;
   }
 
   async function listTrash() {
     await purgeExpiredTrash();
+
     const snapshot = await trashPath().once('value');
     const value = snapshot.val() || {};
+
     return Object.values(value)
       .filter(Boolean)
-      .sort((a, b) => Number(b.deletedAt || 0) - Number(a.deletedAt || 0));
+      .sort(
+        (a, b) =>
+          Number(b.deletedAt || 0) -
+          Number(a.deletedAt || 0)
+      );
   }
 
   async function restoreFromTrash(id) {
@@ -137,28 +214,41 @@ window.IndooneCloudAccounts = (() => {
     const ref = trashPath().child(key);
     const snapshot = await ref.once('value');
     const item = snapshot.val();
-    if (!item) throw new Error('Trash item not found.');
+
+    if (!item) {
+      throw new Error('Trash item not found.');
+    }
 
     if (Number(item.purgeAt || 0) <= Date.now()) {
       await ref.remove();
-      throw new Error('This account has expired from Trash.');
+      throw new Error(
+        'This account has expired from Trash.'
+      );
     }
 
     const account = cleanAccount(item);
+
     await userPath().update({
       [`accounts/${key}`]: account,
       [`trash/${key}`]: null
     });
+
     return account;
   }
 
   async function permanentlyDeleteFromTrash(id) {
     const key = String(Number(id));
-    if (!key || key === '0') throw new Error('Invalid Trash account.');
+
+    if (!key || key === '0') {
+      throw new Error('Invalid Trash account.');
+    }
 
     const trashRef = trashPath().child(key);
     const snapshot = await trashRef.once('value');
-    if (!snapshot.exists()) throw new Error('Trash item not found.');
+
+    if (!snapshot.exists()) {
+      throw new Error('Trash item not found.');
+    }
 
     // Remove every current-user location in one atomic Firebase update so the
     // item cannot remain in Trash or reappear in the Accounts collection.
@@ -177,8 +267,16 @@ window.IndooneCloudAccounts = (() => {
   }
 
   async function remove(id) {
-    const account = (window.indooneState?.accounts || []).find(a => Number(a.id) === Number(id));
-    if (!account) throw new Error('Account not found.');
+    const account = (
+      window.indooneState?.accounts || []
+    ).find(
+      a => Number(a.id) === Number(id)
+    );
+
+    if (!account) {
+      throw new Error('Account not found.');
+    }
+
     return moveToTrash(account);
   }
 
