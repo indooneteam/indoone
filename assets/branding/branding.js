@@ -1,10 +1,9 @@
 (() => {
-  const MARK_SRC = 'assets/branding/indoone-mark.svg';
-  const WHITE_MARK_SRC = 'assets/branding/indoone-mark-white.svg';
+  const MASTER_MARK_SRC = 'assets/branding/indoone-master.svg';
 
-  function createImage(source, className, alt) {
+  function createImage(className, alt) {
     const image = document.createElement('img');
-    image.src = source;
+    image.src = MASTER_MARK_SRC;
     image.alt = alt;
     image.className = `${className} branding-image`;
     image.setAttribute('aria-hidden', alt ? 'false' : 'true');
@@ -13,34 +12,29 @@
     return image;
   }
 
-  function wireElement(element, source, alt) {
+  function wireElement(element) {
     if (!element || element.tagName === 'IMG') return;
 
     const className = element.classList.contains('auth-mark')
       ? 'auth-mark'
       : 'brand-mark';
 
-    const image = createImage(source, className, alt);
+    const image = createImage(className, 'Indoone logo');
 
     if (className === 'brand-mark') {
-      image.width = 34;
-      image.height = 34;
+      image.width = 38;
+      image.height = 38;
     } else {
-      image.width = 58;
-      image.height = 58;
+      image.width = 76;
+      image.height = 76;
     }
 
     element.replaceWith(image);
   }
 
   function wire(root = document) {
-    root.querySelectorAll?.('.brand-mark').forEach(element => {
-      wireElement(element, MARK_SRC, 'Indoone logo');
-    });
-
-    root.querySelectorAll?.('.auth-mark').forEach(element => {
-      wireElement(element, MARK_SRC, 'Indoone logo');
-    });
+    root.querySelectorAll?.('.brand-mark').forEach(wireElement);
+    root.querySelectorAll?.('.auth-mark').forEach(wireElement);
   }
 
   function injectStyles() {
@@ -54,23 +48,21 @@
         flex: 0 0 auto !important;
         object-fit: contain !important;
         object-position: center !important;
-        overflow: hidden !important;
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
       }
 
       .brand-mark.branding-image {
-        width: 34px !important;
-        height: 34px !important;
-        border-radius: 11px !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 0 !important;
       }
 
       .auth-mark.branding-image {
-        width: 58px !important;
-        height: 58px !important;
-        border-radius: 17px !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        width: 76px !important;
+        height: 76px !important;
+        border-radius: 0 !important;
       }
     `;
 
@@ -98,8 +90,8 @@
 
     window.IndooneBranding = {
       wire,
-      mark: MARK_SRC,
-      whiteMark: WHITE_MARK_SRC
+      mark: MASTER_MARK_SRC,
+      whiteMark: MASTER_MARK_SRC
     };
   }
 
