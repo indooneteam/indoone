@@ -120,4 +120,63 @@
       subtree: true
     });
   }
+
+  // Re-clicking the currently active bottom-navigation tab refreshes only
+  // that section. It does not create a new page/history state.
+  document.addEventListener(
+    'click',
+    async event => {
+      const button = event.target.closest(
+        '#accountsNav, #lobbyNav, #connectNav, #settingsNav'
+      );
+
+      if (!button || !button.classList.contains('active')) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      try {
+        switch (button.id) {
+          case 'accountsNav':
+            if (window.IndooneCloudAccounts?.load) {
+              await window.IndooneCloudAccounts.load();
+            }
+
+            if (window.refreshAccountCodes) {
+              await window.refreshAccountCodes();
+            }
+            break;
+
+          case 'lobbyNav':
+            await window.showLobby?.({
+              remember: false,
+              refresh: true
+            });
+            break;
+
+          case 'connectNav':
+            await window.showConnect?.({
+              remember: false,
+              refresh: true
+            });
+            break;
+
+          case 'settingsNav':
+            await window.showSettings?.({
+              remember: false,
+              refresh: true
+            });
+            break;
+        }
+      } catch (error) {
+        console.warn(
+          'Indoone navigation refresh failed:',
+          error
+        );
+      }
+    },
+    true
+  );
 })();
