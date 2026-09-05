@@ -35,6 +35,27 @@ android {
     }
 }
 
+def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') {
+    doLast {
+        File source = file("$projectDir/src/main/java/com/indoone/authenticator/MainActivity.java")
+        String text = source.getText('UTF-8')
+        String broken = '''            WindowInsetsCompat systemBars =
+                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            lastTopInset = systemBars.top;
+            lastBottomInset = systemBars.bottom;'''
+        String fixed = '''            androidx.core.graphics.Insets systemBars =
+                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            lastTopInset = systemBars.top;
+            lastBottomInset = systemBars.bottom;'''
+
+        if (text.contains(broken)) {
+            source.setText(text.replace(broken, fixed), 'UTF-8')
+        }
+    }
+}
+
 def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
     from(file("$rootDir/..")) {
         include 'index.html'
@@ -48,6 +69,10 @@ def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
 }
 
 tasks.configureEach { task ->
+    if (task.name ==~ /compile.*JavaWithJavac/) {
+        task.dependsOn(normalizeMainActivityInsets)
+    }
+
     if (task.name ==~ /merge.*Assets/) {
         task.dependsOn(prepareIndooneWebAssets)
     }
