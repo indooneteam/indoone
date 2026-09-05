@@ -13,9 +13,13 @@ window.IndooneStorage = (() => {
 
   async function unlock(pin) {
     const accounts = await IndooneEncryptedVault.decrypt(pin);
-    if (!accounts) throw new Error('Vault not found');
+    if (!accounts) {
+      throw new Error('Vault not found');
+    }
+
     window.indooneState.accounts = accounts;
     unlocked = true;
+
     return accounts;
   }
 
@@ -26,19 +30,39 @@ window.IndooneStorage = (() => {
     }
   }
 
-  function isUnlocked() { return unlocked; }
-  function lock() { unlocked = false; }
-  function hasVault() { return IndooneEncryptedVault.exists(); }
+  function isUnlocked() {
+    return unlocked;
+  }
+
+  function lock() {
+    unlocked = false;
+  }
+
+  function hasVault() {
+    return IndooneEncryptedVault.exists();
+  }
 
   async function migrateLegacy(pin) {
     const legacy = loadLegacy();
-    if (!Array.isArray(legacy) || !legacy.length) return false;
+
+    if (!Array.isArray(legacy) || !legacy.length) {
+      return false;
+    }
+
     await IndooneEncryptedVault.encrypt(legacy, pin);
     localStorage.removeItem(LEGACY_KEY);
     window.indooneState.accounts = legacy;
     unlocked = true;
+
     return true;
   }
 
-  return {unlock, save, isUnlocked, lock, hasVault, migrateLegacy};
+  return {
+    unlock,
+    save,
+    isUnlocked,
+    lock,
+    hasVault,
+    migrateLegacy
+  };
 })();
