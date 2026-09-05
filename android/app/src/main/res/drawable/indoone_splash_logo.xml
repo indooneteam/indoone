@@ -6,13 +6,13 @@
 
     <path
         android:fillColor="#10052FFF"
-        android:pathData="M256,102m-176,0a176,176 0,1 0,352 0a176,176 0,1 0,-352 0" />
+        android:pathData="M256,278m-176,0a176,176 0,1 0,352 0a176,176 0,1 0,-352 0" />
+
     <path
         android:fillColor="#6D4AE8"
-        android:pathData="M256,102m-176,0a176,176 0,1 0,352 0a176,176 0,1 0,-352 0"
-        android:strokeWidth="8"
-        android:strokeColor="#6D4AE8"
-        android:fillAlpha="0" />
+        android:pathData="M256,278m-176,0a176,176 0,1 0,352 0a176,176 0,1 0,-352 0"
+        android:fillAlpha="0.28" />
+
     <path
         android:fillColor="#F1E8FFFF"
         android:pathData="M181,118C168,82 193,50 244,42C246,78 225,108 181,118Z" />
