@@ -1,5 +1,25 @@
-.menu-feature-shell { display: block; }
-.menu-feature-list { display: grid; gap: 8px; }
-.menu-feature-row { width: 100%; }
-.menu-feature-note { margin: 8px 0 12px; color: #8a8492; font-size: 12px; line-height: 1.5; }
-.menu-feature-actions { display: grid; gap: 8px; margin-top: 12px; }
+.menu-feature-shell {
+  display: block;
+}
+
+.menu-feature-list {
+  display: grid;
+  gap: 8px;
+}
+
+.menu-feature-row {
+  width: 100%;
+}
+
+.menu-feature-note {
+  margin: 8px 0 12px;
+  color: #8a8492;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.menu-feature-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
