@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Indoone logo">
+  <defs>
+    <linearGradient id="bg" x1="18" y1="12" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5E2CE2"/>
+      <stop offset="1" stop-color="#9346ED"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#bg)"/>
+  <path fill="#FFFFFF" d="M63 25h16v46c0 15-8 27-22 32l-7-13c8-4 13-10 13-19V25Z"/>
+  <path fill="#FFFFFF" d="M30 25h35v13H30z"/>
+  <path fill="#FFFFFF" d="M30 91h47v12H30z"/>
+  <path fill="#FFFFFF" d="M44 39h15v41H44z" opacity=".96"/>
+  <path fill="#DCC9FF" d="M81 37c12 4 18 11 18 21 0 8-4 14-12 18-2-10-6-17-14-22 2-7 4-12 8-17Z"/>
+</svg>
