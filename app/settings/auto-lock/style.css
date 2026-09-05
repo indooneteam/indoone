@@ -1,8 +1,10 @@
-.settings-choice-list {
+.settings-choice-list
+{
   display:grid;
   gap:8px
 }
-.settings-choice {
+.settings-choice
+{
   width:100%;
   display:flex;
   align-items:center;
@@ -14,11 +16,13 @@
   color:#2c2733;
   text-align:left
 }
-.settings-choice.selected {
+.settings-choice.selected
+{
   border-color:#cbb8ec;
   background:#faf7ff;
   color:#5c2ac7
 }
-.settings-choice b {
+.settings-choice b
+{
   font-weight:700
 }

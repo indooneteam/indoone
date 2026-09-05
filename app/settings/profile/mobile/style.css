@@ -1,10 +1,13 @@
-.settings-subpage p {
+.settings-subpage p
+{
   color:#77707f;
   line-height:1.5
 }
-.settings-subpage .field {
+.settings-subpage .field
+{
   margin-top:14px
 }
-.settings-subpage .primary {
+.settings-subpage .primary
+{
   margin-top:16px
 }
