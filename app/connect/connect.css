@@ -571,6 +571,14 @@
   font-size: 11px;
 }
 
+/* The unfinished status/how-it-works area is intentionally removed from
+   the Connect home screen until the Connect feature is implemented. */
+#connectHomePage > .connect-section-title,
+#connectHomePage > .connect-status,
+#connectHomePage > .connect-empty {
+  display: none !important;
+}
+
 input[type="checkbox"] {
   accent-color: #2878ea;
   width: 17px;
