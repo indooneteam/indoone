@@ -10,25 +10,47 @@ window.IndoonePersistence = (() => {
   async function unlock(pin) {
     const payload = await IndooneVault.load(pin);
     if (!payload) return false;
+
     IndooneSecureSession.unlock(pin);
     unlocked = true;
     window.indooneState.accounts = payload.accounts || [];
+
     return true;
   }
 
-  function isUnlocked() { return unlocked && !IndooneSecureSession.isLocked(); }
+  function isUnlocked() {
+    return unlocked && !IndooneSecureSession.isLocked();
+  }
 
   function lock() {
     unlocked = false;
     IndooneSecureSession.lock();
     window.indooneState.accounts = [];
-    if (typeof renderAccounts === 'function') renderAccounts();
+
+    if (typeof renderAccounts === 'function') {
+      renderAccounts();
+    }
   }
 
   async function persistCurrent() {
-    if (!isUnlocked()) throw new Error('Vault is locked');
-    await save(window.indooneState.accounts, IndooneSecureSession.getPin());
+    if (!isUnlocked()) {
+      throw new Error('Vault is locked');
+    }
+
+    await save(
+      window.indooneState.accounts,
+      IndooneSecureSession.getPin()
+    );
   }
 
-  return { save, unlock, lock, isUnlocked, persistCurrent, hasVault: () => IndooneVault.hasVault(), clear: () => IndooneVault.clearVault(), storageKey: KEY };
+  return {
+    save,
+    unlock,
+    lock,
+    isUnlocked,
+    persistCurrent,
+    hasVault: () => IndooneVault.hasVault(),
+    clear: () => IndooneVault.clearVault(),
+    storageKey: KEY
+  };
 })();
