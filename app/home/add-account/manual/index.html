@@ -1,61 +1,126 @@
-<section class="add-account-child manual-page" data-feature="home-add-account-manual">
-  <button type="button" class="page-back" data-manual-action="back">
-    <span aria-hidden="true">‹</span>
-    <span>Back</span>
+<section
+  class="add-account-child manual-page"
+  data-feature="home-add-account-manual"
+>
+  <button
+    type="button"
+    class="page-back"
+    data-manual-action="back"
+  >
+    <span aria-hidden="true">
+      ‹
+    </span>
+    <span>
+      Back
+    </span>
   </button>
 
   <div class="page-heading">
     <div>
-      <p class="eyebrow">ACCOUNT DETAILS</p>
-      <h1 id="manualAccountTitle">Enter Setup Key</h1>
-      <p>Enter the details used to generate your one-time codes.</p>
+      <p class="eyebrow">
+        ACCOUNT DETAILS
+      </p>
+      <h1 id="manualAccountTitle">
+        Enter Setup Key
+      </h1>
+      <p>
+        Enter the details used to generate your one-time codes.
+      </p>
     </div>
   </div>
 
-  <form id="manualAccountForm" class="manual-form">
+  <form
+    id="manualAccountForm"
+    class="manual-form"
+  >
     <div class="field">
-      <label for="accountName">ACCOUNT NAME</label>
-      <input id="accountName" type="text" placeholder="e.g. Google" required />
+      <label for="accountName">
+        ACCOUNT NAME
+      </label>
+      <input
+        id="accountName"
+        type="text"
+        placeholder="e.g. Google"
+        required
+      />
     </div>
 
     <div class="field">
-      <label for="accountUser">EMAIL / USERNAME</label>
-      <input id="accountUser" type="text" placeholder="you@example.com" />
+      <label for="accountUser">
+        EMAIL / USERNAME
+      </label>
+      <input
+        id="accountUser"
+        type="text"
+        placeholder="you@example.com"
+      />
     </div>
 
     <div class="field">
-      <label for="secretKey">SECRET KEY</label>
-      <input id="secretKey" type="text" placeholder="Base32 secret key" autocomplete="off" required />
+      <label for="secretKey">
+        SECRET KEY
+      </label>
+      <input
+        id="secretKey"
+        type="text"
+        placeholder="Base32 secret key"
+        autocomplete="off"
+        required
+      />
     </div>
 
     <div class="manual-grid">
       <div class="field">
-        <label for="accountDigits">DIGITS</label>
+        <label for="accountDigits">
+          DIGITS
+        </label>
         <select id="accountDigits">
-          <option value="6">6</option>
-          <option value="8">8</option>
+          <option value="6">
+            6
+          </option>
+          <option value="8">
+            8
+          </option>
         </select>
       </div>
 
       <div class="field">
-        <label for="accountPeriod">PERIOD</label>
+        <label for="accountPeriod">
+          PERIOD
+        </label>
         <select id="accountPeriod">
-          <option value="30">30</option>
-          <option value="60">60</option>
+          <option value="30">
+            30
+          </option>
+          <option value="60">
+            60
+          </option>
         </select>
       </div>
     </div>
 
     <div class="field">
-      <label for="accountAlgorithm">ALGORITHM</label>
+      <label for="accountAlgorithm">
+        ALGORITHM
+      </label>
       <select id="accountAlgorithm">
-        <option value="SHA1">SHA-1</option>
-        <option value="SHA256">SHA-256</option>
-        <option value="SHA512">SHA-512</option>
+        <option value="SHA1">
+          SHA-1
+        </option>
+        <option value="SHA256">
+          SHA-256
+        </option>
+        <option value="SHA512">
+          SHA-512
+        </option>
       </select>
     </div>
 
-    <button type="submit" class="primary" id="saveAccountButton">
+    <button
+      type="submit"
+      class="primary"
+      id="saveAccountButton"
+    >
       Save Account
     </button>
   </form>
