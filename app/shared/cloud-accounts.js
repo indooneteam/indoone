@@ -250,15 +250,48 @@ window.IndooneCloudAccounts = (() => {
       throw new Error('Trash item not found.');
     }
 
-    // Remove every current-user location in one atomic Firebase update so the
-    // item cannot remain in Trash or reappear in the Accounts collection.
-    await userPath().update({
-      [`trash/${key}`]: null,
-      [`accounts/${key}`]: null
-    });
+    const email = String(currentUser().email || '')
+      .trim()
+      .toLowerCase();
+    const updates = {};
+
+    try {
+      const usersSnapshot = await window.IndooneFirebase.database
+        .ref('users')
+        .orderByChild('profile/email')
+        .equalTo(email)
+        .once('value');
+      const users = usersSnapshot.val() || {};
+
+      Object.entries(users).forEach(([uid, userNode]) => {
+        const matchedEmail = String(userNode?.profile?.email || '')
+          .trim()
+          .toLowerCase();
+
+        if (!matchedEmail || matchedEmail !== email) return;
+
+        updates[`users/${uid}/trash/${key}`] = null;
+        updates[`users/${uid}/accounts/${key}`] = null;
+      });
+    } catch (_) {
+      // Fall back to the current user's paths when the linked-user lookup fails.
+    }
+
+    updates[`users/${currentUser().uid}/trash/${key}`] = null;
+    updates[`users/${currentUser().uid}/accounts/${key}`] = null;
+
+    // Remove every matching copy in one atomic update so the account cannot
+    // reappear later when accounts are merged across the same email.
+    await window.IndooneFirebase.database.ref().update(updates);
 
     if (window.indooneState?.trash) {
       window.indooneState.trash = window.indooneState.trash.filter(
+        item => Number(item?.id) !== Number(id)
+      );
+    }
+
+    if (window.indooneState?.accounts) {
+      window.indooneState.accounts = window.indooneState.accounts.filter(
         item => Number(item?.id) !== Number(id)
       );
     }
