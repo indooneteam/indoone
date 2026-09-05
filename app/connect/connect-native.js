@@ -71,7 +71,18 @@
     if (typeof window.openModal !== 'function') return;
 
     window.openModal(
-      `<div class="modal-head"><h2>${escapeHtml(title)}</h2><button type="button" class="close-btn" data-close>×</button></div>${body}`
+      `<div class="modal-head">
+        <h2>
+          ${escapeHtml(title)}
+        </h2>
+        <button
+          type="button"
+          class="close-btn"
+          data-close
+        >
+          ×
+        </button>
+      </div>${body}`
     );
   }
 
@@ -185,11 +196,62 @@
 
     const isAdvertise = mode === 'advertise';
 
+    const advertiseBody = `
+      <div class="device-summary">
+        <div class="device-icon large">
+          ${targetType === 'computer' ? '💻' : '📱'}
+        </div>
+        <div>
+          <b>
+            ${escapeHtml(deviceName())}
+          </b>
+          <small>
+            Waiting for a nearby connection
+          </small>
+        </div>
+      </div>
+      <div class="connect-empty">
+        Keep this device open. Another Indoone device can connect to it.
+      </div>
+      <div
+        id="nearbyStatus"
+        class="connect-muted"
+      >
+        Requesting Nearby permissions…
+      </div>
+      <button
+        type="button"
+        class="secondary"
+        data-nearby-stop
+      >
+        Stop
+      </button>
+    `;
+
+    const discoverBody = `
+      <div id="nearbyDiscoveryList">
+        <div class="connect-empty">
+          Scanning for nearby Indoone devices…
+        </div>
+      </div>
+      <div
+        id="nearbyStatus"
+        class="connect-muted"
+      >
+        Requesting Nearby permissions…
+      </div>
+      <button
+        type="button"
+        class="secondary"
+        data-nearby-stop
+      >
+        Stop
+      </button>
+    `;
+
     openStatus(
       isAdvertise ? 'Waiting for connection' : 'Nearby devices',
-      isAdvertise
-        ? `<div class="device-summary"><div class="device-icon large">${targetType === 'computer' ? '💻' : '📱'}</div><div><b>${escapeHtml(deviceName())}</b><small>Waiting for a nearby connection</small></div></div><div class="connect-empty">Keep this device open. Another Indoone device can connect to it.</div><div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div><button type="button" class="secondary" data-nearby-stop>Stop</button>`
-        : `<div id="nearbyDiscoveryList"><div class="connect-empty">Scanning for nearby Indoone devices…</div></div><div id="nearbyStatus" class="connect-muted">Requesting Nearby permissions…</div><button type="button" class="secondary" data-nearby-stop>Stop</button>`
+      isAdvertise ? advertiseBody : discoverBody
     );
 
     native.requestNearbyPermissions?.();
@@ -205,7 +267,45 @@
 
     openStatus(
       `Connect ${label}`,
-      `<div class="device-summary"><div class="device-icon large">${icon}</div><div><b>Nearby connection</b><small>Connection and data access are separate.</small></div></div><div class="connect-empty">Keep both devices nearby. One device searches while the other is discoverable.</div><button type="button" class="primary" data-nearby-mode="discover">Find nearby ${label}</button><button type="button" class="secondary" data-nearby-mode="advertise">Make this device discoverable</button><button type="button" class="secondary" data-close>Cancel</button>`
+      `
+        <div class="device-summary">
+          <div class="device-icon large">
+            ${icon}
+          </div>
+          <div>
+            <b>
+              Nearby connection
+            </b>
+            <small>
+              Connection and data access are separate.
+            </small>
+          </div>
+        </div>
+        <div class="connect-empty">
+          Keep both devices nearby. One device searches while the other is discoverable.
+        </div>
+        <button
+          type="button"
+          class="primary"
+          data-nearby-mode="discover"
+        >
+          Find nearby ${label}
+        </button>
+        <button
+          type="button"
+          class="secondary"
+          data-nearby-mode="advertise"
+        >
+          Make this device discoverable
+        </button>
+        <button
+          type="button"
+          class="secondary"
+          data-close
+        >
+          Cancel
+        </button>
+      `
     );
   };
 
