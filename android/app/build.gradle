@@ -1,11 +1,15 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+}
 
 android {
     namespace 'com.indoone.authenticator'
     compileSdk 35
+
     buildFeatures {
         buildConfig true
     }
+
     defaultConfig {
         applicationId 'com.indoone.authenticator'
         versionCode 11
@@ -13,6 +17,7 @@ android {
         minSdk 26
         targetSdk 35
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -20,6 +25,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     sourceSets {
         main {
             assets {
@@ -36,6 +42,7 @@ def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
         include '*.css'
         include 'js/**'
         include 'app/**'
+        include 'assets/**'
     }
     into(layout.buildDirectory.dir('generated/indooneAssets'))
 }
