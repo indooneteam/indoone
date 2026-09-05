@@ -101,7 +101,7 @@ window.IndoonePersistence = (() => {
     lock,
     isUnlocked,
     persistCurrent,
-    hasVault: () => Boolean(
+    hasAppLock: () => Boolean(
       localStorage.getItem(PIN_KEY)
     ),
     clear: () => {
