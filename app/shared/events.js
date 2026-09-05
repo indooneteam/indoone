@@ -197,6 +197,15 @@
   function requireAppBootLock() {
     if (appBootLockChecked) return;
 
+    // The browser version must not trigger App Lock on every page refresh.
+    // App-start enforcement will be handled by the native Android layer.
+    if (
+      typeof window.IndooneNative?.authenticateBiometric !==
+        'function'
+    ) {
+      return;
+    }
+
     appBootLockChecked = true;
 
     if (!window.IndoonePersistence?.hasAppLock?.()) {
