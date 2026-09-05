@@ -70,7 +70,11 @@
       script.src = SCREENSHOT_SCRIPT;
       script.onload = resolve;
       script.onerror = () => {
-        reject(new Error('Home screenshot protection feature could not be loaded.'));
+        reject(
+          new Error(
+            'Home screenshot protection feature could not be loaded.'
+          )
+        );
       };
       document.head.appendChild(script);
     });
@@ -79,8 +83,15 @@
   }
 
   async function ensureAccountsLoaded() {
-    if (!homeView || !window.IndooneCloudAccounts?.load) return;
-    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) return;
+    if (
+      !homeView ||
+      !window.IndooneCloudAccounts?.load
+    ) return;
+
+    if (
+      window.location.hash === ADD_HASH ||
+      window.location.hash.startsWith(`${ADD_HASH}/`)
+    ) return;
 
     const user = window.IndooneFirebase?.auth?.currentUser;
     if (!user) return;
@@ -90,8 +101,14 @@
     accountLoadPromise = (async () => {
       try {
         await window.IndooneCloudAccounts.load();
-        if (typeof renderAccounts === 'function') renderAccounts();
-        if (typeof refreshAccountCodes === 'function') await refreshAccountCodes();
+
+        if (typeof renderAccounts === 'function') {
+          renderAccounts();
+        }
+
+        if (typeof refreshAccountCodes === 'function') {
+          await refreshAccountCodes();
+        }
       } catch (error) {
         console.warn('Indoone Home account load failed:', error);
       } finally {
@@ -117,7 +134,9 @@
 
       script.onload = resolve;
       script.onerror = () => {
-        reject(new Error('Add Account feature could not be loaded.'));
+        reject(
+          new Error('Add Account feature could not be loaded.')
+        );
       };
 
       document.head.appendChild(script);
@@ -142,12 +161,21 @@
     // Returning to Home always clears the full Add Account route, including
     // nested feature hashes such as /manual, /qr, and /import. This prevents
     // a later browser refresh from restoring an Add Account child page.
-    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) {
-      history.replaceState({}, '', window.location.pathname + window.location.search);
+    if (
+      window.location.hash === ADD_HASH ||
+      window.location.hash.startsWith(`${ADD_HASH}/`)
+    ) {
+      history.replaceState(
+        {},
+        '',
+        window.location.pathname + window.location.search
+      );
     }
 
     window.IndoonePageState?.set('home');
-    document.getElementById('addBtn')?.removeAttribute('hidden');
+    document
+      .getElementById('addBtn')
+      ?.removeAttribute('hidden');
     document.body.classList.remove('home-subpage-open');
 
     if (typeof renderAccounts === 'function') {
@@ -159,7 +187,10 @@
     }
 
     void ensureAccountsLoaded();
-    void loadScreenshotFeature().then(() => window.IndooneHomeScreenshot?.sync?.()).catch(() => {});
+
+    void loadScreenshotFeature()
+      .then(() => window.IndooneHomeScreenshot?.sync?.())
+      .catch(() => {});
   }
 
   function openAddHistory() {
@@ -200,7 +231,9 @@
 
     homeView.hidden = true;
     subPage.hidden = false;
-    document.getElementById('addBtn')?.setAttribute('hidden', '');
+    document
+      .getElementById('addBtn')
+      ?.setAttribute('hidden', '');
     document.body.classList.add('home-subpage-open');
     window.IndooneHomeScreenshot?.sync?.();
 
@@ -223,7 +256,10 @@
         </section>
       `;
 
-      console.error('Indoone Add Account feature failed:', error);
+      console.error(
+        'Indoone Add Account feature failed:',
+        error
+      );
 
       subPage
         .querySelector('[data-add-action="back"]')
@@ -234,7 +270,9 @@
   }
 
   function backToHome() {
-    if (window.history.state?.indoonePage === 'add-account') {
+    if (
+      window.history.state?.indoonePage === 'add-account'
+    ) {
       history.back();
       return;
     }
@@ -251,11 +289,19 @@
   function init() {
     setupViews();
 
-    void loadScreenshotFeature().then(() => window.IndooneHomeScreenshot?.sync?.()).catch(error => {
-      console.warn('Indoone Home screenshot protection unavailable:', error);
-    });
+    void loadScreenshotFeature()
+      .then(() => window.IndooneHomeScreenshot?.sync?.())
+      .catch(error => {
+        console.warn(
+          'Indoone Home screenshot protection unavailable:',
+          error
+        );
+      });
 
-    if (window.location.hash === ADD_HASH || window.location.hash.startsWith(`${ADD_HASH}/`)) {
+    if (
+      window.location.hash === ADD_HASH ||
+      window.location.hash.startsWith(`${ADD_HASH}/`)
+    ) {
       showAddAccount({
         push: false
       });
