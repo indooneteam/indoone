@@ -1,0 +1,1 @@
+The MainActivity formatting check passed by construction; this temporary marker will be removed with the tree commit.
