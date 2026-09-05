@@ -1,1 +1,13 @@
 /* Menu feature styles live in the shared app shell to preserve the existing UI. */
+
+/* Typography alignment: match the existing Connect heading and eyebrow sizes. */
+.page-heading h1 {
+  font-size: 26px !important;
+}
+
+.eyebrow,
+.settings-page-head .eyebrow,
+.connect-hero .eyebrow {
+  color: #7650d8 !important;
+  font-size: 9px !important;
+}
