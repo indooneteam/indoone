@@ -66,6 +66,12 @@ window.renderAccounts = function () {
         : (seconds >= 5
           ? 'timer timer-yellow'
           : 'timer timer-red');
+    const codeClass =
+      seconds >= 15
+        ? 'code-green'
+        : (seconds >= 5
+          ? 'code-yellow'
+          : 'code-red');
 
     return `
     <article
@@ -77,7 +83,7 @@ window.renderAccounts = function () {
       <div class="account-info">
         <b>${a.name}</b>
         <span>${a.email}</span>
-        <strong>${a.code || '------'}</strong>
+        <strong class="${codeClass}">${a.code || '------'}</strong>
       </div>
       <button
         class="fav ${a.favorite ? 'active' : ''}"
