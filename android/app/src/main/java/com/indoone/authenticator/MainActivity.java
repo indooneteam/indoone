@@ -35,6 +35,8 @@ public class MainActivity extends FragmentActivity {
     private WebView webView;
     private NearbyConnectionManager nearbyConnectionManager;
     private UpdateManager updateManager;
+    private boolean activityStartedOnce;
+    private boolean appWentToBackground;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +73,33 @@ public class MainActivity extends FragmentActivity {
         loadWebApp();
         setContentView(webView);
         webView.postDelayed(() -> updateManager.checkForUpdate(), 1800);
+    }
+
+    @Override protected void onStart() {
+        super.onStart();
+
+        if (!activityStartedOnce) {
+            activityStartedOnce = true;
+            return;
+        }
+
+        if (!appWentToBackground) return;
+
+        appWentToBackground = false;
+        if (webView != null) {
+            webView.postDelayed(
+                    () -> webView.evaluateJavascript(
+                            "window.dispatchEvent(new Event('indoone-native-resume'));",
+                            null
+                    ),
+                    350
+            );
+        }
+    }
+
+    @Override protected void onStop() {
+        appWentToBackground = true;
+        super.onStop();
     }
 
     public void setSecureScreen(boolean enabled) {
