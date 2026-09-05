@@ -1,9 +1,9 @@
 window.showAppLock = function (mode = 'unlock') {
-  const hasVault = IndoonePersistence.hasVault();
+  const hasPin = IndoonePersistence.hasVault();
   const title =
     mode === 'setup'
       ? 'Create App PIN'
-      : (hasVault ? 'Unlock Indoone' : 'Create App PIN');
+      : (hasPin ? 'Unlock Indoone' : 'Create App PIN');
 
   openModal(`
     <div class="modal-head">
@@ -12,9 +12,9 @@ window.showAppLock = function (mode = 'unlock') {
     </div>
     <p>
       ${
-        hasVault && mode !== 'setup'
-          ? 'Enter your PIN to unlock your encrypted local authenticator vault.'
-          : 'Your PIN protects the encrypted local authenticator vault.'
+        hasPin && mode !== 'setup'
+          ? 'Enter your App PIN to unlock Indoone.'
+          : 'Your App PIN controls access to Indoone when the app is locked.'
       }
     </p>
     <div class="field">
@@ -30,9 +30,9 @@ window.showAppLock = function (mode = 'unlock') {
     </div>
     <button class="primary" id="vaultPinAction">
       ${
-        hasVault && mode !== 'setup'
-          ? 'Unlock Vault'
-          : 'Create Secure Vault'
+        hasPin && mode !== 'setup'
+          ? 'Unlock App'
+          : 'Create App PIN'
       }
     </button>
   `);
@@ -48,7 +48,7 @@ window.showAppLock = function (mode = 'unlock') {
       }
 
       try {
-        if (hasVault && mode !== 'setup') {
+        if (hasPin && mode !== 'setup') {
           const ok = await IndoonePersistence.unlock(value);
 
           if (!ok) {
@@ -62,19 +62,16 @@ window.showAppLock = function (mode = 'unlock') {
             startTOTPRefresh();
           }
 
-          toast('Vault unlocked');
+          toast('App unlocked');
         } else {
           IndooneSecureSession.unlock(value);
-          await IndoonePersistence.save(
-            indooneState.accounts,
-            value
-          );
+          await IndoonePersistence.save([], value);
 
           closeModal();
-          toast('Encrypted vault created');
+          toast('App PIN created');
         }
       } catch (error) {
-        toast(error?.message || 'Vault operation failed');
+        toast(error?.message || 'App PIN operation failed');
       }
     });
 };
@@ -122,7 +119,7 @@ window.showBiometricUnlock = function () {
             startTOTPRefresh();
           }
 
-          toast('Vault unlocked with fingerprint');
+          toast('App unlocked with fingerprint');
         } catch (error) {
           biometricButton.disabled = false;
           toast(
