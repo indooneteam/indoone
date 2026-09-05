@@ -49,21 +49,31 @@ public final class NativeBridge {
     @JavascriptInterface
     public boolean saveBiometricSecret(String pin) {
         if (pin == null || !pin.matches("\\d{4,12}")) return false;
+
         try {
             SecretKey key = getOrCreateKey();
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] ciphertext = cipher.doFinal(pin.getBytes(StandardCharsets.UTF_8));
             SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            prefs.edit()
+            boolean saved = prefs.edit()
                     .putString(PREF_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
                     .putString(PREF_IV, Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP))
-                    .apply();
-            return true;
-        } catch (Exception error) { return false; }
+                    .commit();
+            return saved && hasBiometricSecret();
+        } catch (Exception error) {
+            return false;
+        }
     }
 
-    @JavascriptInterface public void clearBiometricSecret() { activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply(); }
+    @JavascriptInterface
+    public void clearBiometricSecret() {
+        activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit();
+    }
+
     @JavascriptInterface public void requestCameraPermission() { activity.requestCameraPermission(); }
     @JavascriptInterface public void requestNearbyPermissions() { activity.requestNearbyPermissions(); }
     @JavascriptInterface public boolean isCameraReady() { return activity.isCameraPermissionGranted(); }
