@@ -1,5 +1,5 @@
 window.showAppLock = function (mode = 'unlock') {
-  const hasPin = IndoonePersistence.hasVault();
+  const hasPin = IndoonePersistence.hasAppLock();
   const title =
     mode === 'setup'
       ? 'Create App PIN'
