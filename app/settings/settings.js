@@ -39,6 +39,12 @@
       .forEach(node => {
         node.textContent = version;
       });
+
+    document
+      .querySelectorAll('[data-settings-action="about"] .settings-row-text small')
+      .forEach(node => {
+        node.textContent = `Version ${version} · Updates`;
+      });
   });
 
   const SETTINGS = [
@@ -78,7 +84,7 @@
     {
       id: 'about',
       title: 'About Indoone',
-      subtitle: 'Version loading… · Updates',
+      subtitle: () => `Version ${appVersion} · Updates`,
       icon: 'info',
       action: () => window.showAboutSettings?.()
     }
