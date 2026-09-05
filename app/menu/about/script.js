@@ -54,32 +54,6 @@ window.initMenuAbout = function () {
     >
       <span>
         <b>
-          Version
-        </b>
-        <small>
-          1.0.0
-        </small>
-      </span>
-    </div>
-
-    <div
-      class="settings-row"
-    >
-      <span>
-        <b>
-          Security
-        </b>
-        <small>
-          Encrypted local vault • Firebase account protection
-        </small>
-      </span>
-    </div>
-
-    <div
-      class="settings-row"
-    >
-      <span>
-        <b>
           Sync
         </b>
         <small>
