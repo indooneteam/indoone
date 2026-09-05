@@ -32,6 +32,7 @@ android {
 def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
     from(file("$rootDir/..")) {
         include 'index.html'
+        include 'update.json'
         include '*.css'
         include 'js/**'
         include 'app/**'
