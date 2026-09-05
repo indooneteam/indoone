@@ -35,14 +35,17 @@ window.initMenuLogoutThisDevice = function () {
     } catch (_) {}
   };
 
-  confirmButton.addEventListener('click', async () => {
-    try {
-      clearLocalSession();
-      await window.IndooneFirebase?.auth?.signOut?.();
-      closeModal();
-      window.location.reload();
-    } catch (error) {
-      toast(error?.message || 'Could not log out');
+  confirmButton.addEventListener(
+    'click',
+    async () => {
+      try {
+        clearLocalSession();
+        await window.IndooneFirebase?.auth?.signOut?.();
+        closeModal();
+        window.location.reload();
+      } catch (error) {
+        toast(error?.message || 'Could not log out');
+      }
     }
-  });
+  );
 };
