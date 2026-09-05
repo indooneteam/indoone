@@ -49,3 +49,16 @@ html, body { height: 100%; }
     padding-right: 10px !important;
   }
 }
+
+/* Keep the OTP digits on the same countdown color cycle as the timer. */
+.account-info strong.code-green {
+  color: #20883e;
+}
+
+.account-info strong.code-yellow {
+  color: #ad8500;
+}
+
+.account-info strong.code-red {
+  color: #c62828;
+}
