@@ -40,6 +40,21 @@
       '</svg>'
   };
 
+  const setComingSoonState = button => {
+    if (!button) return;
+
+    button.disabled = true;
+    button.setAttribute('aria-disabled', 'true');
+    button.dataset.connectAvailability = 'coming-soon';
+
+    if (!button.querySelector('.connect-coming-soon')) {
+      const badge = document.createElement('small');
+      badge.className = 'connect-coming-soon';
+      badge.textContent = 'Coming soon';
+      button.appendChild(badge);
+    }
+  };
+
   function putIcon(node, name, size = 23) {
     if (!node || !svgIcons[name]) return;
     node.innerHTML = svgIcons[name];
@@ -66,6 +81,8 @@
         if (index === 0) putIcon(icon, 'pair');
         if (index === 1) putIcon(icon, 'connect');
         if (index === 2) putIcon(icon, 'devices');
+
+        setComingSoonState(button);
       });
 
     putIcon(
@@ -85,6 +102,30 @@
       .forEach(arrow => {
         putIcon(arrow, 'chevron', 18);
       });
+
+    document
+      .querySelectorAll('.connect-choice button')
+      .forEach(button => {
+        setComingSoonState(button);
+      });
+
+    document
+      .querySelectorAll('.connect-section-title button[data-connect-action]')
+      .forEach(button => {
+        setComingSoonState(button);
+      });
+
+    const status = document.querySelector('.connect-status');
+    const statusTitle = status?.querySelector('b');
+    const statusText = status?.querySelector('small');
+
+    if (statusTitle) {
+      statusTitle.textContent = 'Remote & nearby connection';
+    }
+
+    if (statusText) {
+      statusText.textContent = 'Connect features are under development.';
+    }
   }
 
   function setActive(tab) {
@@ -184,7 +225,7 @@
 
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-connect-action]');
-    if (!action) return;
+    if (!action || action.disabled) return;
 
     const name = action.dataset.connectAction;
 
