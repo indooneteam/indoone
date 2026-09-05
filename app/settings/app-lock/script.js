@@ -105,7 +105,13 @@
     startupUnlockShown = true;
     firstAccountPromptShown = false;
     document.body.classList.add('app-lock-active');
-    showAppLock('unlock');
+
+    if (IndooneBiometric.enabled()) {
+      showBiometricUnlock();
+    } else {
+      showAppLock('unlock');
+    }
+
     return true;
   }
 
@@ -254,6 +260,8 @@
               throw new Error('Biometric credential is invalid');
             }
 
+            startupUnlockShown = true;
+            document.body.classList.remove('app-lock-active');
             closeModal();
             renderAccounts();
 
@@ -293,7 +301,11 @@
     startupUnlockShown = true;
     firstAccountPromptShown = false;
     document.body.classList.add('app-lock-active');
-    showAppLock('unlock');
+    if (IndooneBiometric.enabled()) {
+      showBiometricUnlock();
+    } else {
+      showAppLock('unlock');
+    }
   };
 
   if (document.readyState === 'loading') {
