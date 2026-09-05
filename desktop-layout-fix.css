@@ -152,3 +152,83 @@ html, body { height: 100%; }
   height: 33px !important;
   font-size: 10px !important;
 }
+
+/*
+ * Device-safe system-bar handling.
+ * Android 15+ forces edge-to-edge for targetSdk 35, so status/navigation
+ * insets can differ by phone, cutout, and navigation mode. The Android
+ * host publishes native inset values; CSS safe-area values cover WebView
+ * and display-cutout variations. max() prevents double-counting.
+ */
+:root {
+  --indoone-top-safe: max(
+    var(--indoone-top-inset, 0px),
+    env(safe-area-inset-top, 0px)
+  );
+  --indoone-bottom-safe: max(
+    var(--indoone-bottom-inset, 0px),
+    env(safe-area-inset-bottom, 0px)
+  );
+}
+
+#app.phone-shell .topbar {
+  height: calc(76px + var(--indoone-top-safe)) !important;
+  min-height: calc(76px + var(--indoone-top-safe)) !important;
+  padding-top: calc(18px + var(--indoone-top-safe)) !important;
+}
+
+#app.phone-shell .bottom-nav {
+  height: calc(67px + var(--indoone-bottom-safe)) !important;
+  padding-bottom: var(--indoone-bottom-safe) !important;
+}
+
+#app.phone-shell .fab {
+  bottom: calc(78px + var(--indoone-bottom-safe)) !important;
+}
+
+#app.phone-shell .drawer-panel {
+  padding-top: calc(25px + var(--indoone-top-safe)) !important;
+  padding-bottom: calc(25px + var(--indoone-bottom-safe)) !important;
+}
+
+#app.phone-shell .overlay {
+  padding-bottom: calc(14px + var(--indoone-bottom-safe)) !important;
+}
+
+#app.phone-shell .modal {
+  max-height: calc(100dvh - 28px - var(--indoone-bottom-safe)) !important;
+}
+
+/* Preserve the existing compact visual scale on narrow phones. */
+@media (max-width: 380px) {
+  #app.phone-shell .topbar {
+    height: calc(68px + var(--indoone-top-safe)) !important;
+    min-height: calc(68px + var(--indoone-top-safe)) !important;
+    padding-top: calc(12px + var(--indoone-top-safe)) !important;
+  }
+
+  #app.phone-shell .bottom-nav {
+    height: calc(60px + var(--indoone-bottom-safe)) !important;
+  }
+
+  #app.phone-shell .fab {
+    bottom: calc(72px + var(--indoone-bottom-safe)) !important;
+  }
+
+  #app.phone-shell .overlay {
+    padding: 8px !important;
+    padding-bottom: calc(8px + var(--indoone-bottom-safe)) !important;
+  }
+
+  #app.phone-shell .modal {
+    max-height: calc(100dvh - 16px - var(--indoone-bottom-safe)) !important;
+  }
+}
+
+@media (max-width: 340px) {
+  #app.phone-shell .topbar {
+    height: calc(64px + var(--indoone-top-safe)) !important;
+    min-height: calc(64px + var(--indoone-top-safe)) !important;
+    padding-top: calc(8px + var(--indoone-top-safe)) !important;
+  }
+}
