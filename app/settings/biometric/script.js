@@ -6,9 +6,17 @@ window.IndooneBiometric = (() => {
   }
 
   function enabled() {
-    return localStorage.getItem(ENABLED_KEY) === '1'
-      && typeof window.IndooneNative?.hasBiometricSecret === 'function'
-      && window.IndooneNative.hasBiometricSecret();
+    const flag = localStorage.getItem(ENABLED_KEY) === '1';
+    const hasSecret =
+      typeof window.IndooneNative?.hasBiometricSecret === 'function' &&
+      window.IndooneNative.hasBiometricSecret();
+
+    if (flag && !hasSecret) {
+      localStorage.removeItem(ENABLED_KEY);
+      return false;
+    }
+
+    return flag && hasSecret;
   }
 
   function setEnabled(value) {
@@ -93,6 +101,10 @@ window.IndooneBiometric = (() => {
       );
     }
 
+    if (!window.IndoonePersistence?.hasAppLock?.()) {
+      return onFallback?.('Create an App PIN first');
+    }
+
     if (!window.IndoonePersistence?.isUnlocked?.()) {
       return onFallback?.('Unlock App Lock with PIN first');
     }
@@ -124,6 +136,13 @@ window.IndooneBiometric = (() => {
       if (!saved) {
         return onFallback?.(
           'Could not enable biometric unlock'
+        );
+      }
+
+      if (!window.IndooneNative.hasBiometricSecret()) {
+        window.IndooneNative.clearBiometricSecret();
+        return onFallback?.(
+          'Could not verify biometric setup'
         );
       }
 
