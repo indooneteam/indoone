@@ -30,9 +30,6 @@
             'input, textarea, [contenteditable="true"]'
           );
 
-        // Never rebuild the auth DOM while the user is interacting with it.
-        // Replacing modal.innerHTML destroys the focused input, which closes
-        // the mobile keyboard and clears the partially entered value.
         if (
           authOpen &&
           overlayNode &&
@@ -127,9 +124,6 @@
     const savedPage =
       window.IndoonePageState?.get?.() || 'home';
 
-    // A nested Add Account hash is restored only when the persisted page state
-    // says the user was actually inside Add Account. This prevents a stale hash
-    // from reopening Enter Setup Key after the user is already back on Home.
     if (hash.startsWith(ADD_ROUTE_PREFIX)) {
       if (savedPage === 'add-account') {
         try {
@@ -181,7 +175,6 @@
         break;
 
       case 'add-account':
-        // Only an explicit Add Account page state should keep this route open.
         await window.IndooneHome?.showAddAccount?.({
           push: false
         });
@@ -194,11 +187,34 @@
     }
   }
 
+  function lockForNativeResume() {
+    if (
+      typeof window.IndooneNative?.authenticateBiometric !==
+        'function'
+    ) {
+      return;
+    }
+
+    if (!window.IndoonePersistence?.hasAppLock?.()) {
+      return;
+    }
+
+    if (!window.IndoonePersistence?.isUnlocked?.()) {
+      return;
+    }
+
+    window.IndoonePersistence.lock();
+
+    if (window.IndooneBiometric?.enabled?.()) {
+      window.showBiometricUnlock?.();
+    } else {
+      window.showAppLock?.('unlock');
+    }
+  }
+
   function requireAppBootLock() {
     if (appBootLockChecked) return;
 
-    // The browser version must not trigger App Lock on every page refresh.
-    // App-start enforcement will be handled by the native Android layer.
     if (
       typeof window.IndooneNative?.authenticateBiometric !==
         'function'
@@ -384,6 +400,11 @@
     }
   });
 
+  window.addEventListener(
+    'indoone-native-resume',
+    lockForNativeResume
+  );
+
   async function loadFirebaseAccounts() {
     if (!window.IndooneCloudAccounts?.load) {
       throw new Error(
@@ -444,9 +465,9 @@
         persistedUid
       );
 
+      requireAppBootLock();
       await loadFirebaseAccounts();
       await restoreSavedPage();
-      requireAppBootLock();
 
       if (typeof startDemoTimers === 'function') {
         startDemoTimers();
