@@ -21,6 +21,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import java.io.InputStream;
@@ -37,6 +39,8 @@ public class MainActivity extends FragmentActivity {
     private UpdateManager updateManager;
     private boolean activityStartedOnce;
     private boolean appWentToBackground;
+    private int lastTopInset;
+    private int lastBottomInset;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,10 +55,15 @@ public class MainActivity extends FragmentActivity {
         s.setLoadWithOverviewMode(false);
         s.setUseWideViewPort(false);
         s.setTextZoom(100);
+        applyWindowInsetsToWebApp(webView);
         nearbyConnectionManager = new NearbyConnectionManager(this);
         updateManager = new UpdateManager(this);
         webView.addJavascriptInterface(new NativeBridge(this), "IndooneNative");
         webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                syncInsetsToWebApp();
+            }
+
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return serveBundledAsset(request.getUrl());
             }
@@ -73,6 +82,34 @@ public class MainActivity extends FragmentActivity {
         loadWebApp();
         setContentView(webView);
         webView.postDelayed(() -> updateManager.checkForUpdate(), 1800);
+    }
+
+    private void applyWindowInsetsToWebApp(WebView target) {
+        ViewCompat.setOnApplyWindowInsetsListener(target, (view, insets) -> {
+            WindowInsetsCompat systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            lastTopInset = systemBars.top;
+            lastBottomInset = systemBars.bottom;
+            syncInsetsToWebApp();
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(target);
+    }
+
+    private void syncInsetsToWebApp() {
+        if (webView == null) return;
+        String script = "(function(){var r=document.documentElement;" +
+                "r.style.setProperty('--indoone-top-inset','" + lastTopInset + "px');" +
+                "r.style.setProperty('--indoone-bottom-inset','" + lastBottomInset + "px');" +
+                "var s=document.getElementById('indoone-native-insets');" +
+                "if(!s){s=document.createElement('style');s.id='indoone-native-insets';document.head.appendChild(s);}" +
+                "s.textContent='.topbar{height:calc(76px + var(--indoone-top-inset, 0px)) !important;min-height:calc(76px + var(--indoone-top-inset, 0px)) !important;padding-top:calc(18px + var(--indoone-top-inset, 0px)) !important;}'+" +
+                "'.bottom-nav{height:calc(67px + var(--indoone-bottom-inset, 0px)) !important;padding-bottom:var(--indoone-bottom-inset, 0px) !important;}'+" +
+                "'.fab{bottom:calc(78px + var(--indoone-bottom-inset, 0px)) !important;}'+" +
+                "'.drawer-panel{padding-top:calc(25px + var(--indoone-top-inset, 0px)) !important;padding-bottom:calc(25px + var(--indoone-bottom-inset, 0px)) !important;}'+" +
+                "'.overlay{padding-bottom:calc(14px + var(--indoone-bottom-inset, 0px)) !important;}'+" +
+                "'.modal{max-height:calc(100dvh - 28px - var(--indoone-bottom-inset, 0px)) !important;}'+" +
+                "'.content,.connect-content{padding-top:16px;}';})();";
+        webView.evaluateJavascript(script, null);
     }
 
     @Override protected void onStart() {
