@@ -18,7 +18,7 @@ window.initMenuSecurity = function () {
       <span>
         When creating an account, the user provides their email or mobile number,
         password, and OTP. The OTP is securely verified through the
-        IndoVerification system. After successful verification, the user’s account
+        Indoverification system. After successful verification, the user’s account
         is created securely in Firebase.
 
         During login, the user enters their registered email or mobile number,
