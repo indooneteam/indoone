@@ -1,18 +1,23 @@
 (() => {
-  const MENU_MARKUP_URL = 'app/home/add-account/index.html?v=20260903d';
-  const MENU_STYLE_URL = 'app/home/add-account/style.css?v=20260903d';
+  const MENU_MARKUP_URL =
+    'app/home/add-account/index.html?v=20260903d';
+  const MENU_STYLE_URL =
+    'app/home/add-account/style.css?v=20260903d';
 
   const FEATURES = {
     qr: {
-      script: 'app/home/add-account/qr/script.js?v=20260903f',
+      script:
+        'app/home/add-account/qr/script.js?v=20260903f',
       globalName: 'IndooneAddAccountQr'
     },
     manual: {
-      script: 'app/home/add-account/manual/script.js?v=20260903d',
+      script:
+        'app/home/add-account/manual/script.js?v=20260903d',
       globalName: 'IndooneAddAccountManual'
     },
     import: {
-      script: 'app/home/add-account/import/script.js?v=20260903d',
+      script:
+        'app/home/add-account/import/script.js?v=20260903d',
       globalName: 'IndooneAddAccountImport'
     }
   };
@@ -75,7 +80,9 @@
         const loaded = window[feature.globalName];
 
         if (!loaded?.render) {
-          reject(new Error(`${name} feature did not initialize.`));
+          reject(
+            new Error(`${name} feature did not initialize.`)
+          );
           return;
         }
 
@@ -83,7 +90,9 @@
       };
 
       script.onerror = () => {
-        reject(new Error(`${name} feature could not be loaded.`));
+        reject(
+          new Error(`${name} feature could not be loaded.`)
+        );
       };
 
       document.head.appendChild(script);
@@ -137,24 +146,26 @@
   }
 
   function bindMenu(root) {
-    root.querySelectorAll('[data-add-action]').forEach(button => {
-      button.addEventListener('click', event => {
-        event.preventDefault();
+    root
+      .querySelectorAll('[data-add-action]')
+      .forEach(button => {
+        button.addEventListener('click', event => {
+          event.preventDefault();
 
-        const action = button.dataset.addAction;
+          const action = button.dataset.addAction;
 
-        if (action === 'back') {
-          backToHome();
-          return;
-        }
+          if (action === 'back') {
+            backToHome();
+            return;
+          }
 
-        if (FEATURES[action]) {
-          void showFeature(action, {
-            push: true
-          });
-        }
+          if (FEATURES[action]) {
+            void showFeature(action, {
+              push: true
+            });
+          }
+        });
       });
-    });
   }
 
   async function showMenu({ push = false } = {}) {
@@ -191,7 +202,10 @@
         </section>
       `;
       bindMenu(mount);
-      console.error('Indoone Add Account menu failed:', error);
+      console.error(
+        'Indoone Add Account menu failed:',
+        error
+      );
     }
   }
 
@@ -212,7 +226,10 @@
 
     try {
       const feature = await loadFeature(name);
-      await feature.render(mount, options.renderOptions || {});
+      await feature.render(
+        mount,
+        options.renderOptions || {}
+      );
     } catch (error) {
       mount.innerHTML = `
         <section class="add-account-page">
@@ -231,11 +248,18 @@
 
       mount
         .querySelector('[data-add-action="back"]')
-        ?.addEventListener('click', backToHome, {
-          once: true
-        });
+        ?.addEventListener(
+          'click',
+          backToHome,
+          {
+            once: true
+          }
+        );
 
-      console.error(`Indoone Add Account ${name} feature failed:`, error);
+      console.error(
+        `Indoone Add Account ${name} feature failed:`,
+        error
+      );
     }
   }
 
@@ -254,7 +278,9 @@
       return;
     }
 
-    const featureName = hash.slice(prefix.length).split('/')[0];
+    const featureName = hash
+      .slice(prefix.length)
+      .split('/')[0];
 
     if (FEATURES[featureName]) {
       void showFeature(featureName, {
@@ -314,6 +340,7 @@
   };
 
   window.showAccountsPage = backToHome;
+
   window.showManual = function (prefill = {}) {
     return window.IndooneAddAccount.showManual({
       push: true,
@@ -321,25 +348,44 @@
       prefill
     });
   };
+
   window.saveAccount = function () {
-    document.getElementById('manualAccountForm')?.requestSubmit();
+    document
+      .getElementById('manualAccountForm')
+      ?.requestSubmit();
   };
+
   window.importOtpUri = function () {
-    return window.IndooneAddAccount.showFeature('import', {
-      push: true
-    });
+    return window.IndooneAddAccount.showFeature(
+      'import',
+      {
+        push: true
+      }
+    );
   };
+
   window.IndooneQrScanner = {
     start() {
-      return window.IndooneAddAccount.showFeature('qr', {
-        push: true
-      });
+      return window.IndooneAddAccount.showFeature(
+        'qr',
+        {
+          push: true
+        }
+      );
     },
+
     stop() {
       window.IndooneAddAccountQr?.stop?.();
     }
   };
 
-  window.addEventListener('popstate', handleHistory);
-  window.addEventListener('hashchange', handleHistory);
+  window.addEventListener(
+    'popstate',
+    handleHistory
+  );
+
+  window.addEventListener(
+    'hashchange',
+    handleHistory
+  );
 })();
