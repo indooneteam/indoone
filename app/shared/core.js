@@ -40,6 +40,13 @@ function clearHomeSubRoute() {
   );
 }
 
+function appLockBlocksAccess() {
+  return Boolean(
+    window.IndoonePersistence?.hasAppLock?.() &&
+    !window.IndoonePersistence?.isUnlocked?.()
+  );
+}
+
 window.openModal = function (html) {
   if (!modal || !overlay) return;
 
@@ -49,15 +56,19 @@ window.openModal = function (html) {
 
 window.closeOverlay = function (event) {
   if (event.target === overlay) {
+    if (appLockBlocksAccess()) return;
     overlay.classList.add('hidden');
   }
 };
 
 window.closeModal = function () {
+  if (appLockBlocksAccess()) return;
   overlay?.classList.add('hidden');
 };
 
 window.showHome = function () {
+  if (appLockBlocksAccess()) return;
+
   // Home is a canonical root route. Never leave an Add Account child hash
   // behind when switching back to Home, because that hash would be restored
   // on the next refresh.
