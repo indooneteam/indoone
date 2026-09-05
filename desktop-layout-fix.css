@@ -62,3 +62,16 @@ html, body { height: 100%; }
 .account-info strong.code-red {
   color: #c62828;
 }
+
+/* Also sync the OTP digits from the timer state when an older cached script renders the markup. */
+.account:has(.timer-green) .account-info strong {
+  color: #20883e;
+}
+
+.account:has(.timer-yellow) .account-info strong {
+  color: #ad8500;
+}
+
+.account:has(.timer-red) .account-info strong {
+  color: #c62828;
+}
