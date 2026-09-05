@@ -11,6 +11,7 @@
     trash: 'initMenuTrash',
     security: 'initMenuSecurity',
     'terms-of-use': 'initMenuTermsOfUse',
+    'privacy-policy': 'initMenuPrivacyPolicy',
     about: 'initMenuAbout',
     lock: 'initMenuLock',
     'danger-zone': 'initMenuDangerZone',
