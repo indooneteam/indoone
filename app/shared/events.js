@@ -6,6 +6,7 @@
   let authResolved = false;
   let authGateRunning = false;
   let authStateResolved = false;
+  let appBootLockChecked = false;
 
   function markAuthReady() {
     if (authResolved) return;
@@ -190,6 +191,24 @@
       default:
         showAccounts({ remember: false });
         break;
+    }
+  }
+
+  function requireAppBootLock() {
+    if (appBootLockChecked) return;
+
+    appBootLockChecked = true;
+
+    if (!window.IndoonePersistence?.hasAppLock?.()) {
+      return;
+    }
+
+    window.IndoonePersistence.lock();
+
+    if (window.IndooneBiometric?.enabled?.()) {
+      window.showBiometricUnlock?.();
+    } else {
+      window.showAppLock?.('unlock');
     }
   }
 
@@ -418,6 +437,7 @@
 
       await loadFirebaseAccounts();
       await restoreSavedPage();
+      requireAppBootLock();
 
       if (typeof startDemoTimers === 'function') {
         startDemoTimers();
