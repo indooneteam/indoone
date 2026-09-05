@@ -87,6 +87,34 @@
   line-height: 1.35;
 }
 
+.connect-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: none;
+  background: #f8f7fa;
+}
+
+.connect-action:disabled strong,
+.connect-action:disabled:hover strong {
+  color: #8d8792;
+}
+
+.connect-action:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.connect-coming-soon {
+  display: inline-block !important;
+  margin-top: 8px !important;
+  color: #7c7485 !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+
 .connect-section-title {
   display: flex;
   align-items: center;
@@ -106,6 +134,12 @@
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.connect-section-title button:disabled {
+  color: #9a94a1;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .connect-status {
@@ -150,8 +184,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2db874;
-  box-shadow: 0 0 0 4px #dff7eb;
+  background: #9a94a1;
+  box-shadow: 0 0 0 4px #eeeaf2;
 }
 
 .connect-choice {
@@ -170,6 +204,12 @@
   gap: 13px;
   text-align: left;
   cursor: pointer;
+}
+
+.connect-choice button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  background: #f8f7fa;
 }
 
 .connect-choice .choice-icon {
@@ -191,6 +231,10 @@
 
 .connect-choice button:hover .choice-icon {
   color: #6230d6;
+}
+
+.connect-choice button:disabled:hover .choice-icon {
+  color: #8d8792;
 }
 
 .connect-choice b {
@@ -223,6 +267,10 @@
 
 .connect-choice button:hover .arrow {
   color: #6230d6;
+}
+
+.connect-choice button:disabled:hover .arrow {
+  color: #8d8792;
 }
 
 .device-card {
