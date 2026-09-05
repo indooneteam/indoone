@@ -75,3 +75,75 @@ html, body { height: 100%; }
 .account:has(.timer-red) .account-info strong {
   color: #c62828;
 }
+
+/* Match the compact sizing used by the Settings screen. */
+.search-wrap {
+  padding: 10px 18px 3px !important;
+}
+
+.search-box {
+  height: 40px !important;
+  border-radius: 12px !important;
+  padding: 0 11px !important;
+}
+
+.search-box input {
+  font-size: 13px !important;
+}
+
+.search-box button {
+  font-size: 20px !important;
+}
+
+.content {
+  padding: 16px 18px 104px !important;
+}
+
+.page-heading {
+  margin-bottom: 11px !important;
+}
+
+.page-heading h1 {
+  font-size: 23px !important;
+}
+
+.small-btn {
+  padding: 7px 10px !important;
+  font-size: 10px !important;
+}
+
+.account-list {
+  gap: 9px !important;
+}
+
+.account {
+  gap: 10px !important;
+  padding: 11px !important;
+  border-radius: 15px !important;
+}
+
+.service-icon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+  font-size: 19px !important;
+}
+
+.account-info b {
+  font-size: 13px !important;
+}
+
+.account-info span {
+  font-size: 10px !important;
+  margin: 2px 0 4px !important;
+}
+
+.account-info strong {
+  font-size: 21px !important;
+}
+
+.timer {
+  width: 33px !important;
+  height: 33px !important;
+  font-size: 10px !important;
+}
