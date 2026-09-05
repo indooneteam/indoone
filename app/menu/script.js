@@ -3,7 +3,7 @@
   const panel = drawer?.querySelector('.drawer-panel');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260905b';
+  const ASSET_VERSION = '20260905c';
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
@@ -25,7 +25,7 @@
     'logout/all-devices': 'initMenuLogoutAllDevices'
   };
 
-  function createLegalIcon(type) {
+  const createSvg = paths => {
     const svg = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'svg'
@@ -41,39 +41,38 @@
     svg.setAttribute('stroke-width', '1.8');
     svg.setAttribute('stroke-linecap', 'round');
     svg.setAttribute('stroke-linejoin', 'round');
-    svg.setAttribute('style', 'flex: 0 0 20px;');
-
-    if (type === 'terms') {
-      svg.innerHTML = [
-        '<path d="M7 3.5h7l3.5 3.5v13.5H7z"></path>',
-        '<path d="M14 3.5V7h3.5"></path>',
-        '<path d="M9.5 11h5"></path>',
-        '<path d="M9.5 14.5h5"></path>',
-        '<path d="M9.5 18h3.5"></path>'
-      ].join('');
-    } else if (type === 'privacy') {
-      svg.innerHTML = [
-        '<path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5z"></path>',
-        '<circle cx="12" cy="12" r="2.2"></circle>'
-      ].join('');
-    } else {
-      svg.innerHTML = [
-        '<path d="M12 3.5 19 6v5.5c0 4.3-2.7 7.7-7 9-4.3-1.3-7-4.7-7-9V6z"></path>',
-        '<path d="m9.2 12 1.8 1.8 3.8-3.8"></path>'
-      ].join('');
-    }
+    svg.style.flex = '0 0 20px';
+    svg.innerHTML = paths.join('');
 
     return svg;
-  }
+  };
 
-  function replaceMenuIcon(item, type) {
+  const securityIcon = () => createSvg([
+    '<path d="M12 3.5 19 6v5.5c0 4.3-2.7 7.7-7 9-4.3-1.3-7-4.7-7-9V6z"></path>',
+    '<path d="m9.2 12 1.8 1.8 3.8-3.8"></path>'
+  ]);
+
+  const termsIcon = () => createSvg([
+    '<path d="M7 3.5h7l3.5 3.5v13.5H7z"></path>',
+    '<path d="M14 3.5V7h3.5"></path>',
+    '<path d="M9.5 11h5"></path>',
+    '<path d="M9.5 14.5h5"></path>',
+    '<path d="M9.5 18h3.5"></path>'
+  ]);
+
+  const privacyIcon = () => createSvg([
+    '<path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5z"></path>',
+    '<circle cx="12" cy="12" r="2.2"></circle>'
+  ]);
+
+  function replaceSecurityIcon(item) {
     if (!item) return;
 
-    const current = item.querySelector(
-      '[data-indoone-menu-icon]'
+    const oldIcon = item.querySelector(
+      '[data-indoone-security-icon]'
     );
 
-    if (current) return;
+    if (oldIcon) return;
 
     item
       .childNodes
@@ -83,30 +82,31 @@
         }
       });
 
-    const icon = createLegalIcon(type);
-    icon.setAttribute('data-indoone-menu-icon', type);
-    item.insertBefore(icon, item.firstChild);
-  }
-
-  function ensureSecurityMenuIcon() {
-    const securityItem = panel?.querySelector(
-      '[data-action="security"]'
+    const icon = securityIcon();
+    icon.setAttribute(
+      'data-indoone-security-icon',
+      'true'
     );
 
-    replaceMenuIcon(securityItem, 'security');
+    item.insertBefore(
+      icon,
+      item.firstChild
+    );
   }
 
   function createLegalMenuItem(type, label) {
     const item = document.createElement('button');
+    const icon = type === 'terms'
+      ? termsIcon()
+      : privacyIcon();
+
     item.type = 'button';
     item.className = 'drawer-item';
     item.dataset.action = type === 'terms'
       ? 'terms-of-use'
       : 'privacy-policy';
 
-    item.appendChild(
-      createLegalIcon(type)
-    );
+    item.appendChild(icon);
 
     const text = document.createElement('span');
     text.textContent = label;
@@ -125,9 +125,9 @@
       '[data-action="about"]'
     );
 
-    if (!securityItem || !aboutItem) return;
+    replaceSecurityIcon(securityItem);
 
-    ensureSecurityMenuIcon();
+    if (!securityItem || !aboutItem) return;
 
     if (!panel.querySelector('[data-action="terms-of-use"]')) {
       const termsItem = createLegalMenuItem(
@@ -138,11 +138,6 @@
       securityItem.insertAdjacentElement(
         'afterend',
         termsItem
-      );
-    } else {
-      replaceMenuIcon(
-        panel.querySelector('[data-action="terms-of-use"]'),
-        'terms'
       );
     }
 
@@ -159,11 +154,6 @@
       termsItem?.insertAdjacentElement(
         'afterend',
         privacyItem
-      );
-    } else {
-      replaceMenuIcon(
-        panel.querySelector('[data-action="privacy-policy"]'),
-        'privacy'
       );
     }
   }
@@ -264,6 +254,8 @@
 
   window.toggleMenu = function () {
     if (!drawer) return;
+
+    ensureLegalMenuItems();
 
     const open = !drawer.classList.contains('open');
     drawer.classList.toggle('open', open);
