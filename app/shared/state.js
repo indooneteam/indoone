@@ -58,7 +58,16 @@ window.renderAccounts = function () {
 
   const listEl = document.getElementById('accountList');
 
-  listEl.innerHTML = list.map(a => `
+  listEl.innerHTML = list.map(a => {
+    const seconds = Number(a.seconds ?? 30);
+    const timerClass =
+      seconds >= 15
+        ? 'timer timer-green'
+        : (seconds >= 5
+          ? 'timer timer-yellow'
+          : 'timer timer-red');
+
+    return `
     <article
       class="account"
       data-id="${a.id}"
@@ -77,11 +86,12 @@ window.renderAccounts = function () {
       >
         ${a.favorite ? '★' : '☆'}
       </button>
-      <div class="timer">
-        ${a.seconds ?? 30}
+      <div class="${timerClass}">
+        ${seconds}
       </div>
     </article>
-  `).join('');
+  `;
+  }).join('');
 
   document.getElementById('emptyState').hidden = list.length > 0;
   document.getElementById('drawerCount').textContent = accounts.length;
