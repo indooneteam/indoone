@@ -262,3 +262,49 @@
     padding:12px 0
   }
 }
+
+.brand-mark,
+.auth-mark
+{
+  width:32px;
+  height:32px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(145deg,#6d35e8,#8744ee);
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+  box-shadow:0 6px 15px #703be333
+}
+.brand strong,
+.drawer-brand strong,
+.auth-brand strong
+{
+  color:#6330db;
+  font-size:19px;
+  font-weight:800;
+  line-height:1
+}
+.brand small,
+.drawer-brand small,
+.auth-brand small
+{
+  display:none!important
+}
+.auth-brand
+{
+  display:flex;
+  align-items:center;
+  gap:9px
+}
+.about-mark
+{
+  background:linear-gradient(145deg,#6d35e8,#8744ee);
+  color:#fff;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:900
+}
