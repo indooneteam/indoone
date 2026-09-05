@@ -92,155 +92,160 @@ window.initMenuDeleteAccount = function () {
     } catch (_) {}
   };
 
-  document.getElementById('confirmAccountDelete')?.addEventListener('click', async () => {
-    const passwordInput = document.getElementById('deleteAccountPassword');
-    const confirmInput = document.getElementById('deleteAccountConfirm');
-    const button = document.getElementById('confirmAccountDelete');
+  document
+    .getElementById('confirmAccountDelete')
+    ?.addEventListener('click', async () => {
+      const passwordInput = document.getElementById('deleteAccountPassword');
+      const confirmInput = document.getElementById('deleteAccountConfirm');
+      const button = document.getElementById('confirmAccountDelete');
 
-    const password = String(passwordInput?.value || '');
-    const confirmation = String(confirmInput?.value || '')
-      .trim()
-      .toUpperCase();
-
-    if (!password) {
-      passwordInput?.focus();
-      toast('Enter your account password');
-      return;
-    }
-
-    if (confirmation !== 'DELETE') {
-      confirmInput?.focus();
-      toast('Type DELETE to confirm');
-      return;
-    }
-
-    if (!auth || !db || !auth.currentUser) {
-      toast('Login session expired. Please login again.');
-      return;
-    }
-
-    if (!auth.currentUser.email) {
-      toast('This account cannot be re-authenticated here.');
-      return;
-    }
-
-    if (button) {
-      button.disabled = true;
-    }
-
-    setStatus('Verifying your account…');
-
-    try {
-      const provider = window.firebase?.auth?.EmailAuthProvider;
-      const credential = provider?.credential?.(
-        auth.currentUser.email,
-        password
-      );
-
-      if (!credential) {
-        throw new Error('Firebase email authentication is unavailable.');
-      }
-
-      await auth.currentUser.reauthenticateWithCredential(credential);
-      await auth.currentUser.reload();
-
-      const liveUser = auth.currentUser;
-      if (!liveUser || liveUser.uid !== user.uid) {
-        throw new Error('Login session expired. Please login again.');
-      }
-
-      setStatus('Removing your Indoone cloud data…');
-
-      const profileSnapshot = await db
-        .ref(`users/${liveUser.uid}/profile`)
-        .once('value');
-      const profile = profileSnapshot.val() || {};
-      const email = String(liveUser.email || profile.email || '')
+      const password = String(passwordInput?.value || '');
+      const confirmation = String(confirmInput?.value || '')
         .trim()
-        .toLowerCase();
-      const mobile = String(profile.mobile || '').trim();
+        .toUpperCase();
 
-      const matchesSnapshot = await db
-        .ref('users')
-        .orderByChild('profile/email')
-        .equalTo(email)
-        .once('value');
-      const matches = matchesSnapshot.val() || {};
-      const updates = {};
-      const mobiles = new Set(mobile ? [mobile] : []);
+      if (!password) {
+        passwordInput?.focus();
+        toast('Enter your account password');
+        return;
+      }
 
-      Object.entries(matches).forEach(([uid, item]) => {
-        const matchedEmail = String(item?.profile?.email || '')
+      if (confirmation !== 'DELETE') {
+        confirmInput?.focus();
+        toast('Type DELETE to confirm');
+        return;
+      }
+
+      if (!auth || !db || !auth.currentUser) {
+        toast('Login session expired. Please login again.');
+        return;
+      }
+
+      if (!auth.currentUser.email) {
+        toast('This account cannot be re-authenticated here.');
+        return;
+      }
+
+      if (button) {
+        button.disabled = true;
+      }
+
+      setStatus('Verifying your account…');
+
+      try {
+        const provider = window.firebase?.auth?.EmailAuthProvider;
+        const credential = provider?.credential?.(
+          auth.currentUser.email,
+          password
+        );
+
+        if (!credential) {
+          throw new Error('Firebase email authentication is unavailable.');
+        }
+
+        await auth.currentUser.reauthenticateWithCredential(credential);
+        await auth.currentUser.reload();
+
+        const liveUser = auth.currentUser;
+        if (!liveUser || liveUser.uid !== user.uid) {
+          throw new Error('Login session expired. Please login again.');
+        }
+
+        setStatus('Removing your Indoone cloud data…');
+
+        const profileSnapshot = await db
+          .ref(`users/${liveUser.uid}/profile`)
+          .once('value');
+        const profile = profileSnapshot.val() || {};
+        const email = String(liveUser.email || profile.email || '')
           .trim()
           .toLowerCase();
+        const mobile = String(profile.mobile || '').trim();
 
-        if (!matchedEmail || matchedEmail !== email) return;
+        const matchesSnapshot = await db
+          .ref('users')
+          .orderByChild('profile/email')
+          .equalTo(email)
+          .once('value');
+        const matches = matchesSnapshot.val() || {};
+        const updates = {};
+        const mobiles = new Set(mobile ? [mobile] : []);
 
-        updates[`users/${uid}`] = null;
+        Object.entries(matches).forEach(([uid, item]) => {
+          const matchedEmail = String(item?.profile?.email || '')
+            .trim()
+            .toLowerCase();
 
-        const matchedMobile = String(item?.profile?.mobile || '').trim();
-        if (matchedMobile) {
-          mobiles.add(matchedMobile);
+          if (!matchedEmail || matchedEmail !== email) return;
+
+          updates[`users/${uid}`] = null;
+
+          const matchedMobile = String(item?.profile?.mobile || '').trim();
+          if (matchedMobile) {
+            mobiles.add(matchedMobile);
+          }
+        });
+
+        updates[`users/${liveUser.uid}`] = null;
+
+        mobiles.forEach(value => {
+          updates[`mobileIndex/${encodeURIComponent(value)}`] = null;
+        });
+
+        await db.ref().update(updates);
+
+        setStatus('Deleting your Firebase account…');
+
+        await liveUser.delete();
+
+        clearLocalData();
+        closeModal();
+        window.location.reload();
+      } catch (error) {
+        if (button) {
+          button.disabled = false;
         }
-      });
 
-      updates[`users/${liveUser.uid}`] = null;
+        const code = String(error?.code || '');
 
-      mobiles.forEach(value => {
-        updates[`mobileIndex/${encodeURIComponent(value)}`] = null;
-      });
+        if (
+          code === 'auth/wrong-password' ||
+          code === 'auth/invalid-credential'
+        ) {
+          setStatus('Incorrect account password.', true);
+          toast('Incorrect account password');
+          return;
+        }
 
-      await db.ref().update(updates);
+        if (code === 'auth/requires-recent-login') {
+          setStatus(
+            'A fresh login is required. Please login again and retry.',
+            true
+          );
+          toast('Please login again, then retry account deletion');
+          return;
+        }
 
-      setStatus('Deleting your Firebase account…');
+        if (
+          code === 'PERMISSION_DENIED' ||
+          /permission_denied/i.test(String(error?.message || ''))
+        ) {
+          setStatus(
+            'Firebase denied deletion of your cloud data. Check Firebase database rules.',
+            true
+          );
+          toast('Firebase denied cloud-data deletion');
+          return;
+        }
 
-      await liveUser.delete();
+        if (code === 'auth/network-request-failed') {
+          setStatus('Network error. Check your connection and retry.', true);
+          toast('Network error. Please retry');
+          return;
+        }
 
-      clearLocalData();
-      closeModal();
-      window.location.reload();
-    } catch (error) {
-      if (button) {
-        button.disabled = false;
+        setStatus(error?.message || 'Account deletion failed.', true);
+        toast(error?.message || 'Could not delete Indoone account');
       }
-
-      const code = String(error?.code || '');
-
-      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        setStatus('Incorrect account password.', true);
-        toast('Incorrect account password');
-        return;
-      }
-
-      if (code === 'auth/requires-recent-login') {
-        setStatus(
-          'A fresh login is required. Please login again and retry.',
-          true
-        );
-        toast('Please login again, then retry account deletion');
-        return;
-      }
-
-      if (
-        code === 'PERMISSION_DENIED' ||
-        /permission_denied/i.test(String(error?.message || ''))
-      ) {
-        setStatus(
-          'Firebase denied deletion of your cloud data. Check Firebase database rules.',
-          true
-        );
-        toast('Firebase denied cloud-data deletion');
-        return;
-      }
-
-      if (code === 'auth/network-request-failed') {
-        setStatus('Network error. Check your connection and retry.', true);
-        toast('Network error. Please retry');
-        return;
-      }
-
-      setStatus(error?.message || 'Account deletion failed.', true);
-      toast(error?.message || 'Could not delete Indoone account');
-    }
-  });
+    });
 };
