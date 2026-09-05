@@ -3,7 +3,7 @@
   const panel = drawer?.querySelector('.drawer-panel');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260905a';
+  const ASSET_VERSION = '20260905b';
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
@@ -51,6 +51,11 @@
         '<path d="M9.5 14.5h5"></path>',
         '<path d="M9.5 18h3.5"></path>'
       ].join('');
+    } else if (type === 'privacy') {
+      svg.innerHTML = [
+        '<path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5z"></path>',
+        '<circle cx="12" cy="12" r="2.2"></circle>'
+      ].join('');
     } else {
       svg.innerHTML = [
         '<path d="M12 3.5 19 6v5.5c0 4.3-2.7 7.7-7 9-4.3-1.3-7-4.7-7-9V6z"></path>',
@@ -59,6 +64,36 @@
     }
 
     return svg;
+  }
+
+  function replaceMenuIcon(item, type) {
+    if (!item) return;
+
+    const current = item.querySelector(
+      '[data-indoone-menu-icon]'
+    );
+
+    if (current) return;
+
+    item
+      .childNodes
+      .forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          node.remove();
+        }
+      });
+
+    const icon = createLegalIcon(type);
+    icon.setAttribute('data-indoone-menu-icon', type);
+    item.insertBefore(icon, item.firstChild);
+  }
+
+  function ensureSecurityMenuIcon() {
+    const securityItem = panel?.querySelector(
+      '[data-action="security"]'
+    );
+
+    replaceMenuIcon(securityItem, 'security');
   }
 
   function createLegalMenuItem(type, label) {
@@ -92,6 +127,8 @@
 
     if (!securityItem || !aboutItem) return;
 
+    ensureSecurityMenuIcon();
+
     if (!panel.querySelector('[data-action="terms-of-use"]')) {
       const termsItem = createLegalMenuItem(
         'terms',
@@ -101,6 +138,11 @@
       securityItem.insertAdjacentElement(
         'afterend',
         termsItem
+      );
+    } else {
+      replaceMenuIcon(
+        panel.querySelector('[data-action="terms-of-use"]'),
+        'terms'
       );
     }
 
@@ -117,6 +159,11 @@
       termsItem?.insertAdjacentElement(
         'afterend',
         privacyItem
+      );
+    } else {
+      replaceMenuIcon(
+        panel.querySelector('[data-action="privacy-policy"]'),
+        'privacy'
       );
     }
   }
