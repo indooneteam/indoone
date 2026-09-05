@@ -4,17 +4,22 @@
     const subPage = document.getElementById('homeSubPage');
     const accountsNav = document.getElementById('accountsNav');
 
-    return !!content &&
+    return (
+      !!content &&
       !content.hidden &&
       !!accountsNav?.classList.contains('active') &&
-      !!subPage?.hidden;
+      !!subPage?.hidden
+    );
   }
 
   function setNative(enabled) {
     try {
       window.IndooneNative?.setSecureScreen?.(!!enabled);
     } catch (error) {
-      console.warn('Indoone screenshot protection native bridge unavailable:', error);
+      console.warn(
+        'Indoone screenshot protection native bridge unavailable:',
+        error
+      );
     }
   }
 
@@ -25,8 +30,14 @@
   function observeNavigation() {
     const observer = new MutationObserver(sync);
 
-    ['accountsNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+    [
+      'accountsNav',
+      'lobbyNav',
+      'connectNav',
+      'settingsNav'
+    ].forEach(id => {
       const node = document.getElementById(id);
+
       if (node) {
         observer.observe(node, {
           attributes: true,
@@ -36,6 +47,7 @@
     });
 
     const content = document.getElementById('content');
+
     if (content) {
       observer.observe(content, {
         attributes: true,
@@ -44,6 +56,7 @@
     }
 
     const subPage = document.getElementById('homeSubPage');
+
     if (subPage) {
       observer.observe(subPage, {
         attributes: true,
@@ -57,10 +70,16 @@
     sync();
   }
 
-  window.IndooneHomeScreenshot = { sync };
+  window.IndooneHomeScreenshot = {
+    sync
+  };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
+    document.addEventListener(
+      'DOMContentLoaded',
+      init,
+      { once: true }
+    );
   } else {
     init();
   }
