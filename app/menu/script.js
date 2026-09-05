@@ -10,6 +10,7 @@
     favorites: 'initMenuFavorites',
     trash: 'initMenuTrash',
     security: 'initMenuSecurity',
+    'terms-of-use': 'initMenuTermsOfUse',
     about: 'initMenuAbout',
     lock: 'initMenuLock',
     'danger-zone': 'initMenuDangerZone',
@@ -54,7 +55,9 @@
       const script = document.createElement('script');
       script.src = src;
       script.onload = resolve;
-      script.onerror = () => reject(new Error('Menu feature script could not be loaded.'));
+      script.onerror = () => reject(
+        new Error('Menu feature script could not be loaded.')
+      );
       document.body.appendChild(script);
     });
 
@@ -62,15 +65,19 @@
   }
 
   async function loadFeatureMarkup(base) {
-    const response = await fetch(`${base}/index.html?v=${ASSET_VERSION}`, {
-      cache: 'no-store'
-    });
+    const response = await fetch(
+      `${base}/index.html?v=${ASSET_VERSION}`,
+      {
+        cache: 'no-store'
+      }
+    );
 
     if (!response.ok) {
       throw new Error('Menu feature could not be loaded.');
     }
 
     const modal = document.getElementById('modal');
+
     if (!modal) {
       throw new Error('Menu modal is unavailable.');
     }
@@ -89,6 +96,7 @@
       await loadScript(base);
 
       const initializer = window[initializerName];
+
       if (typeof initializer !== 'function') {
         throw new Error('Menu feature initializer is unavailable.');
       }
@@ -102,7 +110,9 @@
       }
     } catch (error) {
       hideOverlay();
-      window.toast?.(error?.message || 'Could not open menu item');
+      window.toast?.(
+        error?.message || 'Could not open menu item'
+      );
     }
   }
 
@@ -111,7 +121,10 @@
 
     const open = !drawer.classList.contains('open');
     drawer.classList.toggle('open', open);
-    drawer.setAttribute('aria-hidden', String(!open));
+    drawer.setAttribute(
+      'aria-hidden',
+      String(!open)
+    );
   };
 
   window.closeDrawer = function () {
@@ -121,6 +134,7 @@
 
   window.openMenuFeature = function (feature) {
     const initializerName = featureInitializers[feature];
+
     if (!initializerName) return;
 
     void openPath(feature, initializerName);
@@ -128,6 +142,7 @@
 
   window.openMenuNested = function (path) {
     const initializerName = nestedInitializers[path];
+
     if (!initializerName) return;
 
     void openPath(path, initializerName);
@@ -135,6 +150,7 @@
 
   panel?.addEventListener('click', event => {
     const item = event.target.closest('[data-action]');
+
     if (!item || !panel.contains(item)) return;
 
     event.preventDefault();
