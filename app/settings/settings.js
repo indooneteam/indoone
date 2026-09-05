@@ -1,5 +1,46 @@
 (() => {
-  const APP_VERSION = '1.8';
+  let appVersion = 'Loading…';
+  let appVersionLoaded = false;
+
+  async function loadAppVersion() {
+    if (appVersionLoaded) return appVersion;
+
+    appVersionLoaded = true;
+
+    try {
+      const response = await fetch(
+        'update.json',
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) {
+        throw new Error('Version metadata unavailable');
+      }
+
+      const metadata = await response.json();
+      const version = String(metadata.versionName || '').trim();
+
+      if (version) {
+        appVersion = version;
+      }
+    } catch (error) {
+      console.warn(
+        'Indoone version metadata load failed:',
+        error
+      );
+    }
+
+    return appVersion;
+  }
+
+  loadAppVersion().then(version => {
+    document
+      .querySelectorAll('[data-app-version]')
+      .forEach(node => {
+        node.textContent = version;
+      });
+  });
+
   const SETTINGS = [
     {
       id: 'profile',
@@ -37,7 +78,7 @@
     {
       id: 'about',
       title: 'About Indoone',
-      subtitle: `Version ${APP_VERSION} · Updates`,
+      subtitle: 'Version loading… · Updates',
       icon: 'info',
       action: () => window.showAboutSettings?.()
     }
@@ -366,7 +407,7 @@
 
       <div class="about-meta">
         <span>Version</span>
-        <b>${APP_VERSION}</b>
+        <b data-app-version>${appVersion}</b>
       </div>
 
       <div class="about-meta">
@@ -376,6 +417,12 @@
 
       <button class="primary" data-close>Done</button>
     `);
+
+    loadAppVersion().then(version => {
+      document
+        .querySelector('[data-app-version]')
+        ?.replaceChildren(document.createTextNode(version));
+    });
   };
 
   document.addEventListener('click', event => {
