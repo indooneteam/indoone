@@ -2,70 +2,147 @@ window.initMenuAbout = function () {
   const modal = document.getElementById('modal');
 
   modal.innerHTML = `
-    <div class="modal-head">
-      <h2>About Indoone</h2>
-      <button class="close-btn" data-close>×</button>
+    <div
+      class="modal-head"
+    >
+      <h2>
+        About Indoone
+      </h2>
+      <button
+        class="close-btn"
+        data-close
+      >
+        ×
+      </button>
     </div>
 
-    <div style="text-align:center">
-      <div class="token-icon">I</div>
-      <h3 style="margin:8px 0 2px">Indoone Authenticator</h3>
-      <p style="margin:0;color:#8a8492;font-size:12px">Secure • Private • Cloud Synced</p>
+    <div
+      style="text-align:center"
+    >
+      <div
+        class="token-icon"
+      >
+        I
+      </div>
+      <h3
+        style="margin:8px 0 2px"
+      >
+        Indoone Authenticator
+      </h3>
+      <p
+        style="margin:0;color:#8a8492;font-size:12px"
+      >
+        Secure • Private • Cloud Synced
+      </p>
     </div>
 
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>About Indoone</b>
+        <b>
+          About Indoone
+        </b>
         <small>
           Securely generate and manage time-based one-time passwords for your accounts.
         </small>
       </span>
     </div>
 
-    <div class="settings-row">
-      <span><b>Version</b><small>1.0.0</small></span>
-    </div>
-
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>Security</b>
-        <small>Encrypted local vault • Firebase account protection</small>
+        <b>
+          Version
+        </b>
+        <small>
+          1.0.0
+        </small>
       </span>
     </div>
 
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>Sync</b>
-        <small>Secure cloud sync across your signed-in devices</small>
+        <b>
+          Security
+        </b>
+        <small>
+          Encrypted local vault • Firebase account protection
+        </small>
       </span>
     </div>
 
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>OTP Standard</b>
-        <small>TOTP • 6/8 digits • SHA-1 / SHA-256 / SHA-512</small>
+        <b>
+          Sync
+        </b>
+        <small>
+          Secure cloud sync across your signed-in devices
+        </small>
       </span>
     </div>
 
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>Account Storage</b>
-        <small>Cloud synced with your Indoone account</small>
+        <b>
+          OTP Standard
+        </b>
+        <small>
+          TOTP • 6/8 digits • SHA-1 / SHA-256 / SHA-512
+        </small>
       </span>
     </div>
 
-    <div class="settings-row">
+    <div
+      class="settings-row"
+    >
       <span>
-        <b>Legal</b>
-        <small>Privacy Policy • Terms of Service</small>
+        <b>
+          Account Storage
+        </b>
+        <small>
+          Cloud synced with your Indoone account
+        </small>
       </span>
     </div>
 
-    <div class="settings-row">
-      <span><b>Licenses</b><small>Open Source Licenses</small></span>
+    <div
+      class="settings-row"
+    >
+      <span>
+        <b>
+          Legal
+        </b>
+        <small>
+          Privacy Policy • Terms of Service
+        </small>
+      </span>
     </div>
 
-    <p style="text-align:center;margin:12px 0 2px;color:#8a8492;font-size:10px">
+    <div
+      class="settings-row"
+    >
+      <span>
+        <b>
+          Licenses
+        </b>
+        <small>
+          Open Source Licenses
+        </small>
+      </span>
+    </div>
+
+    <p
+      style="text-align:center;margin:12px 0 2px;color:#8a8492;font-size:10px"
+    >
       © 2026 Indoone
     </p>
   `;
