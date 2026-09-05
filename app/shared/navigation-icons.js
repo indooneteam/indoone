@@ -2,10 +2,10 @@
 (() => {
   const ICONS = {
     accounts: [
-      '<rect x="4" y="4" width="6" y="6" rx="1.5"></rect>',
-      '<rect x="14" y="4" width="6" height="6" rx="1.5"></rect>',
-      '<rect x="4" y="14" width="6" height="6" rx="1.5"></rect>',
-      '<rect x="14" y="14" width="6" height="6" rx="1.5"></rect>'
+      '<circle cx="9" cy="8" r="3"></circle>',
+      '<path d="M4.5 19c.6-3 2.1-4.5 4.5-4.5s3.9 1.5 4.5 4.5"></path>',
+      '<circle cx="16" cy="9" r="2.5"></circle>',
+      '<path d="M13.5 18.5c.5-2.2 1.7-3.4 3.5-3.4 1.7 0 2.9 1.2 3.5 3.4"></path>'
     ].join(''),
     lobby: [
       '<path d="M12 3.5 20.5 12 12 20.5 3.5 12 12 3.5Z"></path>',
