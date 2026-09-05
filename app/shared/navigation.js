@@ -13,41 +13,87 @@ window.showFavorites = async function () {
     const rows = favorites.length
       ? favorites
           .map(
-            a => `<button type="button" class="settings-row" style="width:100%;text-align:left;border:0;background:#fff;" onclick="closeModal();openAccount(${Number(a.id)})"><span>${a.name}<small>${a.email || 'Authenticator account'}</small></span><b>${a.code || '------'}</b></button>`
+            a => `
+              <button
+                type="button"
+                class="settings-row"
+                style="width:100%;text-align:left;border:0;background:#fff;"
+                onclick="closeModal();openAccount(${Number(a.id)})"
+              >
+                <span>
+                  ${a.name}
+                  <small>${a.email || 'Authenticator account'}</small>
+                </span>
+                <b>${a.code || '------'}</b>
+              </button>
+            `
           )
           .join('')
       : `<p style="text-align:center;padding:28px 0">No favorite accounts yet.</p>`;
 
-    openModal(
-      `<div class="modal-head"><h2>Favorites</h2><button class="close-btn" data-close>×</button></div><div id="favoritesList">${rows}</div><button class="primary" data-close>Done</button>`
-    );
+    openModal(`
+      <div class="modal-head">
+        <h2>Favorites</h2>
+        <button class="close-btn" data-close>×</button>
+      </div>
+      <div id="favoritesList">${rows}</div>
+      <button class="primary" data-close>Done</button>
+    `);
   } catch (error) {
     toast(error?.message || 'Could not load favorites');
   }
 };
 
 window.showTrash = function () {
-  openModal(
-    `<div class="modal-head"><h2>Trash</h2><button class="close-btn" data-close>×</button></div><p style="text-align:center;padding:28px 0">Deleted accounts are permanently removed from Firebase. Nothing is kept in Trash.</p><button class="primary" data-close>Done</button>`
-  );
+  openModal(`
+    <div class="modal-head">
+      <h2>Trash</h2>
+      <button class="close-btn" data-close>×</button>
+    </div>
+    <p style="text-align:center;padding:28px 0">
+      Deleted accounts are permanently removed from Firebase. Nothing is kept in Trash.
+    </p>
+    <button class="primary" data-close>Done</button>
+  `);
 };
 
 window.showSecurity = function () {
-  openModal(
-    `<h2>Security</h2><div class="settings-row"><span>Firebase account storage<small>Authenticator accounts synced to your user account</small></span><b>✓</b></div><div class="settings-row"><span>Local account storage<small>Not used for permanent account data</small></span><b>✓</b></div><button class="primary" data-close>Done</button>`
-  );
+  openModal(`
+    <h2>Security</h2>
+    <div class="settings-row">
+      <span>
+        Firebase account storage
+        <small>
+          Authenticator accounts synced to your user account
+        </small>
+      </span>
+      <b>✓</b>
+    </div>
+    <div class="settings-row">
+      <span>
+        Local account storage
+        <small>
+          Not used for permanent account data
+        </small>
+      </span>
+      <b>✓</b>
+    </div>
+    <button class="primary" data-close>Done</button>
+  `);
 };
 
 window.showAbout = function () {
-  openModal(
-    `<h2>About Indoone</h2><p>Indoone Authenticator — a login-based cloud-synced TOTP authenticator.</p><button class="primary" data-close>Done</button>`
-  );
+  openModal(`
+    <h2>About Indoone</h2>
+    <p>
+      Indoone Authenticator — a login-based cloud-synced TOTP authenticator.
+    </p>
+    <button class="primary" data-close>Done</button>
+  `);
 };
 
 // Keep Lock App packed with the menu items instead of pinning it to the bottom.
-document
-  .querySelector('.lock-item')
-  ?.style.setProperty('margin-top', '0');
+document.querySelector('.lock-item')?.style.setProperty('margin-top', '0');
 
 // Keep a clear, consistent space between the Indoone brand and the menu button.
 function applyTopbarBrandSpacing() {
@@ -61,13 +107,17 @@ function applyTopbarBrandSpacing() {
 // Replace drawer Unicode glyphs with one consistent SVG icon family.
 const DRAWER_ICONS = {
   accounts:
-    '<rect x="4" y="4" width="6" height="6" rx="1.5"></rect><rect x="14" y="4" width="6" height="6" rx="1.5"></rect><rect x="4" y="14" width="6" height="6" rx="1.5"></rect><rect x="14" y="14" width="6" height="6" rx="1.5"></rect>',
+    '<rect x="4" y="4" width="6" height="6" rx="1.5"></rect>' +
+    '<rect x="14" y="4" width="6" height="6" rx="1.5"></rect>' +
+    '<rect x="4" y="14" width="6" height="6" rx="1.5"></rect>' +
+    '<rect x="14" y="14" width="6" height="6" rx="1.5"></rect>',
   favorites:
     '<path d="m12 4 2.5 5.1 5.6.8-4 4 1 5.6-5.1-2.7-5.1 2.7 1-5.6-4-4 5.6-.8L12 4Z"></path>',
   trash:
     '<path d="M5 7h14M9 7V5h6v2M8 10v7M12 10v7M16 10v7M7 7l1 13h8l1-13"></path>',
   security:
-    '<path d="M12 3.5 19 6v5.2c0 4.4-2.8 7.5-7 9.3-4.2-1.8-7-4.9-7-9.3V6l7-2.5Z"></path><path d="m9 12 2 2 4-4"></path>',
+    '<path d="M12 3.5 19 6v5.2c0 4.4-2.8 7.5-7 9.3-4.2-1.8-7-4.9-7-9.3V6l7-2.5Z"></path>' +
+    '<path d="m9 12 2 2 4-4"></path>',
   about:
     '<circle cx="12" cy="12" r="8"></circle><path d="M12 10.5v5M12 7.5h.01"></path>',
   lock:
@@ -133,11 +183,13 @@ const MAIN_SVG_ICONS = {
   empty:
     '<path d="M4 12h16M12 4v16"></path>',
   pair:
-    '<path d="M8.5 8.5 6.7 10.3a4 4 0 0 0 5.7 5.7l1.8-1.8M15.5 15.5l1.8-1.8a4 4 0 0 0-5.7-5.7L9.8 9.8"></path><path d="m9.3 14.7 5.4-5.4"></path>',
+    '<path d="M8.5 8.5 6.7 10.3a4 4 0 0 0 5.7 5.7l1.8-1.8M15.5 15.5l1.8-1.8a4 4 0 0 0-5.7-5.7L9.8 9.8"></path>' +
+    '<path d="m9.3 14.7 5.4-5.4"></path>',
   connect:
     '<path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"></path>',
   devices:
-    '<rect x="3" y="5" width="13" height="10" rx="1.5"></rect><path d="M7 19h5M9.5 15v4M19 9h2v10h-7V9h2M16.5 11h3"></path>',
+    '<rect x="3" y="5" width="13" height="10" rx="1.5"></rect>' +
+    '<path d="M7 19h5M9.5 15v4M19 9h2v10h-7V9h2M16.5 11h3"></path>',
   status:
     '<path d="M4 17a11.5 11.5 0 0 1 16 0M7 14a7.4 7.4 0 0 1 10 0M10 11a3.4 3.4 0 0 1 4 0"></path>',
   phone:
@@ -347,21 +399,88 @@ function applySvgIconStyles() {
   const style = document.createElement('style');
   style.id = 'svg-icon-runtime-style';
   style.textContent = `
-    .ui-svg-icon{width:22px;height:22px;display:block;flex:none;color:currentColor;}
-    .topbar-svg-icon{width:21px;height:21px;margin:auto;}
-    .search-box .ui-svg-icon{width:18px;height:18px;}
-    #sortBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;}
-    #sortBtn .ui-svg-icon{width:15px;height:15px;}
-    .empty-icon .ui-svg-icon{width:27px;height:27px;}
-    .connect-action strong{display:grid;place-items:center;font-size:0;}
-    .connect-action strong .ui-svg-icon{width:25px;height:25px;}
-    .connect-status-icon .ui-svg-icon{width:23px;height:23px;}
-    .connect-choice .choice-icon{display:grid;place-items:center;font-size:0;}
-    .connect-choice .choice-icon .ui-svg-icon{width:22px;height:22px;}
-    .connect-choice .arrow .ui-svg-icon{width:18px;height:18px;}
-    .connect-back{display:inline-flex!important;align-items:center;gap:6px;}
-    .connect-back::before{content:none!important;}
-    .connect-back .ui-svg-icon{width:16px;height:16px;}
+    .ui-svg-icon {
+      width: 22px;
+      height: 22px;
+      display: block;
+      flex: none;
+      color: currentColor;
+    }
+
+    .topbar-svg-icon {
+      width: 21px;
+      height: 21px;
+      margin: auto;
+    }
+
+    .search-box .ui-svg-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    #sortBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    #sortBtn .ui-svg-icon {
+      width: 15px;
+      height: 15px;
+    }
+
+    .empty-icon .ui-svg-icon {
+      width: 27px;
+      height: 27px;
+    }
+
+    .connect-action strong {
+      display: grid;
+      place-items: center;
+      font-size: 0;
+    }
+
+    .connect-action strong .ui-svg-icon {
+      width: 25px;
+      height: 25px;
+    }
+
+    .connect-status-icon .ui-svg-icon {
+      width: 23px;
+      height: 23px;
+    }
+
+    .connect-choice .choice-icon {
+      display: grid;
+      place-items: center;
+      font-size: 0;
+    }
+
+    .connect-choice .choice-icon .ui-svg-icon {
+      width: 22px;
+      height: 22px;
+    }
+
+    .connect-choice .arrow .ui-svg-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .connect-back {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .connect-back::before {
+      content: none !important;
+    }
+
+    .connect-back .ui-svg-icon {
+      width: 16px;
+      height: 16px;
+    }
   `;
   document.head.appendChild(style);
 }
