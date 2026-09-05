@@ -1,4 +1,5 @@
 (() => {
+  const APP_VERSION = '1.8';
   const SETTINGS = [
     {
       id: 'profile',
@@ -36,7 +37,7 @@
     {
       id: 'about',
       title: 'About Indoone',
-      subtitle: 'Version 1.8',
+      subtitle: `Version ${APP_VERSION} · Updates`,
       icon: 'info',
       action: () => window.showAboutSettings?.()
     }
@@ -359,18 +360,18 @@
       <div class="about-mark">I</div>
       <h3 class="about-title">Indoone Authenticator</h3>
       <p class="about-copy">
-        Private authenticator with an encrypted local vault,
-        cloud sync and secure device pairing.
+        Private authenticator with cloud sync and secure device pairing.
+        Updates are checked automatically when the app opens.
       </p>
 
       <div class="about-meta">
         <span>Version</span>
-        <b>1.8</b>
+        <b>${APP_VERSION}</b>
       </div>
 
       <div class="about-meta">
-        <span>Storage</span>
-        <b>Encrypted vault</b>
+        <span>Updates</span>
+        <b>Automatic</b>
       </div>
 
       <button class="primary" data-close>Done</button>
