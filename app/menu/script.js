@@ -47,11 +47,6 @@
     return svg;
   };
 
-  const securityIcon = () => createSvg([
-    '<path d="M12 3.5 19 6v5.5c0 4.3-2.7 7.7-7 9-4.3-1.3-7-4.7-7-9V6z"></path>',
-    '<path d="m9.2 12 1.8 1.8 3.8-3.8"></path>'
-  ]);
-
   const termsIcon = () => createSvg([
     '<path d="M7 3.5h7l3.5 3.5v13.5H7z"></path>',
     '<path d="M14 3.5V7h3.5"></path>',
@@ -64,35 +59,6 @@
     '<path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5z"></path>',
     '<circle cx="12" cy="12" r="2.2"></circle>'
   ]);
-
-  function replaceSecurityIcon(item) {
-    if (!item) return;
-
-    const oldIcon = item.querySelector(
-      '[data-indoone-security-icon]'
-    );
-
-    if (oldIcon) return;
-
-    item
-      .childNodes
-      .forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          node.remove();
-        }
-      });
-
-    const icon = securityIcon();
-    icon.setAttribute(
-      'data-indoone-security-icon',
-      'true'
-    );
-
-    item.insertBefore(
-      icon,
-      item.firstChild
-    );
-  }
 
   function createLegalMenuItem(type, label) {
     const item = document.createElement('button');
@@ -124,8 +90,6 @@
     const aboutItem = panel.querySelector(
       '[data-action="about"]'
     );
-
-    replaceSecurityIcon(securityItem);
 
     if (!securityItem || !aboutItem) return;
 
