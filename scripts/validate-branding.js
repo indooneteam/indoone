@@ -24,16 +24,24 @@ assert(
   'Shared branding connector must use inline SVG logo markup.'
 );
 assert(
-  brandingJs.includes('viewBox', 0),
-  'Shared branding connector is missing inline SVG geometry.'
+  brandingJs.includes("viewBox', '0 0 48 48'"),
+  'Shared branding connector is missing the compact logo viewBox.'
 );
 assert(
-  brandingJs.includes('indooneBrandGradient'),
-  'Shared branding connector is missing the Indoone gradient.'
+  brandingJs.includes('<circle cx="24" cy="12" r="5"'),
+  'Shared branding connector is missing the minimal dot.'
 );
 assert(
-  brandingJs.includes('20260906-logo-6'),
-  'Shared branding connector is not using the current branding cache version.'
+  brandingJs.includes('<rect x="17.5" y="21" width="13" height="22"'),
+  'Shared branding connector is missing the minimal rounded stem.'
+);
+assert(
+  brandingJs.includes('20260906-logo-9'),
+  'Shared branding connector is not using the current logo cache version.'
+);
+assert(
+  !brandingJs.includes('assets/branding/indoone-logo.png'),
+  'Shared branding connector still references the old PNG logo asset.'
 );
 
 const index = read('index.html');
@@ -41,30 +49,50 @@ assert(index.includes('class="brand-mark"'), 'index.html is missing the shared b
 
 const login = read('app/auth/login/login.js');
 const signup = read('app/auth/signup/signup.js');
-assert(login.includes('indooneLoginGradient'), 'Login does not contain inline Indoone SVG branding.');
-assert(signup.includes('indooneSignupGradient'), 'Signup does not contain inline Indoone SVG branding.');
+assert(login.includes('class="auth-mark"'), 'Login is missing the shared auth logo placeholder.');
+assert(signup.includes('class="auth-mark"'), 'Signup is missing the shared auth logo placeholder.');
+assert(!login.includes('indooneLoginGradient'), 'Login still contains an obsolete duplicate logo definition.');
+assert(!signup.includes('indooneSignupGradient'), 'Signup still contains an obsolete duplicate logo definition.');
 assert(!login.includes('assets/branding/'), 'Login still references an external branding asset.');
 assert(!signup.includes('assets/branding/'), 'Signup still references an external branding asset.');
 
 const settingsAbout = read('app/settings/about/index.html');
-assert(settingsAbout.includes('indooneSettingsAboutGradient'), 'Settings About does not contain inline Indoone SVG branding.');
+assert(settingsAbout.includes('class="about-mark"'), 'Settings About is missing the shared logo placeholder.');
+assert(!settingsAbout.includes('indooneSettingsAboutGradient'), 'Settings About still contains an obsolete duplicate logo definition.');
 assert(!settingsAbout.includes('assets/branding/'), 'Settings About still references an external branding asset.');
 
 const menuAbout = read('app/menu/about/script.js');
-assert(menuAbout.includes('indooneMenuAboutGradient'), 'Menu About does not contain inline Indoone SVG branding.');
+assert(menuAbout.includes('class="token-icon"'), 'Menu About is missing the shared logo placeholder.');
+assert(!menuAbout.includes('indooneMenuAboutGradient'), 'Menu About still contains an obsolete duplicate logo definition.');
 assert(!menuAbout.includes('assets/branding/'), 'Menu About still references an external branding asset.');
 
 const brandingFiles = fs.readdirSync(brandingDir);
 const svgFiles = brandingFiles.filter(file => file.toLowerCase().endsWith('.svg'));
 assert(svgFiles.length === 0, `External branding SVG files must be deleted: ${svgFiles.join(', ')}`);
 
+const oldRasterFiles = [
+  'assets/branding/indoone-logo.png',
+  'assets/branding/indoone-mark.png',
+  'android/app/src/main/res/drawable-nodpi/indoone_logo.png',
+  'android/app/src/main/res/drawable-nodpi/indoone_mark.png'
+];
+for (const relativePath of oldRasterFiles) {
+  assert(!fs.existsSync(path.join(root, relativePath)), `Obsolete logo asset still exists: ${relativePath}`);
+}
+
 const gradle = read('android/app/build.gradle');
 assert(!gradle.includes('exact-logo'), 'Android Gradle still contains stale exact-logo references.');
 assert(!gradle.includes('exact-logo-v2'), 'Android Gradle still contains stale exact-logo-v2 references.');
 
 read('android/app/src/main/AndroidManifest.xml');
-read('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
-read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
+const launcher = read('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
+const splashLogo = read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
+assert(launcher.includes('<vector '), 'Android launcher logo must be a direct vector drawable.');
+assert(splashLogo.includes('<vector '), 'Android splash logo must be a direct vector drawable.');
+assert(launcher.includes('#7C3AED'), 'Android launcher logo is missing the purple fill.');
+assert(splashLogo.includes('#7C3AED'), 'Android splash logo is missing the purple fill.');
+assert(!launcher.includes('indoone_mark'), 'Android launcher still references the old PNG logo.');
+assert(!splashLogo.includes('indoone_logo'), 'Android splash still references the old PNG logo.');
 
 const forbidden = [
   'assets/branding/indoone-exact.svg',
@@ -78,4 +106,4 @@ for (const relativePath of forbidden) {
   assert(!fs.existsSync(path.join(root, relativePath)), `Stale branding artifact still exists: ${relativePath}`);
 }
 
-console.log('Branding validation passed. Web branding is inline SVG, external branding SVG files are absent, and Android branding inputs remain present.');
+console.log('Branding validation passed. Indoone uses one compact inline logo source across web UI and direct vector code for Android launcher/splash, with external logo assets removed.');
