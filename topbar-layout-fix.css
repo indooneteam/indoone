@@ -127,6 +127,8 @@
   padding: 0 !important;
   overflow: visible !important;
   object-fit: contain !important;
+  transform: scale(0.94) translateY(-1px) !important;
+  transform-origin: center center !important;
 }
 
 .topbar-left .brand {
