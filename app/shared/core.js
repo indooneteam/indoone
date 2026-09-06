@@ -114,7 +114,7 @@ window.toast = function (message) {
   if (existing) return;
 
   const script = document.createElement('script');
-  script.src = 'assets/branding/branding.js?v=20260906d';
+  script.src = 'assets/branding/branding.js?v=20260906-stable-logo-2';
   script.async = false;
   script.dataset.indooneBranding = 'true';
   document.head.appendChild(script);
