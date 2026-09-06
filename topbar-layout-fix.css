@@ -1,3 +1,12 @@
+/* Keep the native Android inset compensation from shifting the topbar twice.
+   The WebView is laid out below the system bar on some devices, so the topbar
+   itself must stay at one consistent visual height across devices. */
+html body .topbar {
+  min-height: 76px !important;
+  height: 76px !important;
+  padding: 18px 18px 8px !important;
+}
+
 .topbar {
   min-height: 76px;
   height: auto;
@@ -86,6 +95,12 @@
 }
 
 @media (max-width: 360px) {
+  html body .topbar {
+    min-height: 70px !important;
+    height: 70px !important;
+    padding: 18px 13px 8px !important;
+  }
+
   .topbar {
     min-height: 70px;
     padding-left: 13px;
