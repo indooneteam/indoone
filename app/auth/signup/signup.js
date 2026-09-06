@@ -46,7 +46,11 @@
   function html() {
     return `
       <div class="auth-brand">
-        <span class="auth-mark">I</span>
+        <img
+          class="auth-mark"
+          src="assets/branding/indoone-exact.svg"
+          alt="Indoone logo"
+        />
         <div>
           <strong>Indoone</strong>
           <small>Authenticator</small>
