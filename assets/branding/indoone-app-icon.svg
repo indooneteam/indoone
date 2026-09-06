@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Indoone app icon</title>
-  <desc id="desc">Dark premium purple circle with white I and two lavender leaves above it.</desc>
+  <title id="title">Indoone logo</title>
+  <desc id="desc">Dark premium purple circle with white I and two lavender leaves above the circle.</desc>
   <defs>
     <radialGradient id="circle" cx="34%" cy="24%" r="90%">
       <stop offset="0" stop-color="#4A32A8"/>
