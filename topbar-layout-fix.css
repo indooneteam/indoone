@@ -26,41 +26,7 @@
 .topbar-left .brand-mark {
   width: 34px;
   height: 34px;
-  border-radius: 11px;
-  font-size: 0;
-  background: linear-gradient(145deg, #6330db, #9147ed);
-  box-shadow: 0 6px 15px #703be333;
   position: relative;
-  overflow: hidden;
-}
-
-.topbar-left .brand-mark::before,
-.drawer-brand .brand-mark::before,
-.auth-mark::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 5px;
-  height: 20px;
-  border-radius: 1px;
-  background: #ffffff;
-  transform: translate(-50%, -50%);
-}
-
-.topbar-left .brand-mark::after,
-.drawer-brand .brand-mark::after,
-.auth-mark::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 14px;
-  height: 4px;
-  border-radius: 1px;
-  background: #ffffff;
-  transform: translate(-50%, -10px);
-  box-shadow: 0 16px 0 #ffffff;
 }
 
 .topbar-left .brand strong {
@@ -92,11 +58,9 @@
 }
 
 .drawer-brand .brand-mark {
-  font-size: 0;
-  background: linear-gradient(145deg, #6330db, #9147ed);
-  box-shadow: 0 6px 15px #703be333;
+  width: 40px;
+  height: 40px;
   position: relative;
-  overflow: hidden;
 }
 
 .drawer-brand small,
@@ -110,53 +74,12 @@
 }
 
 .auth-mark {
-  background: linear-gradient(145deg, #6330db, #9147ed);
-  box-shadow: 0 9px 22px #703be333;
-  font-size: 0;
   position: relative;
-  overflow: hidden;
 }
 
-/* Canonical approved leaf logo. Use it directly everywhere and never
-   paint a second synthetic "I" on top of it. */
-.brand-mark,
-.auth-mark {
-  background-image: url("assets/branding/indoone-exact.svg?v=20260906-leaf") !important;
-  background-repeat: no-repeat !important;
-  background-position: center center !important;
-  background-size: contain !important;
-  background-color: transparent !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  color: transparent !important;
-  font-size: 0 !important;
-  overflow: visible !important;
-}
-
-.brand-mark::before,
-.brand-mark::after,
-.auth-mark::before,
-.auth-mark::after {
-  content: none !important;
-  display: none !important;
-}
-
-.topbar-left .brand-mark {
-  width: 34px !important;
-  height: 34px !important;
-}
-
-.drawer-brand .brand-mark {
-  width: 40px !important;
-  height: 40px !important;
-}
-
-.auth-mark {
-  width: 82px !important;
-  height: 82px !important;
-}
-
-.topbar-left .brand {
+.topbar-left .brand,
+.drawer-brand,
+.auth-brand {
   min-height: 42px;
 }
 
@@ -177,8 +100,8 @@
   }
 
   .topbar-left .brand-mark {
-    width: 32px !important;
-    height: 32px !important;
+    width: 32px;
+    height: 32px;
   }
 
   .topbar-left .brand strong {
