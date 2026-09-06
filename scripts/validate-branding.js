@@ -93,13 +93,21 @@ const launcher = read('android/app/src/main/res/drawable/ic_launcher_foreground.
 const splashLogo = read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
 const splashGlow = read('android/app/src/main/res/drawable/indoone_splash_glow.xml');
 const splashScreen = read('android/app/src/main/res/drawable/splash_screen.xml');
+const splashColors = read('android/app/src/main/res/values/colors.xml');
 assert(launcher.includes('<vector '), 'Android launcher logo must be a direct vector drawable.');
 assert(splashLogo.includes('<vector '), 'Android splash logo must be a direct vector drawable.');
 assert(splashGlow.includes('<vector '), 'Android splash glow must be a direct vector drawable.');
 assert(launcher.includes('#A855F7') && launcher.includes('#7C3AED') && launcher.includes('#5B21B6'), 'Android launcher logo is missing the premium gradient palette.');
 assert(splashLogo.includes('#A855F7') && splashLogo.includes('#FFFFFF'), 'Android splash logo is missing the Design 2 purple ring and white center.');
 assert(splashGlow.includes('#60A5FA') && splashGlow.includes('#A855F7'), 'Android splash glow is missing the purple-blue glow palette.');
-assert(splashScreen.includes('#05030A') && splashScreen.includes('@drawable/indoone_splash_glow') && splashScreen.includes('@drawable/indoone_splash_logo'), 'Android splash screen is missing the Design 2 dark glow composition.');
+assert(
+  (splashScreen.includes('#05030A') || splashScreen.includes('@color/indoone_splash_background')) &&
+  splashScreen.includes('@drawable/indoone_splash_glow') &&
+  splashScreen.includes('@drawable/indoone_splash_logo') &&
+  splashColors.includes('name="indoone_splash_background"') &&
+  splashColors.includes('#05030A'),
+  'Android splash screen is missing the Design 2 dark glow composition.'
+);
 assert(launcher.includes('M54,14.625'), 'Android launcher ring geometry is missing the compact premium ring.');
 assert(splashLogo.includes('M54,14.625'), 'Android splash ring geometry is missing the compact premium ring.');
 assert(launcher.includes('M46.4625,36.5625'), 'Android launcher dot geometry is missing.');
