@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "versionName": "2.1.5",
+  "versionCode": 18,
+  "versionName": "2.1.6",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.5 release. Replaced the legacy ring logo with Spark 06 branding across web and Android surfaces."
+  "notes": "Indoone 2.1.6 release. Fixed Android header vertical alignment across devices."
 }
