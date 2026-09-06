@@ -1,5 +1,11 @@
 // Single source of truth for the four bottom-navigation SVG icons and Lobby status icon.
 (() => {
+  const brandingLoader = document.createElement('script');
+  brandingLoader.src =
+    'app/shared/branding.js?v=20260906-logo-1';
+  brandingLoader.async = false;
+  document.head.appendChild(brandingLoader);
+
   const ICONS = {
     accounts: [
       '<circle cx="9" cy="8" r="3"></circle>',
