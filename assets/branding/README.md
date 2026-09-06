@@ -2,7 +2,7 @@
 
 `indoone-master.svg` is the single source of truth for the final Indoone logo.
 
-- `indoone-master.svg` — final master artwork: dark premium purple circle, white `I`, and two lavender leaves above the circle.
+- `indoone-master.svg` — final master artwork: minimal deep-purple `in` monogram with a lavender leaf above the mark.
 - `indoone-mark.svg` — compatibility copy kept aligned with the master artwork.
 - `indoone-mark-white.svg` — legacy dark-surface variant kept for compatibility.
 - `indoone-splash.svg` — compatibility copy kept aligned with the master artwork.
@@ -11,4 +11,4 @@
 
 Do not add alternate web logo files for individual screens. New UI branding must use `assets/branding/indoone-master.svg`.
 
-Android launcher and splash resources use native vector resources that reproduce the same master artwork for reliable startup rendering. The Android launcher may still apply the platform's adaptive-icon mask outside the master artwork.
+Android launcher and splash resources use native vector resources that reproduce the same Minimal In artwork for reliable startup rendering. The Android launcher may still apply the platform's adaptive-icon mask outside the master artwork.
