@@ -18,6 +18,9 @@
   order: 1;
   padding: 4px 10px;
   gap: 9px;
+  overflow: visible;
+  align-items: center;
+  line-height: 0;
 }
 
 .topbar-left .brand-mark {
@@ -112,6 +115,22 @@
   font-size: 0;
   position: relative;
   overflow: hidden;
+}
+
+/* The exact raster mark has artwork close to its source bounds. Keep a small
+   safety inset in the compact topbar so no edge gets visually clipped. */
+.topbar-left .brand-mark.branding-image {
+  width: 34px !important;
+  height: 34px !important;
+  max-width: 34px !important;
+  max-height: 34px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  object-fit: contain !important;
+}
+
+.topbar-left .brand {
+  min-height: 42px;
 }
 
 @media (max-width: 360px) {
