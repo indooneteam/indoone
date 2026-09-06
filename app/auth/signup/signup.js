@@ -48,7 +48,7 @@
       <div class="auth-brand">
         <img
           class="auth-mark"
-          src="assets/branding/indoone-master.svg?v=20260906-logo-2"
+          src="assets/branding/indoone-master.svg?v=20260906-logo-3"
           alt="Indoone logo"
         />
         <div>
