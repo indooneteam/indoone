@@ -43,7 +43,7 @@ function clearHomeSubRoute() {
 function appLockBlocksAccess() {
   return Boolean(
     window.IndoonePersistence?.hasAppLock?.() &&
-    !window.IndonePersistence?.isUnlocked?.()
+    !window.IndoonePersistence?.isUnlocked?.()
   );
 }
 
