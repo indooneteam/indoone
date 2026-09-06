@@ -1,6 +1,6 @@
 {
-  "versionCode": 14,
-  "versionName": "2.1.2",
+  "versionCode": 15,
+  "versionName": "2.1.3",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.2 release."
+  "notes": "Indoone 2.1.3 release. Android 12+ splash updated to Design 2."
 }
