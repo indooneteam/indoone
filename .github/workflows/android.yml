@@ -2,9 +2,9 @@ name: Android Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, merge/main-into-develop-prep-2026-09-06 ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, merge/main-into-develop-prep-2026-09-06 ]
 
 jobs:
   build:
