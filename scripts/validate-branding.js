@@ -38,6 +38,10 @@ assert(
   brandingJs.includes("assets/branding/indoone-master.svg"),
   'Shared branding connector does not point to the canonical master logo.'
 );
+assert(
+  brandingJs.includes('20260906-logo-3'),
+  'Shared branding connector is not using the current logo cache version.'
+);
 
 const index = read('index.html');
 assert(index.includes('class="brand-mark"'), 'index.html is missing the shared brand placeholder.');
@@ -47,6 +51,10 @@ for (const relativePath of ['app/auth/login/login.js', 'app/auth/signup/signup.j
   assert(
     content.includes('assets/branding/indoone-master.svg'),
     `${relativePath} does not use the canonical master logo.`
+  );
+  assert(
+    content.includes('20260906-logo-3'),
+    `${relativePath} is not using the current logo cache version.`
   );
 }
 
@@ -61,6 +69,7 @@ read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
 const forbidden = [
   'assets/branding/indoone-exact.svg',
   'assets/branding/branding.js',
+  'assets/branding/indoone-mark-white.svg',
   'assets/branding/exact-logo/',
   'assets/branding/exact-logo-v2/',
   'assets/branding/exact-logo-v3.txt'
@@ -69,4 +78,4 @@ for (const relativePath of forbidden) {
   assert(!fs.existsSync(path.join(root, relativePath)), `Stale branding artifact still exists: ${relativePath}`);
 }
 
-console.log('Branding validation passed. Canonical web SVGs, shared references, and Android branding inputs are present and consistent.');
+console.log('Branding validation passed. Canonical web SVGs, shared references, current cache version, and Android branding inputs are present and consistent.');
