@@ -2,7 +2,7 @@
 (() => {
   const brandingLoader = document.createElement('script');
   brandingLoader.src =
-    'app/shared/branding.js?v=20260906-logo-9';
+    'app/shared/branding.js?v=20260906-logo-10';
   brandingLoader.async = false;
   document.head.appendChild(brandingLoader);
 
