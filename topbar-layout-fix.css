@@ -10,22 +10,22 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 14px;
+  gap: 13px;
   min-width: 0;
 }
 
 .topbar-left .brand {
   order: 1;
   padding: 4px 10px;
-  gap: 9px;
+  gap: 8px;
   overflow: visible;
   align-items: center;
   line-height: 0;
 }
 
 .topbar-left .brand-mark {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   position: relative;
 }
 
@@ -33,6 +33,7 @@
   font-size: 22px;
   line-height: 22px;
   color: #6330db;
+  letter-spacing: -0.2px;
 }
 
 .topbar-left .brand small {
@@ -55,11 +56,12 @@
 
 .drawer-brand {
   align-items: center;
+  gap: 8px;
 }
 
 .drawer-brand .brand-mark {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   position: relative;
 }
 
@@ -91,17 +93,18 @@
   }
 
   .topbar-left {
-    gap: 10px;
+    gap: 9px;
   }
 
   .topbar-left .brand {
     padding-left: 4px;
     padding-right: 4px;
+    gap: 7px;
   }
 
   .topbar-left .brand-mark {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 
   .topbar-left .brand strong {
