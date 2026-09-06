@@ -137,6 +137,99 @@
     }, 100);
   }
 
+  window.showChangeAppPin = function () {
+    openModal(`
+      <div class="modal-head">
+        <h2>Change your PIN</h2>
+        <button class="close-btn" data-close aria-label="Close">×</button>
+      </div>
+      <p>
+        Enter your current App PIN, then choose a new 4–12 digit PIN.
+      </p>
+
+      <div class="field">
+        <label>Current PIN</label>
+        <input
+          id="currentVaultPin"
+          type="password"
+          inputmode="numeric"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="Current PIN"
+        >
+      </div>
+
+      <div class="field">
+        <label>New PIN</label>
+        <input
+          id="newVaultPin"
+          type="password"
+          inputmode="numeric"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="4–12 digits"
+        >
+      </div>
+
+      <div class="field">
+        <label>Confirm new PIN</label>
+        <input
+          id="confirmVaultPin"
+          type="password"
+          inputmode="numeric"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="Re-enter new PIN"
+        >
+      </div>
+
+      <button class="primary" id="changeVaultPinAction">
+        Change PIN
+      </button>
+    `);
+
+    document
+      .getElementById('changeVaultPinAction')
+      ?.addEventListener('click', async () => {
+        const currentPin =
+          document.getElementById('currentVaultPin')?.value || '';
+        const newPin =
+          document.getElementById('newVaultPin')?.value || '';
+        const confirmPin =
+          document.getElementById('confirmVaultPin')?.value || '';
+
+        if (!/^\d{4,12}$/.test(currentPin)) {
+          return toast('Current PIN must be 4–12 digits');
+        }
+
+        if (!/^\d{4,12}$/.test(newPin)) {
+          return toast('New PIN must be 4–12 digits');
+        }
+
+        if (newPin !== confirmPin) {
+          return toast('New PINs do not match');
+        }
+
+        if (newPin === currentPin) {
+          return toast('New PIN must be different from the current PIN');
+        }
+
+        try {
+          const verified = await IndoonePersistence.unlock(currentPin);
+
+          if (!verified) {
+            return toast('Incorrect current PIN');
+          }
+
+          await IndoonePersistence.save([], newPin);
+          closeModal();
+          toast('App PIN changed');
+        } catch (error) {
+          toast(error?.message || 'App PIN change failed');
+        }
+      });
+  };
+
   window.showAppLock = function (mode = 'unlock') {
     const hasPin = IndoonePersistence.hasAppLock();
     const title =
@@ -178,7 +271,18 @@
             : 'Create App PIN'
         }
       </button>
+      ${
+        hasPin && mode !== 'setup'
+          ? '<button class="secondary" id="changeAppPinAction">Change your PIN</button>'
+          : ''
+      }
     `);
+
+    document
+      .getElementById('changeAppPinAction')
+      ?.addEventListener('click', () => {
+        window.showChangeAppPin();
+      });
 
     document
       .getElementById('vaultPinAction')
