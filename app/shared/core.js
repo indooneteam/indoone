@@ -43,7 +43,7 @@ function clearHomeSubRoute() {
 function appLockBlocksAccess() {
   return Boolean(
     window.IndoonePersistence?.hasAppLock?.() &&
-    !window.IndoonePersistence?.isUnlocked?.()
+    !window.IndonePersistence?.isUnlocked?.()
   );
 }
 
@@ -107,15 +107,3 @@ window.toast = function (message) {
     1800
   );
 };
-
-(() => {
-  const existing = document.querySelector('script[data-indoone-branding]');
-
-  if (existing) return;
-
-  const script = document.createElement('script');
-  script.src = 'assets/branding/branding.js?v=20260906-stable-logo-2';
-  script.async = false;
-  script.dataset.indooneBranding = 'true';
-  document.head.appendChild(script);
-})();
