@@ -9,5 +9,11 @@
         android:strokeWidth="3.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M54,6 A48,48 0,1 1,53.9 6 M48,39 A6,6 0,1 0,60,39 A6,6 0,1 0,48,39 M46,49 H62 V79 A8,8 0,0 1,54,87 A8,8 0,0 1,46,79 Z" />
+        android:pathData="M54,6 A48,48 0,1 1,54,102 A48,48 0,1 1,54,6" />
+    <path
+        android:fillColor="#7C3AED"
+        android:pathData="M48,39 A6,6 0,1 0,60,39 A6,6 0,1 0,48,39" />
+    <path
+        android:fillColor="#7C3AED"
+        android:pathData="M46,49 H62 V79 A8,8 0,0 1,54,87 A8,8 0,0 1,46,79 Z" />
 </vector>
