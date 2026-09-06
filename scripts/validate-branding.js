@@ -93,10 +93,14 @@ const launcher = read('android/app/src/main/res/drawable/ic_launcher_foreground.
 const splashLogo = read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
 assert(launcher.includes('<vector '), 'Android launcher logo must be a direct vector drawable.');
 assert(splashLogo.includes('<vector '), 'Android splash logo must be a direct vector drawable.');
-assert(launcher.includes('#7C3AED'), 'Android launcher logo is missing the purple ring/stem.');
-assert(splashLogo.includes('#7C3AED'), 'Android splash logo is missing the purple ring/stem.');
-assert(launcher.includes('M54,6'), 'Android launcher ring geometry is missing.');
-assert(splashLogo.includes('M54,6'), 'Android splash ring geometry is missing.');
+assert(launcher.includes('#A855F7') && launcher.includes('#7C3AED') && launcher.includes('#5B21B6'), 'Android launcher logo is missing the premium gradient palette.');
+assert(splashLogo.includes('#A855F7') && splashLogo.includes('#7C3AED') && splashLogo.includes('#5B21B6'), 'Android splash logo is missing the premium gradient palette.');
+assert(launcher.includes('M54,14.625'), 'Android launcher ring geometry is missing the compact premium ring.');
+assert(splashLogo.includes('M54,14.625'), 'Android splash ring geometry is missing the compact premium ring.');
+assert(launcher.includes('M46.4625,36.5625'), 'Android launcher dot geometry is missing.');
+assert(splashLogo.includes('M46.4625,36.5625'), 'Android splash dot geometry is missing.');
+assert(launcher.includes('M45.3375,49.5'), 'Android launcher stem geometry is missing.');
+assert(splashLogo.includes('M45.3375,49.5'), 'Android splash stem geometry is missing.');
 assert(!launcher.includes('indoone_mark'), 'Android launcher still references the old PNG logo.');
 assert(!splashLogo.includes('indoone_logo'), 'Android splash still references the old PNG logo.');
 
