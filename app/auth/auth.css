@@ -20,7 +20,6 @@
   padding-left: 42px !important;
 }
 
-/* Authentication uses the same canonical logo asset as the main app. */
 .indoone-auth-screen .auth-mark {
   width: 82px !important;
   height: 82px !important;
@@ -28,18 +27,10 @@
   display: block !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background-color: transparent !important;
-  background-image: url("../../assets/branding/indoone-master.svg?v=20260906-final-brand") !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  background-size: contain !important;
+  background: transparent !important;
   box-shadow: none !important;
   font-size: 0 !important;
   overflow: visible !important;
-}
-
-.indoone-auth-screen .auth-mark::before,
-.indoone-auth-screen .auth-mark::after {
-  content: none !important;
-  display: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
 }
