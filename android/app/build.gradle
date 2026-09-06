@@ -12,8 +12,8 @@ android {
 
     defaultConfig {
         applicationId 'com.indoone.authenticator'
-        versionCode 16
-        versionName '2.1.4'
+        versionCode 17
+        versionName '2.1.5'
         minSdk 26
         targetSdk 35
     }
