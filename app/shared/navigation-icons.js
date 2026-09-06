@@ -2,7 +2,7 @@
 (() => {
   const brandingLoader = document.createElement('script');
   brandingLoader.src =
-    'app/shared/branding.js?v=20260906-logo-3';
+    'app/shared/branding.js?v=20260906-logo-6';
   brandingLoader.async = false;
   document.head.appendChild(brandingLoader);
 
@@ -127,8 +127,6 @@
     });
   }
 
-  // Re-clicking the currently active bottom-navigation tab refreshes only
-  // that section. It does not create a new page/history state.
   document.addEventListener(
     'click',
     async event => {
