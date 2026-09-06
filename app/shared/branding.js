@@ -1,7 +1,7 @@
 (() => {
   const LOGO_SOURCE = 'assets/branding/indoone-master.svg';
   const APP_ICON_SOURCE = 'assets/branding/indoone-logo.png';
-  const BRAND_VERSION = '20260906-logo-5';
+  const BRAND_VERSION = '20260906-logo-3';
 
   function createLogo(className, alt = 'Indoone logo') {
     const image = document.createElement('img');
