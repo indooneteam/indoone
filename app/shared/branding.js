@@ -4,7 +4,7 @@
   function createLogo(className, alt = 'Indoone logo') {
     const image = document.createElement('img');
 
-    image.src = `${LOGO_SOURCE}?v=20260906-logo-2`;
+    image.src = `${LOGO_SOURCE}?v=20260906-logo-3`;
     image.alt = alt;
     image.className = `${className} branding-image`;
     image.draggable = false;
