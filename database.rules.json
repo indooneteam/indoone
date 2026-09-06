@@ -4,17 +4,19 @@
       ".read": "auth != null && query.orderByChild == 'profile/email' && query.equalTo == auth.token.email",
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && (auth.uid === $uid || (newData.val() === null && data.child('profile/email').val() === auth.token.email))",
+        ".write": "auth != null && auth.uid === $uid",
         "profile": {
           ".validate": "newData.hasChildren(['uid','email','updatedAt']) && newData.child('uid').val() === $uid"
         },
         "accounts": {
           "$accountId": {
+            ".write": "auth != null && (auth.uid === $uid || (newData.val() === null && data.child('email').val() === auth.token.email))",
             ".validate": "newData.hasChildren(['id','name','secret','digits','period','algorithm','updatedAt']) && newData.child('id').val() === $accountId * 1 && newData.child('digits').val() in [6,8] && newData.child('period').val() in [30,60] && newData.child('algorithm').val() in ['SHA1','SHA256','SHA512']"
           }
         },
         "trash": {
           "$accountId": {
+            ".write": "auth != null && (auth.uid === $uid || (newData.val() === null && data.child('email').val() === auth.token.email))",
             ".validate": "newData.hasChildren(['id','name','secret','digits','period','algorithm','updatedAt','deletedAt','purgeAt']) && newData.child('id').val() === $accountId * 1 && newData.child('digits').val() in [6,8] && newData.child('period').val() in [30,60] && newData.child('algorithm').val() in ['SHA1','SHA256','SHA512'] && newData.child('purgeAt').val() === newData.child('deletedAt').val() + 2592000000 && newData.child('deletedAt').val() <= now"
           }
         }

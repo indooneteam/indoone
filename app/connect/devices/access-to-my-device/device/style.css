@@ -1,0 +1,9 @@
+.device-feature {
+  width: 100%;
+}
+
+.device-content {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}

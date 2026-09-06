@@ -1,0 +1,129 @@
+/* Keep the native Android inset compensation from shifting the topbar twice.
+   The WebView is laid out below the system bar on some devices, so the topbar
+   itself must stay at one consistent visual height across devices. */
+html body .topbar {
+  min-height: 76px !important;
+  height: 76px !important;
+  padding: 18px 18px 8px !important;
+}
+
+.topbar {
+  min-height: 76px;
+  height: auto;
+  align-items: center;
+  padding: 18px 18px 8px;
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 13px;
+  min-width: 0;
+}
+
+.topbar-left .brand {
+  order: 1;
+  padding: 4px 10px;
+  gap: 8px;
+  overflow: visible;
+  align-items: center;
+  line-height: 0;
+}
+
+.topbar-left .brand-mark {
+  width: 32px;
+  height: 32px;
+  position: relative;
+}
+
+.topbar-left .brand strong {
+  font-size: 22px;
+  line-height: 22px;
+  color: #6330db;
+  letter-spacing: -0.2px;
+}
+
+.topbar-left .brand small {
+  display: none;
+}
+
+.topbar-left .menu-top-btn {
+  order: 2;
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+  font-size: 23px;
+  line-height: 1;
+  transform: translateY(4px);
+}
+
+.topbar .top-actions {
+  align-self: center;
+}
+
+.drawer-brand {
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-brand .brand-mark {
+  width: 34px;
+  height: 34px;
+  position: relative;
+}
+
+.drawer-brand small,
+.auth-brand small {
+  display: none;
+}
+
+.drawer-brand strong,
+.auth-brand strong {
+  color: #6330db;
+}
+
+.auth-mark {
+  position: relative;
+}
+
+.topbar-left .brand,
+.drawer-brand,
+.auth-brand {
+  min-height: 42px;
+}
+
+@media (max-width: 360px) {
+  /* Keep the same vertical geometry on compact phones; only reduce horizontal
+     spacing and text/icon sizes so the header does not move vertically. */
+  html body .topbar {
+    min-height: 76px !important;
+    height: 76px !important;
+    padding: 18px 13px 8px !important;
+  }
+
+  .topbar {
+    min-height: 76px;
+  }
+
+  .topbar-left {
+    gap: 9px;
+  }
+
+  .topbar-left .brand {
+    padding-left: 4px;
+    padding-right: 4px;
+    gap: 7px;
+  }
+
+  .topbar-left .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .topbar-left .brand strong {
+    font-size: 19px;
+    line-height: 19px;
+  }
+}

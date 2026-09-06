@@ -32,14 +32,12 @@ public final class NativeBridge {
         this.activity = activity;
     }
 
-    @JavascriptInterface
-    public void authenticateBiometric() {
-        authenticate(false);
-    }
+    @JavascriptInterface public void authenticateBiometric() { authenticate(false); }
+    @JavascriptInterface public void authenticateBiometricUnlock() { authenticate(true); }
 
     @JavascriptInterface
-    public void authenticateBiometricUnlock() {
-        authenticate(true);
+    public void setSecureScreen(boolean enabled) {
+        activity.runOnUiThread(() -> activity.setSecureScreen(enabled));
     }
 
     @JavascriptInterface
@@ -51,17 +49,18 @@ public final class NativeBridge {
     @JavascriptInterface
     public boolean saveBiometricSecret(String pin) {
         if (pin == null || !pin.matches("\\d{4,12}")) return false;
+
         try {
             SecretKey key = getOrCreateKey();
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] ciphertext = cipher.doFinal(pin.getBytes(StandardCharsets.UTF_8));
             SharedPreferences prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            prefs.edit()
+            boolean saved = prefs.edit()
                     .putString(PREF_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
                     .putString(PREF_IV, Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP))
-                    .apply();
-            return true;
+                    .commit();
+            return saved && hasBiometricSecret();
         } catch (Exception error) {
             return false;
         }
@@ -69,69 +68,95 @@ public final class NativeBridge {
 
     @JavascriptInterface
     public void clearBiometricSecret() {
-        activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply();
+        activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit();
+    }
+
+    @JavascriptInterface public void requestCameraPermission() { activity.requestCameraPermission(); }
+    @JavascriptInterface public void requestNearbyPermissions() { activity.requestNearbyPermissions(); }
+    @JavascriptInterface public boolean isCameraReady() { return activity.isCameraPermissionGranted(); }
+    @JavascriptInterface public boolean isNearbyReady() { return activity.isNearbyTransportReady(); }
+
+    @JavascriptInterface
+    public void startNearbyAdvertising(String deviceName) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().startAdvertising(deviceName));
+    }
+
+    @JavascriptInterface
+    public void startNearbyDiscovery() {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().startDiscovery());
+    }
+
+    @JavascriptInterface
+    public void connectNearbyEndpoint(String endpointId, String deviceName) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().requestConnection(endpointId, deviceName));
+    }
+
+    @JavascriptInterface
+    public void acceptNearbyConnection(String endpointId) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().acceptConnection(endpointId));
+    }
+
+    @JavascriptInterface
+    public void rejectNearbyConnection(String endpointId) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().rejectConnection(endpointId));
+    }
+
+    @JavascriptInterface
+    public void sendNearbyText(String endpointId, String text) {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().sendText(endpointId, text));
+    }
+
+    @JavascriptInterface
+    public void stopNearby() {
+        activity.runOnUiThread(() -> activity.getNearbyConnectionManager().stop());
     }
 
     private void authenticate(boolean unlockVault) {
         activity.runOnUiThread(() -> {
             BiometricManager manager = BiometricManager.from(activity);
             int canAuth = manager.canAuthenticate(
-                    BiometricManager.Authenticators.BIOMETRIC_STRONG
-                            | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
             if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
                 activity.sendBiometricResult(false, "Biometric authentication unavailable", null);
                 return;
             }
-
             if (unlockVault && !hasBiometricSecret()) {
                 activity.sendBiometricResult(false, "Biometric unlock is not configured", null);
                 return;
             }
 
             Executor executor = ContextCompat.getMainExecutor(activity);
-            BiometricPrompt prompt = new BiometricPrompt(activity, executor,
-                    new BiometricPrompt.AuthenticationCallback() {
-                        @Override
-                        public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-                            if (!unlockVault) {
-                                activity.sendBiometricResult(true, "Biometric authentication successful", null);
-                                return;
-                            }
-
-                            try {
-                                SecretKey key = getKey();
-                                if (key == null) throw new IllegalStateException("Missing biometric key");
-                                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-                                cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, getIv()));
-                                byte[] plaintext = cipher.doFinal(getCiphertext());
-                                String pin = new String(plaintext, StandardCharsets.UTF_8);
-                                if (!pin.matches("\\d{4,12}")) throw new IllegalStateException("Invalid stored PIN");
-                                activity.sendBiometricResult(true, "Biometric authentication successful", pin);
-                            } catch (Exception error) {
-                                clearBiometricSecret();
-                                activity.sendBiometricResult(false, "Biometric credential is unavailable", null);
-                            }
-                        }
-
-                        @Override
-                        public void onAuthenticationError(int errorCode, CharSequence errString) {
-                            activity.sendBiometricResult(false, String.valueOf(errString), null);
-                        }
-
-                        @Override
-                        public void onAuthenticationFailed() {
-                            activity.sendBiometricResult(false, "Authentication failed", null);
-                        }
-                    });
+            BiometricPrompt prompt = new BiometricPrompt(activity, executor, new BiometricPrompt.AuthenticationCallback() {
+                @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                    if (!unlockVault) {
+                        activity.sendBiometricResult(true, "Biometric authentication successful", null);
+                        return;
+                    }
+                    try {
+                        SecretKey key = getKey();
+                        if (key == null) throw new IllegalStateException("Missing biometric key");
+                        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                        cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, getIv()));
+                        String pin = new String(cipher.doFinal(getCiphertext()), StandardCharsets.UTF_8);
+                        if (!pin.matches("\\d{4,12}")) throw new IllegalStateException("Invalid stored PIN");
+                        activity.sendBiometricResult(true, "Biometric authentication successful", pin);
+                    } catch (Exception error) {
+                        clearBiometricSecret();
+                        activity.sendBiometricResult(false, "Biometric credential is unavailable", null);
+                    }
+                }
+                @Override public void onAuthenticationError(int errorCode, CharSequence errString) { activity.sendBiometricResult(false, String.valueOf(errString), null); }
+                @Override public void onAuthenticationFailed() { activity.sendBiometricResult(false, "Authentication failed", null); }
+            });
 
             BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
                     .setTitle("Unlock Indoone")
                     .setSubtitle(unlockVault ? "Use your fingerprint or device credential to unlock" : "Use your biometric or device credential")
-                    .setAllowedAuthenticators(
-                            BiometricManager.Authenticators.BIOMETRIC_STRONG
-                                    | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                    .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
                     .build();
-
             prompt.authenticate(info);
         });
     }
@@ -142,19 +167,14 @@ public final class NativeBridge {
             keyStore.load(null);
             java.security.Key key = keyStore.getKey(KEY_ALIAS, null);
             return key instanceof SecretKey ? (SecretKey) key : null;
-        } catch (Exception error) {
-            return null;
-        }
+        } catch (Exception error) { return null; }
     }
 
     private SecretKey getOrCreateKey() throws Exception {
         SecretKey existing = getKey();
         if (existing != null) return existing;
-
         KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        generator.init(new KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
-                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+        generator.init(new KeyGenParameterSpec.Builder(KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setRandomizedEncryptionRequired(true)
@@ -172,10 +192,5 @@ public final class NativeBridge {
         String encoded = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(PREF_CIPHERTEXT, null);
         if (encoded == null) throw new IllegalStateException("Missing biometric credential");
         return Base64.decode(encoded, Base64.NO_WRAP);
-    }
-
-    @JavascriptInterface
-    public void requestCameraPermission() {
-        activity.requestCameraPermission();
     }
 }

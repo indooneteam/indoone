@@ -1,15 +1,23 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+}
 
 android {
     namespace 'com.indoone.authenticator'
     compileSdk 35
+
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId 'com.indoone.authenticator'
+        versionCode 18
+        versionName '2.1.6'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -17,6 +25,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     sourceSets {
         main {
             assets {
@@ -26,16 +35,58 @@ android {
     }
 }
 
+def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') {
+    doLast {
+        File source = file("$projectDir/src/main/java/com/indoone/authenticator/MainActivity.java")
+        String text = source.getText('UTF-8')
+        String broken = '''            WindowInsetsCompat systemBars =
+                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            lastTopInset = systemBars.top;
+            lastBottomInset = systemBars.bottom;'''
+        String fixed = '''            androidx.core.graphics.Insets systemBars =
+                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            lastTopInset = systemBars.top;
+            lastBottomInset = systemBars.bottom;'''
+
+        if (text.contains(broken)) {
+            text = text.replace(broken, fixed)
+        }
+
+        String oldTopbarCss = "s.textContent='.topbar{height:calc(76px + " +
+                "var(--indoone-top-inset, 0px)) !important;" +
+                "min-height:calc(76px + var(--indoone-top-inset, 0px)) !important;" +
+                "padding-top:calc(18px + var(--indoone-top-inset, 0px)) !important;}'+";
+        String newTopbarCss = "s.textContent='.topbar{height:64px !important;" +
+                "min-height:64px !important;" +
+                "padding:10px 18px 6px !important;}'+";
+
+        if (text.contains(oldTopbarCss)) {
+            text = text.replace(oldTopbarCss, newTopbarCss)
+        }
+
+        source.setText(text, 'UTF-8')
+    }
+}
+
 def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
     from(file("$rootDir/..")) {
         include 'index.html'
-        include 'style.css'
+        include 'update.json'
+        include '*.css'
         include 'js/**'
+        include 'app/**'
+        include 'assets/**'
     }
     into(layout.buildDirectory.dir('generated/indooneAssets'))
 }
 
 tasks.configureEach { task ->
+    if (task.name ==~ /compile.*JavaWithJavac/) {
+        task.dependsOn(normalizeMainActivityInsets)
+    }
+
     if (task.name ==~ /merge.*Assets/) {
         task.dependsOn(prepareIndooneWebAssets)
     }
@@ -43,4 +94,6 @@ tasks.configureEach { task ->
 
 dependencies {
     implementation 'androidx.biometric:biometric:1.2.0-alpha05'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'com.google.android.gms:play-services-nearby:19.5.0'
 }
