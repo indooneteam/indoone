@@ -1,5 +1,5 @@
 (() => {
-  const BRAND_VERSION = '20260906-logo-10';
+  const BRAND_VERSION = '20260906-logo-06-spark';
   let logoInstance = 0;
 
   function createLogo(className, alt = 'Indoone logo') {
@@ -24,33 +24,29 @@
     svg.innerHTML = `
       <defs>
         <linearGradient id="${gradientId}" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#A855F7"></stop>
-          <stop offset="0.52" stop-color="#7C3AED"></stop>
-          <stop offset="1" stop-color="#5B21B6"></stop>
+          <stop offset="0" stop-color="#C15CFF"></stop>
+          <stop offset="0.48" stop-color="#7C3AED"></stop>
+          <stop offset="1" stop-color="#22C7FF"></stop>
         </linearGradient>
       </defs>
-      <circle
-        cx="24"
-        cy="24"
-        r="17.5"
-        fill="none"
-        stroke="url(#${gradientId})"
-        stroke-width="3.5"
-      ></circle>
-      <circle
-        cx="24"
-        cy="16.25"
-        r="3.35"
-        fill="url(#${gradientId})"
-      ></circle>
-      <rect
-        x="20.15"
-        y="22"
-        width="7.7"
-        height="14.2"
-        rx="3.85"
-        fill="url(#${gradientId})"
-      ></rect>
+      <g transform="rotate(45 24 24)">
+        <rect
+          x="11"
+          y="11"
+          width="26"
+          height="26"
+          rx="6"
+          fill="url(#${gradientId})"
+        ></rect>
+      </g>
+      <path
+        d="M24 14 L27.2 20.8 L34 24 L27.2 27.2 L24 34 L20.8 27.2 L14 24 L20.8 20.8 Z"
+        fill="#0A0A18"
+      ></path>
+      <path
+        d="M24 20.8 L25.2 22.8 L27.2 24 L25.2 25.2 L24 27.2 L22.8 25.2 L20.8 24 L22.8 22.8 Z"
+        fill="#60A5FA"
+      ></path>
     `;
 
     return svg;
@@ -61,33 +57,29 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
         <defs>
           <linearGradient id="indooneFaviconGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#A855F7"></stop>
-            <stop offset="0.52" stop-color="#7C3AED"></stop>
-            <stop offset="1" stop-color="#5B21B6"></stop>
+            <stop offset="0" stop-color="#C15CFF"></stop>
+            <stop offset="0.48" stop-color="#7C3AED"></stop>
+            <stop offset="1" stop-color="#22C7FF"></stop>
           </linearGradient>
         </defs>
-        <circle
-          cx="24"
-          cy="24"
-          r="17.5"
-          fill="none"
-          stroke="url(#indooneFaviconGradient)"
-          stroke-width="3.5"
-        ></circle>
-        <circle
-          cx="24"
-          cy="16.25"
-          r="3.35"
-          fill="url(#indooneFaviconGradient)"
-        ></circle>
-        <rect
-          x="20.15"
-          y="22"
-          width="7.7"
-          height="14.2"
-          rx="3.85"
-          fill="url(#indooneFaviconGradient)"
-        ></rect>
+        <g transform="rotate(45 24 24)">
+          <rect
+            x="11"
+            y="11"
+            width="26"
+            height="26"
+            rx="6"
+            fill="url(#indooneFaviconGradient)"
+          ></rect>
+        </g>
+        <path
+          d="M24 14 L27.2 20.8 L34 24 L27.2 27.2 L24 34 L20.8 27.2 L14 24 L20.8 20.8 Z"
+          fill="#0A0A18"
+        ></path>
+        <path
+          d="M24 20.8 L25.2 22.8 L27.2 24 L25.2 25.2 L24 27.2 L22.8 25.2 L20.8 24 L22.8 22.8 Z"
+          fill="#60A5FA"
+        ></path>
       </svg>
     `;
 
