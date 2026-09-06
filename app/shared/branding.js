@@ -1,23 +1,22 @@
 (() => {
-  const LOGO_SOURCE = 'assets/branding/indoone-mark.png';
+  const LOGO_SOURCE = 'assets/branding/indoone-master.svg';
   const APP_ICON_SOURCE = 'assets/branding/indoone-logo.png';
-  const BRAND_VERSION = '20260906-logo-4';
+  const BRAND_VERSION = '20260906-logo-5';
 
   function createLogo(className, alt = 'Indoone logo') {
     const image = document.createElement('img');
-
     image.src = `${LOGO_SOURCE}?v=${BRAND_VERSION}`;
     image.alt = alt;
     image.className = `${className} branding-image`;
     image.draggable = false;
     image.decoding = 'async';
-
     return image;
   }
 
   function installFavicon() {
     const href = `${APP_ICON_SOURCE}?v=${BRAND_VERSION}`;
     let icon = document.querySelector('link[data-indoone-favicon="true"]');
+
     if (!icon) {
       icon = document.createElement('link');
       icon.rel = 'icon';
@@ -25,18 +24,23 @@
       icon.dataset.indooneFavicon = 'true';
       document.head.appendChild(icon);
     }
+
     icon.href = href;
   }
 
   function wire(root = document) {
     root
-      .querySelectorAll?.('.brand-mark, .auth-mark')
+      .querySelectorAll?.('.brand-mark, .auth-mark, .about-mark, .token-icon')
       .forEach(element => {
         if (element.tagName === 'IMG') return;
 
         const className = element.classList.contains('auth-mark')
           ? 'auth-mark'
-          : 'brand-mark';
+          : element.classList.contains('about-mark')
+            ? 'about-mark'
+            : element.classList.contains('token-icon')
+              ? 'token-icon'
+              : 'brand-mark';
 
         element.replaceWith(createLogo(className));
       });
@@ -60,6 +64,8 @@
         border: 0 !important;
         background: transparent !important;
         box-shadow: none !important;
+        color: transparent !important;
+        font-size: 0 !important;
       }
 
       .topbar-left .branding-image {
@@ -76,6 +82,18 @@
       .auth-mark.branding-image {
         width: 82px !important;
         height: 82px !important;
+      }
+
+      .about-mark.branding-image {
+        width: 52px !important;
+        height: 52px !important;
+        margin: 8px auto 12px !important;
+      }
+
+      .token-icon.branding-image {
+        width: 52px !important;
+        height: 52px !important;
+        margin: 0 auto !important;
       }
     `;
 
