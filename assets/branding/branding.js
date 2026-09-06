@@ -1,9 +1,16 @@
 (() => {
-  const MASTER_MARK_SRC = 'assets/branding/indoone-master.svg';
+  const EXACT_LOGO_PARTS = [
+    'assets/branding/exact-logo/part-01.txt',
+    'assets/branding/exact-logo/part-02.txt'
+  ];
+
+  let masterMarkSrc = null;
 
   function createImage(className, alt) {
+    if (!masterMarkSrc) return null;
+
     const image = document.createElement('img');
-    image.src = MASTER_MARK_SRC;
+    image.src = masterMarkSrc;
     image.alt = alt;
     image.className = `${className} branding-image`;
     image.setAttribute('aria-hidden', alt ? 'false' : 'true');
@@ -13,13 +20,14 @@
   }
 
   function wireElement(element) {
-    if (!element || element.tagName === 'IMG') return;
+    if (!element || element.tagName === 'IMG' || !masterMarkSrc) return;
 
     const className = element.classList.contains('auth-mark')
       ? 'auth-mark'
       : 'brand-mark';
 
     const image = createImage(className, 'Indoone logo');
+    if (!image) return;
 
     if (className === 'brand-mark') {
       image.width = 38;
@@ -69,10 +77,18 @@
     document.head.appendChild(style);
   }
 
-  function init() {
-    injectStyles();
-    wire(document);
+  async function loadExactLogo() {
+    const responses = await Promise.all(EXACT_LOGO_PARTS.map(async part => {
+      const response = await fetch(`${part}?v=exact-20260906`, { cache: 'force-cache' });
+      if (!response.ok) throw new Error(`Logo part failed: ${part}`);
+      return response.text();
+    }));
 
+    const base64 = responses.join('').replace(/\s+/g, '');
+    masterMarkSrc = `data:image/png;base64,${base64}`;
+  }
+
+  function startObserver() {
     const observer = new MutationObserver(records => {
       for (const record of records) {
         record.addedNodes.forEach(node => {
@@ -87,11 +103,23 @@
       childList: true,
       subtree: true
     });
+  }
+
+  async function init() {
+    injectStyles();
+
+    try {
+      await loadExactLogo();
+      wire(document);
+      startObserver();
+    } catch (error) {
+      console.error('[Indoone branding] exact logo failed to load', error);
+    }
 
     window.IndooneBranding = {
       wire,
-      mark: MASTER_MARK_SRC,
-      whiteMark: MASTER_MARK_SRC
+      mark: () => masterMarkSrc,
+      whiteMark: () => masterMarkSrc
     };
   }
 
