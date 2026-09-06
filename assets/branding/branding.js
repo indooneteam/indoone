@@ -42,53 +42,49 @@
   }
 
   function injectStyles() {
-    if (document.getElementById('indoone-branding-styles')) {
-      return;
-    }
+    if (document.getElementById('indoone-branding-styles')) return;
 
     const style = document.createElement('style');
     style.id = 'indoone-branding-styles';
-
     style.textContent = `
       .branding-image {
         display: block !important;
         flex: 0 0 auto !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
         object-fit: contain !important;
         object-position: center !important;
         overflow: visible !important;
         background: transparent !important;
+        border: 0 !important;
         box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
       .brand-mark.branding-image {
         width: 40px !important;
         height: 40px !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
       }
 
       .auth-mark.branding-image {
         width: 82px !important;
         height: 82px !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
       }
 
       .topbar-left .brand-mark.branding-image {
         flex: 0 0 40px !important;
+        align-self: center !important;
       }
     `;
-
     document.head.appendChild(style);
   }
 
   async function loadExactLogo() {
     const response = await fetch(
-      `${EXACT_LOGO_SOURCE}?v=20260906-padded-master-1`,
+      `${EXACT_LOGO_SOURCE}?v=20260906-padded-master-2`,
       { cache: 'no-store' }
     );
 
