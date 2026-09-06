@@ -1,17 +1,15 @@
 (() => {
-  const EXACT_LOGO_SOURCE =
-    'assets/branding/exact-logo-v3.txt';
+  const LOGO_SOURCE =
+    'assets/branding/indoone-master.svg';
 
-  let masterMarkSrc = null;
+  let masterMarkSrc = '';
 
   function createImage(className, alt) {
-    if (!masterMarkSrc) return null;
-
     const image = document.createElement('img');
+
     image.src = masterMarkSrc;
     image.alt = alt;
     image.className = `${className} branding-image`;
-    image.setAttribute('aria-hidden', alt ? 'false' : 'true');
     image.setAttribute('draggable', 'false');
     image.decoding = 'async';
 
@@ -19,7 +17,7 @@
   }
 
   function wireElement(element) {
-    if (!element || element.tagName === 'IMG' || !masterMarkSrc) {
+    if (!element || element.tagName === 'IMG') {
       return;
     }
 
@@ -27,22 +25,21 @@
       ? 'auth-mark'
       : 'brand-mark';
 
-    const image = createImage(className, 'Indoone logo');
-    if (!image) return;
-
-    image.width = className === 'brand-mark' ? 40 : 82;
-    image.height = className === 'brand-mark' ? 40 : 82;
-
-    element.replaceWith(image);
+    element.replaceWith(
+      createImage(className, 'Indoone logo')
+    );
   }
 
   function wire(root = document) {
-    root.querySelectorAll?.('.brand-mark').forEach(wireElement);
-    root.querySelectorAll?.('.auth-mark').forEach(wireElement);
+    root
+      .querySelectorAll?.('.brand-mark, .auth-mark')
+      .forEach(wireElement);
   }
 
   function injectStyles() {
-    if (document.getElementById('indoone-branding-styles')) return;
+    if (document.getElementById('indoone-branding-styles')) {
+      return;
+    }
 
     const style = document.createElement('style');
     style.id = 'indoone-branding-styles';
@@ -50,21 +47,26 @@
       .branding-image {
         display: block !important;
         flex: 0 0 auto !important;
-        width: auto !important;
-        height: auto !important;
-        max-width: none !important;
-        max-height: none !important;
         object-fit: contain !important;
         object-position: center !important;
-        overflow: visible !important;
-        background: transparent !important;
-        border: 0 !important;
-        box-shadow: none !important;
+        width: 38px !important;
+        height: 38px !important;
+        max-width: none !important;
+        max-height: none !important;
         margin: 0 !important;
         padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
       }
 
-      .brand-mark.branding-image {
+      .topbar-left .branding-image {
+        width: 38px !important;
+        height: 38px !important;
+        align-self: center !important;
+      }
+
+      .drawer-brand .branding-image {
         width: 40px !important;
         height: 40px !important;
       }
@@ -73,27 +75,9 @@
         width: 82px !important;
         height: 82px !important;
       }
-
-      .topbar-left .brand-mark.branding-image {
-        flex: 0 0 40px !important;
-        align-self: center !important;
-      }
     `;
+
     document.head.appendChild(style);
-  }
-
-  async function loadExactLogo() {
-    const response = await fetch(
-      `${EXACT_LOGO_SOURCE}?v=20260906-padded-master-2`,
-      { cache: 'no-store' }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Logo source failed: ${EXACT_LOGO_SOURCE}`);
-    }
-
-    const base64 = (await response.text()).replace(/\s+/g, '');
-    masterMarkSrc = `data:image/png;base64,${base64}`;
   }
 
   function startObserver() {
@@ -113,25 +97,14 @@
     });
   }
 
-  async function init() {
+  function init() {
     injectStyles();
 
-    try {
-      await loadExactLogo();
-      wire(document);
-      startObserver();
-    } catch (error) {
-      console.error(
-        '[Indoone branding] exact logo failed to load',
-        error
-      );
-    }
+    masterMarkSrc =
+      `${LOGO_SOURCE}?v=20260906-stable-logo-1`;
 
-    window.IndooneBranding = {
-      wire,
-      mark: () => masterMarkSrc,
-      whiteMark: () => masterMarkSrc
-    };
+    wire(document);
+    startObserver();
   }
 
   if (document.readyState === 'loading') {
