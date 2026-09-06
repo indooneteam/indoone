@@ -98,7 +98,7 @@ tasks.configureEach { task ->
         task.dependsOn(prepareIndooneWebAssets)
     }
 
-    if (task.name ==~ /merge.*Resources/) {
+    if (task.name ==~ /merge.*Resources/ || task.name ==~ /generate.*Resources/ || task.name ==~ /map.*SourceSetPaths/) {
         task.dependsOn(prepareIndooneExactLogo)
     }
 }
