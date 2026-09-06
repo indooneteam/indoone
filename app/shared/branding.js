@@ -1,5 +1,5 @@
 (() => {
-  const BRAND_VERSION = '20260906-logo-9';
+  const BRAND_VERSION = '20260906-logo-10';
   let logoInstance = 0;
 
   function createLogo(className, alt = 'Indoone logo') {
@@ -29,8 +29,28 @@
           <stop offset="1" stop-color="#5B21B6"></stop>
         </linearGradient>
       </defs>
-      <circle cx="24" cy="12" r="5" fill="url(#${gradientId})"></circle>
-      <rect x="17.5" y="21" width="13" height="22" rx="6.5" fill="url(#${gradientId})"></rect>
+      <circle
+        cx="24"
+        cy="24"
+        r="17.5"
+        fill="none"
+        stroke="url(#${gradientId})"
+        stroke-width="3.5"
+      ></circle>
+      <circle
+        cx="24"
+        cy="16.25"
+        r="3.35"
+        fill="url(#${gradientId})"
+      ></circle>
+      <rect
+        x="20.15"
+        y="22"
+        width="7.7"
+        height="14.2"
+        rx="3.85"
+        fill="url(#${gradientId})"
+      ></rect>
     `;
 
     return svg;
@@ -46,8 +66,28 @@
             <stop offset="1" stop-color="#5B21B6"></stop>
           </linearGradient>
         </defs>
-        <circle cx="24" cy="12" r="5" fill="url(#indooneFaviconGradient)"></circle>
-        <rect x="17.5" y="21" width="13" height="22" rx="6.5" fill="url(#indooneFaviconGradient)"></rect>
+        <circle
+          cx="24"
+          cy="24"
+          r="17.5"
+          fill="none"
+          stroke="url(#indooneFaviconGradient)"
+          stroke-width="3.5"
+        ></circle>
+        <circle
+          cx="24"
+          cy="16.25"
+          r="3.35"
+          fill="url(#indooneFaviconGradient)"
+        ></circle>
+        <rect
+          x="20.15"
+          y="22"
+          width="7.7"
+          height="14.2"
+          rx="3.85"
+          fill="url(#indooneFaviconGradient)"
+        ></rect>
       </svg>
     `;
 
@@ -111,11 +151,12 @@
       .topbar-left .branding-image {
         width: 34px !important;
         height: 34px !important;
+        align-self: center !important;
       }
 
       .drawer-brand .branding-image {
-        width: 38px !important;
-        height: 38px !important;
+        width: 36px !important;
+        height: 36px !important;
       }
 
       .auth-mark.branding-image {
