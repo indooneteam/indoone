@@ -3,13 +3,12 @@
   width:52px;
   height:52px;
   margin:8px auto 12px;
-  display:grid;
-  place-items:center;
-  border-radius:16px;
-  background:#f2ebff;
-  color:#5c2ac7;
-  font-weight:800;
-  font-size:24px
+  display:block;
+  object-fit:contain;
+  object-position:center;
+  border:0;
+  border-radius:0;
+  background:transparent;
 }
 .about-title
 {
