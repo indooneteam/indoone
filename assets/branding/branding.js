@@ -1,12 +1,6 @@
 (() => {
-  const EXACT_LOGO_PARTS = [
-    'assets/branding/exact-logo-v2/part-01.txt',
-    'assets/branding/exact-logo-v2/part-02.txt'
-  ];
-
-  const LOGO_PADDING = 8;
-  const MIN_ALPHA = 8;
-  const MIN_COMPONENT_SIZE = 4;
+  const EXACT_LOGO_SOURCE =
+    'assets/branding/exact-logo-v3.txt';
 
   let masterMarkSrc = null;
 
@@ -36,8 +30,8 @@
     const image = createImage(className, 'Indoone logo');
     if (!image) return;
 
-    image.width = className === 'brand-mark' ? 38 : 76;
-    image.height = className === 'brand-mark' ? 38 : 76;
+    image.width = className === 'brand-mark' ? 40 : 82;
+    image.height = className === 'brand-mark' ? 40 : 82;
 
     element.replaceWith(image);
   }
@@ -92,165 +86,18 @@
     document.head.appendChild(style);
   }
 
-  function cleanupLogoPixels(sourceCanvas) {
-    const context = sourceCanvas.getContext('2d', {
-      willReadFrequently: true
-    });
-
-    if (!context) return sourceCanvas;
-
-    const { width, height } = sourceCanvas;
-    const imageData = context.getImageData(0, 0, width, height);
-    const pixels = imageData.data;
-    const visited = new Uint8Array(width * height);
-    const keep = new Uint8Array(width * height);
-    const indexFor = (x, y) => y * width + x;
-
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const start = indexFor(x, y);
-        if (visited[start]) continue;
-
-        visited[start] = 1;
-
-        if (pixels[start * 4 + 3] < MIN_ALPHA) {
-          continue;
-        }
-
-        const queue = [start];
-        const component = [];
-
-        while (queue.length) {
-          const current = queue.pop();
-          component.push(current);
-
-          const cx = current % width;
-          const cy = Math.floor(current / width);
-          const neighbors = [
-            [cx - 1, cy],
-            [cx + 1, cy],
-            [cx, cy - 1],
-            [cx, cy + 1]
-          ];
-
-          for (const [nx, ny] of neighbors) {
-            if (
-              nx < 0 ||
-              ny < 0 ||
-              nx >= width ||
-              ny >= height
-            ) {
-              continue;
-            }
-
-            const next = indexFor(nx, ny);
-            if (visited[next]) continue;
-
-            visited[next] = 1;
-
-            if (pixels[next * 4 + 3] >= MIN_ALPHA) {
-              queue.push(next);
-            }
-          }
-        }
-
-        if (component.length >= MIN_COMPONENT_SIZE) {
-          component.forEach(index => {
-            keep[index] = 1;
-          });
-        }
-      }
-    }
-
-    for (let i = 0; i < width * height; i += 1) {
-      if (!keep[i]) {
-        pixels[i * 4 + 3] = 0;
-      }
-    }
-
-    context.putImageData(imageData, 0, 0);
-    return sourceCanvas;
-  }
-
-  function cleanAndPadLogo(dataUri) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-
-      image.onload = () => {
-        try {
-          const sourceCanvas = document.createElement('canvas');
-          sourceCanvas.width = image.naturalWidth;
-          sourceCanvas.height = image.naturalHeight;
-
-          const sourceContext = sourceCanvas.getContext('2d');
-          if (!sourceContext) {
-            resolve(dataUri);
-            return;
-          }
-
-          sourceContext.clearRect(
-            0,
-            0,
-            sourceCanvas.width,
-            sourceCanvas.height
-          );
-          sourceContext.drawImage(image, 0, 0);
-          cleanupLogoPixels(sourceCanvas);
-
-          const outputCanvas = document.createElement('canvas');
-          outputCanvas.width = image.naturalWidth + LOGO_PADDING * 2;
-          outputCanvas.height = image.naturalHeight + LOGO_PADDING * 2;
-
-          const outputContext = outputCanvas.getContext('2d');
-          if (!outputContext) {
-            resolve(dataUri);
-            return;
-          }
-
-          outputContext.clearRect(
-            0,
-            0,
-            outputCanvas.width,
-            outputCanvas.height
-          );
-          outputContext.drawImage(
-            sourceCanvas,
-            LOGO_PADDING,
-            LOGO_PADDING
-          );
-
-          resolve(outputCanvas.toDataURL('image/png'));
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      image.onerror = reject;
-      image.src = dataUri;
-    });
-  }
-
   async function loadExactLogo() {
-    const responses = await Promise.all(
-      EXACT_LOGO_PARTS.map(async part => {
-        const response = await fetch(
-          `${part}?v=20260906-exact-raster-4`,
-          { cache: 'no-store' }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Logo part failed: ${part}`);
-        }
-
-        return response.text();
-      })
+    const response = await fetch(
+      `${EXACT_LOGO_SOURCE}?v=20260906-padded-master-1`,
+      { cache: 'no-store' }
     );
 
-    const sourceDataUri = `data:image/png;base64,${responses
-      .join('')
-      .replace(/\s+/g, '')}`;
+    if (!response.ok) {
+      throw new Error(`Logo source failed: ${EXACT_LOGO_SOURCE}`);
+    }
 
-    masterMarkSrc = await cleanAndPadLogo(sourceDataUri);
+    const base64 = (await response.text()).replace(/\s+/g, '');
+    masterMarkSrc = `data:image/png;base64,${base64}`;
   }
 
   function startObserver() {
