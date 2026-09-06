@@ -28,15 +28,19 @@ assert(
   'Shared branding connector is missing the compact logo viewBox.'
 );
 assert(
-  brandingJs.includes('<circle cx="24" cy="12" r="5"'),
-  'Shared branding connector is missing the minimal dot.'
+  brandingJs.includes('cx=\\"24\\" cy=\\"24\\" r=\\"17.5\\"'),
+  'Shared branding connector is missing the premium ring.'
 );
 assert(
-  brandingJs.includes('<rect x="17.5" y="21" width="13" height="22"'),
-  'Shared branding connector is missing the minimal rounded stem.'
+  brandingJs.includes('cx=\\"24\\" cy=\\"16.25\\" r=\\"3.35\\"'),
+  'Shared branding connector is missing the logo dot.'
 );
 assert(
-  brandingJs.includes('20260906-logo-9'),
+  brandingJs.includes('x=\\"20.15\\" y=\\"22\\" width=\\"7.7\\" height=\\"14.2\\"'),
+  'Shared branding connector is missing the compact rounded stem.'
+);
+assert(
+  brandingJs.includes('20260906-logo-10'),
   'Shared branding connector is not using the current logo cache version.'
 );
 assert(
@@ -89,8 +93,10 @@ const launcher = read('android/app/src/main/res/drawable/ic_launcher_foreground.
 const splashLogo = read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
 assert(launcher.includes('<vector '), 'Android launcher logo must be a direct vector drawable.');
 assert(splashLogo.includes('<vector '), 'Android splash logo must be a direct vector drawable.');
-assert(launcher.includes('#7C3AED'), 'Android launcher logo is missing the purple fill.');
-assert(splashLogo.includes('#7C3AED'), 'Android splash logo is missing the purple fill.');
+assert(launcher.includes('#7C3AED'), 'Android launcher logo is missing the purple ring/stem.');
+assert(splashLogo.includes('#7C3AED'), 'Android splash logo is missing the purple ring/stem.');
+assert(launcher.includes('M54,6'), 'Android launcher ring geometry is missing.');
+assert(splashLogo.includes('M54,6'), 'Android splash ring geometry is missing.');
 assert(!launcher.includes('indoone_mark'), 'Android launcher still references the old PNG logo.');
 assert(!splashLogo.includes('indoone_logo'), 'Android splash still references the old PNG logo.');
 
@@ -106,4 +112,4 @@ for (const relativePath of forbidden) {
   assert(!fs.existsSync(path.join(root, relativePath)), `Stale branding artifact still exists: ${relativePath}`);
 }
 
-console.log('Branding validation passed. Indoone uses one compact inline logo source across web UI and direct vector code for Android launcher/splash, with external logo assets removed.');
+console.log('Branding validation passed. Indoone uses one compact premium ring logo source across web UI and direct vector code for Android launcher/splash, with external logo assets removed.');
