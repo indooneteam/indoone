@@ -121,7 +121,7 @@
    paint a second synthetic "I" on top of it. */
 .brand-mark,
 .auth-mark {
-  background-image: url("assets/branding/indoone-exact.svg") !important;
+  background-image: url("assets/branding/indoone-exact.svg?v=20260906-leaf") !important;
   background-repeat: no-repeat !important;
   background-position: center center !important;
   background-size: contain !important;
