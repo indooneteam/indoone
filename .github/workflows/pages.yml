@@ -36,6 +36,9 @@ jobs:
           path: develop-source
           fetch-depth: 1
 
+      - name: Validate branding
+        run: node develop-source/scripts/validate-branding.js
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
