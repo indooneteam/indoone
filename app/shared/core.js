@@ -69,32 +69,19 @@ window.closeModal = function () {
 window.showHome = function () {
   if (appLockBlocksAccess()) return;
 
-  // Home is a canonical root route. Never leave an Add Account child hash
-  // behind when switching back to Home, because that hash would be restored
-  // on the next refresh.
   clearHomeSubRoute();
   window.IndoonePageState?.set('home');
   overlay?.classList.add('hidden');
-  document
-    .getElementById('connectContent')
-    ?.setAttribute('hidden', '');
-  document
-    .getElementById('content')
-    ?.removeAttribute('hidden');
-  document
-    .getElementById('addBtn')
-    ?.removeAttribute('hidden');
-  document
-    .getElementById('searchWrap')
-    ?.removeAttribute('hidden');
+  document.getElementById('connectContent')?.setAttribute('hidden', '');
+  document.getElementById('content')?.removeAttribute('hidden');
+  document.getElementById('addBtn')?.removeAttribute('hidden');
+  document.getElementById('searchWrap')?.removeAttribute('hidden');
 
   document
     .querySelectorAll('.bottom-nav button')
     .forEach(button => button.classList.remove('active'));
 
-  document
-    .getElementById('accountsNav')
-    ?.classList.add('active');
+  document.getElementById('accountsNav')?.classList.add('active');
 
   window.IndooneHome?.restoreHome?.();
 };
@@ -121,16 +108,13 @@ window.toast = function (message) {
   );
 };
 
-// Load the centralized branding connector after the base DOM helpers are ready.
-// It replaces every .brand-mark and .auth-mark with the shared master logo,
-// including auth modals that are created later at runtime.
 (() => {
   const existing = document.querySelector('script[data-indoone-branding]');
 
   if (existing) return;
 
   const script = document.createElement('script');
-  script.src = 'assets/branding/branding.js?v=20260906b';
+  script.src = 'assets/branding/branding.js?v=20260906d';
   script.async = false;
   script.dataset.indooneBranding = 'true';
   document.head.appendChild(script);
