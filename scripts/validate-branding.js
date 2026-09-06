@@ -28,15 +28,15 @@ assert(
   'Shared branding connector is missing the compact logo viewBox.'
 );
 assert(
-  brandingJs.includes('circle cx="24" cy="24" r="17.5"'),
+  /<circle\s+cx="24"\s+cy="24"\s+r="17\.5"/.test(brandingJs),
   'Shared branding connector is missing the premium ring.'
 );
 assert(
-  brandingJs.includes('circle cx="24" cy="16.25" r="3.35"'),
+  /<circle\s+cx="24"\s+cy="16\.25"\s+r="3\.35"/.test(brandingJs),
   'Shared branding connector is missing the logo dot.'
 );
 assert(
-  brandingJs.includes('rect x="20.15" y="22" width="7.7" height="14.2"'),
+  /<rect\s+x="20\.15"\s+y="22"\s+width="7\.7"\s+height="14\.2"/.test(brandingJs),
   'Shared branding connector is missing the compact rounded stem.'
 );
 assert(
