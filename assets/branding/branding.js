@@ -1,13 +1,8 @@
 (() => {
-  const EXACT_LOGO_PARTS = [
-    'assets/branding/exact-logo-v2/part-01.txt',
-    'assets/branding/exact-logo-v2/part-02.txt'
-  ];
-
-  let masterMarkSrc = null;
+  const MASTER_LOGO = 'assets/branding/indoone-master.svg';
+  let masterMarkSrc = MASTER_LOGO;
 
   function createImage(className, alt) {
-    if (!masterMarkSrc) return null;
     const image = document.createElement('img');
     image.src = masterMarkSrc;
     image.alt = alt;
@@ -19,10 +14,9 @@
   }
 
   function wireElement(element) {
-    if (!element || element.tagName === 'IMG' || !masterMarkSrc) return;
+    if (!element || element.tagName === 'IMG') return;
     const className = element.classList.contains('auth-mark') ? 'auth-mark' : 'brand-mark';
     const image = createImage(className, 'Indoone logo');
-    if (!image) return;
     image.width = className === 'brand-mark' ? 38 : 76;
     image.height = className === 'brand-mark' ? 38 : 76;
     element.replaceWith(image);
@@ -45,15 +39,6 @@
     document.head.appendChild(style);
   }
 
-  async function loadExactLogo() {
-    const responses = await Promise.all(EXACT_LOGO_PARTS.map(async part => {
-      const response = await fetch(`${part}?v=20260906-exact`, { cache: 'force-cache' });
-      if (!response.ok) throw new Error(`Logo part failed: ${part}`);
-      return response.text();
-    }));
-    masterMarkSrc = `data:image/png;base64,${responses.join('').replace(/\s+/g, '')}`;
-  }
-
   function startObserver() {
     const observer = new MutationObserver(records => {
       for (const record of records) {
@@ -65,15 +50,10 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  async function init() {
+  function init() {
     injectStyles();
-    try {
-      await loadExactLogo();
-      wire(document);
-      startObserver();
-    } catch (error) {
-      console.error('[Indoone branding] exact logo failed to load', error);
-    }
+    wire(document);
+    startObserver();
     window.IndooneBranding = {
       wire,
       mark: () => masterMarkSrc,
