@@ -10,6 +10,8 @@
   let addFeatureReady = null;
   let accountLoadPromise = null;
   let screenshotFeatureReady = null;
+  let startupAccountRetryTimer = null;
+  let startupAccountRetryCount = 0;
 
   window.showAdd = () => {
     window.IndooneHome?.showAddAccount?.({
@@ -86,15 +88,15 @@
     if (
       !homeView ||
       !window.IndooneCloudAccounts?.load
-    ) return;
+    ) return false;
 
     if (
       window.location.hash === ADD_HASH ||
       window.location.hash.startsWith(`${ADD_HASH}/`)
-    ) return;
+    ) return false;
 
     const user = window.IndooneFirebase?.auth?.currentUser;
-    if (!user) return;
+    if (!user) return false;
 
     if (accountLoadPromise) return accountLoadPromise;
 
@@ -109,14 +111,39 @@
         if (typeof refreshAccountCodes === 'function') {
           await refreshAccountCodes();
         }
+
+        return true;
       } catch (error) {
         console.warn('Indoone Home account load failed:', error);
+        return false;
       } finally {
         accountLoadPromise = null;
       }
     })();
 
     return accountLoadPromise;
+  }
+
+  function stopStartupAccountRetry() {
+    if (startupAccountRetryTimer) {
+      clearInterval(startupAccountRetryTimer);
+      startupAccountRetryTimer = null;
+    }
+    startupAccountRetryCount = 0;
+  }
+
+  function startStartupAccountRetry() {
+    stopStartupAccountRetry();
+
+    startupAccountRetryTimer = setInterval(async () => {
+      startupAccountRetryCount += 1;
+
+      const loaded = await ensureAccountsLoaded();
+
+      if (loaded || startupAccountRetryCount >= 30) {
+        stopStartupAccountRetry();
+      }
+    }, 200);
   }
 
   function loadAddFeature() {
@@ -308,7 +335,11 @@
       return;
     }
 
-    void ensureAccountsLoaded();
+    void ensureAccountsLoaded().then(loaded => {
+      if (!loaded) {
+        startStartupAccountRetry();
+      }
+    });
   }
 
   window.IndooneHome = {
