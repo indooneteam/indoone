@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
+const brandingDir = path.join(root, 'assets/branding');
 
 function read(relativePath) {
   const file = path.join(root, relativePath);
@@ -17,46 +18,45 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-const master = read('assets/branding/indoone-master.svg');
-const aligned = [
-  'assets/branding/indoone-mark.svg',
-  'assets/branding/indoone-app-icon.svg',
-  'assets/branding/indoone-splash.svg'
-];
-
-assert(master.includes('<svg '), 'Canonical logo is not a valid SVG document.');
-assert(master.includes('viewBox="0 0 512 512"'), 'Canonical logo viewBox changed unexpectedly.');
-assert(!master.includes('filter='), 'Canonical logo contains an unsupported filter effect.');
-
-for (const relativePath of aligned) {
-  const content = read(relativePath);
-  assert(content === master, `${relativePath} must match indoone-master.svg exactly.`);
-}
-
 const brandingJs = read('app/shared/branding.js');
 assert(
-  brandingJs.includes("assets/branding/indoone-master.svg"),
-  'Shared branding connector does not point to the canonical master logo.'
+  brandingJs.includes("logoSource: 'inline-svg'"),
+  'Shared branding connector must use inline SVG logo markup.'
 );
 assert(
-  brandingJs.includes('20260906-logo-3'),
-  'Shared branding connector is not using the current logo cache version.'
+  brandingJs.includes('viewBox', 0),
+  'Shared branding connector is missing inline SVG geometry.'
+);
+assert(
+  brandingJs.includes('indooneBrandGradient'),
+  'Shared branding connector is missing the Indoone gradient.'
+);
+assert(
+  brandingJs.includes('20260906-logo-6'),
+  'Shared branding connector is not using the current branding cache version.'
 );
 
 const index = read('index.html');
 assert(index.includes('class="brand-mark"'), 'index.html is missing the shared brand placeholder.');
 
-for (const relativePath of ['app/auth/login/login.js', 'app/auth/signup/signup.js']) {
-  const content = read(relativePath);
-  assert(
-    content.includes('assets/branding/indoone-master.svg'),
-    `${relativePath} does not use the canonical master logo.`
-  );
-  assert(
-    content.includes('20260906-logo-3'),
-    `${relativePath} is not using the current logo cache version.`
-  );
-}
+const login = read('app/auth/login/login.js');
+const signup = read('app/auth/signup/signup.js');
+assert(login.includes('indooneLoginGradient'), 'Login does not contain inline Indoone SVG branding.');
+assert(signup.includes('indooneSignupGradient'), 'Signup does not contain inline Indoone SVG branding.');
+assert(!login.includes('assets/branding/'), 'Login still references an external branding asset.');
+assert(!signup.includes('assets/branding/'), 'Signup still references an external branding asset.');
+
+const settingsAbout = read('app/settings/about/index.html');
+assert(settingsAbout.includes('indooneSettingsAboutGradient'), 'Settings About does not contain inline Indoone SVG branding.');
+assert(!settingsAbout.includes('assets/branding/'), 'Settings About still references an external branding asset.');
+
+const menuAbout = read('app/menu/about/script.js');
+assert(menuAbout.includes('indooneMenuAboutGradient'), 'Menu About does not contain inline Indoone SVG branding.');
+assert(!menuAbout.includes('assets/branding/'), 'Menu About still references an external branding asset.');
+
+const brandingFiles = fs.readdirSync(brandingDir);
+const svgFiles = brandingFiles.filter(file => file.toLowerCase().endsWith('.svg'));
+assert(svgFiles.length === 0, `External branding SVG files must be deleted: ${svgFiles.join(', ')}`);
 
 const gradle = read('android/app/build.gradle');
 assert(!gradle.includes('exact-logo'), 'Android Gradle still contains stale exact-logo references.');
@@ -78,4 +78,4 @@ for (const relativePath of forbidden) {
   assert(!fs.existsSync(path.join(root, relativePath)), `Stale branding artifact still exists: ${relativePath}`);
 }
 
-console.log('Branding validation passed. Canonical web SVGs, shared references, current cache version, and Android branding inputs are present and consistent.');
+console.log('Branding validation passed. Web branding is inline SVG, external branding SVG files are absent, and Android branding inputs remain present.');
