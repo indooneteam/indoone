@@ -117,28 +117,19 @@
   overflow: hidden;
 }
 
-/* The canonical Indoone logo is rendered directly as a static asset.
-   No runtime image replacement or canvas processing is needed. */
+/* Canonical approved leaf logo. Use it directly everywhere and never
+   paint a second synthetic "I" on top of it. */
 .brand-mark,
 .auth-mark {
-  position: relative;
-  display: block;
-  flex: 0 0 auto;
-  width: 38px !important;
-  height: 38px !important;
-  max-width: none !important;
-  max-height: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background-color: transparent !important;
-  background-image: url("assets/branding/indoone-master.svg?v=20260906-final-brand") !important;
+  background-image: url("assets/branding/indoone-exact.svg") !important;
   background-repeat: no-repeat !important;
-  background-position: center !important;
+  background-position: center center !important;
   background-size: contain !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   color: transparent !important;
   font-size: 0 !important;
-  line-height: 0 !important;
   overflow: visible !important;
 }
 
@@ -151,9 +142,8 @@
 }
 
 .topbar-left .brand-mark {
-  width: 38px !important;
-  height: 38px !important;
-  transform: none !important;
+  width: 34px !important;
+  height: 34px !important;
 }
 
 .drawer-brand .brand-mark {
