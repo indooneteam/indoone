@@ -12,8 +12,8 @@ android {
 
     defaultConfig {
         applicationId 'com.indoone.authenticator'
-        versionCode 17
-        versionName '2.1.5'
+        versionCode 18
+        versionName '2.1.6'
         minSdk 26
         targetSdk 35
     }
@@ -51,8 +51,22 @@ def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') 
             lastBottomInset = systemBars.bottom;'''
 
         if (text.contains(broken)) {
-            source.setText(text.replace(broken, fixed), 'UTF-8')
+            text = text.replace(broken, fixed)
         }
+
+        String oldTopbarCss = "s.textContent='.topbar{height:calc(76px + " +
+                "var(--indoone-top-inset, 0px)) !important;" +
+                "min-height:calc(76px + var(--indoone-top-inset, 0px)) !important;" +
+                "padding-top:calc(18px + var(--indoone-top-inset, 0px)) !important;}'+";
+        String newTopbarCss = "s.textContent='.topbar{height:64px !important;" +
+                "min-height:64px !important;" +
+                "padding:10px 18px 6px !important;}'+";
+
+        if (text.contains(oldTopbarCss)) {
+            text = text.replace(oldTopbarCss, newTopbarCss)
+        }
+
+        source.setText(text, 'UTF-8')
     }
 }
 
