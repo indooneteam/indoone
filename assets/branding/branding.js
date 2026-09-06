@@ -16,7 +16,6 @@
     image.setAttribute('aria-hidden', alt ? 'false' : 'true');
     image.setAttribute('draggable', 'false');
     image.decoding = 'async';
-
     return image;
   }
 
@@ -32,8 +31,8 @@
     const image = createImage(className, 'Indoone logo');
     if (!image) return;
 
-    image.width = className === 'brand-mark' ? 38 : 76;
-    image.height = className === 'brand-mark' ? 38 : 76;
+    image.width = className === 'brand-mark' ? 42 : 82;
+    image.height = className === 'brand-mark' ? 42 : 82;
 
     element.replaceWith(image);
   }
@@ -60,38 +59,36 @@
         overflow: visible !important;
         background: transparent !important;
         box-shadow: none !important;
+        padding: 0 !important;
       }
 
       .brand-mark.branding-image {
-        width: 38px !important;
-        height: 38px !important;
-        border-radius: 0 !important;
-      }
-
-      .auth-mark.branding-image {
-        width: 76px !important;
-        height: 76px !important;
-        border-radius: 0 !important;
-      }
-
-      /* Keep the complete source artwork visible in the compact header. */
-      .topbar-left .brand-mark.branding-image {
-        width: 38px !important;
-        height: 38px !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        min-height: 42px !important;
         max-width: none !important;
         max-height: none !important;
-        margin: 0 !important;
-        transform: scale(.90);
-        transform-origin: center center;
+        border-radius: 0 !important;
+        transform: none !important;
       }
 
       .auth-mark.branding-image {
         width: 82px !important;
         height: 82px !important;
+        min-width: 82px !important;
+        min-height: 82px !important;
         max-width: none !important;
         max-height: none !important;
-        transform: scale(.92);
-        transform-origin: center center;
+        border-radius: 0 !important;
+        transform: none !important;
+      }
+
+      .topbar-left .brand {
+        min-height: 48px !important;
+        overflow: visible !important;
+        align-items: center !important;
+        line-height: 0 !important;
       }
     `;
 
@@ -102,7 +99,7 @@
     const responses = await Promise.all(
       EXACT_LOGO_PARTS.map(async part => {
         const response = await fetch(
-          `${part}?v=20260906-exact-raster-2`,
+          `${part}?v=20260906-exact-raster-4`,
           { cache: 'no-store' }
         );
 
@@ -158,11 +155,7 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener(
-      'DOMContentLoaded',
-      init,
-      { once: true }
-    );
+    document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {
     init();
   }
