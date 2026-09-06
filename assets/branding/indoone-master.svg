@@ -13,7 +13,7 @@
     </linearGradient>
   </defs>
   <circle cx="176" cy="112" r="27" fill="url(#mark)"/>
-  <path d="M145 178 H207 V395 H145 Z" rx="31" fill="url(#mark)"/>
+  <path d="M145 178 H207 V395 H145 Z" fill="url(#mark)"/>
   <path d="M246 395 V235 C246 177 284 145 340 145 C399 145 437 181 437 239 V395 H375 V248 C375 224 363 209 341 209 C319 209 308 224 308 248 V395 Z" fill="url(#mark)"/>
   <path d="M205 130 C196 88 221 52 271 43 C272 83 250 117 205 130 Z" fill="url(#leaf)"/>
 </svg>
