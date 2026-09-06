@@ -98,7 +98,10 @@ tasks.configureEach { task ->
         task.dependsOn(prepareIndooneWebAssets)
     }
 
-    if (task.name ==~ /process.*Resources/) {
+    // The generated raster must exist before any Android resource task can
+    // inspect, merge, package, or link the drawable. Hook it at preBuild so
+    // Gradle's task-validation sees a real dependency chain for every variant.
+    if (task.name == 'preBuild' || task.name ==~ /pre.*Build/) {
         task.dependsOn(prepareIndooneExactLogo)
     }
 }
