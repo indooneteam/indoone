@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf publish
-          mkdir -p publish/develop/downloads
+          mkdir -p publish/downloads publish/develop/downloads
           rsync -a --exclude='.git' develop-source/ publish/
           cp develop-source/android/app/build/outputs/apk/debug/app-debug.apk publish/downloads/indoone.apk
           rsync -a --exclude='.git' develop-source/ publish/develop/
