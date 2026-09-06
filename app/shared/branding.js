@@ -1,16 +1,31 @@
 (() => {
-  const LOGO_SOURCE = 'assets/branding/indoone-master.svg';
+  const LOGO_SOURCE = 'assets/branding/indoone-mark.png';
+  const APP_ICON_SOURCE = 'assets/branding/indoone-logo.png';
+  const BRAND_VERSION = '20260906-logo-4';
 
   function createLogo(className, alt = 'Indoone logo') {
     const image = document.createElement('img');
 
-    image.src = `${LOGO_SOURCE}?v=20260906-logo-3`;
+    image.src = `${LOGO_SOURCE}?v=${BRAND_VERSION}`;
     image.alt = alt;
     image.className = `${className} branding-image`;
     image.draggable = false;
     image.decoding = 'async';
 
     return image;
+  }
+
+  function installFavicon() {
+    const href = `${APP_ICON_SOURCE}?v=${BRAND_VERSION}`;
+    let icon = document.querySelector('link[data-indoone-favicon="true"]');
+    if (!icon) {
+      icon = document.createElement('link');
+      icon.rel = 'icon';
+      icon.type = 'image/png';
+      icon.dataset.indooneFavicon = 'true';
+      document.head.appendChild(icon);
+    }
+    icon.href = href;
   }
 
   function wire(root = document) {
@@ -86,13 +101,15 @@
 
   function init() {
     installStyles();
+    installFavicon();
     wire(document);
     observe();
   }
 
   window.IndooneBranding = {
     init,
-    logoSource: LOGO_SOURCE
+    logoSource: LOGO_SOURCE,
+    appIconSource: APP_ICON_SOURCE
   };
 
   if (document.readyState === 'loading') {

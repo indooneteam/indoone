@@ -1,16 +1,3 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="96dp"
-    android:height="96dp"
-    android:viewportWidth="512"
-    android:viewportHeight="512">
-
-    <path
-        android:fillColor="#7A38E6"
-        android:pathData="M126,154C176,138 258,145 344,115C382,102 407,81 421,52L421,112C411,142 388,161 353,173C264,203 190,181 126,206Z" />
-    <path
-        android:fillColor="#8B4BEF"
-        android:pathData="M126,235C188,211 258,224 350,193C387,181 408,162 421,137L421,198C411,226 388,245 351,257C263,286 190,260 126,285Z" />
-    <path
-        android:fillColor="#6526C7"
-        android:pathData="M126,304C190,279 258,296 349,265C386,253 409,235 421,210L421,270C411,301 387,323 350,336C273,364 205,342 166,360C136,374 126,397 128,419C130,444 147,457 169,457C190,457 205,445 205,421L205,364C253,378 304,372 351,351C390,334 413,309 421,281C418,344 383,389 326,407C274,423 238,427 208,445C185,459 154,458 136,440C114,418 109,387 112,357C114,336 119,320 126,304Z" />
-</vector>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/indoone_logo"
+    android:gravity="center" />

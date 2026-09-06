@@ -1,13 +1,13 @@
 # Indoone Branding
 
-`indoone-master.svg` is the single source of truth for the final Indoone logo.
+The supplied final Indoone logo is kept in raster form for exact UI and launcher rendering.
 
-- `indoone-master.svg` — final master artwork: minimal flowing purple Indoone mark inspired by a clean F shape.
-- `indoone-mark.svg` — compatibility copy kept aligned with the master artwork.
-- `indoone-splash.svg` — compatibility copy kept aligned with the master artwork.
-- `indoone-app-icon.svg` — compatibility copy kept aligned with the master artwork.
-- `app/shared/branding.js` — app-wide runtime connector that replaces legacy `.brand-mark` and `.auth-mark` placeholders with the master logo.
+- `indoone-logo.png` — supplied final square logo artwork, including its light rounded-square background.
+- `indoone-mark.png` — transparent mark extracted from the supplied logo for web headers and authentication UI.
+- `indoone-master.svg` — vector compatibility/master artwork retained for existing integrations.
+- `indoone-mark.svg`, `indoone-splash.svg`, `indoone-app-icon.svg` — compatibility copies retained for existing integrations.
+- `app/shared/branding.js` — app-wide branding connector that uses the supplied mark and installs the supplied app icon as the favicon.
 
-Do not add alternate logo files for individual screens. New UI branding must use `assets/branding/indoone-master.svg`.
+Do not add alternate logo files for individual screens. New UI branding should use the supplied branding assets above.
 
-Android launcher and splash resources use native vector resources that reproduce the same final artwork for reliable startup rendering. The Android launcher may still apply the platform's adaptive-icon mask outside the master artwork.
+Android launcher and splash resources use the supplied PNG artwork so the launcher and startup presentation match the selected logo. The Android adaptive-icon mask is still applied by the platform where applicable.
