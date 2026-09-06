@@ -95,16 +95,16 @@ html body .topbar {
 }
 
 @media (max-width: 360px) {
+  /* Keep the same vertical geometry on compact phones; only reduce horizontal
+     spacing and text/icon sizes so the header does not move vertically. */
   html body .topbar {
-    min-height: 70px !important;
-    height: 70px !important;
+    min-height: 76px !important;
+    height: 76px !important;
     padding: 18px 13px 8px !important;
   }
 
   .topbar {
-    min-height: 70px;
-    padding-left: 13px;
-    padding-right: 13px;
+    min-height: 76px;
   }
 
   .topbar-left {
