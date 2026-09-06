@@ -19,11 +19,11 @@ window.initMenuAbout = function () {
     <div
       style="text-align:center"
     >
-      <div
+      <img
         class="token-icon"
-      >
-        I
-      </div>
+        src="assets/branding/indoone-master.svg?v=20260906-logo-3"
+        alt="Indoone logo"
+      />
       <h3
         style="margin:8px 0 2px"
       >
