@@ -31,6 +31,7 @@ android {
             assets {
                 srcDirs = [file("${layout.buildDirectory.get()}/generated/indooneAssets")]
             }
+            res.srcDir(file("${layout.buildDirectory.get()}/generated/exactBranding/res"))
         }
     }
 }
@@ -68,6 +69,26 @@ def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
     into(layout.buildDirectory.dir('generated/indooneAssets'))
 }
 
+def prepareIndooneExactLogo = tasks.register('prepareIndooneExactLogo') {
+    inputs.files(
+        file("$rootDir/../assets/branding/exact-logo-v2/part-01.txt"),
+        file("$rootDir/../assets/branding/exact-logo-v2/part-02.txt")
+    )
+    outputs.file(file("${layout.buildDirectory.get()}/generated/exactBranding/res/drawable/indoone_exact_logo.png"))
+
+    doLast {
+        File sourceDir = file("$rootDir/../assets/branding/exact-logo-v2")
+        String base64 = [1, 2].collect { index ->
+            file("$sourceDir/part-${String.format('%02d', index)}.txt").getText('UTF-8')
+        }.join('').replaceAll(/\s+/, '')
+
+        byte[] png = java.util.Base64.decoder.decode(base64)
+        File output = file("${layout.buildDirectory.get()}/generated/exactBranding/res/drawable/indoone_exact_logo.png")
+        output.parentFile.mkdirs()
+        output.bytes = png
+    }
+}
+
 tasks.configureEach { task ->
     if (task.name ==~ /compile.*JavaWithJavac/) {
         task.dependsOn(normalizeMainActivityInsets)
@@ -75,6 +96,10 @@ tasks.configureEach { task ->
 
     if (task.name ==~ /merge.*Assets/) {
         task.dependsOn(prepareIndooneWebAssets)
+    }
+
+    if (task.name ==~ /process.*Resources/) {
+        task.dependsOn(prepareIndooneExactLogo)
     }
 }
 
