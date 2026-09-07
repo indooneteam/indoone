@@ -16,14 +16,11 @@ concurrency:
   group: github-pages-${{ github.ref_name }}
   cancel-in-progress: true
 
-env:
-  PAGES_ENVIRONMENT: ${{ github.ref_name == 'main' && 'github-pages' || 'github-pages-develop' }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ env.PAGES_ENVIRONMENT }}
+      name: ${{ github.ref_name == 'main' && 'github-pages' || 'github-pages-develop' }}
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout deployment branch
