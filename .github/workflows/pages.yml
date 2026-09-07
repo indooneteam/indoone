@@ -3,6 +3,7 @@ name: Deploy Indoone Pages
 on:
   push:
     branches:
+      - main
       - develop
   workflow_dispatch:
 
@@ -22,10 +23,10 @@ jobs:
       name: github-pages-develop
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout develop branch
+      - name: Checkout deployment branch
         uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: ${{ github.ref_name }}
           path: develop-source
           fetch-depth: 1
 
@@ -43,7 +44,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build develop APK for updater
+      - name: Build deployment APK for updater
         run: gradle -p develop-source/android assembleDebug --stacktrace
 
       - name: Build Pages package
@@ -64,7 +65,7 @@ jobs:
           test -f publish/develop/app/connect/connect.js
           test -f publish/develop/update.json
           test -f publish/develop/downloads/indoone.apk
-          echo "Develop site is deployed at the Pages root; /develop/ is retained as a compatibility path."
+          echo "Deployment branch is published at the Pages root; /develop/ is retained as a compatibility path."
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
