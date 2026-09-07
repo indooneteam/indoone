@@ -39,6 +39,13 @@ def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') 
     doLast {
         File source = file("$projectDir/src/main/java/com/indoone/authenticator/MainActivity.java")
         String text = source.getText('UTF-8')
+
+        String edgeToEdgeCall = '        WindowCompat.enableEdgeToEdge(getWindow());'
+        String compatibleEdgeToEdgeCall = '        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);'
+        if (text.contains(edgeToEdgeCall)) {
+            text = text.replace(edgeToEdgeCall, compatibleEdgeToEdgeCall)
+        }
+
         String broken = '''            WindowInsetsCompat systemBars =
                     insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
@@ -52,6 +59,54 @@ def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') 
 
         if (text.contains(broken)) {
             text = text.replace(broken, fixed)
+        }
+
+        String brokenInsetFields = '''    private int lastTopInset;
+    private int lastBottomInset;'''
+        String fixedInsetFields = '''    private int lastLeftInset;
+    private int lastTopInset;
+    private int lastRightInset;
+    private int lastBottomInset;'''
+        if (text.contains(brokenInsetFields)) {
+            text = text.replace(brokenInsetFields, fixedInsetFields)
+        }
+
+        String brokenInsetAssignments = '''            lastTopInset = safeInsets.top;
+            lastBottomInset = safeInsets.bottom;'''
+        String fixedInsetAssignments = '''            lastLeftInset = safeInsets.left;
+            lastTopInset = safeInsets.top;
+            lastRightInset = safeInsets.right;
+            lastBottomInset = safeInsets.bottom;'''
+        if (text.contains(brokenInsetAssignments)) {
+            text = text.replace(brokenInsetAssignments, fixedInsetAssignments)
+        }
+
+        String oldInsetScript = '''                "r.style.setProperty('--indoone-top-inset','" +
+                lastTopInset +
+                "px');" +
+                "r.style.setProperty('--indoone-bottom-inset','" +
+                lastBottomInset +
+                "px');})();";'''
+        String newInsetScript = '''                "r.style.setProperty('--indoone-safe-left','" +
+                lastLeftInset +
+                "px');" +
+                "r.style.setProperty('--indoone-safe-top','" +
+                lastTopInset +
+                "px');" +
+                "r.style.setProperty('--indoone-safe-right','" +
+                lastRightInset +
+                "px');" +
+                "r.style.setProperty('--indoone-safe-bottom','" +
+                lastBottomInset +
+                "px');" +
+                "r.style.setProperty('--indoone-top-inset','" +
+                lastTopInset +
+                "px');" +
+                "r.style.setProperty('--indoone-bottom-inset','" +
+                lastBottomInset +
+                "px');})();";'''
+        if (text.contains(oldInsetScript)) {
+            text = text.replace(oldInsetScript, newInsetScript)
         }
 
         String oldTopbarCss = "s.textContent='.topbar{height:calc(76px + " +
