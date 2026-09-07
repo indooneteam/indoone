@@ -25,6 +25,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import com.indoone.authenticator.layout.SafeLayoutContract;
+
 import java.io.InputStream;
 
 public class MainActivity extends FragmentActivity {
@@ -119,15 +121,11 @@ public class MainActivity extends FragmentActivity {
 
     private void applyWindowInsetsToWebApp(WebView target) {
         ViewCompat.setOnApplyWindowInsetsListener(target, (view, insets) -> {
-            WindowInsetsCompat systemBars =
-                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            WindowInsetsCompat tappable =
-                    insets.getInsets(WindowInsetsCompat.Type.tappableElement());
-            WindowInsetsCompat cutout =
-                    insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+            androidx.core.graphics.Insets safeInsets =
+                    SafeLayoutContract.getSafeInsets(insets);
 
-            lastTopInset = Math.max(systemBars.top, cutout.top);
-            lastBottomInset = Math.max(systemBars.bottom, tappable.bottom);
+            lastTopInset = safeInsets.top;
+            lastBottomInset = safeInsets.bottom;
 
             syncInsetsToWebApp();
             return insets;
