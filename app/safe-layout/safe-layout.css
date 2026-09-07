@@ -1,9 +1,11 @@
+@import url("./header.css");
+
 /*
  * Indoone Safe Layout Contract
  *
- * This file currently defines only shared variables/primitives.
- * Existing production layout rules remain in their current files until
- * each responsibility is migrated and verified.
+ * Shared safe-area variables live here. Existing production layout rules
+ * remain in their current files until each responsibility is migrated and
+ * verified.
  */
 
 :root {
