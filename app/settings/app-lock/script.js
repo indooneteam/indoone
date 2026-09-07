@@ -185,9 +185,15 @@
     return window.IndooneAppLockBiometric;
   }
 
-  window.showAppLock = async function (mode = 'unlock') {
+  window.showAppLock = async function (mode) {
     try {
       const module = await ensurePinModule();
+
+      if (typeof mode === 'undefined') {
+        module?.showAppLockSettings?.();
+        return;
+      }
+
       module?.showAppLock?.(mode);
     } catch (error) {
       toast(error?.message || 'App PIN screen failed to load');
