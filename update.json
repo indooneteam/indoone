@@ -1,6 +1,6 @@
 {
-  "versionCode": 20,
-  "versionName": "2.1.8",
+  "versionCode": 21,
+  "versionName": "2.1.9",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.8 release. Responsive App Lock screen for different device sizes and improved PIN unlock behavior."
+  "notes": "Indoone 2.1.9 verification build. Responsive layout and Android safe-area handling for different device sizes and navigation modes."
 }
