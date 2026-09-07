@@ -30,7 +30,11 @@
       submitting = false;
 
       if (typeof result === 'string' && result) {
-        buffer = '';
+        /* In auto-submit unlock mode, keep the entered digits so that
+           5–12 digit PINs can continue beyond the first four digits. */
+        if (!autoSubmit) {
+          buffer = '';
+        }
         errorMessage = result;
         render();
       }
