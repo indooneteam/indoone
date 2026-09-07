@@ -1,6 +1,0 @@
-/*
- * Compatibility shim.
- * Header rules now live in app/safe-layout/header.css.
- * Keep this path temporarily so existing index.html references remain safe.
- */
-@import url("app/safe-layout/header.css");
