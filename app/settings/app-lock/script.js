@@ -70,6 +70,162 @@
     });
   }
 
+  function ensureAppLockStyles() {
+    if (document.getElementById('indoone-app-lock-runtime-styles')) return;
+
+    const link = document.createElement('link');
+    link.id = 'indoone-app-lock-runtime-styles';
+    link.rel = 'stylesheet';
+    link.href = 'app/settings/app-lock/style.css?v=20260907b';
+    document.head.appendChild(link);
+  }
+
+  function clearAppLockOverlayClasses() {
+    document.getElementById('overlay')?.classList.remove(
+      'indoone-app-lock-overlay'
+    );
+    document.getElementById('modal')?.classList.remove(
+      'indoone-app-lock-modal'
+    );
+  }
+
+  function openAppLockScreen(html) {
+    ensureAppLockStyles();
+    openModal(html);
+    document.getElementById('overlay')?.classList.add(
+      'indoone-app-lock-overlay'
+    );
+    document.getElementById('modal')?.classList.add(
+      'indoone-app-lock-modal'
+    );
+    document.body.classList.add('app-lock-active');
+  }
+
+  function closeAppLockScreen() {
+    clearAppLockOverlayClasses();
+    document.body.classList.remove('app-lock-active');
+    closeModal();
+  }
+
+  function pinDots(buffer, maxLength = 12) {
+    return Array.from({ length: maxLength }, (_, index) =>
+      `<span class="app-lock-dot${index < buffer.length ? ' filled' : ''}"></span>`
+    ).join('');
+  }
+
+  function showCustomPinPad({
+    title,
+    description,
+    actionLabel,
+    maxLength = 12,
+    minLength = 4,
+    allowClose = false,
+    onSubmit
+  }) {
+    let buffer = '';
+    let errorMessage = '';
+
+    function render() {
+      const actionDisabled = buffer.length < minLength;
+
+      openAppLockScreen(`
+        <div class="app-lock-screen">
+          <div class="app-lock-top">
+            <div class="app-lock-brand" aria-hidden="true">
+              <span class="app-lock-brand-mark">I</span>
+              <span class="app-lock-brand-name">Indoone</span>
+            </div>
+
+            <h2 class="app-lock-title">${title}</h2>
+            <p class="app-lock-description">${description}</p>
+
+            <div
+              class="app-lock-dots"
+              aria-label="PIN length ${buffer.length}"
+            >${pinDots(buffer, maxLength)}</div>
+            <div class="app-lock-error" aria-live="polite">${errorMessage}</div>
+
+            <button
+              type="button"
+              class="app-lock-action"
+              id="appLockPadAction"
+              ${actionDisabled ? 'disabled' : ''}
+            >
+              ${actionLabel}
+            </button>
+          </div>
+
+          <div>
+            <div class="app-lock-keypad" aria-label="PIN keypad">
+              <button type="button" class="app-lock-key" data-app-lock-digit="1">1</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="2">2</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="3">3</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="4">4</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="5">5</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="6">6</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="7">7</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="8">8</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="9">9</button>
+              <button type="button" class="app-lock-key secondary-key" data-app-lock-clear>Clear</button>
+              <button type="button" class="app-lock-key" data-app-lock-digit="0">0</button>
+              <button type="button" class="app-lock-key secondary-key" data-app-lock-back>⌫</button>
+            </div>
+
+            <div class="app-lock-footer">
+              ${allowClose ? '<button type="button" class="app-lock-cancel" id="appLockCancel">Cancel</button>' : 'PIN is entered using the secure on-screen keypad'}
+            </div>
+          </div>
+        </div>
+      `);
+
+      document.querySelectorAll('[data-app-lock-digit]').forEach(button => {
+        button.addEventListener('click', () => {
+          if (buffer.length >= maxLength) return;
+          buffer += button.getAttribute('data-app-lock-digit');
+          errorMessage = '';
+          render();
+        });
+      });
+
+      document.querySelectorAll('[data-app-lock-back]').forEach(button => {
+        button.addEventListener('click', () => {
+          buffer = buffer.slice(0, -1);
+          errorMessage = '';
+          render();
+        });
+      });
+
+      document.querySelectorAll('[data-app-lock-clear]').forEach(button => {
+        button.addEventListener('click', () => {
+          buffer = '';
+          errorMessage = '';
+          render();
+        });
+      });
+
+      document
+        .getElementById('appLockPadAction')
+        ?.addEventListener('click', async () => {
+          if (buffer.length < minLength) return;
+
+          const value = buffer;
+          const result = await onSubmit(value);
+
+          if (typeof result === 'string' && result) {
+            buffer = '';
+            errorMessage = result;
+            render();
+          }
+        });
+
+      document
+        .getElementById('appLockCancel')
+        ?.addEventListener('click', closeAppLockScreen);
+    }
+
+    render();
+  }
+
   function scheduleSessionLock() {
     if (sessionLockTimer) {
       clearTimeout(sessionLockTimer);
@@ -96,6 +252,7 @@
     startupUnlockShown = false;
     firstAccountPromptShown = false;
     document.body.classList.add('app-lock-active');
+    maskVisibleAccountCodes();
 
     if (currentUser() && IndoonePersistence.hasAppLock()) {
       if (IndooneBiometric.enabled()) {
@@ -286,176 +443,97 @@
   }
 
   window.showChangeAppPin = function () {
-    openModal(`
-      <div class="modal-head">
-        <h2>Change your PIN</h2>
-        <button class="close-btn" data-close aria-label="Close">×</button>
-      </div>
-      <p>
-        Enter your current App PIN, then choose a new 4–12 digit PIN.
-      </p>
+    let step = 'current';
+    let newPin = '';
 
-      <div class="field">
-        <label>Current PIN</label>
-        <input
-          id="currentVaultPin"
-          type="password"
-          inputmode="numeric"
-          maxlength="12"
-          autocomplete="off"
-          placeholder="Current PIN"
-        >
-      </div>
-
-      <div class="field">
-        <label>New PIN</label>
-        <input
-          id="newVaultPin"
-          type="password"
-          inputmode="numeric"
-          maxlength="12"
-          autocomplete="off"
-          placeholder="4–12 digits"
-        >
-      </div>
-
-      <div class="field">
-        <label>Confirm new PIN</label>
-        <input
-          id="confirmVaultPin"
-          type="password"
-          inputmode="numeric"
-          maxlength="12"
-          autocomplete="off"
-          placeholder="Re-enter new PIN"
-        >
-      </div>
-
-      <button class="primary" id="changeVaultPinAction">
-        Change PIN
-      </button>
-    `);
-
-    document
-      .getElementById('changeVaultPinAction')
-      ?.addEventListener('click', async () => {
-        const currentPin =
-          document.getElementById('currentVaultPin')?.value || '';
-        const newPin =
-          document.getElementById('newVaultPin')?.value || '';
-        const confirmPin =
-          document.getElementById('confirmVaultPin')?.value || '';
-
-        if (!/^\d{4,12}$/.test(currentPin)) {
-          return toast('Current PIN must be 4–12 digits');
+    const renderStep = (errorMessage = '') => {
+      const meta = {
+        current: {
+          title: 'Verify current PIN',
+          description: 'Enter your current App PIN to continue.',
+          action: 'Continue'
+        },
+        new: {
+          title: 'Create new PIN',
+          description: 'Choose a new 4–12 digit App PIN.',
+          action: 'Continue'
+        },
+        confirm: {
+          title: 'Confirm new PIN',
+          description: 'Enter the new PIN again to confirm it.',
+          action: 'Change PIN'
         }
+      }[step];
 
-        if (!/^\d{4,12}$/.test(newPin)) {
-          return toast('New PIN must be 4–12 digits');
-        }
-
-        if (newPin !== confirmPin) {
-          return toast('New PINs do not match');
-        }
-
-        if (newPin === currentPin) {
-          return toast('New PIN must be different from the current PIN');
-        }
-
-        try {
-          const verified = await IndoonePersistence.unlock(currentPin);
-
-          if (!verified) {
-            return toast('Incorrect current PIN');
+      showCustomPinPad({
+        title: meta.title,
+        description: meta.description,
+        actionLabel: meta.action,
+        allowClose: true,
+        onSubmit: async value => {
+          if (step === 'current') {
+            const verified = await IndoonePersistence.unlock(value);
+            if (!verified) return 'Incorrect current PIN';
+            step = 'new';
+            renderStep();
+            return null;
           }
 
-          await IndoonePersistence.save([], newPin);
-          setSession(newPin);
-          closeModal();
-          toast('App PIN changed');
-        } catch (error) {
-          toast(error?.message || 'App PIN change failed');
+          if (step === 'new') {
+            newPin = value;
+            step = 'confirm';
+            renderStep();
+            return null;
+          }
+
+          if (value !== newPin) {
+            return 'New PINs do not match';
+          }
+
+          if (value.length < 4 || value.length > 12) {
+            return 'PIN must be 4–12 digits';
+          }
+
+          try {
+            await IndoonePersistence.save([], newPin);
+            setSession(newPin);
+            closeAppLockScreen();
+            toast('App PIN changed');
+            return null;
+          } catch (error) {
+            return error?.message || 'App PIN change failed';
+          }
         }
       });
+    };
+
+    renderStep();
   };
 
   window.showAppLock = function (mode = 'unlock') {
     const hasPin = IndoonePersistence.hasAppLock();
-    const title =
-      mode === 'setup'
-        ? 'Create App PIN'
-        : (hasPin ? 'Unlock Indoone' : 'Create App PIN');
+    const isUnlock = hasPin && mode !== 'setup';
 
-    openModal(`
-      <div class="modal-head">
-        <h2>${title}</h2>
-        <button class="close-btn" data-close ${
-          hasPin && mode !== 'setup'
-            ? 'aria-label="Unlock required"'
-            : 'aria-label="Close"'
-        }>×</button>
-      </div>
-      <p>
-        ${
-          hasPin && mode !== 'setup'
-            ? 'Enter your App PIN to unlock Indoone. App access is locked until the correct PIN is entered.'
-            : 'Your App PIN controls access to Indoone when the app is locked.'
-        }
-      </p>
-      <div class="field">
-        <label>PIN</label>
-        <input
-          id="vaultPin"
-          type="password"
-          inputmode="numeric"
-          maxlength="12"
-          autocomplete="off"
-          placeholder="4–12 digits"
-        >
-      </div>
-      <button class="primary" id="vaultPinAction">
-        ${
-          hasPin && mode !== 'setup'
-            ? 'Unlock App'
-            : 'Create App PIN'
-        }
-      </button>
-      ${
-        hasPin && mode !== 'setup'
-          ? '<button class="secondary" id="changeAppPinAction">Change your PIN</button>'
-          : ''
-      }
-    `);
-
-    document
-      .getElementById('changeAppPinAction')
-      ?.addEventListener('click', () => {
-        window.showChangeAppPin();
-      });
-
-    document
-      .getElementById('vaultPinAction')
-      ?.addEventListener('click', async () => {
-        const value =
-          document.getElementById('vaultPin')?.value || '';
-
-        if (!/^\d{4,12}$/.test(value)) {
-          return toast('PIN must be 4–12 digits');
-        }
-
+    showCustomPinPad({
+      title: isUnlock ? 'Unlock Indoone' : 'Create App PIN',
+      description: isUnlock
+        ? 'Enter your App PIN. Indoone stays locked until the correct PIN is entered.'
+        : 'Create a 4–12 digit PIN to protect Indoone.',
+      actionLabel: isUnlock ? 'Unlock App' : 'Create App PIN',
+      allowClose: !isUnlock,
+      onSubmit: async value => {
         try {
-          if (hasPin && mode !== 'setup') {
+          if (isUnlock) {
             const ok = await IndoonePersistence.unlock(value);
 
             if (!ok) {
-              return toast('Incorrect PIN');
+              return 'Incorrect PIN';
             }
 
             setSession(value);
             startupUnlockShown = true;
             unmaskVisibleAccountCodes();
-            document.body.classList.remove('app-lock-active');
-            closeModal();
+            closeAppLockScreen();
             renderAccounts();
 
             if (typeof startTOTPRefresh === 'function') {
@@ -471,14 +549,16 @@
 
             firstAccountPromptShown = false;
             unmaskVisibleAccountCodes();
-            document.body.classList.remove('app-lock-active');
-            closeModal();
+            closeAppLockScreen();
             toast('App PIN created');
           }
+
+          return null;
         } catch (error) {
-          toast(error?.message || 'App PIN operation failed');
+          return error?.message || 'App PIN operation failed';
         }
-      });
+      }
+    });
   };
 
   window.showBiometricUnlock = function () {
@@ -561,6 +641,8 @@
     startupUnlockShown = true;
     firstAccountPromptShown = false;
     document.body.classList.add('app-lock-active');
+    maskVisibleAccountCodes();
+
     if (IndooneBiometric.enabled()) {
       showBiometricUnlock();
     } else {
