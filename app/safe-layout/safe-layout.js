@@ -2,15 +2,16 @@
  * Indoone Safe Layout runtime hook.
  *
  * Android publishes measured inset values through CSS custom properties.
- * This module keeps component geometry in CSS. The native WebView bridge may
- * still create its legacy runtime stylesheet; remove it so old hardcoded
- * header/bottom-nav dimensions cannot override the central safe-layout
- * contract.
+ * This module keeps component geometry in CSS and identifies the taller
+ * three-button navigation bar so the app navigation controls do not get
+ * pushed unnecessarily far above the system buttons.
  */
 (function () {
   'use strict';
 
   var LEGACY_STYLE_ID = 'indoone-native-insets';
+  var THREE_BUTTON_CLASS = 'indoone-three-button-nav';
+  var THREE_BUTTON_MIN_INSET_PX = 32;
 
   window.IndooneSafeLayout = window.IndooneSafeLayout || {};
 
@@ -34,14 +35,53 @@
     }
   }
 
-  removeLegacyNativeStyle();
+  function updateNavigationModeClass() {
+    var root = document.documentElement;
+    if (!root) {
+      return;
+    }
+
+    var styles = window.getComputedStyle(root);
+    var rawBottom = styles.getPropertyValue('--indoone-safe-bottom').trim();
+    var bottom = parseFloat(rawBottom);
+
+    if (!isFinite(bottom)) {
+      bottom = 0;
+    }
+
+    root.classList.toggle(
+      THREE_BUTTON_CLASS,
+      bottom >= THREE_BUTTON_MIN_INSET_PX
+    );
+  }
+
+  function refresh() {
+    removeLegacyNativeStyle();
+    updateNavigationModeClass();
+  }
+
+  refresh();
 
   if (typeof MutationObserver !== 'undefined') {
-    new MutationObserver(function () {
+    new MutationObserver(function (mutations) {
       removeLegacyNativeStyle();
+
+      var shouldRefreshMode = false;
+      for (var i = 0; i < mutations.length; i += 1) {
+        if (mutations[i].type === 'attributes') {
+          shouldRefreshMode = true;
+          break;
+        }
+      }
+
+      if (shouldRefreshMode) {
+        updateNavigationModeClass();
+      }
     }).observe(document.documentElement, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style']
     });
   }
 })();
