@@ -54,6 +54,22 @@
     }
   }
 
+  function maskVisibleAccountCodes() {
+    document.querySelectorAll('.account-info strong').forEach(node => {
+      node.dataset.indooneLockHidden = 'true';
+      node.style.visibility = 'hidden';
+    });
+  }
+
+  function unmaskVisibleAccountCodes() {
+    document.querySelectorAll('.account-info strong').forEach(node => {
+      if (node.dataset.indooneLockHidden === 'true') {
+        node.style.removeProperty('visibility');
+        delete node.dataset.indooneLockHidden;
+      }
+    });
+  }
+
   function scheduleSessionLock() {
     if (sessionLockTimer) {
       clearTimeout(sessionLockTimer);
@@ -123,6 +139,7 @@
       firstAccountPromptShown = false;
       document.body.classList.remove('app-lock-active');
       scheduleSessionLock();
+      unmaskVisibleAccountCodes();
 
       if (typeof renderAccounts === 'function') {
         renderAccounts();
@@ -234,6 +251,7 @@
 
     startupUnlockShown = true;
     firstAccountPromptShown = false;
+    maskVisibleAccountCodes();
     document.body.classList.add('app-lock-active');
 
     if (IndooneBiometric.enabled()) {
@@ -435,6 +453,7 @@
 
             setSession(value);
             startupUnlockShown = true;
+            unmaskVisibleAccountCodes();
             document.body.classList.remove('app-lock-active');
             closeModal();
             renderAccounts();
@@ -451,6 +470,7 @@
             dismissFirstAccountPrompt();
 
             firstAccountPromptShown = false;
+            unmaskVisibleAccountCodes();
             document.body.classList.remove('app-lock-active');
             closeModal();
             toast('App PIN created');
@@ -499,6 +519,7 @@
 
             setSession(pin);
             startupUnlockShown = true;
+            unmaskVisibleAccountCodes();
             document.body.classList.remove('app-lock-active');
             closeModal();
             renderAccounts();
