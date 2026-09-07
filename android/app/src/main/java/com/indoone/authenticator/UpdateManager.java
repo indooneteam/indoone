@@ -30,7 +30,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class UpdateManager {
-    private static final String UPDATE_URL = "https://indooneteam.github.io/indoone/develop/update.json?ts=";
+    private static final String UPDATE_BASE_URL = "https://indooneteam.github.io/indoone/";
 
     private final MainActivity activity;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -40,11 +40,15 @@ public final class UpdateManager {
         this.activity = activity;
     }
 
+    private String getUpdateUrl() {
+        return UPDATE_BASE_URL + BuildConfig.INDOONE_CHANNEL + "/update.json?ts=";
+    }
+
     public void checkForUpdate() {
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
-                String requestUrl = UPDATE_URL + System.currentTimeMillis();
+                String requestUrl = getUpdateUrl() + System.currentTimeMillis();
                 connection = (HttpURLConnection) new URL(requestUrl).openConnection();
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
