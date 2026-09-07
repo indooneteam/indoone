@@ -87,38 +87,20 @@ def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') 
                 "r.style.setProperty('--indoone-bottom-inset','" +
                 lastBottomInset +
                 "px');})();";'''
-        String newInsetScript = '''                "r.style.setProperty('--indoone-safe-left','" +
+        String newInsetScript = '''                "r.style.setProperty('--indoone-left-inset','" +
                 lastLeftInset +
-                "px');" +
-                "r.style.setProperty('--indoone-safe-top','" +
-                lastTopInset +
-                "px');" +
-                "r.style.setProperty('--indoone-safe-right','" +
-                lastRightInset +
-                "px');" +
-                "r.style.setProperty('--indoone-safe-bottom','" +
-                lastBottomInset +
                 "px');" +
                 "r.style.setProperty('--indoone-top-inset','" +
                 lastTopInset +
+                "px');" +
+                "r.style.setProperty('--indoone-right-inset','" +
+                lastRightInset +
                 "px');" +
                 "r.style.setProperty('--indoone-bottom-inset','" +
                 lastBottomInset +
                 "px');})();";'''
         if (text.contains(oldInsetScript)) {
             text = text.replace(oldInsetScript, newInsetScript)
-        }
-
-        String oldTopbarCss = "s.textContent='.topbar{height:calc(76px + " +
-                "var(--indoone-top-inset, 0px)) !important;" +
-                "min-height:calc(76px + var(--indoone-top-inset, 0px)) !important;" +
-                "padding-top:calc(18px + var(--indoone-top-inset, 0px)) !important;}'+";
-        String newTopbarCss = "s.textContent='.topbar{height:64px !important;" +
-                "min-height:64px !important;" +
-                "padding:10px 18px 6px !important;}'+";
-
-        if (text.contains(oldTopbarCss)) {
-            text = text.replace(oldTopbarCss, newTopbarCss)
         }
 
         source.setText(text, 'UTF-8')
