@@ -25,18 +25,23 @@ public final class SafeLayoutContract {
         Insets cutout = insets.getInsets(
                 WindowInsetsCompat.Type.displayCutout()
         );
-        Insets systemGestures = insets.getInsets(
-                WindowInsetsCompat.Type.systemGestures()
-        );
-        Insets mandatoryGestures = insets.getInsets(
-                WindowInsetsCompat.Type.mandatorySystemGestures()
-        );
 
+        /*
+         * Use only regions that can actually occupy or protect the app's
+         * layout. System-gesture insets describe gesture touch regions and
+         * can be larger than the visible navigation area. Treating them as
+         * layout insets creates unnecessary gaps on gesture-navigation
+         * devices.
+         *
+         * This same rule works for gesture navigation, two-button
+         * navigation, three-button navigation, cutouts, and rotation
+         * without identifying a specific device or Android version.
+         */
         return Insets.of(
-                max(systemBars.left, cutout.left, systemGestures.left, mandatoryGestures.left),
+                max(systemBars.left, cutout.left),
                 max(systemBars.top, cutout.top),
-                max(systemBars.right, cutout.right, systemGestures.right, mandatoryGestures.right),
-                max(systemBars.bottom, tappable.bottom, systemGestures.bottom, mandatoryGestures.bottom)
+                max(systemBars.right, cutout.right),
+                max(systemBars.bottom, tappable.bottom, cutout.bottom)
         );
     }
 
