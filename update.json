@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "versionName": "2.1.10",
+  "versionCode": 23,
+  "versionName": "2.1.11",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.10 verification build. Normalize shared responsive screen layout across device sizes."
+  "notes": "Indoone 2.1.11 verification build. Fix Accounts list scrolling on different device sizes."
 }
