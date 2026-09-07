@@ -2,11 +2,15 @@
  * Indoone Safe Layout runtime hook.
  *
  * Android publishes measured inset values through CSS custom properties.
- * This module intentionally stays passive for now; layout responsibilities
- * will be migrated here only after the native/WebView contract is verified.
+ * This module keeps component geometry in CSS. The native WebView bridge may
+ * still create its legacy runtime stylesheet; remove it so old hardcoded
+ * header/bottom-nav dimensions cannot override the central safe-layout
+ * contract.
  */
 (function () {
   'use strict';
+
+  var LEGACY_STYLE_ID = 'indoone-native-insets';
 
   window.IndooneSafeLayout = window.IndooneSafeLayout || {};
 
@@ -21,4 +25,23 @@
       left: styles.getPropertyValue('--indoone-safe-left').trim()
     };
   };
+
+  function removeLegacyNativeStyle() {
+    var legacyStyle = document.getElementById(LEGACY_STYLE_ID);
+
+    if (legacyStyle) {
+      legacyStyle.remove();
+    }
+  }
+
+  removeLegacyNativeStyle();
+
+  if (typeof MutationObserver !== 'undefined') {
+    new MutationObserver(function () {
+      removeLegacyNativeStyle();
+    }).observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+  }
 })();
