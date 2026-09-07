@@ -1,6 +1,6 @@
 {
-  "versionCode": 27,
-  "versionName": "2.1.15",
+  "versionCode": 28,
+  "versionName": "2.1.16",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.15. Final responsive safe-area layout update for device testing."
+  "notes": "Indoone 2.1.16. Fix extra bottom navigation gap in Android 3-button system navigation mode."
 }
