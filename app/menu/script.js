@@ -3,7 +3,7 @@
   const panel = drawer?.querySelector('.drawer-panel');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260905c';
+  const ASSET_VERSION = '20260907a';
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
@@ -84,45 +84,26 @@
   function ensureLegalMenuItems() {
     if (!panel) return;
 
-    const securityItem = panel.querySelector(
-      '[data-action="security"]'
-    );
-    const aboutItem = panel.querySelector(
-      '[data-action="about"]'
-    );
+    const securityItem = panel.querySelector('[data-action="security"]');
+    const aboutItem = panel.querySelector('[data-action="about"]');
 
     if (!securityItem || !aboutItem) return;
 
     if (!panel.querySelector('[data-action="terms-of-use"]')) {
-      const termsItem = createLegalMenuItem(
-        'terms',
-        'Terms of Use'
-      );
-
       securityItem.insertAdjacentElement(
         'afterend',
-        termsItem
+        createLegalMenuItem('terms', 'Terms of Use')
       );
     }
 
     if (!panel.querySelector('[data-action="privacy-policy"]')) {
-      const privacyItem = createLegalMenuItem(
-        'privacy',
-        'Privacy Policy'
-      );
-
-      const termsItem = panel.querySelector(
-        '[data-action="terms-of-use"]'
-      );
-
+      const termsItem = panel.querySelector('[data-action="terms-of-use"]');
       termsItem?.insertAdjacentElement(
         'afterend',
-        privacyItem
+        createLegalMenuItem('privacy', 'Privacy Policy')
       );
     }
   }
-
-  ensureLegalMenuItems();
 
   function showOverlay() {
     document.getElementById('overlay')?.classList.remove('hidden');
@@ -167,9 +148,7 @@
   async function loadFeatureMarkup(base) {
     const response = await fetch(
       `${base}/index.html?v=${ASSET_VERSION}`,
-      {
-        cache: 'no-store'
-      }
+      { cache: 'no-store' }
     );
 
     if (!response.ok) {
@@ -177,10 +156,7 @@
     }
 
     const modal = document.getElementById('modal');
-
-    if (!modal) {
-      throw new Error('Menu modal is unavailable.');
-    }
+    if (!modal) throw new Error('Menu modal is unavailable.');
 
     modal.innerHTML = await response.text();
   }
@@ -190,43 +166,30 @@
 
     try {
       const base = getFeatureBase(path);
-
       await loadFeatureMarkup(base);
       await loadStyle(base);
       await loadScript(base);
 
       const initializer = window[initializerName];
-
       if (typeof initializer !== 'function') {
         throw new Error('Menu feature initializer is unavailable.');
       }
 
       const result = await initializer();
-
-      if (result === false) {
-        hideOverlay();
-      } else {
-        showOverlay();
-      }
+      if (result === false) hideOverlay();
+      else showOverlay();
     } catch (error) {
       hideOverlay();
-      window.toast?.(
-        error?.message || 'Could not open menu item'
-      );
+      window.toast?.(error?.message || 'Could not open menu item');
     }
   }
 
   window.toggleMenu = function () {
     if (!drawer) return;
-
     ensureLegalMenuItems();
-
     const open = !drawer.classList.contains('open');
     drawer.classList.toggle('open', open);
-    drawer.setAttribute(
-      'aria-hidden',
-      String(!open)
-    );
+    drawer.setAttribute('aria-hidden', String(!open));
   };
 
   window.closeDrawer = function () {
@@ -236,30 +199,24 @@
 
   window.openMenuFeature = function (feature) {
     const initializerName = featureInitializers[feature];
-
     if (!initializerName) return;
-
     void openPath(feature, initializerName);
   };
 
   window.openMenuNested = function (path) {
     const initializerName = nestedInitializers[path];
-
     if (!initializerName) return;
-
     void openPath(path, initializerName);
   };
 
   panel?.addEventListener('click', event => {
     const item = event.target.closest('[data-action]');
-
     if (!item || !panel.contains(item)) return;
 
     event.preventDefault();
     event.stopPropagation();
 
     const action = item.dataset.action;
-
     if (action === 'accounts') {
       closeDrawer();
       document.getElementById('accountsNav')?.click();
@@ -272,7 +229,6 @@
   drawer?.addEventListener('pointerdown', event => {
     if (!drawer.classList.contains('open')) return;
     if (panel && panel.contains(event.target)) return;
-
     closeDrawer();
   });
 })();
