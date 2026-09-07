@@ -1,15 +1,55 @@
 /* Indoone Settings Icon Refresh
  *
- * Clean, consistent line icons for the Settings screen.
+ * Modern, consistent line icons for the Settings screen.
  * Existing settings.js behavior remains unchanged; this file is visual only.
  */
 
-.settings-content .settings-option-icon-wrap{position:relative;color:#756d80}
-.settings-content .settings-option-icon-wrap>.settings-option-icon{display:none!important}
-.settings-content .settings-option-icon-wrap::before{content:"";display:block;width:21px;height:21px;flex:none;background-repeat:no-repeat;background-position:center;background-size:contain}
-.settings-content [data-settings-action="profile"] .settings-option-icon-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3'/%3E%3Cpath d='M5.5 20c.7-3.2 2.9-5 6.5-5s5.8 1.8 6.5 5'/%3E%3C/svg%3E")}
-.settings-content [data-settings-action="app-lock"] .settings-option-icon-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E")}
-.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.65' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 8.5A5 5 0 0 1 12 3.5a5 5 0 0 1 5 5'/%3E%3Cpath d='M5.5 11A6.5 6.5 0 0 1 12 4.5a6.5 6.5 0 0 1 6.5 6.5'/%3E%3Cpath d='M8 13a4 4 0 0 1 8 0'/%3E%3Cpath d='M9.5 15v1.5a2 2 0 0 1-4 0V15'/%3E%3Cpath d='M12 14v4a2 2 0 0 1-4 0v-1'/%3E%3Cpath d='M14.5 14.5v3a2.5 2.5 0 0 1-5 0'/%3E%3Cpath d='M17 13v4a3 3 0 0 1-6 0v-1'/%3E%3C/svg%3E")}
-.settings-content [data-settings-action="auto-lock"] .settings-option-icon-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13' r='7'/%3E%3Cpath d='M12 13V9'/%3E%3Cpath d='M9.5 3.5h5'/%3E%3Cpath d='M12 6V4'/%3E%3C/svg%3E")}
-.settings-content [data-settings-action="about"] .settings-option-icon-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M12 10.5v5'/%3E%3Cpath d='M12 7.5h.01'/%3E%3C/svg%3E")}
-.settings-content .settings-option-row:active .settings-option-icon-wrap::before,.settings-content .settings-row-toggle:active .settings-option-icon-wrap::before{filter:brightness(0) saturate(100%) invert(22%) sepia(40%) saturate(2614%) hue-rotate(243deg) brightness(89%) contrast(90%)}
+.settings-content .settings-option-icon-wrap {
+  position: relative;
+  color: #756d80;
+}
+
+.settings-content .settings-option-icon-wrap > .settings-option-icon {
+  display: none !important;
+}
+
+.settings-content .settings-option-icon-wrap::before {
+  content: "";
+  display: block;
+  width: 21px;
+  height: 21px;
+  flex: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* Profile: rounded user icon */
+.settings-content [data-settings-action="profile"] .settings-option-icon-wrap::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='7.5' r='3.2'/%3E%3Cpath d='M4.8 20c.9-3.3 3.3-5.2 7.2-5.2s6.3 1.9 7.2 5.2'/%3E%3C/svg%3E");
+}
+
+/* App Lock: shield + lock */
+.settings-content [data-settings-action="app-lock"] .settings-option-icon-wrap::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.8 19 6.7v5.1c0 4.2-2.8 7.2-7 8.4-4.2-1.2-7-4.2-7-8.4V6.7L12 3.8Z'/%3E%3Crect x='8.1' y='10' width='7.8' height='6.2' rx='1.4'/%3E%3Cpath d='M10 10V8.8a2 2 0 0 1 4 0V10'/%3E%3C/svg%3E");
+}
+
+/* Biometric: cleaner fingerprint motif */
+.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.65' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.2 10.2A4.8 4.8 0 0 1 12 5.4a4.8 4.8 0 0 1 4.8 4.8'/%3E%3Cpath d='M5.2 11.7A6.8 6.8 0 0 1 12 4.9a6.8 6.8 0 0 1 6.8 6.8'/%3E%3Cpath d='M8.7 13.4a3.3 3.3 0 0 1 6.6 0v1.2'/%3E%3Cpath d='M10.4 14.8v2.4a1.6 1.6 0 0 1-3.2 0v-1.4'/%3E%3Cpath d='M13.6 14.2v3.1a1.8 1.8 0 0 1-3.6 0v-1.2'/%3E%3Cpath d='M16.5 13.5v3.2a2.5 2.5 0 0 1-5 0'/%3E%3C/svg%3E");
+}
+
+/* Auto-Lock: compact stopwatch */
+.settings-content [data-settings-action="auto-lock"] .settings-option-icon-wrap::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13' r='7'/%3E%3Cpath d='M12 9.2v3.8l2.5 1.5'/%3E%3Cpath d='M9.5 3.8h5'/%3E%3Cpath d='M12 3.8V2.6'/%3E%3Cpath d='m17.6 6.4 1.2-1.2'/%3E%3C/svg%3E");
+}
+
+/* About Indoone: information mark */
+.settings-content [data-settings-action="about"] .settings-option-icon-wrap::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.2'/%3E%3Cpath d='M12 10.5v5.2'/%3E%3Ccircle cx='12' cy='7.5' r='.75' fill='%23756d80' stroke='none'/%3E%3C/svg%3E");
+}
+
+.settings-content .settings-option-row:active .settings-option-icon-wrap::before,
+.settings-content .settings-row-toggle:active .settings-option-icon-wrap::before {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(40%) saturate(2614%) hue-rotate(243deg) brightness(89%) contrast(90%);
+}
