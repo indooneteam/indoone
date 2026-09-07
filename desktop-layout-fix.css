@@ -95,29 +95,84 @@ html, body { height: 100%; }
   }
 }
 
-/* Accounts view: make the account area a real flex scroll region.
-   This keeps the search bar fixed while the account list can scroll
-   independently above the bottom navigation. */
-#app.phone-shell {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-#app.phone-shell #content {
-  min-height: 0;
-  flex: 1 1 auto;
-  height: auto;
-  max-height: none;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
+/* Shared content regions: every main screen uses the same vertical geometry.
+   Screen-specific modules only control their inner content. */
+#app.phone-shell > #content,
+#app.phone-shell > #connectContent,
+#app.phone-shell > .settings-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  padding-top: clamp(14px, 2.5vw, 18px) !important;
+  padding-right: calc(clamp(12px, 4.2vw, 18px) + var(--indoone-safe-right)) !important;
+  padding-bottom: calc(var(--indoone-bottom-nav-base) + 37px + var(--indoone-safe-bottom)) !important;
+  padding-left: calc(clamp(12px, 4.2vw, 18px) + var(--indoone-safe-left)) !important;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
 }
 
-/* The search bar remains outside the scrolling account region. */
-#app.phone-shell #searchWrap {
-  flex: 0 0 auto;
+#app.phone-shell > #searchWrap {
+  flex: 0 0 auto !important;
+}
+
+#app.phone-shell > .topbar,
+#app.phone-shell > .bottom-nav {
+  flex: 0 0 auto !important;
+}
+
+/* Keep shared headings from drifting vertically between screens. */
+#app.phone-shell > #content .page-heading,
+#app.phone-shell > #connectContent .connect-hero,
+#app.phone-shell > .settings-content .settings-page-head {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Drawer and modal content also respect the same horizontal safe area. */
+#app.phone-shell .drawer-panel {
+  padding-left: calc(14px + var(--indoone-safe-left)) !important;
+  padding-right: calc(14px + var(--indoone-safe-right)) !important;
+}
+
+/* Full-screen overlays must not use viewport height to create large empty gaps. */
+.overlay.indoone-app-lock-overlay .app-lock-screen {
+  justify-content: center !important;
+  gap: clamp(14px, 4vh, 28px) !important;
+}
+
+.overlay.indoone-app-lock-overlay .app-lock-screen > div:last-child {
+  flex: 0 0 auto !important;
+}
+
+.overlay.indoone-app-lock-overlay .app-lock-top {
+  flex: 0 0 auto !important;
+}
+
+@media (max-height: 620px) {
+  .overlay.indoone-app-lock-overlay .app-lock-screen {
+    gap: 8px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .overlay.indoone-app-lock-overlay .app-lock-screen {
+    justify-content: initial !important;
+    gap: 0 !important;
+  }
+}
+
+/* ChromeOS/browser preview: keep a stable centered app and shared navigation. */
+@media (min-width: 700px) {
+  #app.phone-shell > #content,
+  #app.phone-shell > #connectContent,
+  #app.phone-shell > .settings-content {
+    padding-right: calc(18px + var(--indoone-safe-right)) !important;
+    padding-left: calc(18px + var(--indoone-safe-left)) !important;
+  }
 }
 
 /* ChromeOS/browser preview: reduce only the preview nav footprint.
