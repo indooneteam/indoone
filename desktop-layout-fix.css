@@ -10,9 +10,35 @@
 }
 
 html, body { height: 100%; }
-.phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
+
+/* Step 3: use one viewport-height flex shell. Header/navigation are fixed
+   flex items and the active content region owns the remaining height. */
+.phone-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+}
+
+.topbar,
+.bottom-nav,
+#searchWrap {
+  flex: 0 0 auto !important;
+}
+
+#app.phone-shell > #content,
+#app.phone-shell > #connectContent,
+#app.phone-shell > .settings-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
 @media (min-width: 700px) {
-  .phone-shell { height: 100dvh !important; min-height: 100dvh !important; }
+  .phone-shell { height: 100dvh !important; min-height: 0 !important; max-height: 100dvh !important; }
   .bottom-nav { bottom: 0 !important; }
 }
 
