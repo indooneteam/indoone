@@ -60,7 +60,7 @@
       title: 'App Lock',
       subtitle: 'PIN',
       icon: 'lock',
-      action: () => window.showAppLock?.()
+      action: () => window.showAppLockSettings?.()
     },
     {
       id: 'biometric',
@@ -316,7 +316,7 @@
       .forEach(button => {
         button.addEventListener(
           'click',
-          () => window.showAppLock?.()
+          () => window.showAppLockSettings?.()
         );
       });
 
