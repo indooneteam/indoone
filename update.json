@@ -1,6 +1,6 @@
 {
-  "versionCode": 19,
-  "versionName": "2.1.7",
+  "versionCode": 20,
+  "versionName": "2.1.8",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.7 release. Improved App Lock PIN and biometric unlock experience."
+  "notes": "Indoone 2.1.8 release. Responsive App Lock screen for different device sizes and improved PIN unlock behavior."
 }
