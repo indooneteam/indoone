@@ -23,7 +23,6 @@ import android.webkit.WebViewClient;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.indoone.authenticator.layout.SafeLayoutContract;
@@ -37,7 +36,9 @@ public class MainActivity extends FragmentActivity {
     private static final int WIFI_ENABLE_REQUEST_CODE = 44;
 
     private static final String APP_BASE_URL =
-            "https://indooneteam.github.io/indoone/develop/";
+            "https://indooneteam.github.io/indoone/"
+                    + BuildConfig.INDOONE_CHANNEL
+                    + "/";
     private static final String DEBUG_WEB_URL = APP_BASE_URL;
 
     private WebView webView;
