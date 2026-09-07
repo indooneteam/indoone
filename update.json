@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "versionName": "2.1.9",
+  "versionCode": 22,
+  "versionName": "2.1.10",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.9 verification build. Responsive layout and Android safe-area handling for different device sizes and navigation modes."
+  "notes": "Indoone 2.1.10 verification build. Normalize shared responsive screen layout across device sizes."
 }
