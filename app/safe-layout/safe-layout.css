@@ -36,20 +36,21 @@
 }
 
 /*
- * The bottom navigation always reserves the measured system-safe region.
- * This is intentionally identical for gesture, two-button, and three-button
- * navigation so the web UI adapts to the device instead of detecting a
- * particular navigation mode or hard-coding a device-specific offset.
+ * The WebView is edge-to-edge. The measured bottom inset belongs to the
+ * system navigation/gesture region, not to the Indoone navigation controls.
+ * Move the whole app navigation above that measured region while keeping
+ * the app bar itself at its normal component height. No navigation-mode
+ * detection or device-specific offset is used.
  */
 #app.phone-shell .bottom-nav {
-  height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-  min-height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-  padding: 0 var(--indoone-safe-right) var(--indoone-safe-bottom) var(--indoone-safe-left) !important;
-  bottom: 0 !important;
+  height: var(--indoone-bottom-nav-base) !important;
+  min-height: var(--indoone-bottom-nav-base) !important;
+  padding: 0 var(--indoone-safe-right) 0 var(--indoone-safe-left) !important;
+  bottom: var(--indoone-safe-bottom) !important;
 }
 
 #app.phone-shell .fab {
-  bottom: calc(78px + var(--indoone-safe-bottom)) !important;
+  bottom: calc(var(--indoone-bottom-nav-base) + 11px + var(--indoone-safe-bottom)) !important;
 }
 
 #app.phone-shell .drawer-panel {
@@ -83,7 +84,7 @@
   }
 
   #app.phone-shell .fab {
-    bottom: calc(72px + var(--indoone-safe-bottom)) !important;
+    bottom: calc(var(--indoone-bottom-nav-base) + 11px + var(--indoone-safe-bottom)) !important;
   }
 
   #app.phone-shell .overlay {
@@ -108,8 +109,8 @@
   }
 }
 
-/* Shared content region: this is the single place that reserves space for
-   the fixed navigation plus device-safe bottom inset. */
+/* Shared content region: reserves the app navigation plus measured system
+   safe area so scrolling content never hides behind either region. */
 #app.phone-shell > #content,
 #app.phone-shell > #connectContent,
 #app.phone-shell > .settings-content {
@@ -187,7 +188,9 @@
   }
 
   #app.phone-shell .bottom-nav {
-    height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-    padding: 0 var(--indoone-safe-right) var(--indoone-safe-bottom) var(--indoone-safe-left) !important;
+    height: var(--indoone-bottom-nav-base) !important;
+    min-height: var(--indoone-bottom-nav-base) !important;
+    padding: 0 var(--indoone-safe-right) 0 var(--indoone-safe-left) !important;
+    bottom: var(--indoone-safe-bottom) !important;
   }
 }
