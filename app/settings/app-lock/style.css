@@ -32,7 +32,6 @@
   flex-direction:column;
   justify-content:space-between;
   overflow:hidden;
-  position:relative;
 }
 
 .app-lock-top{
@@ -132,40 +131,6 @@
   box-shadow:none;
 }
 
-/* On unlock screens, present PIN + biometric as one split action row. */
-.app-lock-screen:has(#appLockBiometricSwitch) .app-lock-action{
-  width:calc(50% - 5px);
-  margin-right:auto;
-}
-
-.app-lock-screen:has(#appLockBiometricSwitch) .app-lock-footer{
-  position:absolute;
-  left:calc(50% + 5px);
-  bottom:298px;
-  width:calc(50% - 5px);
-  min-height:0;
-  margin:0;
-  padding:0;
-  z-index:2;
-}
-
-.app-lock-screen:has(#appLockBiometricSwitch) #appLockBiometricSwitch{
-  display:block;
-  width:100%;
-  height:48px;
-  margin:0;
-  padding:0 8px;
-  border:0;
-  border-radius:14px;
-  background:linear-gradient(90deg,#6330db,#9147ed);
-  color:#fff;
-  font-size:14px;
-  font-weight:850;
-  line-height:48px;
-  text-align:center;
-  box-shadow:0 8px 18px #7137df22;
-}
-
 .app-lock-keypad{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -239,14 +204,4 @@
   .app-lock-key.secondary-key{font-size:12px}
   .app-lock-footer{margin-top:6px;min-height:20px}
   .app-lock-cancel{font-size:12px}
-
-  .app-lock-screen:has(#appLockBiometricSwitch) .app-lock-footer{
-    bottom:244px;
-  }
-
-  .app-lock-screen:has(#appLockBiometricSwitch) #appLockBiometricSwitch{
-    height:42px;
-    line-height:42px;
-    border-radius:12px;
-  }
 }
