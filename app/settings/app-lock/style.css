@@ -15,25 +15,28 @@
   max-height:none;
   min-height:100dvh;
   margin:0;
-  padding:clamp(24px,6vw,42px) clamp(18px,5vw,32px) max(22px,env(safe-area-inset-bottom,0px));
+  padding:clamp(14px,4vw,30px) clamp(14px,5vw,32px) max(10px,env(safe-area-inset-bottom,0px));
   border-radius:0;
   box-shadow:none;
   overflow:hidden;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
 }
 
 .app-lock-screen{
   width:min(430px,100%);
-  min-height:100%;
+  height:100%;
+  min-height:0;
   margin:0 auto;
   display:flex;
   flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
 }
 
 .app-lock-top{
   text-align:center;
+  flex:0 0 auto;
 }
 
 .app-lock-brand{
@@ -41,54 +44,54 @@
   align-items:center;
   justify-content:center;
   gap:9px;
-  margin:4px auto 20px;
+  margin:2px auto 14px;
 }
 
 .app-lock-brand-mark{
-  width:38px;
-  height:38px;
-  border-radius:12px;
+  width:36px;
+  height:36px;
+  border-radius:11px;
   display:grid;
   place-items:center;
   background:linear-gradient(145deg,#5e2ce2,#9b51f1);
   color:#fff;
-  font-size:20px;
+  font-size:19px;
   font-weight:900;
   box-shadow:0 8px 18px #703be32f;
 }
 
 .app-lock-brand-name{
   color:#5e2dd2;
-  font-size:21px;
+  font-size:20px;
   font-weight:850;
   letter-spacing:-.2px;
 }
 
 .app-lock-title{
   margin:0;
-  font-size:28px;
+  font-size:27px;
   letter-spacing:-.7px;
 }
 
 .app-lock-description{
-  margin:10px auto 0;
+  margin:8px auto 0;
   max-width:330px;
   color:#76717d;
   font-size:13px;
-  line-height:1.55;
+  line-height:1.5;
 }
 
 .app-lock-dots{
   display:flex;
   justify-content:center;
-  gap:11px;
-  min-height:24px;
-  margin:30px auto 18px;
+  gap:10px;
+  min-height:20px;
+  margin:20px auto 14px;
 }
 
 .app-lock-dot{
-  width:12px;
-  height:12px;
+  width:11px;
+  height:11px;
   border:2px solid #cfc7dc;
   border-radius:50%;
   background:#fff;
@@ -101,8 +104,8 @@
 }
 
 .app-lock-error{
-  min-height:20px;
-  margin:-4px 0 6px;
+  min-height:18px;
+  margin:-2px 0 5px;
   text-align:center;
   color:#cf2f2f;
   font-size:12px;
@@ -111,7 +114,7 @@
 
 .app-lock-action{
   width:100%;
-  height:50px;
+  height:48px;
   border:0;
   border-radius:14px;
   background:linear-gradient(90deg,#6330db,#9147ed);
@@ -119,7 +122,7 @@
   font-weight:850;
   cursor:pointer;
   box-shadow:0 8px 18px #7137df22;
-  margin:0 0 16px;
+  margin:0 0 12px;
 }
 
 .app-lock-action:disabled{
@@ -131,15 +134,15 @@
 .app-lock-keypad{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
+  gap:8px;
   width:min(330px,100%);
   margin:0 auto;
 }
 
 .app-lock-key{
   width:100%;
-  aspect-ratio:1.25;
-  min-height:58px;
+  height:58px;
+  min-height:0;
   border:1px solid #e5dfec;
   border-radius:17px;
   background:#faf9fc;
@@ -164,7 +167,7 @@
 
 .app-lock-footer{
   min-height:24px;
-  margin-top:14px;
+  margin-top:10px;
   text-align:center;
   color:#8a8392;
   font-size:11px;
@@ -172,23 +175,33 @@
 
 .app-lock-cancel{
   display:inline-block;
-  margin-top:2px;
+  margin-top:0;
+  padding:4px 8px;
   border:0;
   background:transparent;
   color:#655b70;
   font-weight:800;
+  font-size:13px;
   cursor:pointer;
 }
 
 @media (max-height:700px){
   .modal.indoone-app-lock-modal{
-    padding-top:18px;
+    padding-top:10px;
+    padding-bottom:max(6px,env(safe-area-inset-bottom,0px));
   }
-  .app-lock-brand{margin-bottom:12px}
-  .app-lock-title{font-size:24px}
-  .app-lock-description{margin-top:6px}
-  .app-lock-dots{margin:18px auto 12px}
-  .app-lock-keypad{gap:7px}
-  .app-lock-key{min-height:50px}
-  .app-lock-action{height:46px;margin-bottom:10px}
+  .app-lock-brand{margin-bottom:8px}
+  .app-lock-brand-mark{width:32px;height:32px;font-size:17px}
+  .app-lock-brand-name{font-size:18px}
+  .app-lock-title{font-size:23px}
+  .app-lock-description{margin-top:4px;line-height:1.4}
+  .app-lock-dots{margin:11px auto 8px;gap:8px}
+  .app-lock-dot{width:9px;height:9px}
+  .app-lock-error{min-height:14px;margin:-1px 0 3px;font-size:11px}
+  .app-lock-action{height:42px;margin-bottom:8px;border-radius:12px}
+  .app-lock-keypad{gap:6px}
+  .app-lock-key{height:48px;border-radius:14px;font-size:20px}
+  .app-lock-key.secondary-key{font-size:12px}
+  .app-lock-footer{margin-top:6px;min-height:20px}
+  .app-lock-cancel{font-size:12px}
 }
