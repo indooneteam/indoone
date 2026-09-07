@@ -79,7 +79,7 @@
     const link = document.createElement('link');
     link.id = 'indoone-app-lock-runtime-styles';
     link.rel = 'stylesheet';
-    link.href = 'app/settings/app-lock/style.css?v=20260907d';
+    link.href = 'app/settings/app-lock/style.css?v=20260907c';
     document.head.appendChild(link);
   }
 
@@ -131,7 +131,7 @@
       }
 
       const script = document.createElement('script');
-      script.src = `${MODULE_BASE}${name}.js?v=20260907d`;
+      script.src = `${MODULE_BASE}${name}.js?v=20260907c`;
       script.async = true;
       script.dataset.indooneAppLockModule = name;
       script.addEventListener(
