@@ -1,3 +1,0 @@
-(() => {
-  window.IndooneHome = { init() {} };
-})();
