@@ -60,6 +60,7 @@ jobs:
           APK_PATH="develop-source/android/app/build/outputs/apk/debug/app-debug.apk"
           if [[ ! -f "$APK_PATH" ]]; then
             echo "::warning::Fresh APK build did not produce an APK; preserving the last published APK for this Pages deployment."
+            mkdir -p "$(dirname "$APK_PATH")"
             curl -fL --retry 3 --retry-delay 2 --retry-all-errors \
               "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk" \
               -o "$APK_PATH"
