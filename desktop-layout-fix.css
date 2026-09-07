@@ -1,4 +1,5 @@
 @import url("app/shared/responsive-compact.css");
+@import url("app/safe-layout/safe-layout.css");
 
 /* Keep the app in its 430px mobile layout on every viewport. */
 .phone-shell {
@@ -15,7 +16,7 @@ html, body { height: 100%; }
   .bottom-nav { bottom: 0 !important; }
 }
 
-/* Keep menu, Indoone branding, and account search on one straight top row. */
+/* Shared topbar geometry. Visual details stay in topbar-layout-fix.css. */
 .topbar {
   display: grid !important;
   grid-template-columns: 40px minmax(0, 1fr) 40px !important;
@@ -54,23 +55,7 @@ html, body { height: 100%; }
 .account-info strong { font-size: 21px !important; }
 .timer { width: 33px !important; height: 33px !important; font-size: 10px !important; }
 
-/* Shared device-agnostic safe-layout contract. */
-:root {
-  --indoone-top-inset: 0px;
-  --indoone-bottom-inset: 0px;
-  --indoone-top-safe: env(safe-area-inset-top, 0px);
-  --indoone-bottom-safe: env(safe-area-inset-bottom, 0px);
-  --indoone-safe-top: max(var(--indoone-top-inset), var(--indoone-top-safe));
-  --indoone-safe-bottom: max(var(--indoone-bottom-inset), var(--indoone-bottom-safe));
-  --indoone-topbar-base: 76px;
-  --indoone-bottom-nav-base: 67px;
-}
-
-#app.phone-shell {
-  --indoone-safe-top: max(var(--indoone-top-inset), var(--indoone-top-safe));
-  --indoone-safe-bottom: max(var(--indoone-bottom-inset), var(--indoone-bottom-safe));
-}
-
+/* The safe-area source and runtime variables live in app/safe-layout/. */
 #app.phone-shell .topbar {
   height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
   min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
