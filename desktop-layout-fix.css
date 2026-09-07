@@ -155,10 +155,11 @@ html, body { height: 100%; }
 
 /*
  * Device-safe system-bar handling.
- * Android 15+ forces edge-to-edge for targetSdk 35, so status/navigation
- * insets can differ by phone, cutout, and navigation mode. The Android
- * host publishes native inset values; CSS safe-area values cover WebView
- * and display-cutout variations. max() prevents double-counting.
+ * Keep the app bars anchored to the WebView viewport. The viewport already
+ * represents the usable app surface on devices where the host/WebView applies
+ * system-bar insets. Adding the same inset to bar size or position can create
+ * a visible gap, so the primary bars use their normal viewport coordinates.
+ * Safe-area values remain available for overlays and modal surfaces below.
  */
 :root {
   --indoone-top-safe: max(
@@ -173,15 +174,15 @@ html, body { height: 100%; }
 }
 
 #app.phone-shell .topbar {
-  height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-  min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
+  height: var(--indoone-topbar-base) !important;
+  min-height: var(--indoone-topbar-base) !important;
   padding-top: 18px !important;
 }
 
 #app.phone-shell .bottom-nav {
   height: 67px !important;
   padding-bottom: 0 !important;
-  bottom: var(--indoone-bottom-safe) !important;
+  bottom: 0 !important;
 }
 
 #app.phone-shell .fab {
@@ -207,8 +208,8 @@ html, body { height: 100%; }
   }
 
   #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
+    height: var(--indoone-topbar-base) !important;
+    min-height: var(--indoone-topbar-base) !important;
     padding-top: 12px !important;
   }
 
@@ -236,8 +237,8 @@ html, body { height: 100%; }
   }
 
   #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
+    height: var(--indoone-topbar-base) !important;
+    min-height: var(--indoone-topbar-base) !important;
     padding-top: 8px !important;
   }
 }
@@ -245,8 +246,8 @@ html, body { height: 100%; }
 /* Keep the Accounts list scrollable inside the fixed app shell. */
 #app.phone-shell #content {
   min-height: 0;
-  height: calc(100dvh - var(--indoone-topbar-base) - var(--indoone-top-safe));
-  max-height: calc(100dvh - var(--indoone-topbar-base) - var(--indoone-top-safe));
+  height: calc(100dvh - var(--indoone-topbar-base));
+  max-height: calc(100dvh - var(--indoone-topbar-base));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
