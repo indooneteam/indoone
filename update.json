@@ -1,6 +1,6 @@
 {
-  "versionCode": 25,
-  "versionName": "2.1.13",
+  "versionCode": 26,
+  "versionName": "2.1.14",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.13 verification build. Fix Trash restore and permanent deletion."
+  "notes": "Indoone 2.1.14. Restore from Trash and classic swipe-to-delete flow finalized."
 }
