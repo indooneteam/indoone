@@ -90,10 +90,20 @@ window.initMenuTrash = async function () {
           if (!id || restoreButton.disabled) return;
           restoreButton.disabled = true;
           try {
-            await cloud.restoreFromTrash(id);
+            const restored = await cloud.restoreFromTrash(id);
             await cloud.load();
+
+            const accounts = window.indooneState?.accounts || [];
+            if (!accounts.some(item => Number(item?.id) === Number(restored?.id))) {
+              accounts.push(restored);
+              accounts.sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+            }
+            window.indooneState.accounts = accounts;
+            window.indooneState.trash = (window.indooneState.trash || [])
+              .filter(item => Number(item?.id) !== Number(id));
+
             window.renderAccounts?.();
-            await refresh();
+            document.getElementById('overlay')?.classList.add('hidden');
             toast('Account restored successfully');
           } catch (error) {
             restoreButton.disabled = false;
