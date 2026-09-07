@@ -23,6 +23,7 @@ import android.webkit.WebViewClient;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.indoone.authenticator.layout.SafeLayoutContract;
@@ -115,6 +116,20 @@ public class MainActivity extends FragmentActivity {
 
         loadWebApp();
         setContentView(webView);
+
+        /*
+         * The listener is registered before the WebView is attached. Request
+         * again after attachment so every device/navigation mode delivers its
+         * current WindowInsets to the app before the bottom navigation is laid
+         * out. This is important for edge-to-edge WebView windows.
+         */
+        ViewCompat.requestApplyInsets(webView);
+        ViewCompat.requestApplyInsets(getWindow().getDecorView());
+
+        webView.post(() -> {
+            ViewCompat.requestApplyInsets(webView);
+            syncInsetsToWebApp();
+        });
 
         webView.postDelayed(
                 () -> updateManager.checkForUpdate(),
