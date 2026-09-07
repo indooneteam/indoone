@@ -154,52 +154,45 @@ html, body { height: 100%; }
 }
 
 /*
- * Device-safe system-bar handling.
- * Keep the app bars anchored to the WebView viewport. The viewport already
- * represents the usable app surface on devices where the host/WebView applies
- * system-bar insets. Adding the same inset to bar size or position can create
- * a visible gap, so the primary bars use their normal viewport coordinates.
- * Safe-area values remain available for overlays and modal surfaces below.
+ * System-bar handling.
+ * MainActivity supplies the real Android system-bar insets through
+ * --indoone-top-inset / --indoone-bottom-inset. Keep the adjustment here
+ * in one place so Android 14 (normally 0px) and Android 15 use the same
+ * layout rules without double-applying the inset.
  */
 :root {
-  --indoone-top-safe: max(
-    var(--indoone-top-inset, 0px),
-    env(safe-area-inset-top, 0px)
-  );
-  --indoone-bottom-safe: max(
-    var(--indoone-bottom-inset, 0px),
-    env(safe-area-inset-bottom, 0px)
-  );
+  --indoone-top-inset: 0px;
+  --indoone-bottom-inset: 0px;
   --indoone-topbar-base: 76px;
 }
 
 #app.phone-shell .topbar {
-  height: var(--indoone-topbar-base) !important;
-  min-height: var(--indoone-topbar-base) !important;
-  padding-top: 18px !important;
+  height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+  min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+  padding-top: calc(18px + var(--indoone-top-inset)) !important;
 }
 
 #app.phone-shell .bottom-nav {
-  height: 67px !important;
-  padding-bottom: 0 !important;
+  height: calc(67px + var(--indoone-bottom-inset)) !important;
+  padding-bottom: var(--indoone-bottom-inset) !important;
   bottom: 0 !important;
 }
 
 #app.phone-shell .fab {
-  bottom: calc(78px + var(--indoone-bottom-safe)) !important;
+  bottom: calc(78px + var(--indoone-bottom-inset)) !important;
 }
 
 #app.phone-shell .drawer-panel {
-  padding-top: calc(25px + var(--indoone-top-safe)) !important;
-  padding-bottom: calc(25px + var(--indoone-bottom-safe)) !important;
+  padding-top: calc(25px + var(--indoone-top-inset)) !important;
+  padding-bottom: calc(25px + var(--indoone-bottom-inset)) !important;
 }
 
 #app.phone-shell .overlay {
-  padding-bottom: calc(14px + var(--indoone-bottom-safe)) !important;
+  padding-bottom: calc(14px + var(--indoone-bottom-inset)) !important;
 }
 
 #app.phone-shell .modal {
-  max-height: calc(100dvh - 28px - var(--indoone-bottom-safe)) !important;
+  max-height: calc(100dvh - 28px - var(--indoone-bottom-inset)) !important;
 }
 
 @media (max-width: 380px) {
@@ -208,26 +201,26 @@ html, body { height: 100%; }
   }
 
   #app.phone-shell .topbar {
-    height: var(--indoone-topbar-base) !important;
-    min-height: var(--indoone-topbar-base) !important;
-    padding-top: 12px !important;
+    height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+    padding-top: calc(12px + var(--indoone-top-inset)) !important;
   }
 
   #app.phone-shell .bottom-nav {
-    height: 60px !important;
+    height: calc(60px + var(--indoone-bottom-inset)) !important;
   }
 
   #app.phone-shell .fab {
-    bottom: calc(72px + var(--indoone-bottom-safe)) !important;
+    bottom: calc(72px + var(--indoone-bottom-inset)) !important;
   }
 
   #app.phone-shell .overlay {
     padding: 8px !important;
-    padding-bottom: calc(8px + var(--indoone-bottom-safe)) !important;
+    padding-bottom: calc(8px + var(--indoone-bottom-inset)) !important;
   }
 
   #app.phone-shell .modal {
-    max-height: calc(100dvh - 16px - var(--indoone-bottom-safe)) !important;
+    max-height: calc(100dvh - 16px - var(--indoone-bottom-inset)) !important;
   }
 }
 
@@ -237,22 +230,27 @@ html, body { height: 100%; }
   }
 
   #app.phone-shell .topbar {
-    height: var(--indoone-topbar-base) !important;
-    min-height: var(--indoone-topbar-base) !important;
-    padding-top: 8px !important;
+    height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
+    padding-top: calc(8px + var(--indoone-top-inset)) !important;
   }
 }
 
 /*
- * Keep the scroll viewport above the fixed bottom navigation.
- * This prevents scrolled account content from appearing in the space occupied
- * by the navigation bar/system-navigation area while leaving the nav itself
- * anchored at the bottom of the app shell.
+ * Keep the scroll viewport above the fixed bottom navigation and its Android
+ * system-navigation inset. This keeps the area below the Indoone buttons
+ * clean instead of allowing scrolled account content to show there.
  */
 #app.phone-shell #content {
   min-height: 0;
-  height: calc(100dvh - var(--indoone-topbar-base) - 67px);
-  max-height: calc(100dvh - var(--indoone-topbar-base) - 67px);
+  height: calc(
+    100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
+    - 67px - var(--indoone-bottom-inset)
+  );
+  max-height: calc(
+    100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
+    - 67px - var(--indoone-bottom-inset)
+  );
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
@@ -262,7 +260,13 @@ html, body { height: 100%; }
 
 @media (max-width: 380px) {
   #app.phone-shell #content {
-    height: calc(100dvh - var(--indoone-topbar-base) - 60px);
-    max-height: calc(100dvh - var(--indoone-topbar-base) - 60px);
+    height: calc(
+      100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
+      - 60px - var(--indoone-bottom-inset)
+    );
+    max-height: calc(
+      100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
+      - 60px - var(--indoone-bottom-inset)
+    );
   }
 }
