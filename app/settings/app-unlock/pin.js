@@ -232,7 +232,7 @@
     const bridge = window.IndooneAppLockBridge;
     const hasPin = IndoonePersistence.hasAppLock();
 
-    bridge.openScreen(`
+    openModal(`
       <div class="app-lock-settings-modal">
         <div class="modal-head">
           <h2>App Lock</h2>
@@ -254,7 +254,7 @@
 
     document
       .getElementById('appLockSettingsClose')
-      ?.addEventListener('click', bridge.closeScreen);
+      ?.addEventListener('click', closeModal);
 
     document
       .getElementById('appLockSetAction')
