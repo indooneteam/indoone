@@ -175,12 +175,13 @@ html, body { height: 100%; }
 #app.phone-shell .topbar {
   height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
   min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-  padding-top: calc(18px + var(--indoone-top-safe)) !important;
+  padding-top: 18px !important;
 }
 
 #app.phone-shell .bottom-nav {
-  height: calc(67px + var(--indoone-bottom-safe)) !important;
-  padding-bottom: var(--indoone-bottom-safe) !important;
+  height: 67px !important;
+  padding-bottom: 0 !important;
+  bottom: var(--indoone-bottom-safe) !important;
 }
 
 #app.phone-shell .fab {
@@ -208,11 +209,11 @@ html, body { height: 100%; }
   #app.phone-shell .topbar {
     height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
     min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-    padding-top: calc(12px + var(--indoone-top-safe)) !important;
+    padding-top: 12px !important;
   }
 
   #app.phone-shell .bottom-nav {
-    height: calc(60px + var(--indoone-bottom-safe)) !important;
+    height: 60px !important;
   }
 
   #app.phone-shell .fab {
@@ -237,7 +238,7 @@ html, body { height: 100%; }
   #app.phone-shell .topbar {
     height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
     min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-safe)) !important;
-    padding-top: calc(8px + var(--indoone-top-safe)) !important;
+    padding-top: 8px !important;
   }
 }
 
