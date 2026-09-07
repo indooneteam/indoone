@@ -183,8 +183,8 @@
 
           try {
             await IndoonePersistence.save([], newPin);
-            bridge.setSession(newPin);
-            bridge.closeScreen();
+            window.IndooneAppLockBridge.setSession(newPin);
+            window.IndooneAppLockBridge.closeScreen();
             toast('App PIN changed');
             return null;
           } catch (error) {
@@ -198,6 +198,8 @@
   }
 
   function showDisableAppLock() {
+    const bridge = window.IndooneAppLockBridge;
+
     showCustomPinPad({
       title: 'Disable App Lock',
       description: 'Enter your current App PIN to disable App Lock.',
@@ -227,6 +229,7 @@
   }
 
   function showAppLockSettings() {
+    const bridge = window.IndooneAppLockBridge;
     const hasPin = IndoonePersistence.hasAppLock();
 
     bridge.openScreen(`
