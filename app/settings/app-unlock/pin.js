@@ -197,6 +197,75 @@
     renderStep();
   }
 
+  function showDisableAppLock() {
+    showCustomPinPad({
+      title: 'Disable App Lock',
+      description: 'Enter your current App PIN to disable App Lock.',
+      actionLabel: 'Disable App Lock',
+      allowClose: true,
+      onSubmit: async value => {
+        const verified = await IndoonePersistence.unlock(value);
+
+        if (!verified) {
+          return 'Incorrect current PIN';
+        }
+
+        try {
+          IndoonePersistence.clear();
+          bridge.clearSession();
+          bridge.setStartupUnlockShown(false);
+          bridge.setFirstAccountPromptShown(false);
+          bridge.unmask();
+          bridge.closeScreen();
+          toast('App Lock disabled');
+          return null;
+        } catch (error) {
+          return error?.message || 'Unable to disable App Lock';
+        }
+      }
+    });
+  }
+
+  function showAppLockSettings() {
+    const hasPin = IndoonePersistence.hasAppLock();
+
+    bridge.openScreen(`
+      <div class="app-lock-settings-modal">
+        <div class="modal-head">
+          <h2>App Lock</h2>
+          <button class="close-btn" id="appLockSettingsClose" aria-label="Close">×</button>
+        </div>
+        <p>${hasPin
+          ? 'Manage your Indoone App PIN.'
+          : 'Protect Indoone with a 4–12 digit App PIN.'}</p>
+        <div class="app-lock-settings-actions">
+          ${hasPin
+            ? `
+              <button class="primary" type="button" id="appLockChangeAction">Change App PIN</button>
+              <button class="secondary" type="button" id="appLockDisableAction">Disable App Lock</button>
+            `
+            : '<button class="primary" type="button" id="appLockSetAction">Set App Lock</button>'}
+        </div>
+      </div>
+    `);
+
+    document
+      .getElementById('appLockSettingsClose')
+      ?.addEventListener('click', bridge.closeScreen);
+
+    document
+      .getElementById('appLockSetAction')
+      ?.addEventListener('click', () => showAppLock('setup'));
+
+    document
+      .getElementById('appLockChangeAction')
+      ?.addEventListener('click', showChangeAppPin);
+
+    document
+      .getElementById('appLockDisableAction')
+      ?.addEventListener('click', showDisableAppLock);
+  }
+
   function showAppLock(mode = 'unlock') {
     const bridge = window.IndooneAppLockBridge;
     const hasPin = IndoonePersistence.hasAppLock();
@@ -247,6 +316,8 @@
 
   window.IndooneAppLockPin = {
     showAppLock,
-    showChangeAppPin
+    showChangeAppPin,
+    showDisableAppLock,
+    showAppLockSettings
   };
 })();
