@@ -146,28 +146,7 @@ public class MainActivity extends FragmentActivity {
                 "px');" +
                 "r.style.setProperty('--indoone-bottom-inset','" +
                 lastBottomInset +
-                "px');" +
-                "var s=document.getElementById('indoone-native-insets');" +
-                "if(!s){s=document.createElement('style');" +
-                "s.id='indoone-native-insets';" +
-                "document.head.appendChild(s);}" +
-                "s.textContent='.topbar{height:calc(76px + " +
-                "var(--indoone-top-inset, 0px)) !important;" +
-                "min-height:calc(76px + var(--indoone-top-inset, 0px)) !important;" +
-                "padding-top:calc(18px + var(--indoone-top-inset, 0px)) !important;}'+" +
-                "'.bottom-nav{height:calc(67px + " +
-                "var(--indoone-bottom-inset, 0px)) !important;" +
-                "padding-bottom:var(--indoone-bottom-inset, 0px) !important;}'+" +
-                "'.fab{bottom:calc(78px + " +
-                "var(--indoone-bottom-inset, 0px)) !important;}'+" +
-                "'.drawer-panel{padding-top:calc(25px + " +
-                "var(--indoone-top-inset, 0px)) !important;" +
-                "padding-bottom:calc(25px + var(--indoone-bottom-inset, 0px)) !important;}'+" +
-                "'.overlay{padding-bottom:calc(14px + " +
-                "var(--indoone-bottom-inset, 0px)) !important;}'+" +
-                "'.modal{max-height:calc(100dvh - 28px - " +
-                "var(--indoone-bottom-inset, 0px)) !important;}'+" +
-                "'.content,.connect-content{padding-top:16px;}';})();";
+                "px');})();";
 
         webView.evaluateJavascript(script, null);
     }
