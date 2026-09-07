@@ -24,9 +24,11 @@
   --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
 }
 
-/* Step 4: keep component geometry in one place. The safe-area contract is
-   the only layer that applies device insets; other styles only describe
-   visual dimensions and internal spacing. */
+/* Step 5: notch/status-bar/gesture/navigation hardening. Native inset values
+   remain the source of truth, while left/right safe areas are also reserved
+   so landscape cutouts cannot overlap header or bottom-navigation controls.
+   3-button navigation and gesture navigation both flow through the same
+   bottom inset contract supplied by Android. */
 #app.phone-shell .topbar,
 #app.phone-shell .bottom-nav {
   box-sizing: border-box !important;
@@ -35,13 +37,13 @@
 #app.phone-shell .topbar {
   height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
   min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-  padding: calc(10px + var(--indoone-safe-top)) 18px 8px !important;
+  padding: calc(10px + var(--indoone-safe-top)) calc(18px + var(--indoone-safe-right)) 8px calc(18px + var(--indoone-safe-left)) !important;
 }
 
 #app.phone-shell .bottom-nav {
   height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
   min-height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-  padding: 0 0 var(--indoone-safe-bottom) !important;
+  padding: 0 var(--indoone-safe-right) var(--indoone-safe-bottom) var(--indoone-safe-left) !important;
   bottom: 0 !important;
 }
 
@@ -71,7 +73,12 @@
   #app.phone-shell .topbar {
     height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
     min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    padding: calc(8px + var(--indoone-safe-top)) 12px 6px !important;
+    padding: calc(8px + var(--indoone-safe-top)) calc(12px + var(--indoone-safe-right)) 6px calc(12px + var(--indoone-safe-left)) !important;
+  }
+
+  #app.phone-shell .bottom-nav {
+    padding-right: var(--indoone-safe-right) !important;
+    padding-left: var(--indoone-safe-left) !important;
   }
 
   #app.phone-shell .fab {
@@ -96,7 +103,7 @@
   #app.phone-shell .topbar {
     height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
     min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    padding: calc(6px + var(--indoone-safe-top)) 10px 4px !important;
+    padding: calc(6px + var(--indoone-safe-top)) calc(10px + var(--indoone-safe-right)) 4px calc(10px + var(--indoone-safe-left)) !important;
   }
 }
 
@@ -180,6 +187,6 @@
 
   #app.phone-shell .bottom-nav {
     height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-    padding: 0 0 var(--indoone-safe-bottom) !important;
+    padding: 0 var(--indoone-safe-right) var(--indoone-safe-bottom) var(--indoone-safe-left) !important;
   }
 }
