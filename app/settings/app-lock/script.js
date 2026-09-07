@@ -79,7 +79,7 @@
     const link = document.createElement('link');
     link.id = 'indoone-app-lock-runtime-styles';
     link.rel = 'stylesheet';
-    link.href = 'app/settings/app-lock/style.css?v=20260907c';
+    link.href = 'app/settings/app-lock/style.css?v=20260907d';
     document.head.appendChild(link);
   }
 
@@ -131,7 +131,7 @@
       }
 
       const script = document.createElement('script');
-      script.src = `${MODULE_BASE}${name}.js?v=20260907c`;
+      script.src = `${MODULE_BASE}${name}.js?v=20260907d`;
       script.async = true;
       script.dataset.indooneAppLockModule = name;
       script.addEventListener(
@@ -244,11 +244,7 @@
     maskVisibleAccountCodes();
 
     if (currentUser() && IndoonePersistence.hasAppLock()) {
-      if (IndooneBiometric.enabled()) {
-        window.showBiometricUnlock();
-      } else {
-        window.showAppLock('unlock');
-      }
+      window.showAppLock('unlock');
     }
   }
 
@@ -394,12 +390,7 @@
     firstAccountPromptShown = false;
     maskVisibleAccountCodes();
     document.body.classList.add('app-lock-active');
-
-    if (IndooneBiometric.enabled()) {
-      window.showBiometricUnlock();
-    } else {
-      window.showAppLock('unlock');
-    }
+    window.showAppLock('unlock');
 
     return true;
   }
@@ -433,12 +424,7 @@
     firstAccountPromptShown = false;
     document.body.classList.add('app-lock-active');
     maskVisibleAccountCodes();
-
-    if (IndooneBiometric.enabled()) {
-      window.showBiometricUnlock();
-    } else {
-      window.showAppLock('unlock');
-    }
+    window.showAppLock('unlock');
   };
 
   if (document.readyState === 'loading') {
