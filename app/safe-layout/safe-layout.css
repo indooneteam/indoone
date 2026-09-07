@@ -4,34 +4,28 @@
 /*
  * Indoone Safe Layout Contract
  *
- * Shared safe-area variables live here. Existing production layout rules
- * remain in their current files until each responsibility is migrated and
- * verified.
+ * One device-agnostic contract owns the safe-area values used by the web UI.
+ * Android supplies measured native insets when available. In browser/WebView
+ * environments without native values, the platform safe-area environment is
+ * used as the fallback.
  */
 
 :root {
-  --indoone-safe-top: max(
-    var(--indoone-top-inset, 0px),
-    env(safe-area-inset-top, 0px)
-  );
+  /* Stable component geometry. Device-specific spacing comes from insets,
+     not from an Android-version-specific rule. */
+  --indoone-topbar-base: 76px;
+  --indoone-bottom-nav-base: 67px;
 
-  --indoone-safe-bottom: max(
-    var(--indoone-bottom-inset, 0px),
-    env(safe-area-inset-bottom, 0px)
-  );
-
-  --indoone-safe-left: env(safe-area-inset-left, 0px);
-  --indoone-safe-right: env(safe-area-inset-right, 0px);
+  /* Native Android values take precedence when they are supplied. */
+  --indoone-safe-top: var(--indoone-top-inset, env(safe-area-inset-top, 0px));
+  --indoone-safe-bottom: var(--indoone-bottom-inset, env(safe-area-inset-bottom, 0px));
+  --indoone-safe-left: var(--indoone-left-inset, env(safe-area-inset-left, 0px));
+  --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
 }
 
 #app.phone-shell {
-  --indoone-safe-top: max(
-    var(--indoone-top-inset, 0px),
-    env(safe-area-inset-top, 0px)
-  );
-
-  --indoone-safe-bottom: max(
-    var(--indoone-bottom-inset, 0px),
-    env(safe-area-inset-bottom, 0px)
-  );
+  --indoone-safe-top: var(--indoone-top-inset, env(safe-area-inset-top, 0px));
+  --indoone-safe-bottom: var(--indoone-bottom-inset, env(safe-area-inset-bottom, 0px));
+  --indoone-safe-left: var(--indoone-left-inset, env(safe-area-inset-left, 0px));
+  --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
 }
