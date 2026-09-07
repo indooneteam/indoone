@@ -3,7 +3,7 @@
   const SESSION_PIN_KEY = 'indoone.app.lock.session.pin.v1';
   const SESSION_UNLOCK_AT_KEY = 'indoone.app.lock.session.unlocked-at.v1';
   const SESSION_GRACE_MS = 5 * 60 * 1000;
-  const MODULE_BASE = 'app/settings/app-lock/unlock/';
+  const MODULE_BASE = 'app/settings/app-unlock/';
 
   let startupUnlockShown = false;
   let firstAccountPromptShown = false;
