@@ -232,15 +232,3 @@ html, body { height: 100%; }
     padding-top: calc(8px + var(--indoone-top-safe)) !important;
   }
 }
-
-/* Keep the Accounts list scrollable inside the fixed app shell. */
-#app.phone-shell #content {
-  min-height: 0;
-  height: calc(100dvh - 76px - var(--indoone-top-safe));
-  max-height: calc(100dvh - 76px - var(--indoone-top-safe));
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable;
-}
