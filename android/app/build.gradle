@@ -16,6 +16,9 @@ android {
         versionName '2.1.15'
         minSdk 26
         targetSdk 35
+
+        def channel = System.getenv('GITHUB_REF_NAME') == 'develop' ? 'develop' : 'main'
+        buildConfigField 'String', 'INDOONE_CHANNEL', "\"${channel}\""
     }
 
     buildTypes {
