@@ -75,37 +75,44 @@ window.initMenuTrash = async function () {
 
     const reset = wrap => wrap?.classList.remove('trash-swipe-open');
 
-    modal.querySelectorAll('[data-trash-restore]').forEach(button => {
-      button.addEventListener('click', async event => {
-        event.stopPropagation();
-        const id = Number(button.dataset.trashRestore);
-        if (!id) return;
-        button.disabled = true;
-        try {
-          await cloud.restoreFromTrash(id);
-          await cloud.load();
-          window.renderAccounts?.();
-          await refresh();
-          toast('Account restored successfully');
-        } catch (error) {
-          button.disabled = false;
-          toast(error?.message || 'Could not restore account');
-        }
-      });
-    });
+    if (!modal.__trashActionsBound) {
+      modal.__trashActionsBound = true;
+      modal.addEventListener('click', async event => {
+        const restoreButton = event.target.closest('[data-trash-restore]');
+        const deleteButton = event.target.closest('[data-trash-delete]');
 
-    modal.querySelectorAll('[data-trash-delete]').forEach(button => {
-      button.addEventListener('click', async event => {
+        if (!restoreButton && !deleteButton) return;
+        event.preventDefault();
         event.stopPropagation();
-        const id = Number(button.dataset.trashDelete);
-        if (!id) return;
-        const item = trash.find(candidate => Number(candidate?.id) === id);
+
+        if (restoreButton) {
+          const id = Number(restoreButton.dataset.trashRestore);
+          if (!id || restoreButton.disabled) return;
+          restoreButton.disabled = true;
+          try {
+            await cloud.restoreFromTrash(id);
+            await cloud.load();
+            window.renderAccounts?.();
+            await refresh();
+            toast('Account restored successfully');
+          } catch (error) {
+            restoreButton.disabled = false;
+            toast(error?.message || 'Could not restore account');
+          }
+          return;
+        }
+
+        const id = Number(deleteButton.dataset.trashDelete);
+        if (!id || deleteButton.disabled) return;
+        const currentTrash = await cloud.listTrash();
+        const item = currentTrash.find(candidate => Number(candidate?.id) === id);
         const name = item?.name || 'this account';
         const confirmed = window.confirm(
           `Permanently delete ${name}?\n\nThis removes the account from Trash and all synced account copies. This action cannot be undone.`
         );
         if (!confirmed) return;
-        button.disabled = true;
+
+        deleteButton.disabled = true;
         try {
           await cloud.permanentlyDeleteFromTrash(id);
           await cloud.load();
@@ -113,45 +120,44 @@ window.initMenuTrash = async function () {
           await refresh();
           toast('Account permanently deleted');
         } catch (error) {
-          button.disabled = false;
+          deleteButton.disabled = false;
           toast(error?.message || 'Could not permanently delete account');
         }
       });
-    });
-
-    let active = null;
-    let startX = 0;
-    let startY = 0;
-    let moved = false;
+    }
 
     modal.querySelectorAll('.trash-swipe-wrap').forEach(wrap => {
       wrap.addEventListener('pointerdown', event => {
+        if (event.target.closest('button')) return;
         if (event.pointerType === 'mouse' && event.button !== 0) return;
-        active = wrap;
-        startX = event.clientX;
-        startY = event.clientY;
-        moved = false;
+        wrap.__swipeActive = true;
+        wrap.__swipeStartX = event.clientX;
+        wrap.__swipeStartY = event.clientY;
+        wrap.__swipeMoved = false;
         wrap.setPointerCapture?.(event.pointerId);
       });
 
       wrap.addEventListener('pointermove', event => {
-        if (active !== wrap) return;
-        const dx = event.clientX - startX;
-        const dy = event.clientY - startY;
+        if (!wrap.__swipeActive) return;
+        const dx = event.clientX - wrap.__swipeStartX;
+        const dy = event.clientY - wrap.__swipeStartY;
         if (Math.abs(dx) < Math.abs(dy) || Math.abs(dx) < 8) return;
-        moved = true;
+        wrap.__swipeMoved = true;
         wrap.classList.toggle('trash-swipe-open', dx < -48);
       });
 
-      wrap.addEventListener('pointerup', () => {
-        if (!active) return;
-        active = null;
-        if (!moved) return;
-        if (!wrap.classList.contains('trash-swipe-open')) reset(wrap);
+      wrap.addEventListener('pointerup', event => {
+        wrap.__swipeActive = false;
+        if (wrap.hasPointerCapture?.(event.pointerId)) {
+          wrap.releasePointerCapture?.(event.pointerId);
+        }
       });
 
-      wrap.addEventListener('pointercancel', () => {
-        active = null;
+      wrap.addEventListener('pointercancel', event => {
+        wrap.__swipeActive = false;
+        if (wrap.hasPointerCapture?.(event.pointerId)) {
+          wrap.releasePointerCapture?.(event.pointerId);
+        }
         reset(wrap);
       });
 
