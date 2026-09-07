@@ -38,7 +38,7 @@ html, body { height: 100%; }
 .account:has(.timer-yellow) .account-info strong { color: #ad8500; }
 .account:has(.timer-red) .account-info strong { color: #c62828; }
 
-.search-wrap { padding: 10px 18px 3px !important; }
+.search-wrap { padding: 10px 18px 3px !important; flex: 0 0 auto; }
 .search-box { height: 40px !important; border-radius: 12px !important; padding: 0 11px !important; }
 .search-box input { font-size: 13px !important; }
 .search-box button { font-size: 20px !important; }
@@ -95,15 +95,29 @@ html, body { height: 100%; }
   }
 }
 
+/* Accounts view: make the account area a real flex scroll region.
+   This keeps the search bar fixed while the account list can scroll
+   independently above the bottom navigation. */
+#app.phone-shell {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
 #app.phone-shell #content {
   min-height: 0;
-  height: calc(100dvh - var(--indoone-topbar-base) - var(--indoone-safe-top) - var(--indoone-bottom-nav-base) - var(--indoone-safe-bottom));
-  max-height: calc(100dvh - var(--indoone-topbar-base) - var(--indoone-safe-top) - var(--indoone-bottom-nav-base) - var(--indoone-safe-bottom));
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+}
+
+/* The search bar remains outside the scrolling account region. */
+#app.phone-shell #searchWrap {
+  flex: 0 0 auto;
 }
 
 /* ChromeOS/browser preview: reduce only the preview nav footprint.
