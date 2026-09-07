@@ -1,19 +1,19 @@
 /* Indoone Settings Icon Refresh
  *
- * One consistent key icon across the Settings screen.
+ * Keep the existing Settings icons everywhere except Biometric Unlock.
  * Existing settings.js behavior remains unchanged; this file is visual only.
  */
 
-.settings-content .settings-option-icon-wrap {
+.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap {
   position: relative;
   color: #756d80;
 }
 
-.settings-content .settings-option-icon-wrap > .settings-option-icon {
+.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap > .settings-option-icon {
   display: none !important;
 }
 
-.settings-content .settings-option-icon-wrap::before {
+.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap::before {
   content: "";
   display: block;
   width: 21px;
@@ -25,7 +25,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23756d80' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='15' r='4'/%3E%3Cpath d='m11 12 7-7 3 3-7 7'/%3E%3Cpath d='m16 7 2 2'/%3E%3Cpath d='m13.5 9.5 2 2'/%3E%3C/svg%3E");
 }
 
-.settings-content .settings-option-row:active .settings-option-icon-wrap::before,
-.settings-content .settings-row-toggle:active .settings-option-icon-wrap::before {
+.settings-content [data-settings-item="biometric"] .settings-option-icon-wrap:active::before {
   filter: brightness(0) saturate(100%) invert(22%) sepia(40%) saturate(2614%) hue-rotate(243deg) brightness(89%) contrast(90%);
 }
