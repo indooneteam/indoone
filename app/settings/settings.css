@@ -247,6 +247,16 @@
   margin-top:0
 }
 
+/* The app shell is a bounded vertical flex layout. Without this, child
+   overflow regions cannot resolve their available height consistently. */
+#app.phone-shell
+{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+
 /* Settings is a real route inside the fixed app shell. Keep it isolated from
    Accounts/Connect and let only the route body own vertical scrolling. */
 #app.phone-shell > .settings-content {
