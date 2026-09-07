@@ -21,35 +21,63 @@ window.initMenuTrash = async function () {
           const id = Number(item.id);
           const left = daysLeft(item.purgeAt);
           return `
-            <article class="trash-row" data-trash-id="${id}">
-              <div class="trash-row-main">
-                <strong>${escapeHtml(item.name || 'Account')}</strong>
-                <small>${escapeHtml(item.email || 'Authenticator account')}</small>
-                <small class="trash-expiry">Auto-delete in ${left} day${left === 1 ? '' : 's'}</small>
+            <div class="trash-swipe-wrap" data-trash-id="${id}">
+              <div class="trash-swipe-delete">
+                <button
+                  type="button"
+                  class="trash-permanent-btn"
+                  data-trash-delete="${id}"
+                  aria-label="Delete ${escapeHtml(item.name || 'account')} permanently"
+                >
+                  Delete
+                </button>
               </div>
-              <div class="trash-row-actions">
-                <button type="button" class="small-btn trash-restore-btn" data-trash-restore="${id}">Restore</button>
-                <button type="button" class="trash-delete-btn" data-trash-delete="${id}">Delete permanently</button>
+              <div class="settings-row trash-list-row trash-swipe-card">
+                <span>
+                  <b>${escapeHtml(item.name || 'Account')}</b>
+                  <small>
+                    ${escapeHtml(item.email || 'Authenticator account')} ·
+                    ${left} day${left === 1 ? '' : 's'} left
+                  </small>
+                </span>
+                <button
+                  type="button"
+                  class="small-btn"
+                  data-trash-restore="${id}"
+                >
+                  Restore
+                </button>
               </div>
-            </article>
+            </div>
           `;
         }).join('')
-      : '<div class="empty-state compact-empty"><h3>Trash is empty</h3><p>Deleted accounts can be restored for 30 days, or permanently deleted before they expire.</p></div>';
+      : `
+          <div class="empty-state compact-empty">
+            <div class="empty-icon" style="font-size:27px">⌫</div>
+            <h3>Trash is empty</h3>
+            <p>Deleted accounts stay here for 30 days. Swipe left on an account to permanently delete it sooner.</p>
+          </div>
+        `;
 
     modal.innerHTML = `
       <div class="modal-head">
-        <div>
-          <h2 style="margin:0">Trash</h2>
-          <small style="display:block;margin-top:2px;color:#8a8492;font-size:10px;font-weight:600">Deleted accounts · 30-day recovery</small>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="brand-mark" style="width:36px;height:36px;border-radius:12px;font-size:18px">I</span>
+          <div>
+            <h2 style="margin:0">Trash</h2>
+            <small style="display:block;margin-top:2px;color:#8a8492;font-size:10px;font-weight:600">Deleted accounts</small>
+          </div>
         </div>
         <button type="button" class="close-btn" data-close aria-label="Close Trash">×</button>
       </div>
-      <p class="trash-policy-note">Restore returns the account with its saved settings. Delete permanently removes the account from Trash and synced account storage and cannot be undone.</p>
-      <div id="trashList">${rows}</div>
+      <div id="trashList" class="drawer-list-modal">${rows}</div>
     `;
 
+    const reset = wrap => wrap?.classList.remove('trash-swipe-open');
+
     modal.querySelectorAll('[data-trash-restore]').forEach(button => {
-      button.addEventListener('click', async () => {
+      button.addEventListener('click', async event => {
+        event.stopPropagation();
         const id = Number(button.dataset.trashRestore);
         if (!id) return;
         button.disabled = true;
@@ -67,12 +95,15 @@ window.initMenuTrash = async function () {
     });
 
     modal.querySelectorAll('[data-trash-delete]').forEach(button => {
-      button.addEventListener('click', async () => {
+      button.addEventListener('click', async event => {
+        event.stopPropagation();
         const id = Number(button.dataset.trashDelete);
         if (!id) return;
         const item = trash.find(candidate => Number(candidate?.id) === id);
         const name = item?.name || 'this account';
-        const confirmed = window.confirm(`Permanently delete ${name}?\n\nThis removes the account from Trash and all synced account copies. This action cannot be undone.`);
+        const confirmed = window.confirm(
+          `Permanently delete ${name}?\n\nThis removes the account from Trash and all synced account copies. This action cannot be undone.`
+        );
         if (!confirmed) return;
         button.disabled = true;
         try {
@@ -85,6 +116,50 @@ window.initMenuTrash = async function () {
           button.disabled = false;
           toast(error?.message || 'Could not permanently delete account');
         }
+      });
+    });
+
+    let active = null;
+    let startX = 0;
+    let startY = 0;
+    let moved = false;
+
+    modal.querySelectorAll('.trash-swipe-wrap').forEach(wrap => {
+      wrap.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        active = wrap;
+        startX = event.clientX;
+        startY = event.clientY;
+        moved = false;
+        wrap.setPointerCapture?.(event.pointerId);
+      });
+
+      wrap.addEventListener('pointermove', event => {
+        if (active !== wrap) return;
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        if (Math.abs(dx) < Math.abs(dy) || Math.abs(dx) < 8) return;
+        moved = true;
+        wrap.classList.toggle('trash-swipe-open', dx < -48);
+      });
+
+      wrap.addEventListener('pointerup', () => {
+        if (!active) return;
+        active = null;
+        if (!moved) return;
+        if (!wrap.classList.contains('trash-swipe-open')) reset(wrap);
+      });
+
+      wrap.addEventListener('pointercancel', () => {
+        active = null;
+        reset(wrap);
+      });
+
+      wrap.addEventListener('click', event => {
+        if (event.target.closest('button')) return;
+        modal.querySelectorAll('.trash-swipe-open').forEach(other => {
+          if (other !== wrap) reset(other);
+        });
       });
     });
   };
