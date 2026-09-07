@@ -3,7 +3,7 @@
   const panel = drawer?.querySelector('.drawer-panel');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260907a';
+  const ASSET_VERSION = '20260907b';
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
