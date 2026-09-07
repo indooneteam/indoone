@@ -24,11 +24,6 @@
   --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
 }
 
-/* Step 5.1: keep the existing safe-area contract, but avoid using the full
-   three-button navigation-bar inset as bottom-nav internal padding. The
-   three-button system bar is already a visible system region below the app;
-   centering our app controls inside that extra inset creates the reported gap.
-   Gesture navigation keeps the existing safe-bottom spacing. */
 #app.phone-shell .topbar,
 #app.phone-shell .bottom-nav {
   box-sizing: border-box !important;
@@ -40,22 +35,17 @@
   padding: calc(10px + var(--indoone-safe-top)) calc(18px + var(--indoone-safe-right)) 8px calc(18px + var(--indoone-safe-left)) !important;
 }
 
+/*
+ * The bottom navigation always reserves the measured system-safe region.
+ * This is intentionally identical for gesture, two-button, and three-button
+ * navigation so the web UI adapts to the device instead of detecting a
+ * particular navigation mode or hard-coding a device-specific offset.
+ */
 #app.phone-shell .bottom-nav {
   height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
   min-height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
   padding: 0 var(--indoone-safe-right) var(--indoone-safe-bottom) var(--indoone-safe-left) !important;
   bottom: 0 !important;
-}
-
-/* On devices exposing the larger three-button navigation region, keep the
-   nav control row in the app's visual footprint instead of shifting it upward
-   by the entire system-bar inset. The outer app background still reaches the
-   system navigation area through edge-to-edge. */
-#app.phone-shell.indoone-three-button-nav .bottom-nav,
-.indoone-three-button-nav #app.phone-shell .bottom-nav {
-  height: var(--indoone-bottom-nav-base) !important;
-  min-height: var(--indoone-bottom-nav-base) !important;
-  padding-bottom: 0 !important;
 }
 
 #app.phone-shell .fab {
