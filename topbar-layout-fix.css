@@ -1,17 +1,12 @@
-/* Keep the native Android inset compensation from shifting the topbar twice.
-   The WebView is laid out below the system bar on some devices, so the topbar
-   itself must stay at one consistent visual height across devices. */
-html body .topbar {
-  min-height: 76px !important;
-  height: 76px !important;
-  padding: 18px 18px 8px !important;
-}
-
+/*
+ * Header visual rules only.
+ *
+ * Header height, padding, and system-safe-area compensation belong to the
+ * shared safe-layout contract in desktop-layout-fix.css. Keeping geometry
+ * here would compete with the runtime inset calculation.
+ */
 .topbar {
-  min-height: 76px;
-  height: auto;
   align-items: center;
-  padding: 18px 18px 8px;
 }
 
 .topbar-left {
@@ -95,18 +90,7 @@ html body .topbar {
 }
 
 @media (max-width: 360px) {
-  /* Keep the same vertical geometry on compact phones; only reduce horizontal
-     spacing and text/icon sizes so the header does not move vertically. */
-  html body .topbar {
-    min-height: 76px !important;
-    height: 76px !important;
-    padding: 18px 13px 8px !important;
-  }
-
-  .topbar {
-    min-height: 76px;
-  }
-
+  /* Compact screens keep the shared header geometry and only reduce content spacing. */
   .topbar-left {
     gap: 9px;
   }
