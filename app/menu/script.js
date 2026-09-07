@@ -1,9 +1,11 @@
 (() => {
   const drawer = document.getElementById('drawer');
   const panel = drawer?.querySelector('.drawer-panel');
+  const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260907d';
+  const ASSET_VERSION = '20260907e';
+  let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
     accounts: 'initMenuAccounts',
@@ -184,9 +186,24 @@
     window.openMenuFeature(action);
   });
 
-  drawer?.addEventListener('pointerdown', event => {
-    if (!drawer.classList.contains('open')) return;
+  const closeFromOutside = event => {
+    if (!drawer?.classList.contains('open')) return;
     if (panel && panel.contains(event.target)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    suppressNextUnderlyingClick = true;
     closeDrawer();
-  });
+  };
+
+  drawer?.addEventListener('pointerdown', closeFromOutside);
+  backdrop?.addEventListener('pointerdown', closeFromOutside, true);
+
+  document.addEventListener('click', event => {
+    if (!suppressNextUnderlyingClick) return;
+    suppressNextUnderlyingClick = false;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+  }, true);
 })();
