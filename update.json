@@ -1,6 +1,6 @@
 {
-  "versionCode": 18,
-  "versionName": "2.1.6",
+  "versionCode": 19,
+  "versionName": "2.1.7",
   "downloadUrl": "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk",
-  "notes": "Indoone 2.1.6 release. Fixed Android header vertical alignment across devices."
+  "notes": "Indoone 2.1.7 release. Improved App Lock PIN and biometric unlock experience."
 }
