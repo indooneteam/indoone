@@ -120,6 +120,7 @@
     maxLength = 12,
     minLength = 4,
     allowClose = false,
+    showBiometricSwitch = false,
     onSubmit
   }) {
     let buffer = '';
@@ -172,7 +173,11 @@
             </div>
 
             <div class="app-lock-footer">
-              ${allowClose ? '<button type="button" class="app-lock-cancel" id="appLockCancel">Cancel</button>' : 'PIN is entered using the secure on-screen keypad'}
+              ${showBiometricSwitch
+                ? '<button type="button" class="app-lock-cancel" id="appLockBiometricSwitch">Use Biometric</button>'
+                : allowClose
+                  ? '<button type="button" class="app-lock-cancel" id="appLockCancel">Cancel</button>'
+                  : 'PIN is entered using the secure on-screen keypad'}
             </div>
           </div>
         </div>
@@ -217,6 +222,10 @@
             render();
           }
         });
+
+      document
+        .getElementById('appLockBiometricSwitch')
+        ?.addEventListener('click', () => showBiometricUnlock());
 
       document
         .getElementById('appLockCancel')
@@ -446,7 +455,7 @@
     let step = 'current';
     let newPin = '';
 
-    const renderStep = (errorMessage = '') => {
+    const renderStep = () => {
       const meta = {
         current: {
           title: 'Verify current PIN',
@@ -521,6 +530,7 @@
         : 'Create a 4–12 digit PIN to protect Indoone.',
       actionLabel: isUnlock ? 'Unlock App' : 'Create App PIN',
       allowClose: !isUnlock,
+      showBiometricSwitch: isUnlock && IndooneBiometric.enabled(),
       onSubmit: async value => {
         try {
           if (isUnlock) {
@@ -562,20 +572,28 @@
   };
 
   window.showBiometricUnlock = function () {
-    openModal(`
-      <div class="modal-head">
-        <h2>Unlock Indoone</h2>
+    openAppLockScreen(`
+      <div class="app-lock-screen biometric-unlock-screen">
+        <div class="app-lock-top">
+          <div class="app-lock-brand" aria-hidden="true">
+            <span class="app-lock-brand-mark">I</span>
+            <span class="app-lock-brand-name">Indoone</span>
+          </div>
+
+          <h2 class="app-lock-title">Unlock Indoone</h2>
+          <div class="token-icon">●</div>
+          <p class="app-lock-description" style="text-align:center">
+            Use your fingerprint or device biometric to unlock Indoone.
+          </p>
+
+          <button class="primary" id="biometricUnlockAction">
+            Use Fingerprint
+          </button>
+          <button class="secondary" id="pinFallbackAction">
+            Use App PIN
+          </button>
+        </div>
       </div>
-      <div class="token-icon">●</div>
-      <p style="text-align:center">
-        Use your fingerprint or device biometric to unlock Indoone.
-      </p>
-      <button class="primary" id="biometricUnlockAction">
-        Use Fingerprint
-      </button>
-      <button class="secondary" id="pinFallbackAction">
-        Use App PIN
-      </button>
     `);
 
     const biometricButton = document.getElementById(
@@ -601,7 +619,7 @@
             startupUnlockShown = true;
             unmaskVisibleAccountCodes();
             document.body.classList.remove('app-lock-active');
-            closeModal();
+            closeAppLockScreen();
             renderAccounts();
 
             if (typeof startTOTPRefresh === 'function') {
