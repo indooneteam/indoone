@@ -1,5 +1,6 @@
 (() => {
   const FIRST_ACCOUNT_PROMPT_KEY = 'indoone.app.lock.prompt.dismissed.v1';
+  const SESSION_PIN_KEY = 'indoone.app.lock.session.pin.v1';
   let startupUnlockShown = false;
   let firstAccountPromptShown = false;
 
@@ -11,6 +12,68 @@
     return Array.isArray(window.indooneState?.accounts)
       ? window.indooneState.accounts.length
       : 0;
+  }
+
+  function getSessionPin() {
+    try {
+      return sessionStorage.getItem(SESSION_PIN_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function setSessionPin(pin) {
+    try {
+      sessionStorage.setItem(SESSION_PIN_KEY, String(pin));
+    } catch (_) {}
+  }
+
+  function clearSessionPin() {
+    try {
+      sessionStorage.removeItem(SESSION_PIN_KEY);
+    } catch (_) {}
+  }
+
+  async function restoreSessionUnlock() {
+    if (
+      startupUnlockShown ||
+      !currentUser() ||
+      !IndoonePersistence.hasAppLock()
+    ) {
+      return false;
+    }
+
+    const sessionPin = getSessionPin();
+
+    if (!/^\d{4,12}$/.test(sessionPin)) {
+      return false;
+    }
+
+    try {
+      const restored = await IndoonePersistence.unlock(sessionPin);
+
+      if (!restored) {
+        clearSessionPin();
+        return false;
+      }
+
+      startupUnlockShown = true;
+      firstAccountPromptShown = false;
+      document.body.classList.remove('app-lock-active');
+
+      if (typeof renderAccounts === 'function') {
+        renderAccounts();
+      }
+
+      if (typeof startTOTPRefresh === 'function') {
+        startTOTPRefresh();
+      }
+
+      return true;
+    } catch (_) {
+      clearSessionPin();
+      return false;
+    }
   }
 
   function promptDismissedForCurrentUser() {
@@ -93,13 +156,17 @@
     return true;
   }
 
-  function showStartupUnlock() {
+  async function showStartupUnlock() {
     if (
       startupUnlockShown ||
       !currentUser() ||
       !IndoonePersistence.hasAppLock()
     ) {
       return false;
+    }
+
+    if (await restoreSessionUnlock()) {
+      return true;
     }
 
     startupUnlockShown = true;
@@ -117,7 +184,7 @@
 
   function monitorAppLockState() {
     let attempts = 0;
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       attempts += 1;
 
       if (!currentUser()) {
@@ -126,7 +193,7 @@
       }
 
       if (IndoonePersistence.hasAppLock()) {
-        showStartupUnlock();
+        await showStartupUnlock();
       } else {
         showFirstAccountPrompt();
       }
@@ -222,6 +289,7 @@
           }
 
           await IndoonePersistence.save([], newPin);
+          setSessionPin(newPin);
           closeModal();
           toast('App PIN changed');
         } catch (error) {
@@ -302,6 +370,7 @@
               return toast('Incorrect PIN');
             }
 
+            setSessionPin(value);
             startupUnlockShown = true;
             document.body.classList.remove('app-lock-active');
             closeModal();
@@ -315,6 +384,7 @@
           } else {
             IndooneSecureSession.unlock(value);
             await IndoonePersistence.save([], value);
+            setSessionPin(value);
             dismissFirstAccountPrompt();
 
             firstAccountPromptShown = false;
@@ -364,6 +434,7 @@
               throw new Error('Biometric credential is invalid');
             }
 
+            setSessionPin(pin);
             startupUnlockShown = true;
             document.body.classList.remove('app-lock-active');
             closeModal();
@@ -401,6 +472,7 @@
   };
 
   window.lockIndoone = function () {
+    clearSessionPin();
     IndoonePersistence.lock();
     startupUnlockShown = true;
     firstAccountPromptShown = false;
