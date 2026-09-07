@@ -79,7 +79,7 @@
     const link = document.createElement('link');
     link.id = 'indoone-app-lock-runtime-styles';
     link.rel = 'stylesheet';
-    link.href = 'app/settings/app-lock/style.css?v=20260907e';
+    link.href = 'app/settings/app-lock/style.css?v=20260907f';
     document.head.appendChild(link);
   }
 
@@ -131,7 +131,7 @@
       }
 
       const script = document.createElement('script');
-      script.src = `${MODULE_BASE}${name}.js?v=20260907e`;
+      script.src = `${MODULE_BASE}${name}.js?v=20260907f`;
       script.async = true;
       script.dataset.indooneAppLockModule = name;
       script.addEventListener(
@@ -184,6 +184,15 @@
     await loadModule('biometric');
     return window.IndooneAppLockBiometric;
   }
+
+  window.showAppLockSettings = async function () {
+    try {
+      const module = await ensurePinModule();
+      module?.showAppLockSettings?.();
+    } catch (error) {
+      toast(error?.message || 'App Lock settings failed to load');
+    }
+  };
 
   window.showAppLock = async function (mode) {
     try {
