@@ -66,12 +66,6 @@ html, body { height: 100%; }
   padding-bottom: var(--indoone-safe-bottom) !important;
   bottom: 0 !important;
 }
-
-/* Keep the navigation hit area stable while lifting only the visual contents. */
-#app.phone-shell .bottom-nav .nav-btn > * {
-  transform: translateY(-4px) !important;
-}
-
 #app.phone-shell .fab { bottom: calc(78px + var(--indoone-safe-bottom)) !important; }
 #app.phone-shell .drawer-panel {
   padding-top: calc(25px + var(--indoone-safe-top)) !important;
@@ -110,4 +104,14 @@ html, body { height: 100%; }
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+}
+
+/* ChromeOS/browser preview: reduce only the preview nav footprint.
+   Android device layouts keep their normal 67px navigation contract. */
+@media (min-width: 700px) {
+  :root { --indoone-bottom-nav-base: 58px; }
+  #app.phone-shell .bottom-nav {
+    height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
+    padding-bottom: var(--indoone-safe-bottom) !important;
+  }
 }
