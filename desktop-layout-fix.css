@@ -51,114 +51,35 @@ html, body { height: 100%; }
 }
 
 /* Keep the OTP digits on the same countdown color cycle as the timer. */
-.account-info strong.code-green {
-  color: #20883e;
-}
-
-.account-info strong.code-yellow {
-  color: #ad8500;
-}
-
-.account-info strong.code-red {
-  color: #c62828;
-}
-
-/* Also sync the OTP digits from the timer state when an older cached script renders the markup. */
-.account:has(.timer-green) .account-info strong {
-  color: #20883e;
-}
-
-.account:has(.timer-yellow) .account-info strong {
-  color: #ad8500;
-}
-
-.account:has(.timer-red) .account-info strong {
-  color: #c62828;
-}
+.account-info strong.code-green { color: #20883e; }
+.account-info strong.code-yellow { color: #ad8500; }
+.account-info strong.code-red { color: #c62828; }
+.account:has(.timer-green) .account-info strong { color: #20883e; }
+.account:has(.timer-yellow) .account-info strong { color: #ad8500; }
+.account:has(.timer-red) .account-info strong { color: #c62828; }
 
 /* Match the compact sizing used by the Settings screen. */
-.search-wrap {
-  padding: 10px 18px 3px !important;
-}
-
-.search-box {
-  height: 40px !important;
-  border-radius: 12px !important;
-  padding: 0 11px !important;
-}
-
-.search-box input {
-  font-size: 13px !important;
-}
-
-.search-box button {
-  font-size: 20px !important;
-}
-
-.content {
-  padding: 16px 18px 104px !important;
-}
-
-.page-heading {
-  margin-bottom: 11px !important;
-}
-
-.page-heading h1 {
-  font-size: 23px !important;
-}
-
-/* Make only the Accounts title slightly larger. */
-.content .page-heading h1 {
-  font-size: 26px !important;
-}
-
-.small-btn {
-  padding: 7px 10px !important;
-  font-size: 10px !important;
-}
-
-.account-list {
-  gap: 9px !important;
-}
-
-.account {
-  gap: 10px !important;
-  padding: 11px !important;
-  border-radius: 15px !important;
-}
-
-.service-icon {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 12px !important;
-  font-size: 19px !important;
-}
-
-.account-info b {
-  font-size: 13px !important;
-}
-
-.account-info span {
-  font-size: 10px !important;
-  margin: 2px 0 4px !important;
-}
-
-.account-info strong {
-  font-size: 21px !important;
-}
-
-.timer {
-  width: 33px !important;
-  height: 33px !important;
-  font-size: 10px !important;
-}
+.search-wrap { padding: 10px 18px 3px !important; }
+.search-box { height: 40px !important; border-radius: 12px !important; padding: 0 11px !important; }
+.search-box input { font-size: 13px !important; }
+.search-box button { font-size: 20px !important; }
+.content { padding: 16px 18px 104px !important; }
+.page-heading { margin-bottom: 11px !important; }
+.page-heading h1 { font-size: 23px !important; }
+.content .page-heading h1 { font-size: 26px !important; }
+.small-btn { padding: 7px 10px !important; font-size: 10px !important; }
+.account-list { gap: 9px !important; }
+.account { gap: 10px !important; padding: 11px !important; border-radius: 15px !important; }
+.service-icon { width: 42px !important; height: 42px !important; border-radius: 12px !important; font-size: 19px !important; }
+.account-info b { font-size: 13px !important; }
+.account-info span { font-size: 10px !important; margin: 2px 0 4px !important; }
+.account-info strong { font-size: 21px !important; }
+.timer { width: 33px !important; height: 33px !important; font-size: 10px !important; }
 
 /*
- * System-bar handling.
- * MainActivity supplies the real Android system-bar insets through
- * --indoone-top-inset / --indoone-bottom-inset. Keep the adjustment here
- * in one place so Android 14 (normally 0px) and Android 15 use the same
- * layout rules without double-applying the inset.
+ * Apply one system-bar layout rule to every device.
+ * The native layer supplies its measured insets when available; CSS safe-area
+ * values cover devices and display modes that expose them directly.
  */
 :root {
   --indoone-top-inset: 0px;
@@ -167,89 +88,81 @@ html, body { height: 100%; }
 }
 
 #app.phone-shell .topbar {
-  height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-  min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-  padding-top: calc(18px + var(--indoone-top-inset)) !important;
+  height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+  min-height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+  padding-top: calc(18px + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
 }
 
 #app.phone-shell .bottom-nav {
-  height: calc(67px + var(--indoone-bottom-inset)) !important;
-  padding-bottom: var(--indoone-bottom-inset) !important;
+  height: calc(67px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
+  padding-bottom: max(var(--indoone-bottom-inset), env(safe-area-inset-bottom)) !important;
   bottom: 0 !important;
 }
 
 #app.phone-shell .fab {
-  bottom: calc(78px + var(--indoone-bottom-inset)) !important;
+  bottom: calc(78px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
 }
 
 #app.phone-shell .drawer-panel {
-  padding-top: calc(25px + var(--indoone-top-inset)) !important;
-  padding-bottom: calc(25px + var(--indoone-bottom-inset)) !important;
+  padding-top: calc(25px + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+  padding-bottom: calc(25px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
 }
 
 #app.phone-shell .overlay {
-  padding-bottom: calc(14px + var(--indoone-bottom-inset)) !important;
+  padding-bottom: calc(14px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
 }
 
 #app.phone-shell .modal {
-  max-height: calc(100dvh - 28px - var(--indoone-bottom-inset)) !important;
+  max-height: calc(100dvh - 28px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
 }
 
 @media (max-width: 380px) {
-  :root {
-    --indoone-topbar-base: 68px;
-  }
+  :root { --indoone-topbar-base: 68px; }
 
   #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-    padding-top: calc(12px + var(--indoone-top-inset)) !important;
+    height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+    min-height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+    padding-top: calc(12px + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
   }
 
   #app.phone-shell .bottom-nav {
-    height: calc(60px + var(--indoone-bottom-inset)) !important;
+    height: calc(60px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
   }
 
   #app.phone-shell .fab {
-    bottom: calc(72px + var(--indoone-bottom-inset)) !important;
+    bottom: calc(72px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
   }
 
   #app.phone-shell .overlay {
     padding: 8px !important;
-    padding-bottom: calc(8px + var(--indoone-bottom-inset)) !important;
+    padding-bottom: calc(8px + max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
   }
 
   #app.phone-shell .modal {
-    max-height: calc(100dvh - 16px - var(--indoone-bottom-inset)) !important;
+    max-height: calc(100dvh - 16px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))) !important;
   }
 }
 
 @media (max-width: 340px) {
-  :root {
-    --indoone-topbar-base: 64px;
-  }
+  :root { --indoone-topbar-base: 64px; }
 
   #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-top-inset)) !important;
-    padding-top: calc(8px + var(--indoone-top-inset)) !important;
+    height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+    min-height: calc(var(--indoone-topbar-base) + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
+    padding-top: calc(8px + max(var(--indoone-top-inset), env(safe-area-inset-top))) !important;
   }
 }
 
-/*
- * Keep the scroll viewport above the fixed bottom navigation and its Android
- * system-navigation inset. This keeps the area below the Indoone buttons
- * clean instead of allowing scrolled account content to show there.
- */
+/* Keep the scroll viewport above the fixed bottom navigation and system inset. */
 #app.phone-shell #content {
   min-height: 0;
   height: calc(
-    100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
-    - 67px - var(--indoone-bottom-inset)
+    100dvh - var(--indoone-topbar-base) - max(var(--indoone-top-inset), env(safe-area-inset-top))
+    - 67px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))
   );
   max-height: calc(
-    100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
-    - 67px - var(--indoone-bottom-inset)
+    100dvh - var(--indoone-topbar-base) - max(var(--indoone-top-inset), env(safe-area-inset-top))
+    - 67px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))
   );
   overflow-y: auto;
   overflow-x: hidden;
@@ -261,12 +174,12 @@ html, body { height: 100%; }
 @media (max-width: 380px) {
   #app.phone-shell #content {
     height: calc(
-      100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
-      - 60px - var(--indoone-bottom-inset)
+      100dvh - var(--indoone-topbar-base) - max(var(--indoone-top-inset), env(safe-area-inset-top))
+      - 60px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))
     );
     max-height: calc(
-      100dvh - var(--indoone-topbar-base) - var(--indoone-top-inset)
-      - 60px - var(--indoone-bottom-inset)
+      100dvh - var(--indoone-topbar-base) - max(var(--indoone-top-inset), env(safe-area-inset-top))
+      - 60px - max(var(--indoone-bottom-inset), env(safe-area-inset-bottom))
     );
   }
 }
