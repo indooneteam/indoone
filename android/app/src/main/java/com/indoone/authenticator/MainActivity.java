@@ -121,9 +121,13 @@ public class MainActivity extends FragmentActivity {
         ViewCompat.setOnApplyWindowInsetsListener(target, (view, insets) -> {
             WindowInsetsCompat systemBars =
                     insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            WindowInsetsCompat tappable =
+                    insets.getInsets(WindowInsetsCompat.Type.tappableElement());
+            WindowInsetsCompat cutout =
+                    insets.getInsets(WindowInsetsCompat.Type.displayCutout());
 
-            lastTopInset = systemBars.top;
-            lastBottomInset = systemBars.bottom;
+            lastTopInset = Math.max(systemBars.top, cutout.top);
+            lastBottomInset = Math.max(systemBars.bottom, tappable.bottom);
 
             syncInsetsToWebApp();
             return insets;
