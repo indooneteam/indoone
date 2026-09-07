@@ -17,23 +17,16 @@
   --indoone-topbar-base: 76px;
   --indoone-bottom-nav-base: 67px;
 
-  /* Native Android values take precedence when they are supplied. */
+  /* Canonical safe-area source for the whole UI. */
   --indoone-safe-top: var(--indoone-top-inset, env(safe-area-inset-top, 0px));
   --indoone-safe-bottom: var(--indoone-bottom-inset, env(safe-area-inset-bottom, 0px));
   --indoone-safe-left: var(--indoone-left-inset, env(safe-area-inset-left, 0px));
   --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
 }
 
-#app.phone-shell {
-  --indoone-safe-top: var(--indoone-top-inset, env(safe-area-inset-top, 0px));
-  --indoone-safe-bottom: var(--indoone-bottom-inset, env(safe-area-inset-bottom, 0px));
-  --indoone-safe-left: var(--indoone-left-inset, env(safe-area-inset-left, 0px));
-  --indoone-safe-right: var(--indoone-right-inset, env(safe-area-inset-right, 0px));
-}
-
-/* Step 2: component geometry owns the visual footprint. Native safe-area
-   values are reserved inside the component instead of inflating its outer
-   visual height. */
+/* Step 4: keep component geometry in one place. The safe-area contract is
+   the only layer that applies device insets; other styles only describe
+   visual dimensions and internal spacing. */
 #app.phone-shell .topbar,
 #app.phone-shell .bottom-nav {
   box-sizing: border-box !important;
@@ -107,8 +100,8 @@
   }
 }
 
-/* Shared content regions: every main screen uses the same vertical geometry.
-   Screen-specific modules only control their inner content. */
+/* Shared content region: this is the single place that reserves space for
+   the fixed navigation plus device-safe bottom inset. */
 #app.phone-shell > #content,
 #app.phone-shell > #connectContent,
 #app.phone-shell > .settings-content {
@@ -127,10 +120,7 @@
   overscroll-behavior-y: contain;
 }
 
-#app.phone-shell > #searchWrap {
-  flex: 0 0 auto !important;
-}
-
+#app.phone-shell > #searchWrap,
 #app.phone-shell > .topbar,
 #app.phone-shell > .bottom-nav {
   flex: 0 0 auto !important;

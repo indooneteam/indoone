@@ -27,36 +27,6 @@ html, body { height: 100%; }
   flex: 0 0 auto !important;
 }
 
-#app.phone-shell > #content,
-#app.phone-shell > #connectContent,
-#app.phone-shell > .settings-content {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-}
-
-@media (min-width: 700px) {
-  .phone-shell { height: 100dvh !important; min-height: 0 !important; max-height: 100dvh !important; }
-  .bottom-nav { bottom: 0 !important; }
-}
-
-/* Shared topbar geometry. Visual details stay in topbar-layout-fix.css. */
-.topbar {
-  display: grid !important;
-  grid-template-columns: 40px minmax(0, 1fr) 40px !important;
-  align-items: center !important;
-  column-gap: 10px !important;
-}
-.topbar-left { display: contents !important; }
-.topbar-left .menu-top-btn { grid-column: 1 !important; grid-row: 1 !important; }
-.topbar-left .brand { grid-column: 2 !important; grid-row: 1 !important; justify-self: center !important; margin: 0 !important; }
-.top-actions { grid-column: 3 !important; grid-row: 1 !important; justify-self: end !important; display: flex !important; }
-@media (max-width: 360px) {
-  .topbar { column-gap: 4px !important; padding-left: 10px !important; padding-right: 10px !important; }
-}
-
 .account-info strong.code-green { color: #20883e; }
 .account-info strong.code-yellow { color: #ad8500; }
 .account-info strong.code-red { color: #c62828; }
@@ -81,48 +51,10 @@ html, body { height: 100%; }
 .account-info strong { font-size: 21px !important; }
 .timer { width: 33px !important; height: 33px !important; font-size: 10px !important; }
 
-/* The safe-area source and runtime variables live in app/safe-layout/. */
-#app.phone-shell .topbar {
-  height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-  min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-  padding-top: calc(18px + var(--indoone-safe-top)) !important;
-}
-#app.phone-shell .bottom-nav {
-  height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-  padding-bottom: var(--indoone-safe-bottom) !important;
-  bottom: 0 !important;
-}
-#app.phone-shell .fab { bottom: calc(78px + var(--indoone-safe-bottom)) !important; }
-#app.phone-shell .drawer-panel {
-  padding-top: calc(25px + var(--indoone-safe-top)) !important;
-  padding-bottom: calc(25px + var(--indoone-safe-bottom)) !important;
-}
-#app.phone-shell .overlay { padding-bottom: calc(14px + var(--indoone-safe-bottom)) !important; }
-#app.phone-shell .modal { max-height: calc(100dvh - 28px - var(--indoone-safe-bottom)) !important; }
+/* Step 4: safe-area sizing/offsets live only in
+   app/safe-layout/safe-layout.css. This file keeps only visual geometry and
+   viewport/flex behavior so the same inset is never applied twice. */
 
-@media (max-width: 380px) {
-  :root { --indoone-topbar-base: 68px; --indoone-bottom-nav-base: 60px; }
-  #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    padding-top: calc(12px + var(--indoone-safe-top)) !important;
-  }
-  #app.phone-shell .fab { bottom: calc(72px + var(--indoone-safe-bottom)) !important; }
-  #app.phone-shell .overlay { padding: 8px !important; padding-bottom: calc(8px + var(--indoone-safe-bottom)) !important; }
-  #app.phone-shell .modal { max-height: calc(100dvh - 16px - var(--indoone-safe-bottom)) !important; }
-}
-
-@media (max-width: 340px) {
-  :root { --indoone-topbar-base: 64px; }
-  #app.phone-shell .topbar {
-    height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    min-height: calc(var(--indoone-topbar-base) + var(--indoone-safe-top)) !important;
-    padding-top: calc(8px + var(--indoone-safe-top)) !important;
-  }
-}
-
-/* Shared content regions: every main screen uses the same vertical geometry.
-   Screen-specific modules only control their inner content. */
 #app.phone-shell > #content,
 #app.phone-shell > #connectContent,
 #app.phone-shell > .settings-content {
@@ -131,26 +63,9 @@ html, body { height: 100%; }
   height: auto !important;
   max-height: none !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
-  box-sizing: border-box !important;
-  padding-top: clamp(14px, 2.5vw, 18px) !important;
-  padding-right: calc(clamp(12px, 4.2vw, 18px) + var(--indoone-safe-right)) !important;
-  padding-bottom: calc(var(--indoone-bottom-nav-base) + 37px + var(--indoone-safe-bottom)) !important;
-  padding-left: calc(clamp(12px, 4.2vw, 18px) + var(--indoone-safe-left)) !important;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
 }
 
-#app.phone-shell > #searchWrap {
-  flex: 0 0 auto !important;
-}
-
-#app.phone-shell > .topbar,
-#app.phone-shell > .bottom-nav {
-  flex: 0 0 auto !important;
-}
-
-/* Keep shared headings from drifting vertically between screens. */
+/* Shared headings stay aligned; safe-area padding is handled centrally. */
 #app.phone-shell > #content .page-heading,
 #app.phone-shell > #connectContent .connect-hero,
 #app.phone-shell > .settings-content .settings-page-head {
@@ -158,40 +73,8 @@ html, body { height: 100%; }
   padding-top: 0 !important;
 }
 
-/* Drawer and modal content also respect the same horizontal safe area. */
-#app.phone-shell .drawer-panel {
-  padding-left: calc(14px + var(--indoone-safe-left)) !important;
-  padding-right: calc(14px + var(--indoone-safe-right)) !important;
-}
-
-/* Full-screen overlays must not use viewport height to create large empty gaps. */
-.overlay.indoone-app-lock-overlay .app-lock-screen {
-  justify-content: center !important;
-  gap: clamp(14px, 4vh, 28px) !important;
-}
-
-.overlay.indoone-app-lock-overlay .app-lock-screen > div:last-child {
-  flex: 0 0 auto !important;
-}
-
-.overlay.indoone-app-lock-overlay .app-lock-top {
-  flex: 0 0 auto !important;
-}
-
-@media (max-height: 620px) {
-  .overlay.indoone-app-lock-overlay .app-lock-screen {
-    gap: 8px !important;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 600px) {
-  .overlay.indoone-app-lock-overlay .app-lock-screen {
-    justify-content: initial !important;
-    gap: 0 !important;
-  }
-}
-
-/* ChromeOS/browser preview: keep a stable centered app and shared navigation. */
+/* ChromeOS/browser preview: keep the app centered while reusing the same
+   safe-area contract as mobile WebView layouts. */
 @media (min-width: 700px) {
   #app.phone-shell > #content,
   #app.phone-shell > #connectContent,
@@ -199,14 +82,25 @@ html, body { height: 100%; }
     padding-right: calc(18px + var(--indoone-safe-right)) !important;
     padding-left: calc(18px + var(--indoone-safe-left)) !important;
   }
+
+  :root { --indoone-bottom-nav-base: 58px; }
 }
 
-/* ChromeOS/browser preview: reduce only the preview nav footprint.
-   Android device layouts keep their normal 67px navigation contract. */
+/* Shared topbar geometry. Visual details stay in the component layout. */
+.topbar {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+}
+.topbar-left { display: contents !important; }
+.topbar-left .menu-top-btn { grid-column: 1 !important; grid-row: 1 !important; }
+.topbar-left .brand { grid-column: 2 !important; grid-row: 1 !important; justify-self: center !important; margin: 0 !important; }
+.top-actions { grid-column: 3 !important; grid-row: 1 !important; justify-self: end !important; display: flex !important; }
+@media (max-width: 360px) {
+  .topbar { column-gap: 4px !important; padding-left: 10px !important; padding-right: 10px !important; }
+}
+
 @media (min-width: 700px) {
-  :root { --indoone-bottom-nav-base: 58px; }
-  #app.phone-shell .bottom-nav {
-    height: calc(var(--indoone-bottom-nav-base) + var(--indoone-safe-bottom)) !important;
-    padding-bottom: var(--indoone-safe-bottom) !important;
-  }
+  .bottom-nav { bottom: 0 !important; }
 }
