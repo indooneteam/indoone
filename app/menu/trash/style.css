@@ -4,104 +4,76 @@
 .menu-feature-note { margin: 8px 0 12px; color: #8a8492; font-size: 12px; line-height: 1.5; }
 .menu-feature-actions { display: grid; gap: 8px; margin-top: 12px; }
 
-/* Trash uses explicit actions so recovery and permanent deletion are clear and reliable on touch and desktop. */
-.trash-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px;
+.trash-swipe-wrap {
+  position: relative;
+  width: 100%;
   margin-bottom: 8px;
-  border: 1px solid #eee8f4;
+  overflow: hidden;
   border-radius: 14px;
-  background: #fff;
-  box-sizing: border-box;
+  touch-action: pan-y;
+  user-select: none;
 }
 
-.trash-row-main {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.trash-row-main > strong {
-  display: block;
-  color: #2c2733;
-  font-size: 13px;
-}
-
-.trash-row-main > small {
-  display: block;
-  margin-top: 3px;
-  color: #8a8492;
-  font-size: 11px;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.trash-row-main .trash-expiry {
-  color: #6f5a9b;
-  font-weight: 700;
-}
-
-.trash-row-actions {
+.trash-swipe-delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 88px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 7px;
-  flex: 0 0 auto;
+  background: #fff1f2;
 }
 
-.trash-restore-btn,
-.trash-delete-btn {
-  min-height: 38px;
-  padding: 0 11px;
-  border-radius: 10px;
+.trash-permanent-btn {
+  width: 88px;
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #b4232b;
+  color: #fff;
   font: inherit;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.trash-delete-btn {
-  border: 1px solid #efc7ca;
-  background: #fff6f7;
-  color: #b4232b;
-}
-
-.trash-restore-btn:disabled,
-.trash-delete-btn:disabled {
-  opacity: .55;
+.trash-permanent-btn:disabled {
+  opacity: .65;
   cursor: wait;
 }
 
-.trash-policy-note {
-  margin: 0 0 14px;
-  color: #756f7f;
-  font-size: 12px;
-  line-height: 1.5;
+.trash-swipe-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 64px;
+  box-sizing: border-box;
+  margin: 0;
+  background: #fff;
+  transform: translate3d(0, 0, 0);
+  transition: transform 180ms ease;
+  will-change: transform;
+  border-radius: 14px;
 }
 
-.trash-header-note {
-  display: block;
-  margin-top: 3px;
-  color: #8a8492;
-  font-size: 10px;
-  font-weight: 600;
+.trash-swipe-wrap.trash-swipe-open .trash-swipe-card {
+  transform: translate3d(-88px, 0, 0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trash-swipe-wrap:hover .trash-swipe-card {
+    box-shadow: 0 1px 8px rgba(41, 32, 49, .06);
+  }
 }
 
 @media (max-width: 420px) {
-  .trash-row {
-    align-items: stretch;
-    flex-direction: column;
+  .trash-swipe-delete,
+  .trash-permanent-btn {
+    width: 82px;
   }
 
-  .trash-row-actions {
-    justify-content: stretch;
-  }
-
-  .trash-restore-btn,
-  .trash-delete-btn {
-    flex: 1 1 0;
+  .trash-swipe-wrap.trash-swipe-open .trash-swipe-card {
+    transform: translate3d(-82px, 0, 0);
   }
 }
