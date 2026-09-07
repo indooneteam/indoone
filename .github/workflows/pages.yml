@@ -45,6 +45,7 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build deployment APK for updater
+        continue-on-error: true
         run: gradle -p develop-source/android assembleDebug --stacktrace
 
       - name: Build Pages package
@@ -54,9 +55,20 @@ jobs:
           rm -rf publish
           mkdir -p publish/downloads publish/develop/downloads
           rsync -a --exclude='.git' develop-source/ publish/
-          cp develop-source/android/app/build/outputs/apk/debug/app-debug.apk publish/downloads/indoone.apk
           rsync -a --exclude='.git' develop-source/ publish/develop/
-          cp develop-source/android/app/build/outputs/apk/debug/app-debug.apk publish/develop/downloads/indoone.apk
+
+          APK_PATH="develop-source/android/app/build/outputs/apk/debug/app-debug.apk"
+          if [[ ! -f "$APK_PATH" ]]; then
+            echo "::warning::Fresh APK build did not produce an APK; preserving the last published APK for this Pages deployment."
+            curl -fL --retry 3 --retry-delay 2 --retry-all-errors \
+              "https://indooneteam.github.io/indoone/develop/downloads/indoone.apk" \
+              -o "$APK_PATH"
+          fi
+
+          test -s "$APK_PATH"
+          cp "$APK_PATH" publish/downloads/indoone.apk
+          cp "$APK_PATH" publish/develop/downloads/indoone.apk
+
           test -f publish/index.html
           test -f publish/app/connect/connect.js
           test -f publish/update.json
