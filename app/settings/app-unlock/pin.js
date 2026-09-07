@@ -13,15 +13,32 @@
     minLength = 4,
     allowClose = false,
     showBiometricSwitch = false,
+    autoSubmit = false,
     onSubmit
   }) {
     let buffer = '';
     let errorMessage = '';
+    let submitting = false;
 
     const bridge = window.IndooneAppLockBridge;
 
+    async function submitValue(value) {
+      if (submitting || value.length < minLength) return;
+
+      submitting = true;
+      const result = await onSubmit(value);
+      submitting = false;
+
+      if (typeof result === 'string' && result) {
+        buffer = '';
+        errorMessage = result;
+        render();
+      }
+    }
+
     function render() {
-      const actionDisabled = buffer.length < minLength;
+      const actionDisabled = buffer.length < minLength || submitting;
+      const showAction = !autoSubmit;
 
       bridge.openScreen(`
         <div class="app-lock-screen">
@@ -40,14 +57,16 @@
             >${pinDots(buffer, maxLength)}</div>
             <div class="app-lock-error" aria-live="polite">${errorMessage}</div>
 
-            <button
-              type="button"
-              class="app-lock-action"
-              id="appLockPadAction"
-              ${actionDisabled ? 'disabled' : ''}
-            >
-              ${actionLabel}
-            </button>
+            ${showAction ? `
+              <button
+                type="button"
+                class="app-lock-action"
+                id="appLockPadAction"
+                ${actionDisabled ? 'disabled' : ''}
+              >
+                ${actionLabel}
+              </button>
+            ` : ''}
           </div>
 
           <div>
@@ -68,10 +87,12 @@
 
             <div class="app-lock-footer">
               ${showBiometricSwitch
-                ? '<button type="button" class="app-lock-cancel" id="appLockBiometricSwitch">Use Biometric</button>'
+                ? '<button type="button" class="app-lock-cancel" id="appLockBiometricSwitch">Use Fingerprint</button>'
                 : allowClose
                   ? '<button type="button" class="app-lock-cancel" id="appLockCancel">Cancel</button>'
-                  : 'PIN is entered using the secure on-screen keypad'}
+                  : autoSubmit
+                    ? 'Enter your PIN using the secure on-screen keypad'
+                    : 'PIN is entered using the secure on-screen keypad'}
             </div>
           </div>
         </div>
@@ -79,15 +100,22 @@
 
       document.querySelectorAll('[data-app-lock-digit]').forEach(button => {
         button.addEventListener('click', () => {
-          if (buffer.length >= maxLength) return;
+          if (submitting || buffer.length >= maxLength) return;
           buffer += button.getAttribute('data-app-lock-digit');
           errorMessage = '';
+
+          if (autoSubmit && buffer.length >= minLength) {
+            void submitValue(buffer);
+            return;
+          }
+
           render();
         });
       });
 
       document.querySelectorAll('[data-app-lock-back]').forEach(button => {
         button.addEventListener('click', () => {
+          if (submitting) return;
           buffer = buffer.slice(0, -1);
           errorMessage = '';
           render();
@@ -96,6 +124,7 @@
 
       document.querySelectorAll('[data-app-lock-clear]').forEach(button => {
         button.addEventListener('click', () => {
+          if (submitting) return;
           buffer = '';
           errorMessage = '';
           render();
@@ -104,18 +133,7 @@
 
       document
         .getElementById('appLockPadAction')
-        ?.addEventListener('click', async () => {
-          if (buffer.length < minLength) return;
-
-          const value = buffer;
-          const result = await onSubmit(value);
-
-          if (typeof result === 'string' && result) {
-            buffer = '';
-            errorMessage = result;
-            render();
-          }
-        });
+        ?.addEventListener('click', () => submitValue(buffer));
 
       document
         .getElementById('appLockBiometricSwitch')
@@ -277,11 +295,12 @@
     showCustomPinPad({
       title: isUnlock ? 'Unlock Indoone' : 'Create App PIN',
       description: isUnlock
-        ? 'Enter your App PIN. Indoone stays locked until the correct PIN is entered.'
+        ? 'Enter your App PIN to unlock Indoone.'
         : 'Create a 4–12 digit PIN to protect Indoone.',
       actionLabel: isUnlock ? 'Unlock App' : 'Create App PIN',
       allowClose: !isUnlock,
       showBiometricSwitch: isUnlock && IndooneBiometric.enabled(),
+      autoSubmit: isUnlock,
       onSubmit: async value => {
         try {
           if (isUnlock) {
