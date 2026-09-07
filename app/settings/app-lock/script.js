@@ -1,8 +1,11 @@
 (() => {
   const FIRST_ACCOUNT_PROMPT_KEY = 'indoone.app.lock.prompt.dismissed.v1';
   const SESSION_PIN_KEY = 'indoone.app.lock.session.pin.v1';
+  const SESSION_UNLOCK_AT_KEY = 'indoone.app.lock.session.unlocked-at.v1';
+  const SESSION_GRACE_MS = 5 * 60 * 1000;
   let startupUnlockShown = false;
   let firstAccountPromptShown = false;
+  let sessionLockTimer = null;
 
   function currentUser() {
     return window.IndooneFirebase?.auth?.currentUser || null;
@@ -22,16 +25,69 @@
     }
   }
 
-  function setSessionPin(pin) {
+  function getSessionUnlockAt() {
     try {
-      sessionStorage.setItem(SESSION_PIN_KEY, String(pin));
-    } catch (_) {}
+      return Number(sessionStorage.getItem(SESSION_UNLOCK_AT_KEY) || 0);
+    } catch (_) {
+      return 0;
+    }
   }
 
-  function clearSessionPin() {
+  function setSession(pin) {
+    try {
+      sessionStorage.setItem(SESSION_PIN_KEY, String(pin));
+      sessionStorage.setItem(SESSION_UNLOCK_AT_KEY, String(Date.now()));
+    } catch (_) {}
+
+    scheduleSessionLock();
+  }
+
+  function clearSession() {
     try {
       sessionStorage.removeItem(SESSION_PIN_KEY);
+      sessionStorage.removeItem(SESSION_UNLOCK_AT_KEY);
     } catch (_) {}
+
+    if (sessionLockTimer) {
+      clearTimeout(sessionLockTimer);
+      sessionLockTimer = null;
+    }
+  }
+
+  function scheduleSessionLock() {
+    if (sessionLockTimer) {
+      clearTimeout(sessionLockTimer);
+      sessionLockTimer = null;
+    }
+
+    const unlockedAt = getSessionUnlockAt();
+    const remaining = SESSION_GRACE_MS - (Date.now() - unlockedAt);
+
+    if (remaining <= 0) {
+      expireSessionLock();
+      return;
+    }
+
+    sessionLockTimer = setTimeout(
+      expireSessionLock,
+      remaining
+    );
+  }
+
+  function expireSessionLock() {
+    clearSession();
+    IndoonePersistence.lock();
+    startupUnlockShown = false;
+    firstAccountPromptShown = false;
+    document.body.classList.add('app-lock-active');
+
+    if (currentUser() && IndoonePersistence.hasAppLock()) {
+      if (IndooneBiometric.enabled()) {
+        showBiometricUnlock();
+      } else {
+        showAppLock('unlock');
+      }
+    }
   }
 
   async function restoreSessionUnlock() {
@@ -43,9 +99,15 @@
       return false;
     }
 
+    const unlockedAt = getSessionUnlockAt();
     const sessionPin = getSessionPin();
 
-    if (!/^\d{4,12}$/.test(sessionPin)) {
+    if (
+      !/^\d{4,12}$/.test(sessionPin) ||
+      !unlockedAt ||
+      (Date.now() - unlockedAt) >= SESSION_GRACE_MS
+    ) {
+      clearSession();
       return false;
     }
 
@@ -53,13 +115,14 @@
       const restored = await IndoonePersistence.unlock(sessionPin);
 
       if (!restored) {
-        clearSessionPin();
+        clearSession();
         return false;
       }
 
       startupUnlockShown = true;
       firstAccountPromptShown = false;
       document.body.classList.remove('app-lock-active');
+      scheduleSessionLock();
 
       if (typeof renderAccounts === 'function') {
         renderAccounts();
@@ -71,7 +134,7 @@
 
       return true;
     } catch (_) {
-      clearSessionPin();
+      clearSession();
       return false;
     }
   }
@@ -289,7 +352,7 @@
           }
 
           await IndoonePersistence.save([], newPin);
-          setSessionPin(newPin);
+          setSession(newPin);
           closeModal();
           toast('App PIN changed');
         } catch (error) {
@@ -370,7 +433,7 @@
               return toast('Incorrect PIN');
             }
 
-            setSessionPin(value);
+            setSession(value);
             startupUnlockShown = true;
             document.body.classList.remove('app-lock-active');
             closeModal();
@@ -384,7 +447,7 @@
           } else {
             IndooneSecureSession.unlock(value);
             await IndoonePersistence.save([], value);
-            setSessionPin(value);
+            setSession(value);
             dismissFirstAccountPrompt();
 
             firstAccountPromptShown = false;
@@ -434,7 +497,7 @@
               throw new Error('Biometric credential is invalid');
             }
 
-            setSessionPin(pin);
+            setSession(pin);
             startupUnlockShown = true;
             document.body.classList.remove('app-lock-active');
             closeModal();
@@ -472,7 +535,7 @@
   };
 
   window.lockIndoone = function () {
-    clearSessionPin();
+    clearSession();
     IndoonePersistence.lock();
     startupUnlockShown = true;
     firstAccountPromptShown = false;
