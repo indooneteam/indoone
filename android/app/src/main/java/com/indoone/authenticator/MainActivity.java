@@ -121,9 +121,13 @@ public class MainActivity extends FragmentActivity {
         ViewCompat.setOnApplyWindowInsetsListener(target, (view, insets) -> {
             WindowInsetsCompat systemBars =
                     insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            WindowInsetsCompat tappable =
+                    insets.getInsets(WindowInsetsCompat.Type.tappableElement());
+            WindowInsetsCompat cutout =
+                    insets.getInsets(WindowInsetsCompat.Type.displayCutout());
 
-            lastTopInset = systemBars.top;
-            lastBottomInset = systemBars.bottom;
+            lastTopInset = Math.max(systemBars.top, cutout.top);
+            lastBottomInset = Math.max(systemBars.bottom, tappable.bottom);
 
             syncInsetsToWebApp();
             return insets;
@@ -590,111 +594,43 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    public void sendCameraPermissionResult(
-            boolean success,
+    private void sendCameraPermissionResult(
+            boolean granted,
             String message
     ) {
-        String safe = escape(message);
-
-        if (webView != null) {
-            runOnUiThread(() -> webView.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent(" +
-                    "'indoone-camera-permission',{detail:{success:" +
-                    success +
-                    ",message:'" +
-                    safe +
-                    "'}}));",
-                    null
-            ));
+        if (webView == null) {
+            return;
         }
+
+        String safeMessage =
+                message == null ? "" : message.replace("'", "\\'");
+
+        webView.post(() -> webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('camera-permission-result'," +
+                "{detail:{granted:" + granted + ",message:'" +
+                safeMessage + "'}}));",
+                null
+        ));
     }
 
-    public void sendBiometricResult(
-            boolean success,
-            String message,
-            String pin
-    ) {
-        String safe = escape(message);
-        String safePin = escape(pin);
-
-        if (webView != null) {
-            runOnUiThread(() -> webView.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent(" +
-                    "'indoone-biometric-result',{detail:{success:" +
-                    success +
-                    ",message:'" +
-                    safe +
-                    "',pin:'" +
-                    safePin +
-                    "'}}));",
-                    null
-            ));
-        }
-    }
-
-    public void sendNearbyEvent(
+    private void sendNearbyEvent(
             String type,
-            String message,
-            String endpointId
+            String status,
+            String message
     ) {
-        sendNearbyEvent(
-                type,
-                message,
-                endpointId,
-                "",
-                false
-        );
-    }
-
-    public void sendNearbyEvent(
-            String type,
-            String message,
-            String endpointId,
-            String authenticationDigits,
-            boolean incoming
-    ) {
-        String safeType = escape(type);
-        String safeMessage = escape(message);
-        String safeEndpoint = escape(endpointId);
-        String safeDigits = escape(authenticationDigits);
-
-        if (webView != null) {
-            runOnUiThread(() -> webView.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent(" +
-                    "'indoone-nearby',{detail:{type:'" +
-                    safeType +
-                    "',message:'" +
-                    safeMessage +
-                    "',endpointId:'" +
-                    safeEndpoint +
-                    "',authenticationDigits:'" +
-                    safeDigits +
-                    "',incoming:" +
-                    incoming +
-                    "}}));",
-                    null
-            ));
+        if (webView == null) {
+            return;
         }
-    }
 
-    public NearbyConnectionManager getNearbyConnectionManager() {
-        return nearbyConnectionManager;
-    }
+        String safeType = type == null ? "" : type.replace("'", "\\'");
+        String safeStatus = status == null ? "" : status.replace("'", "\\'");
+        String safeMessage = message == null ? "" : message.replace("'", "\\'");
 
-    private static String escape(String value) {
-        return value == null
-                ? ""
-                : value
-                .replace("\\", "\\\\")
-                .replace("'", "\\'");
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        webView.post(() -> webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('nearby-native-event'," +
+                "{detail:{type:'" + safeType + "',status:'" + safeStatus +
+                "',message:'" + safeMessage + "'}}));",
+                null
+        ));
     }
 }
