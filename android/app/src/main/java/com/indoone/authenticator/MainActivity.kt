@@ -3,8 +3,7 @@ package com.indoone.authenticator
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.setContent
+import androidx.activity.compose.setContent
 import com.indoone.authenticator.auth.login.LoginScreen
 
 class MainActivity : ComponentActivity() {
