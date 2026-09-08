@@ -25,7 +25,6 @@ class EncryptedAccountRepository(
     private val file = File(context.filesDir, FILE_NAME)
     private val trashFile = File(context.filesDir, TRASH_FILE_NAME)
 
-    @Synchronized
     override suspend fun save(account: AccountRecord) {
         val accounts = getAllInternal().toMutableList()
         val index = accounts.indexOfFirst { it.id == account.id }
@@ -34,17 +33,14 @@ class EncryptedAccountRepository(
         writeEncrypted(file, encode(accounts))
     }
 
-    @Synchronized
     override suspend fun getAll(): List<AccountRecord> = getAllInternal()
 
-    @Synchronized
     override suspend fun remove(id: String) {
         val accounts = getAllInternal()
         if (accounts.none { it.id == id }) return
         writeEncrypted(file, encode(accounts.filterNot { it.id == id }))
     }
 
-    @Synchronized
     override suspend fun moveToTrash(id: String) {
         val accounts = getAllInternal()
         val account = accounts.firstOrNull { it.id == id } ?: return
@@ -55,10 +51,8 @@ class EncryptedAccountRepository(
         writeEncrypted(file, encode(accounts.filterNot { it.id == id }))
     }
 
-    @Synchronized
     override suspend fun listTrash(): List<TrashRecord> = loadTrashInternal(System.currentTimeMillis())
 
-    @Synchronized
     override suspend fun restoreFromTrash(id: String): AccountRecord {
         val trash = loadTrashInternal(System.currentTimeMillis()).toMutableList()
         val item = trash.firstOrNull { it.account.id == id }
@@ -71,7 +65,6 @@ class EncryptedAccountRepository(
         return item.account
     }
 
-    @Synchronized
     override suspend fun permanentlyDeleteFromTrash(id: String) {
         val trash = loadTrashInternal(System.currentTimeMillis())
         writeEncrypted(trashFile, encodeTrash(trash.filterNot { it.account.id == id }))
