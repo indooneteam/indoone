@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <activity
-            android:name=".settings.applock.lockapp.LockAppActivity"
+            android:name=".settings.unlock.UnlockAppActivity"
             android:exported="false" />
         <activity
             android:name=".authentication.AuthActivity"
