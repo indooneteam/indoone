@@ -3,7 +3,6 @@ package com.indoone.accounts.storage
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Base64
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountRepository
 import org.json.JSONArray
@@ -19,8 +18,8 @@ import javax.crypto.spec.GCMParameterSpec
 /**
  * Durable local account storage with Android Keystore-backed AES/GCM encryption.
  *
- * The whole account payload is encrypted before it is written to the app-private
- * files directory. The TOTP secrets therefore never sit in plaintext on disk.
+ * The complete account payload is encrypted before it is written to the app's
+ * private files directory, so TOTP secrets are not stored in plaintext.
  */
 class EncryptedAccountRepository(
     context: Context,
@@ -60,8 +59,7 @@ class EncryptedAccountRepository(
     }
 
     private fun writeEncrypted(plaintext: ByteArray) {
-        val encrypted = encrypt(plaintext)
-        file.writeBytes(encrypted)
+        file.writeBytes(encrypt(plaintext))
     }
 
     private fun encrypt(plaintext: ByteArray): ByteArray {
@@ -82,6 +80,7 @@ class EncryptedAccountRepository(
         val iv = payload.copyOfRange(0, GCM_IV_LENGTH)
         val ciphertext = payload.copyOfRange(GCM_IV_LENGTH, payload.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
+
         cipher.init(
             Cipher.DECRYPT_MODE,
             getOrCreateKey(),
@@ -163,16 +162,13 @@ class EncryptedAccountRepository(
                         provider = item.optString("provider"),
                         service = item.optString("service"),
                         favorite = item.optBoolean("favorite", false),
-                        createdAt = item.optLong("createdAt"),
-                        updatedAt = item.optLong("updatedAt"),
+                        createdAt = item.optLong("createdAt", 0L),
+                        updatedAt = item.optLong("updatedAt", 0L),
                     ),
                 )
             }
         }
     }
-
-    private fun SecretKey.encodedForLog(): String =
-        Base64.encodeToString(encoded ?: ByteArray(0), Base64.NO_WRAP)
 
     private companion object {
         const val FILE_NAME = "accounts.enc"
