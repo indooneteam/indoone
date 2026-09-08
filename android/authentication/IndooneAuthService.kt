@@ -36,6 +36,13 @@ class IndooneAuthService(
                 if (raw.contains('@') && savedEmail.isNotBlank() && savedEmail != email) {
                     throw AuthException("The account profile does not match this email address.")
                 }
+                if (!raw.contains('@')) {
+                    val expectedMobile = normalizeMobile(raw)
+                    val savedMobile = normalizeMobile(profile?.get("mobile")?.toString().orEmpty())
+                    if (savedMobile.isNotBlank() && savedMobile != expectedMobile) {
+                        throw AuthException("This mobile number is not linked to this Indoone account.")
+                    }
+                }
 
                 val result = post("/api/auth/login/request-otp", JSONObject().apply {
                     put("email", email)
