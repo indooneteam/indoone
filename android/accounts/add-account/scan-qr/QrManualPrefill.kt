@@ -2,9 +2,6 @@ package com.indoone.accounts.addaccount.scanqr
 
 /**
  * Maps a scanned TOTP payload into the fields expected by account setup.
- *
- * The object deliberately contains data only; navigation and persistence stay
- * outside the scanner feature so the feature remains isolated and testable.
  */
 data class QrManualPrefill(
     val name: String,
@@ -20,9 +17,9 @@ data class QrManualPrefill(
         fun from(result: QrAccountResult): QrManualPrefill {
             return QrManualPrefill(
                 name = result.issuer
-                    .ifBlank { result.label }
+                    .ifBlank { result.name }
                     .ifBlank { "Account" },
-                email = result.label,
+                email = result.email,
                 secret = result.secret,
                 algorithm = result.algorithm,
                 digits = result.digits,
