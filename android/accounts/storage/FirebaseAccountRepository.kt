@@ -9,10 +9,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Firebase-backed account repository.
- *
- * Accounts are scoped below the currently authenticated user's document so one
- * user's authenticator data cannot be addressed through another user's path.
+ * Firebase-backed account repository scoped to the authenticated user.
  */
 class FirebaseAccountRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
@@ -38,8 +35,7 @@ class FirebaseAccountRepository(
         )
 
         awaitTask {
-            firestore
-                .collection("users")
+            firestore.collection("users")
                 .document(uid)
                 .collection("accounts")
                 .document(account.id)
@@ -52,25 +48,36 @@ class FirebaseAccountRepository(
             ?: throw IllegalStateException("Please login first.")
 
         val snapshot = awaitTask {
-            firestore
-                .collection("users")
+            firestore.collection("users")
                 .document(uid)
                 .collection("accounts")
                 .get()
         }
 
-        return snapshot.documents.mapNotNull { document ->
-            document.toAccountRecord()
-        }.sortedBy { it.name.lowercase() }
+        return snapshot.documents.mapNotNull { it.toAccountRecord() }
+            .sortedBy { it.name.lowercase() }
+    }
+
+    override suspend fun remove(id: String) {
+        val uid = auth.currentUser?.uid
+            ?: throw IllegalStateException("Please login first.")
+
+        awaitTask {
+            firestore.collection("users")
+                .document(uid)
+                .collection("accounts")
+                .document(id)
+                .delete()
+        }
     }
 
     private fun com.google.firebase.firestore.DocumentSnapshot.toAccountRecord(): AccountRecord? {
-        val id = getString("id") ?: id
+        val recordId = getString("id") ?: id
         val name = getString("name") ?: return null
         val secret = getString("secret") ?: return null
 
         return AccountRecord(
-            id = id,
+            id = recordId,
             name = name,
             email = getString("email").orEmpty(),
             secret = secret,
@@ -90,14 +97,10 @@ class FirebaseAccountRepository(
     ): T = suspendCancellableCoroutine { continuation ->
         request()
             .addOnSuccessListener { value ->
-                if (continuation.isActive) {
-                    continuation.resume(value)
-                }
+                if (continuation.isActive) continuation.resume(value)
             }
             .addOnFailureListener { error ->
-                if (continuation.isActive) {
-                    continuation.resumeWithException(error)
-                }
+                if (continuation.isActive) continuation.resumeWithException(error)
             }
     }
 }
