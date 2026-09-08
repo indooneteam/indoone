@@ -34,7 +34,7 @@ import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
 import com.indoone.menu.trash.TrashScreen
 import com.indoone.settings.applock.AppLockStore
-import com.indoone.settings.applock.lockapp.LockAppActivity
+import com.indoone.settings.unlock.UnlockAppActivity
 
 @Composable
 fun MenuDrawer(
@@ -155,7 +155,7 @@ fun MenuDrawer(
                 DrawerItem("▣", "Lock App", null) {
                     if (AppLockStore(context).isEnabled()) {
                         onDismiss()
-                        context.startActivity(Intent(context, LockAppActivity::class.java))
+                        context.startActivity(Intent(context, UnlockAppActivity::class.java))
                     } else {
                         onLock()
                     }
@@ -178,13 +178,13 @@ private fun DrawerItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 15.dp),
+            .padding(horizontal = 20.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(icon, style = MaterialTheme.typography.titleMedium)
-        Text(title, modifier = Modifier.weight(1f).padding(start = 14.dp), style = MaterialTheme.typography.bodyLarge)
+        Text(icon, modifier = Modifier.width(32.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
         trailing?.let {
-            Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
