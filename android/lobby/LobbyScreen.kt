@@ -1,6 +1,7 @@
 package com.indoone.lobby
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -128,7 +129,7 @@ private fun LobbyNavItem(
     active: Boolean,
     onClick: () -> Unit,
 ) {
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(
@@ -138,8 +139,8 @@ private fun LobbyNavItem(
                     MaterialTheme.colorScheme.surface
                 },
             )
-            .padding(horizontal = 18.dp, vertical = 6.dp)
-            .then(Modifier),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
