@@ -1,19 +1,23 @@
 package com.indoone.settings.biometric
 
-import androidx.fragment.app.FragmentActivity
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
+import android.app.Activity
+import android.content.Context
+import android.hardware.fingerprint.FingerprintManager
+import android.os.Build
+import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
 
-class BiometricAuthenticator(private val activity: FragmentActivity) {
+class BiometricAuthenticator(private val activity: Activity) {
     fun canAuthenticate(): Boolean {
-        val manager = BiometricManager.from(activity)
-        val result = manager.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                BiometricManager.Authenticators.DEVICE_CREDENTIAL,
-        )
-        return result == BiometricManager.BIOMETRIC_SUCCESS
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val manager = activity.getSystemService(android.hardware.biometrics.BiometricManager::class.java)
+            manager?.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val manager = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
+            manager?.isHardwareDetected == true && manager.hasEnrolledFingerprints()
+        } else {
+            false
+        }
     }
 
     fun authenticate(
@@ -49,12 +53,71 @@ class BiometricAuthenticator(private val activity: FragmentActivity) {
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
     ) {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
+                authenticateWithBiometricPrompt(title, subtitle, description, onSuccess, onError)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+                authenticateWithFingerprint(onSuccess, onError)
+            else -> onError("Biometric authentication is not supported on this Android version.")
+        }
+    }
+
+    private fun authenticateWithBiometricPrompt(
+        title: String,
+        subtitle: String,
+        description: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
         val executor = ContextCompat.getMainExecutor(activity)
-        val prompt = BiometricPrompt(
-            activity,
-            executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+        val callback = object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(
+                result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult,
+            ) {
+                onSuccess()
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                onError(errString.toString().ifBlank { "Biometric authentication failed." })
+            }
+
+            override fun onAuthenticationFailed() {
+                onError("Biometric authentication failed. Try again.")
+            }
+        }
+
+        val builder = android.hardware.biometrics.BiometricPrompt.Builder(activity)
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            .setDescription(description)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            builder.setDeviceCredentialAllowed(true)
+        } else {
+            builder.setNegativeButton("Cancel", executor) { _, _ ->
+                onError("Biometric authentication cancelled.")
+            }
+        }
+
+        builder.build().authenticate(CancellationSignal(), executor, callback)
+    }
+
+    private fun authenticateWithFingerprint(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        val manager = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
+        if (manager == null || !manager.isHardwareDetected || !manager.hasEnrolledFingerprints()) {
+            onError("Biometric authentication is unavailable on this device.")
+            return
+        }
+
+        manager.authenticate(
+            null,
+            CancellationSignal(),
+            0,
+            object : FingerprintManager.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: FingerprintManager.AuthenticationResult) {
                     onSuccess()
                 }
 
@@ -63,22 +126,10 @@ class BiometricAuthenticator(private val activity: FragmentActivity) {
                 }
 
                 override fun onAuthenticationFailed() {
-                    onError("Biometric authentication failed. Try again.")
+                    onError("Fingerprint authentication failed. Try again.")
                 }
             },
+            null,
         )
-
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(title)
-            .setSubtitle(subtitle)
-            .setDescription(description)
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL,
-            )
-            .build()
-
-        prompt.authenticate(promptInfo)
     }
 }
