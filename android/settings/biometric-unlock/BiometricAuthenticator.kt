@@ -1,28 +1,19 @@
 package com.indoone.settings.biometric
 
 import android.app.Activity
-import android.app.KeyguardManager
-import android.content.Context
-import android.hardware.biometrics.BiometricManager
-import android.hardware.biometrics.BiometricPrompt
-import android.hardware.fingerprint.FingerprintManager
-import android.os.Build
-import android.os.CancellationSignal
-import java.util.concurrent.Executor
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 
 class BiometricAuthenticator(private val activity: Activity) {
     fun canAuthenticate(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
-        val keyguard = activity.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-        if (keyguard?.isKeyguardSecure != true) return false
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val manager = activity.getSystemService(Context.BIOMETRIC_SERVICE) as? BiometricManager
-            manager?.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS
-        } else {
-            val fingerprint = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
-            fingerprint?.isHardwareDetected == true && fingerprint.hasEnrolledFingerprints()
-        }
+        val manager = BiometricManager.from(activity)
+        val result = manager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+        )
+        return result == BiometricManager.BIOMETRIC_SUCCESS
     }
 
     fun authenticate(
@@ -58,23 +49,9 @@ class BiometricAuthenticator(private val activity: Activity) {
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
     ) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            onError("Biometric unlock requires Android 9 or newer.")
-            return
-        }
-
-        val executor: Executor = activity.mainExecutor
-        val prompt = BiometricPrompt.Builder(activity)
-            .setTitle(title)
-            .setSubtitle(subtitle)
-            .setDescription(description)
-            .setNegativeButton("Use App PIN", executor) { _, _ ->
-                onError("Biometric authentication cancelled.")
-            }
-            .build()
-
-        prompt.authenticate(
-            CancellationSignal(),
+        val executor = ContextCompat.getMainExecutor(activity)
+        val prompt = BiometricPrompt(
+            activity,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -90,5 +67,18 @@ class BiometricAuthenticator(private val activity: Activity) {
                 }
             },
         )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            .setDescription(description)
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+            )
+            .build()
+
+        prompt.authenticate(promptInfo)
     }
 }
