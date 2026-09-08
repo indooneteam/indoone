@@ -41,6 +41,7 @@ private enum class AppRoute {
     QR_ACCOUNT_DETAILS,
     ENTER_SETUP_KEY,
     IMPORT_OTP_URI,
+    IMPORT_ACCOUNT_DETAILS,
 }
 
 class MainActivity : ComponentActivity() {
@@ -61,6 +62,9 @@ class MainActivity : ComponentActivity() {
 
                 var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember {
+                    mutableStateOf<AccountDetailsViewModel?>(null)
+                }
+                var importAccountDetailsViewModel by remember {
                     mutableStateOf<AccountDetailsViewModel?>(null)
                 }
 
@@ -86,7 +90,6 @@ class MainActivity : ComponentActivity() {
                             onSort = accountsViewModel::toggleSort,
                             onToggleFavorite = accountsViewModel::toggleFavorite,
                             onAddAccount = {
-                                addAccountViewModel.clearImportUri()
                                 route = AppRoute.ADD_ACCOUNT
                             },
                         )
@@ -126,11 +129,60 @@ class MainActivity : ComponentActivity() {
                             onContinue = {
                                 importOtpUriViewModel.parse()
                                     .onSuccess { result ->
-                                        qrAccountDetailsViewModel = AccountDetailsViewModel(result)
-                                        route = AppRoute.QR_ACCOUNT_DETAILS
+                                        importAccountDetailsViewModel = AccountDetailsViewModel(result)
+                                        route = AppRoute.IMPORT_ACCOUNT_DETAILS
                                     }
                             },
                         )
+                    }
+
+                    AppRoute.IMPORT_ACCOUNT_DETAILS -> {
+                        val detailsViewModel = importAccountDetailsViewModel
+
+                        if (detailsViewModel == null) {
+                            route = AppRoute.IMPORT_OTP_URI
+                        } else {
+                            val state by detailsViewModel.state.collectAsState()
+
+                            AccountDetailsScreen(
+                                state = state,
+                                onNameChanged = detailsViewModel::onNameChanged,
+                                onEmailChanged = detailsViewModel::onEmailChanged,
+                                onSecretChanged = detailsViewModel::onSecretChanged,
+                                onDigitsChanged = detailsViewModel::onDigitsChanged,
+                                onPeriodChanged = detailsViewModel::onPeriodChanged,
+                                onAlgorithmChanged = detailsViewModel::onAlgorithmChanged,
+                                onBack = {
+                                    route = AppRoute.IMPORT_OTP_URI
+                                },
+                                onSave = {
+                                    val validation = detailsViewModel.prepareSave()
+
+                                    validation.onFailure { error ->
+                                        detailsViewModel.onSaveFailed(
+                                            error.message ?: "Invalid account details.",
+                                        )
+                                    }.onSuccess {
+                                        detailsViewModel.onSaveStarted()
+
+                                        coroutineScope.launch {
+                                            val result = AccountSaveCoordinator(repository)
+                                                .save(state)
+
+                                            result.onSuccess {
+                                                detailsViewModel.onSaveCompleted()
+                                                loadAccounts()
+                                                route = AppRoute.ACCOUNTS
+                                            }.onFailure { error ->
+                                                detailsViewModel.onSaveFailed(
+                                                    error.message ?: "Could not save account.",
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
 
                     AppRoute.SCAN_QR -> {
