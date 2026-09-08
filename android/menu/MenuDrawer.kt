@@ -1,5 +1,6 @@
 package com.indoone.menu
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +26,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.indoone.menu.termsofuse.TermsOfUseScreen
+import com.indoone.settings.applock.AppLockStore
+import com.indoone.settings.applock.lockapp.LockAppActivity
 
 @Composable
 fun MenuDrawer(
@@ -43,6 +47,7 @@ fun MenuDrawer(
     onDangerZone: () -> Unit,
     onLogout: () -> Unit,
 ) {
+    val context = LocalContext.current
     var showTerms by remember { mutableStateOf(false) }
 
     if (showTerms) {
@@ -104,7 +109,14 @@ fun MenuDrawer(
                 DrawerItem("▤", "Terms of Use", null) { showTerms = true }
                 DrawerItem("▥", "Privacy Policy", null, onPrivacy)
                 DrawerItem("ⓘ", "About Indoone", null, onAbout)
-                DrawerItem("▣", "Lock App", null, onLock)
+                DrawerItem("▣", "Lock App", null) {
+                    if (AppLockStore(context).isEnabled()) {
+                        onDismiss()
+                        context.startActivity(Intent(context, LockAppActivity::class.java))
+                    } else {
+                        onLock()
+                    }
+                }
                 DrawerItem("⚠", "Danger Zone", null, onDangerZone)
                 DrawerItem("⇥", "Log out", null, onLogout)
             }
