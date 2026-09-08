@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LobbyScreen(
     state: LobbyState = LobbyState(),
-    onDone: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
@@ -35,89 +33,84 @@ fun LobbyScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 22.dp, vertical = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Surface(
+        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(20.dp)),
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {}
+                    .fillMaxSize()
+                    .padding(horizontal = 22.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {}
 
-            Spacer(Modifier.size(14.dp))
+                Spacer(Modifier.size(14.dp))
 
-            Text(
-                text = "INDOONE LOBBY",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
+                Text(
+                    text = "INDOONE LOBBY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
 
-            Spacer(Modifier.size(6.dp))
+                Spacer(Modifier.size(6.dp))
 
-            Text(
-                text = state.title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+                Text(
+                    text = state.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
 
-            Spacer(Modifier.size(10.dp))
+                Spacer(Modifier.size(10.dp))
 
-            Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-
-            Spacer(Modifier.size(20.dp))
-
-            Button(onClick = onDone) {
-                Text("Done")
+                Text(
+                    text = state.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
             }
-        }
 
-        LobbyBottomNav(
-            onAccountsClick = onAccountsClick,
-            onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
-            onSettingsClick = onSettingsClick,
-        )
+            LobbyBottomNav(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onAccountsClick = onAccountsClick,
+                onLobbyClick = onLobbyClick,
+                onConnectClick = onConnectClick,
+                onSettingsClick = onSettingsClick,
+            )
+        }
     }
 }
 
 @Composable
 private fun LobbyBottomNav(
+    modifier: Modifier = Modifier,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
-        Surface(
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+    ) {
+        Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .navigationBarsPadding(),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 2.dp,
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LobbyNavItem("♟", "Accounts", false, onAccountsClick)
-                LobbyNavItem("◆", "Lobby", true, onLobbyClick)
-                LobbyNavItem("↔", "Connect", false, onConnectClick)
-                LobbyNavItem("☷", "Settings", false, onSettingsClick)
-            }
+            LobbyNavItem("♟", "Accounts", false, onAccountsClick)
+            LobbyNavItem("◆", "Lobby", true, onLobbyClick)
+            LobbyNavItem("↔", "Connect", false, onConnectClick)
+            LobbyNavItem("☷", "Settings", false, onSettingsClick)
         }
     }
 }
