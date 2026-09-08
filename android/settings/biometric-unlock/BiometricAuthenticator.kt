@@ -1,11 +1,11 @@
 package com.indoone.settings.biometric
 
-import android.app.Activity
+import androidx.fragment.app.FragmentActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 
-class BiometricAuthenticator(private val activity: Activity) {
+class BiometricAuthenticator(private val activity: FragmentActivity) {
     fun canAuthenticate(): Boolean {
         val manager = BiometricManager.from(activity)
         val result = manager.canAuthenticate(
