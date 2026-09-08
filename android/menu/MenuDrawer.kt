@@ -28,9 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
+import com.indoone.menu.trash.TrashScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.applock.lockapp.LockAppActivity
 
@@ -50,9 +52,11 @@ fun MenuDrawer(
     onLogout: () -> Unit,
 ) {
     val context = LocalContext.current
+    val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
     var showDangerZone by remember { mutableStateOf(false) }
     var showLogout by remember { mutableStateOf(false) }
+    var showTrash by remember { mutableStateOf(false) }
 
     if (showTerms) {
         TermsOfUseScreen(
@@ -72,6 +76,18 @@ fun MenuDrawer(
             onLobbyClick = { showDangerZone = false },
             onConnectClick = { showDangerZone = false },
             onSettingsClick = { showDangerZone = false; onDismiss() },
+        )
+        return
+    }
+
+    if (showTrash) {
+        TrashScreen(
+            repository = repository,
+            onBack = { showTrash = false },
+            onAccountsClick = { showTrash = false; onAccounts() },
+            onLobbyClick = { showTrash = false },
+            onConnectClick = { showTrash = false },
+            onSettingsClick = { showTrash = false; onDismiss() },
         )
         return
     }
@@ -128,7 +144,7 @@ fun MenuDrawer(
                 Spacer(Modifier.padding(top = 10.dp))
                 DrawerItem("▦", "All Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
                 DrawerItem("☆", "Favorites", null, onFavorites)
-                DrawerItem("♙", "Trash", null, onTrash)
+                DrawerItem("♙", "Trash", null) { showTrash = true }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
 
