@@ -16,6 +16,7 @@ import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
 import com.indoone.accounts.AccountsViewModel
+import com.indoone.accounts.accounts.list.AccountTotpGenerator
 import com.indoone.accounts.addaccount.AddAccountScreen
 import com.indoone.accounts.addaccount.AddAccountViewModel
 import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyScreen
@@ -32,6 +33,7 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordina
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveRequest
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountRecordMapper
 import com.indoone.accounts.storage.AccountRepositoryProvider
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
@@ -79,6 +81,18 @@ class MainActivity : ComponentActivity() {
                     loadAccounts()
                 }
 
+                LaunchedEffect(repository) {
+                    while (true) {
+                        val records = repository.getAll()
+                        if (records.isNotEmpty()) {
+                            accountsViewModel.setAccounts(
+                                records.toUiAccounts(System.currentTimeMillis()),
+                            )
+                        }
+                        delay(1_000L)
+                    }
+                }
+
                 when (route) {
                     AppRoute.ACCOUNTS -> {
                         val state by accountsViewModel.state.collectAsState()
@@ -90,6 +104,7 @@ class MainActivity : ComponentActivity() {
                             onSort = accountsViewModel::toggleSort,
                             onToggleFavorite = accountsViewModel::toggleFavorite,
                             onAddAccount = {
+                                addAccountViewModel.clearImportUri()
                                 route = AppRoute.ADD_ACCOUNT
                             },
                         )
@@ -338,15 +353,31 @@ private fun QrManualPrefill.toQrAccountResult(): com.indoone.accounts.addaccount
     )
 }
 
-private fun List<AccountRecord>.toUiAccounts(): List<AccountItem> {
+private fun List<AccountRecord>.toUiAccounts(
+    nowMillis: Long = System.currentTimeMillis(),
+): List<AccountItem> {
     return map { record ->
+        val period = record.period.coerceAtLeast(1)
+        val nowSeconds = nowMillis / 1000L
+        val elapsed = (nowSeconds % period).toInt()
+        val secondsRemaining = (period - elapsed).coerceIn(1, period)
+        val code = runCatching {
+            AccountTotpGenerator.generate(
+                secret = record.secret,
+                timeMillis = nowMillis,
+                periodSeconds = period,
+                digits = record.digits,
+                algorithm = record.algorithm,
+            )
+        }.getOrDefault("------")
+
         AccountItem(
             id = record.id,
             name = record.name,
             email = record.email,
-            code = "------",
-            secondsRemaining = record.period,
-            periodSeconds = record.period,
+            code = code,
+            secondsRemaining = secondsRemaining,
+            periodSeconds = period,
             favorite = record.favorite,
         )
     }
