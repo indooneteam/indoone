@@ -47,74 +47,99 @@ fun SettingsScreen(
 
     fun resetToSettings() {
         flow.sync(store.isEnabled())
+        flow.setStep(AppLockViewModel.Step.NONE)
         appLockPage = false
     }
 
     if (appLockPage) {
-        when (flow.state.value.step) {
+        val state = flow.state.value
+        when (state.step) {
             AppLockViewModel.Step.CREATE -> SetAppLockScreen(
-                pin = flow.state.value.pin,
-                error = flow.state.value.error,
+                pin = state.pin,
+                error = state.error,
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
                 onCreate = {
-                    runCatching { store.setPin(flow.state.value.pin) }
-                        .onSuccess { flow.markCompleted(); resetToSettings() }
-                        .onFailure { flow.error("PIN must contain 4–12 digits.") }
+                    if (state.pin.length !in 4..12) {
+                        flow.error("PIN must contain 4–12 digits.")
+                    } else {
+                        runCatching { store.setPin(state.pin) }
+                            .onSuccess { resetToSettings() }
+                            .onFailure { flow.error("Could not create App PIN.") }
+                    }
                 },
                 onCancel = ::resetToSettings,
             )
-            AppLockViewModel.Step.CURRENT -> {
-                val state = flow.state.value
-                if (state.newPin.isEmpty()) {
-                    ChangeAppLockScreen(
-                        stepTitle = "Verify current PIN",
-                        description = "Enter your current App PIN to continue.",
-                        pin = state.pin,
-                        error = state.error,
-                        actionLabel = "Continue",
-                        onDigit = flow::appendDigit,
-                        onBackspace = flow::backspace,
-                        onClear = flow::clear,
-                        onAction = {
-                            if (store.verifyPin(state.pin)) {
-                                flow.resetInput()
-                                flow.setNewPin("pending")
-                            } else {
-                                flow.error("Incorrect current PIN")
-                            }
-                        },
-                        onCancel = ::resetToSettings,
-                    )
-                } else {
-                    ChangeAppLockScreen(
-                        stepTitle = "Create new PIN",
-                        description = "Choose a new 4–12 digit App PIN.",
-                        pin = state.pin,
-                        error = state.error,
-                        actionLabel = "Continue",
-                        onDigit = flow::appendDigit,
-                        onBackspace = flow::backspace,
-                        onClear = flow::clear,
-                        onAction = {
-                            flow.setNewPin(state.pin)
-                            flow.resetInput()
-                            flow.sync(store.isEnabled())
-                            flow.setNewPin(state.newPin)
-                        },
-                        onCancel = ::resetToSettings,
-                    )
-                }
-            }
+
+            AppLockViewModel.Step.CURRENT -> ChangeAppLockScreen(
+                stepTitle = "Verify current PIN",
+                description = "Enter your current App PIN to continue.",
+                pin = state.pin,
+                error = state.error,
+                actionLabel = "Continue",
+                onDigit = flow::appendDigit,
+                onBackspace = flow::backspace,
+                onClear = flow::clear,
+                onAction = {
+                    if (store.verifyPin(state.pin)) {
+                        flow.setStep(AppLockViewModel.Step.NEW)
+                    } else {
+                        flow.error("Incorrect current PIN")
+                    }
+                },
+                onCancel = ::resetToSettings,
+            )
+
+            AppLockViewModel.Step.NEW -> ChangeAppLockScreen(
+                stepTitle = "Create new PIN",
+                description = "Choose a new 4–12 digit App PIN.",
+                pin = state.pin,
+                error = state.error,
+                actionLabel = "Continue",
+                onDigit = flow::appendDigit,
+                onBackspace = flow::backspace,
+                onClear = flow::clear,
+                onAction = {
+                    if (state.pin.length in 4..12) {
+                        flow.setNewPin(state.pin)
+                        flow.setStep(AppLockViewModel.Step.CONFIRM)
+                    } else {
+                        flow.error("PIN must contain 4–12 digits.")
+                    }
+                },
+                onCancel = ::resetToSettings,
+            )
+
+            AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen(
+                stepTitle = "Confirm new PIN",
+                description = "Enter the new PIN again to confirm it.",
+                pin = state.pin,
+                error = state.error,
+                actionLabel = "Change PIN",
+                onDigit = flow::appendDigit,
+                onBackspace = flow::backspace,
+                onClear = flow::clear,
+                onAction = {
+                    if (state.pin != state.newPin) {
+                        flow.error("New PINs do not match")
+                    } else {
+                        runCatching { store.setPin(state.newPin) }
+                            .onSuccess { resetToSettings() }
+                            .onFailure { flow.error("Could not change App PIN.") }
+                    }
+                },
+                onCancel = ::resetToSettings,
+            )
+
             AppLockViewModel.Step.DISABLE -> DisableAppLockScreen(
-                pin = flow.state.value.pin,
-                error = flow.state.value.error,
+                pin = state.pin,
+                error = state.error,
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
                 onDisable = {
-                    if (store.verifyPin(flow.state.value.pin)) {
+                    if (store.verifyPin(state.pin)) {
                         store.clear()
                         resetToSettings()
                     } else {
@@ -123,17 +148,12 @@ fun SettingsScreen(
                 },
                 onCancel = ::resetToSettings,
             )
+
             else -> AppLockScreen(
                 hasPin = store.isEnabled(),
                 onSet = { flow.startCreate(); appLockPage = true },
                 onChange = { flow.startChange(); appLockPage = true },
-                onDisable = {
-                    flow.startDisable()
-                    flow.sync(store.isEnabled())
-                    flow.state.value.let { flow.clear() }
-                    flow.setNewPin("disable")
-                    appLockPage = true
-                },
+                onDisable = { flow.startDisable(); appLockPage = true },
                 onBack = ::resetToSettings,
             )
         }
