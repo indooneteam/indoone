@@ -1,7 +1,6 @@
 package com.indoone.accounts.addaccount.scanqr
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,12 +13,14 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BorderStroke
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,8 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,10 +56,10 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 
 /**
- * Scan QR Code screen matching the current main reference layout.
+ * Scan QR Code screen matching the current main reference.
  *
- * The camera surface is responsive and keeps a 3:4 preview ratio.
- * QR decoding is isolated in the camera analyzer so the Composable remains UI-focused.
+ * The page keeps the camera preview responsive while preserving the
+ * portrait scanner proportions shown in the reference screenshot.
  */
 @Composable
 fun ScanQrScreen(
@@ -286,8 +284,11 @@ private fun CameraScannerSurface(
                 .fillMaxWidth(0.66f)
                 .fillMaxHeight(0.64f)
                 .align(Alignment.Center)
-                .background(Color.Transparent)
-                .then(ScanFrameBorderModifier()),
+                .border(
+                    width = 1.5.dp,
+                    color = Color.White,
+                    shape = RoundedCornerShape(15.dp),
+                ),
         )
     }
 }
@@ -319,12 +320,12 @@ private fun CameraPreview(
 
     DisposableEffect(lifecycleOwner, previewView) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        val analysisExecutor = ContextCompat.getMainExecutor(context)
         var scanner: BarcodeScanner? = null
-        var analysisExecutor = ContextCompat.getMainExecutor(context)
 
         latestCameraStarting()
 
-        val cameraProviderListener = cameraProviderFuture.addListener({
+        cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
                 val preview = Preview.Builder().build().apply {
@@ -334,7 +335,9 @@ private fun CameraPreview(
                 scanner = BarcodeScanning.getClient()
 
                 val analysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setBackpressureStrategy(
+                        ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST,
+                    )
                     .build()
                     .apply {
                         setAnalyzer(analysisExecutor) { imageProxy ->
@@ -367,7 +370,7 @@ private fun CameraPreview(
             try {
                 cameraProviderFuture.get().unbindAll()
             } catch (_: Exception) {
-                // Camera may already be released by the lifecycle.
+                // Lifecycle may already have released the camera.
             }
             scanner?.close()
         }
@@ -402,14 +405,18 @@ private fun analyzeFrame(
             val rawValue = barcodes
                 .asSequence()
                 .mapNotNull { it.rawValue?.trim() }
-                .firstOrNull { it.startsWith("otpauth://", ignoreCase = true) }
+                .firstOrNull {
+                    it.startsWith("otpauth://", ignoreCase = true)
+                }
 
             if (!rawValue.isNullOrBlank()) {
                 onQrDetected(rawValue)
             }
         }
         .addOnFailureListener { error ->
-            onError(error.message ?: "Unable to read this QR code.")
+            onError(
+                error.message ?: "Unable to read this QR code."
+            )
         }
         .addOnCompleteListener {
             imageProxy.close()
@@ -495,16 +502,12 @@ private fun ScanQrBottomNavItem(
                 text = label,
                 color = color,
                 fontSize = 7.sp,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                fontWeight = if (active) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Normal
+                },
             )
         }
     }
-}
-
-private fun ScanFrameBorderModifier(): Modifier {
-    return Modifier
-        .background(Color.Transparent)
-        .then(
-            Modifier
-        )
 }
