@@ -3,7 +3,6 @@ package com.indoone
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,8 +16,9 @@ import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
 import com.indoone.accounts.AccountsViewModel
+import com.indoone.accounts.accounts.AccountDetailActions
+import com.indoone.accounts.accounts.AccountRemovalService
 import com.indoone.accounts.accounts.edit.EditAccountScreen
-import com.indoone.accounts.accounts.edit.EditAccountState
 import com.indoone.accounts.accounts.edit.EditAccountViewModel
 import com.indoone.accounts.accounts.list.AccountDetailsScreen
 import com.indoone.accounts.accounts.list.AccountTotpGenerator
@@ -60,6 +60,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 val repository = remember { AccountRepositoryProvider(applicationContext) }
+                val detailActions = remember { AccountDetailActions(repository, applicationContext) }
+                val removalService = remember { AccountRemovalService(repository) }
                 val coroutineScope = rememberCoroutineScope()
                 val accountsViewModel: AccountsViewModel = viewModel()
                 val addAccountViewModel: AddAccountViewModel = viewModel()
@@ -83,7 +85,9 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(repository) {
                     while (true) {
-                        accountsViewModel.setAccounts(repository.getAll().toUiAccounts(System.currentTimeMillis()))
+                        accountsViewModel.setAccounts(
+                            repository.getAll().toUiAccounts(System.currentTimeMillis()),
+                        )
                         delay(1_000L)
                     }
                 }
@@ -96,7 +100,15 @@ class MainActivity : ComponentActivity() {
                             onSearchChanged = accountsViewModel::updateSearchQuery,
                             onClearSearch = accountsViewModel::clearSearch,
                             onSort = accountsViewModel::toggleSort,
-                            onToggleFavorite = accountsViewModel::toggleFavorite,
+                            onToggleFavorite = { id ->
+                                coroutineScope.launch {
+                                    val account = repository.getAll().firstOrNull { it.id == id }
+                                    if (account != null) {
+                                        detailActions.setFavorite(account, !account.favorite)
+                                        loadAccounts()
+                                    }
+                                }
+                            },
                             onAccountClick = { item ->
                                 coroutineScope.launch {
                                     selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
@@ -115,6 +127,7 @@ class MainActivity : ComponentActivity() {
                         val uiAccount = account?.let { record ->
                             accountsViewModel.state.value.accounts.firstOrNull { it.id == record.id }
                         }
+
                         if (account == null || uiAccount == null) {
                             route = AppRoute.ACCOUNTS
                         } else {
@@ -128,8 +141,26 @@ class MainActivity : ComponentActivity() {
                                     route = AppRoute.EDIT_ACCOUNT
                                 },
                                 onCopy = {
-                                    val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-                                    clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("OTP code", uiAccount.code))
+                                    detailActions.copyCode(uiAccount.code)
+                                },
+                                onToggleFavorite = {
+                                    coroutineScope.launch {
+                                        detailActions.setFavorite(account, !account.favorite)
+                                            .onSuccess { updated ->
+                                                selectedAccount = updated
+                                                loadAccounts()
+                                            }
+                                    }
+                                },
+                                onDelete = {
+                                    coroutineScope.launch {
+                                        removalService.remove(account.id)
+                                            .onSuccess {
+                                                selectedAccount = null
+                                                loadAccounts()
+                                                route = AppRoute.ACCOUNTS
+                                            }
+                                    }
                                 },
                             )
                         }
