@@ -18,10 +18,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.indoone.menu.termsofuse.TermsOfUseScreen
 
 @Composable
 fun MenuDrawer(
@@ -38,6 +43,19 @@ fun MenuDrawer(
     onDangerZone: () -> Unit,
     onLogout: () -> Unit,
 ) {
+    var showTerms by remember { mutableStateOf(false) }
+
+    if (showTerms) {
+        TermsOfUseScreen(
+            onBack = { showTerms = false },
+            onAccountsClick = { showTerms = false; onAccounts() },
+            onLobbyClick = { showTerms = false },
+            onConnectClick = { showTerms = false },
+            onSettingsClick = { showTerms = false; onDismiss() },
+        )
+        return
+    }
+
     Row(modifier = Modifier.fillMaxSize()) {
         Spacer(
             modifier = Modifier
@@ -83,7 +101,7 @@ fun MenuDrawer(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
 
                 DrawerItem("◈", "Security", null, onSecurity)
-                DrawerItem("▤", "Terms of Use", null, onTerms)
+                DrawerItem("▤", "Terms of Use", null) { showTerms = true }
                 DrawerItem("▥", "Privacy Policy", null, onPrivacy)
                 DrawerItem("ⓘ", "About Indoone", null, onAbout)
                 DrawerItem("▣", "Lock App", null, onLock)
