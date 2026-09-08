@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import com.indoone.settings.about.AboutScreen
 import com.indoone.settings.applock.AppLockScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.applock.AppLockViewModel
@@ -59,6 +60,7 @@ fun SettingsScreen(
 
     var appLockPage by remember { mutableStateOf(false) }
     var autoLockPage by remember { mutableStateOf(false) }
+    var aboutPage by remember { mutableStateOf(false) }
     var biometricOn by remember { mutableStateOf(biometricStore.isEnabled()) }
     var showAppLockRequired by remember { mutableStateOf(false) }
     var showBiometricUnavailable by remember { mutableStateOf(false) }
@@ -75,13 +77,11 @@ fun SettingsScreen(
             showAppLockRequired = true
             return
         }
-
         val authenticator = biometricAuthenticator
         if (authenticator == null || !authenticator.canAuthenticate()) {
             showBiometricUnavailable = true
             return
         }
-
         authenticator.authenticate(
             onSuccess = {
                 biometricStore.setEnabled(true)
@@ -90,6 +90,17 @@ fun SettingsScreen(
             },
             onError = { message -> biometricError = message },
         )
+    }
+
+    if (aboutPage) {
+        AboutScreen(
+            onBack = { aboutPage = false },
+            onAccountsClick = onAccountsClick,
+            onLobbyClick = onLobbyClick,
+            onConnectClick = onConnectClick,
+            onSettingsClick = onSettingsClick,
+        )
+        return
     }
 
     if (showAppLockRequired) {
@@ -105,9 +116,7 @@ fun SettingsScreen(
                     appLockPage = true
                 }) { Text("Set App Lock") }
             },
-            dismissButton = {
-                TextButton(onClick = { showAppLockRequired = false }) { Text("Cancel") }
-            },
+            dismissButton = { TextButton(onClick = { showAppLockRequired = false }) { Text("Cancel") } },
         )
     }
 
@@ -116,9 +125,7 @@ fun SettingsScreen(
             onDismissRequest = { showBiometricUnavailable = false },
             title = { Text("Biometric unavailable") },
             text = { Text("Set up a supported fingerprint or device biometric on this Android device first.") },
-            confirmButton = {
-                TextButton(onClick = { showBiometricUnavailable = false }) { Text("OK") }
-            },
+            confirmButton = { TextButton(onClick = { showBiometricUnavailable = false }) { Text("OK") } },
         )
     }
 
@@ -127,9 +134,7 @@ fun SettingsScreen(
             onDismissRequest = { biometricError = null },
             title = { Text("Biometric Unlock") },
             text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = { biometricError = null }) { Text("OK") }
-            },
+            confirmButton = { TextButton(onClick = { biometricError = null }) { Text("OK") } },
         )
     }
 
@@ -143,13 +148,8 @@ fun SettingsScreen(
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
                 onCreate = {
-                    if (state.pin.length !in 4..12) {
-                        flow.error("PIN must contain 4–12 digits.")
-                    } else {
-                        runCatching { appLockStore.setPin(state.pin) }
-                            .onSuccess { resetToSettings() }
-                            .onFailure { flow.error("Could not create App PIN.") }
-                    }
+                    if (state.pin.length !in 4..12) flow.error("PIN must contain 4–12 digits.")
+                    else runCatching { appLockStore.setPin(state.pin) }.onSuccess { resetToSettings() }.onFailure { flow.error("Could not create App PIN.") }
                 },
                 onCancel = ::resetToSettings,
             )
@@ -162,14 +162,7 @@ fun SettingsScreen(
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
-                onAction = {
-                    if (appLockStore.verifyPin(state.pin)) {
-                        flow.setStep(AppLockViewModel.Step.NEW)
-                        flow.resetInput()
-                    } else {
-                        flow.error("Incorrect current PIN")
-                    }
-                },
+                onAction = { if (appLockStore.verifyPin(state.pin)) { flow.setStep(AppLockViewModel.Step.NEW); flow.resetInput() } else flow.error("Incorrect current PIN") },
                 onCancel = ::resetToSettings,
             )
             AppLockViewModel.Step.NEW -> ChangeAppLockScreen(
@@ -181,15 +174,7 @@ fun SettingsScreen(
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
-                onAction = {
-                    if (state.pin.length in 4..12) {
-                        flow.setNewPin(state.pin)
-                        flow.setStep(AppLockViewModel.Step.CONFIRM)
-                        flow.resetInput()
-                    } else {
-                        flow.error("PIN must contain 4–12 digits.")
-                    }
-                },
+                onAction = { if (state.pin.length in 4..12) { flow.setNewPin(state.pin); flow.setStep(AppLockViewModel.Step.CONFIRM); flow.resetInput() } else flow.error("PIN must contain 4–12 digits.") },
                 onCancel = ::resetToSettings,
             )
             AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen(
@@ -201,15 +186,7 @@ fun SettingsScreen(
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
-                onAction = {
-                    if (state.pin != state.newPin) {
-                        flow.error("New PINs do not match")
-                    } else {
-                        runCatching { appLockStore.setPin(state.newPin) }
-                            .onSuccess { resetToSettings() }
-                            .onFailure { flow.error("Could not change App PIN.") }
-                    }
-                },
+                onAction = { if (state.pin != state.newPin) flow.error("New PINs do not match") else runCatching { appLockStore.setPin(state.newPin) }.onSuccess { resetToSettings() }.onFailure { flow.error("Could not change App PIN.") } },
                 onCancel = ::resetToSettings,
             )
             AppLockViewModel.Step.DISABLE -> DisableAppLockScreen(
@@ -218,25 +195,10 @@ fun SettingsScreen(
                 onDigit = flow::appendDigit,
                 onBackspace = flow::backspace,
                 onClear = flow::clear,
-                onDisable = {
-                    if (appLockStore.verifyPin(state.pin)) {
-                        appLockStore.clear()
-                        biometricStore.setEnabled(false)
-                        biometricOn = false
-                        resetToSettings()
-                    } else {
-                        flow.error("Incorrect current PIN")
-                    }
-                },
+                onDisable = { if (appLockStore.verifyPin(state.pin)) { appLockStore.clear(); biometricStore.setEnabled(false); biometricOn = false; resetToSettings() } else flow.error("Incorrect current PIN") },
                 onCancel = ::resetToSettings,
             )
-            else -> AppLockScreen(
-                hasPin = appLockStore.isEnabled(),
-                onSet = { flow.startCreate(); appLockPage = true },
-                onChange = { flow.startChange(); appLockPage = true },
-                onDisable = { flow.startDisable(); appLockPage = true },
-                onBack = ::resetToSettings,
-            )
+            else -> AppLockScreen(appLockStore.isEnabled(), { flow.startCreate(); appLockPage = true }, { flow.startChange(); appLockPage = true }, { flow.startDisable(); appLockPage = true }, ::resetToSettings)
         }
         return
     }
@@ -255,42 +217,19 @@ fun SettingsScreen(
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
             AppTopBar(onMenuClick = onMenuClick)
-            Column(
-                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 18.dp),
-            ) {
+            Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 18.dp)) {
                 Text("SETTINGS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text("Settings", modifier = Modifier.padding(top = 3.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.padding(top = 18.dp))
                 SettingsCard("Profile", "Manage your email and mobile number", onProfileClick)
                 Spacer(Modifier.padding(top = 12.dp))
-                SettingsCard("App Lock", if (appLockStore.isEnabled()) "PIN enabled" else "Protect Indoone with a PIN") {
-                    flow.sync(appLockStore.isEnabled())
-                    appLockPage = true
-                }
+                SettingsCard("App Lock", if (appLockStore.isEnabled()) "PIN enabled" else "Protect Indoone with a PIN") { flow.sync(appLockStore.isEnabled()); appLockPage = true }
                 Spacer(Modifier.padding(top = 12.dp))
-                BiometricCard(
-                    enabled = biometricOn,
-                    onCheckedChange = { enabled ->
-                        if (enabled) {
-                            requestBiometricEnable()
-                        } else {
-                            biometricStore.setEnabled(false)
-                            biometricOn = false
-                            biometricError = null
-                        }
-                    },
-                )
+                BiometricCard(biometricOn) { enabled -> if (enabled) requestBiometricEnable() else { biometricStore.setEnabled(false); biometricOn = false; biometricError = null } }
                 Spacer(Modifier.padding(top = 12.dp))
-                SettingsCard(
-                    "Auto-Lock",
-                    if (appLockStore.isEnabled() || biometricStore.isEnabled()) {
-                        "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}"
-                    } else {
-                        "Requires App Lock or Biometric Unlock"
-                    },
-                ) {
-                    autoLockPage = true
-                }
+                SettingsCard("Auto-Lock", if (appLockStore.isEnabled() || biometricStore.isEnabled()) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Requires App Lock or Biometric Unlock") { autoLockPage = true }
+                Spacer(Modifier.padding(top = 12.dp))
+                SettingsCard("About Indoone", "Version 0.1.0 · Updates", { aboutPage = true })
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
@@ -299,12 +238,7 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsCard(title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
+    Surface(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
         Column(Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(subtitle, modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -314,23 +248,11 @@ private fun SettingsCard(title: String, subtitle: String, onClick: () -> Unit) {
 
 @Composable
 private fun BiometricCard(enabled: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Biometric Unlock", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(
-                    "Fingerprint / device biometric",
-                    modifier = Modifier.padding(top = 4.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text("Fingerprint / device biometric", modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(checked = enabled, onCheckedChange = onCheckedChange)
         }
