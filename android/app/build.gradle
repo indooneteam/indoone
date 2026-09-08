@@ -1,5 +1,7 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -8,6 +10,7 @@ android {
 
     buildFeatures {
         buildConfig true
+        compose true
     }
 
     defaultConfig {
@@ -28,112 +31,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
-    sourceSets {
-        main {
-            assets {
-                srcDirs = [file("${layout.buildDirectory.get()}/generated/indooneAssets")]
-            }
-        }
-    }
-}
-
-def normalizeMainActivityInsets = tasks.register('normalizeMainActivityInsets') {
-    doLast {
-        File source = file("$projectDir/src/main/java/com/indoone/authenticator/MainActivity.java")
-        String text = source.getText('UTF-8')
-
-        String edgeToEdgeCall = '        WindowCompat.enableEdgeToEdge(getWindow());'
-        String compatibleEdgeToEdgeCall = '        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);'
-        if (text.contains(edgeToEdgeCall)) {
-            text = text.replace(edgeToEdgeCall, compatibleEdgeToEdgeCall)
-        }
-
-        String broken = '''            WindowInsetsCompat systemBars =
-                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            lastTopInset = systemBars.top;
-            lastBottomInset = systemBars.bottom;'''
-        String fixed = '''            androidx.core.graphics.Insets systemBars =
-                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            lastTopInset = systemBars.top;
-            lastBottomInset = systemBars.bottom;'''
-
-        if (text.contains(broken)) {
-            text = text.replace(broken, fixed)
-        }
-
-        String brokenInsetFields = '''    private int lastTopInset;
-    private int lastBottomInset;'''
-        String fixedInsetFields = '''    private int lastLeftInset;
-    private int lastTopInset;
-    private int lastRightInset;
-    private int lastBottomInset;'''
-        if (text.contains(brokenInsetFields)) {
-            text = text.replace(brokenInsetFields, fixedInsetFields)
-        }
-
-        String brokenInsetAssignments = '''            lastTopInset = safeInsets.top;
-            lastBottomInset = safeInsets.bottom;'''
-        String fixedInsetAssignments = '''            lastLeftInset = safeInsets.left;
-            lastTopInset = safeInsets.top;
-            lastRightInset = safeInsets.right;
-            lastBottomInset = safeInsets.bottom;'''
-        if (text.contains(brokenInsetAssignments)) {
-            text = text.replace(brokenInsetAssignments, fixedInsetAssignments)
-        }
-
-        String oldInsetScript = '''                "r.style.setProperty('--indoone-top-inset','" +
-                lastTopInset +
-                "px');" +
-                "r.style.setProperty('--indoone-bottom-inset','" +
-                lastBottomInset +
-                "px');})();";'''
-        String newInsetScript = '''                "r.style.setProperty('--indoone-left-inset','" +
-                lastLeftInset +
-                "px');" +
-                "r.style.setProperty('--indoone-top-inset','" +
-                lastTopInset +
-                "px');" +
-                "r.style.setProperty('--indoone-right-inset','" +
-                lastRightInset +
-                "px');" +
-                "r.style.setProperty('--indoone-bottom-inset','" +
-                lastBottomInset +
-                "px');})();";'''
-        if (text.contains(oldInsetScript)) {
-            text = text.replace(oldInsetScript, newInsetScript)
-        }
-
-        source.setText(text, 'UTF-8')
-    }
-}
-
-def prepareIndooneWebAssets = tasks.register('prepareIndooneWebAssets', Sync) {
-    from(file("$rootDir/..")) {
-        include 'index.html'
-        include 'update.json'
-        include '*.css'
-        include 'js/**'
-        include 'app/**'
-        include 'assets/**'
-    }
-    into(layout.buildDirectory.dir('generated/indooneAssets'))
-}
-
-tasks.configureEach { task ->
-    if (task.name ==~ /compile.*JavaWithJavac/) {
-        task.dependsOn(normalizeMainActivityInsets)
-    }
-
-    if (task.name ==~ /merge.*Assets/) {
-        task.dependsOn(prepareIndooneWebAssets)
-    }
 }
 
 dependencies {
-    implementation 'androidx.biometric:biometric:1.2.0-alpha05'
-    implementation 'androidx.core:core:1.13.1'
-    implementation 'com.google.android.gms:play-services-nearby:19.5.0'
+    implementation platform('androidx.compose:compose-bom:2025.08.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    implementation 'androidx.core:core-ktx:1.15.0'
+
+    implementation platform('com.google.firebase:firebase-bom:34.18.0')
+    implementation 'com.google.firebase:firebase-auth'
 }
