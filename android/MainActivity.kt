@@ -18,6 +18,8 @@ import com.indoone.accounts.AccountsScreen
 import com.indoone.accounts.AccountsViewModel
 import com.indoone.accounts.addaccount.AddAccountScreen
 import com.indoone.accounts.addaccount.AddAccountViewModel
+import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyScreen
+import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyViewModel
 import com.indoone.accounts.addaccount.scanqr.QrManualPrefill
 import com.indoone.accounts.addaccount.scanqr.QrScanResultHandler
 import com.indoone.accounts.addaccount.scanqr.ScanQrScreen
@@ -25,6 +27,8 @@ import com.indoone.accounts.addaccount.scanqr.ScanQrViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
+import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveRequest
+import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountRecordMapper
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import kotlinx.coroutines.launch
 
@@ -32,7 +36,8 @@ private enum class AppRoute {
     ACCOUNTS,
     ADD_ACCOUNT,
     SCAN_QR,
-    ACCOUNT_DETAILS,
+    QR_ACCOUNT_DETAILS,
+    ENTER_SETUP_KEY,
 }
 
 class MainActivity : ComponentActivity() {
@@ -48,9 +53,10 @@ class MainActivity : ComponentActivity() {
                 val accountsViewModel: AccountsViewModel = viewModel()
                 val addAccountViewModel: AddAccountViewModel = viewModel()
                 val scanQrViewModel: ScanQrViewModel = viewModel()
+                val enterSetupKeyViewModel: EnterSetupKeyViewModel = viewModel()
 
                 var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
-                var accountDetailsViewModel by remember {
+                var qrAccountDetailsViewModel by remember {
                     mutableStateOf<AccountDetailsViewModel?>(null)
                 }
 
@@ -94,8 +100,7 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.SCAN_QR
                             },
                             onEnterSetupKey = {
-                                accountDetailsViewModel = AccountDetailsViewModel()
-                                route = AppRoute.ACCOUNT_DETAILS
+                                route = AppRoute.ENTER_SETUP_KEY
                             },
                             onImportOtpUri = {
                                 // Import URI flow is implemented separately.
@@ -115,11 +120,11 @@ class MainActivity : ComponentActivity() {
                             onQrDetected = { rawValue ->
                                 val handler = QrScanResultHandler(
                                     onAccountDetailsReady = { prefill ->
-                                        accountDetailsViewModel = AccountDetailsViewModel(
+                                        qrAccountDetailsViewModel = AccountDetailsViewModel(
                                             prefill.toQrAccountResult(),
                                         )
                                         scanQrViewModel.onQrDetected()
-                                        route = AppRoute.ACCOUNT_DETAILS
+                                        route = AppRoute.QR_ACCOUNT_DETAILS
                                     },
                                     onInvalidQr = scanQrViewModel::onCameraError,
                                 )
@@ -133,8 +138,8 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    AppRoute.ACCOUNT_DETAILS -> {
-                        val detailsViewModel = accountDetailsViewModel
+                    AppRoute.QR_ACCOUNT_DETAILS -> {
+                        val detailsViewModel = qrAccountDetailsViewModel
 
                         if (detailsViewModel == null) {
                             route = AppRoute.ADD_ACCOUNT
@@ -150,7 +155,7 @@ class MainActivity : ComponentActivity() {
                                 onPeriodChanged = detailsViewModel::onPeriodChanged,
                                 onAlgorithmChanged = detailsViewModel::onAlgorithmChanged,
                                 onBack = {
-                                    route = AppRoute.ADD_ACCOUNT
+                                    route = AppRoute.SCAN_QR
                                 },
                                 onSave = {
                                     val validation = detailsViewModel.prepareSave()
@@ -181,9 +186,65 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    AppRoute.ENTER_SETUP_KEY -> {
+                        val state by enterSetupKeyViewModel.state.collectAsState()
+
+                        EnterSetupKeyScreen(
+                            state = state,
+                            onNameChanged = enterSetupKeyViewModel::onNameChanged,
+                            onEmailChanged = enterSetupKeyViewModel::onEmailChanged,
+                            onSecretChanged = enterSetupKeyViewModel::onSecretChanged,
+                            onDigitsChanged = enterSetupKeyViewModel::onDigitsChanged,
+                            onPeriodChanged = enterSetupKeyViewModel::onPeriodChanged,
+                            onAlgorithmChanged = enterSetupKeyViewModel::onAlgorithmChanged,
+                            onBack = {
+                                route = AppRoute.ADD_ACCOUNT
+                            },
+                            onSave = {
+                                val validation = enterSetupKeyViewModel.prepareSave()
+
+                                validation.onFailure { error ->
+                                    enterSetupKeyViewModel.onSaveFailed(
+                                        error.message ?: "Invalid account details.",
+                                    )
+                                }.onSuccess { request ->
+                                    enterSetupKeyViewModel.onSaveStarted()
+
+                                    coroutineScope.launch {
+                                        val result = saveManualAccount(
+                                            repository = repository,
+                                            request = request,
+                                        )
+
+                                        result.onSuccess {
+                                            enterSetupKeyViewModel.onSaveCompleted()
+                                            loadAccounts()
+                                            route = AppRoute.ACCOUNTS
+                                        }.onFailure { error ->
+                                            enterSetupKeyViewModel.onSaveFailed(
+                                                error.message ?: "Could not save account.",
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+private suspend fun saveManualAccount(
+    repository: com.indoone.accounts.AccountRepository,
+    request: AccountSaveRequest,
+): Result<AccountRecord> {
+    return runCatching {
+        val record = AccountRecordMapper.from(request)
+        repository.save(record)
+        record
     }
 }
 
