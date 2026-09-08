@@ -1,11 +1,13 @@
 package com.indoone.settings
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -13,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -24,6 +24,7 @@ import com.indoone.menu.AppTopBar
 fun SettingsScreen(
     onMenuClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onAppLockClick: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
@@ -38,14 +39,38 @@ fun SettingsScreen(
                 Text("SETTINGS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text("Settings", modifier = Modifier.padding(top = 3.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.padding(top = 18.dp))
-                Surface(onClick = onProfileClick, modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Profile", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Manage your email and mobile number", modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+                SettingsCard(
+                    title = "Profile",
+                    subtitle = "Manage your email and mobile number",
+                    onClick = onProfileClick,
+                )
+                Spacer(Modifier.padding(top = 12.dp))
+                SettingsCard(
+                    title = "App Lock",
+                    subtitle = "Protect Indoone with a PIN",
+                    onClick = onAppLockClick,
+                )
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
+        }
+    }
+}
+
+@Composable
+private fun SettingsCard(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(subtitle, modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
