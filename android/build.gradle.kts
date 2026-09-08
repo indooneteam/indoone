@@ -26,7 +26,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    sourceSets["main"].java.setSrcDirs(listOf(projectDir))
+    sourceSets["main"].kotlin.setSrcDirs(
+        listOf(
+            "IndooneApplication.kt",
+            "MainActivity.kt",
+            "authentication",
+            "accounts",
+            "menu",
+            "lobby",
+            "connect",
+            "settings"
+        )
+    )
     sourceSets["main"].manifest.srcFile(file("AndroidManifest.xml"))
 
     packaging {
