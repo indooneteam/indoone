@@ -16,9 +16,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.authentication.AuthSessionStore
+import kotlinx.coroutines.launch
 
 @Composable
 fun LogoutScreen(
@@ -35,7 +36,7 @@ fun LogoutScreen(
         onDismissRequest = { if (!working) onDismiss() },
         title = { Text("Log out on this device") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(10))) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("This signs you out only from this device.")
                 error?.let { Text(it) }
             }
