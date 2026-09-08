@@ -29,6 +29,35 @@ class BiometricAuthenticator(private val activity: Activity) {
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
     ) {
+        authenticateInternal(
+            title = "Enable Biometric Unlock",
+            subtitle = "Confirm your fingerprint or device biometric",
+            description = "Biometric unlock will work together with your App PIN.",
+            onSuccess = onSuccess,
+            onError = onError,
+        )
+    }
+
+    fun authenticateForUnlock(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        authenticateInternal(
+            title = "Unlock Indoone",
+            subtitle = "Use your fingerprint or device biometric",
+            description = "Authenticate to unlock Indoone.",
+            onSuccess = onSuccess,
+            onError = onError,
+        )
+    }
+
+    private fun authenticateInternal(
+        title: String,
+        subtitle: String,
+        description: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
             onError("Biometric unlock requires Android 9 or newer.")
             return
@@ -36,10 +65,10 @@ class BiometricAuthenticator(private val activity: Activity) {
 
         val executor: Executor = activity.mainExecutor
         val prompt = BiometricPrompt.Builder(activity)
-            .setTitle("Enable Biometric Unlock")
-            .setSubtitle("Confirm your fingerprint or device biometric")
-            .setDescription("Biometric unlock will work together with your App PIN.")
-            .setNegativeButton("Cancel", executor) { _, _ ->
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            .setDescription(description)
+            .setNegativeButton("Use App PIN", executor) { _, _ ->
                 onError("Biometric authentication cancelled.")
             }
             .build()
