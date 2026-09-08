@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -35,7 +35,7 @@ fun LogoutScreen(
         onDismissRequest = { if (!working) onDismiss() },
         title = { Text("Log out on this device") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(10f))) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("This signs you out only from this device.")
                 error?.let { Text(it) }
             }
@@ -59,7 +59,6 @@ fun LogoutScreen(
                     }
                 },
                 enabled = !working,
-                colors = ButtonDefaults.buttonColors(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Log out on this device")
