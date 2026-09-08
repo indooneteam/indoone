@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,9 +58,6 @@ import com.google.mlkit.vision.common.InputImage
 
 /**
  * Scan QR Code screen matching the current main reference.
- *
- * The page keeps the camera preview responsive while preserving the
- * portrait scanner proportions shown in the reference screenshot.
  */
 @Composable
 fun ScanQrScreen(
@@ -156,7 +154,7 @@ fun ScanQrScreen(
                 color = Color(0xFF77717F),
             )
 
-            TextButton(
+            OutlinedButton(
                 onClick = onCancelScan,
                 modifier = Modifier
                     .fillMaxWidth()
