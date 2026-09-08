@@ -159,7 +159,6 @@ class MainActivity : ComponentActivity() {
                         val state by lobbyViewModel.state.collectAsState()
                         LobbyScreen(
                             state = state,
-                            onDone = { route = AppRoute.ACCOUNTS },
                             onAccountsClick = { route = AppRoute.ACCOUNTS },
                             onLobbyClick = { route = AppRoute.LOBBY },
                         )
