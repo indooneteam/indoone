@@ -25,6 +25,24 @@ class AccountRepositoryProvider(
         return activeRepository().getAll()
     }
 
+    override suspend fun remove(id: String) {
+        activeRepository().remove(id)
+    }
+
+    override suspend fun moveToTrash(id: String) {
+        activeRepository().moveToTrash(id)
+    }
+
+    override suspend fun listTrash() = activeRepository().listTrash()
+
+    override suspend fun restoreFromTrash(id: String): AccountRecord {
+        return activeRepository().restoreFromTrash(id)
+    }
+
+    override suspend fun permanentlyDeleteFromTrash(id: String) {
+        activeRepository().permanentlyDeleteFromTrash(id)
+    }
+
     private fun activeRepository(): AccountRepository {
         return if (
             cloud != null &&
