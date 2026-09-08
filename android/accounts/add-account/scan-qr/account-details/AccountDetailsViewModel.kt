@@ -34,12 +34,7 @@ class AccountDetailsViewModel(
     }
 
     fun onSecretChanged(value: String) {
-        update {
-            copy(
-                secret = value,
-                errorMessage = null,
-            )
-        }
+        update { copy(secret = value, errorMessage = null) }
     }
 
     fun onDigitsChanged(value: Int) {
@@ -52,6 +47,16 @@ class AccountDetailsViewModel(
 
     fun onAlgorithmChanged(value: String) {
         update { copy(algorithm = value.uppercase(), errorMessage = null) }
+    }
+
+    fun prepareSave(): Result<AccountSaveRequest> {
+        val result = AccountDetailsValidator.validate(_state.value)
+
+        result.exceptionOrNull()?.let { error ->
+            onSaveFailed(error.message ?: "Invalid account details.")
+        }
+
+        return result
     }
 
     fun onSaveStarted() {
@@ -71,7 +76,9 @@ class AccountDetailsViewModel(
         update { copy(isSaving = false, errorMessage = null) }
     }
 
-    private inline fun update(transform: AccountDetailsState.() -> AccountDetailsState) {
+    private inline fun update(
+        transform: AccountDetailsState.() -> AccountDetailsState,
+    ) {
         _state.value = _state.value.transform()
     }
 }
