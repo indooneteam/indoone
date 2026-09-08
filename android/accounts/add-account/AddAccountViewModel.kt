@@ -19,4 +19,8 @@ class AddAccountViewModel : ViewModel() {
             isImportEnabled = value.trim().startsWith("otpauth://"),
         )
     }
+
+    fun clearImportUri() {
+        updateOtpUri("")
+    }
 }
