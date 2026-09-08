@@ -10,10 +10,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
+import com.indoone.accounts.AccountsViewModel
 import com.indoone.accounts.addaccount.AddAccountScreen
 import com.indoone.accounts.addaccount.AddAccountViewModel
 import com.indoone.accounts.addaccount.scanqr.QrManualPrefill
@@ -43,7 +45,7 @@ class MainActivity : ComponentActivity() {
                     EncryptedAccountRepository(applicationContext)
                 }
                 val coroutineScope = rememberCoroutineScope()
-                val accountsViewModel: com.indoone.accounts.AccountsViewModel = viewModel()
+                val accountsViewModel: AccountsViewModel = viewModel()
                 val addAccountViewModel: AddAccountViewModel = viewModel()
                 val scanQrViewModel: ScanQrViewModel = viewModel()
 
@@ -51,7 +53,6 @@ class MainActivity : ComponentActivity() {
                 var accountDetailsViewModel by remember {
                     mutableStateOf<AccountDetailsViewModel?>(null)
                 }
-                var lastError by remember { mutableStateOf<String?>(null) }
 
                 fun loadAccounts() {
                     coroutineScope.launch {
@@ -66,7 +67,7 @@ class MainActivity : ComponentActivity() {
 
                 when (route) {
                     AppRoute.ACCOUNTS -> {
-                        val state by accountsViewModel.state.collectAsStateWithLifecycleCompat()
+                        val state by accountsViewModel.state.collectAsState()
 
                         AccountsScreen(
                             state = state,
@@ -75,14 +76,13 @@ class MainActivity : ComponentActivity() {
                             onSort = accountsViewModel::toggleSort,
                             onToggleFavorite = accountsViewModel::toggleFavorite,
                             onAddAccount = {
-                                lastError = null
                                 route = AppRoute.ADD_ACCOUNT
                             },
                         )
                     }
 
                     AppRoute.ADD_ACCOUNT -> {
-                        val state by addAccountViewModel.state.collectAsStateWithLifecycleCompat()
+                        val state by addAccountViewModel.state.collectAsState()
 
                         AddAccountScreen(
                             state = state,
@@ -91,22 +91,20 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.ACCOUNTS
                             },
                             onScanQr = {
-                                lastError = null
                                 route = AppRoute.SCAN_QR
                             },
                             onEnterSetupKey = {
                                 accountDetailsViewModel = AccountDetailsViewModel()
-                                lastError = null
                                 route = AppRoute.ACCOUNT_DETAILS
                             },
                             onImportOtpUri = {
-                                lastError = null
+                                // Import URI flow is implemented separately.
                             },
                         )
                     }
 
                     AppRoute.SCAN_QR -> {
-                        val state by scanQrViewModel.state.collectAsStateWithLifecycleCompat()
+                        val state by scanQrViewModel.state.collectAsState()
 
                         ScanQrScreen(
                             state = state,
@@ -141,7 +139,7 @@ class MainActivity : ComponentActivity() {
                         if (detailsViewModel == null) {
                             route = AppRoute.ADD_ACCOUNT
                         } else {
-                            val state by detailsViewModel.state.collectAsStateWithLifecycleCompat()
+                            val state by detailsViewModel.state.collectAsState()
 
                             AccountDetailsScreen(
                                 state = state,
@@ -155,41 +153,35 @@ class MainActivity : ComponentActivity() {
                                     route = AppRoute.ADD_ACCOUNT
                                 },
                                 onSave = {
-                                    detailsViewModel.prepareSave()
-                                        .onFailure { error ->
-                                            lastError = error.message
-                                            detailsViewModel.onSaveFailed(
-                                                error.message ?: "Invalid account details.",
-                                            )
-                                        }
-                                        .onSuccess {
-                                            lastError = null
-                                            detailsViewModel.onSaveStarted()
+                                    val validation = detailsViewModel.prepareSave()
 
-                                            coroutineScope.launch {
-                                                val result = AccountSaveCoordinator(repository)
-                                                    .save(state)
+                                    validation.onFailure { error ->
+                                        detailsViewModel.onSaveFailed(
+                                            error.message ?: "Invalid account details.",
+                                        )
+                                    }.onSuccess {
+                                        detailsViewModel.onSaveStarted()
 
-                                                result.onSuccess {
-                                                    detailsViewModel.onSaveCompleted()
-                                                    loadAccounts()
-                                                    route = AppRoute.ACCOUNTS
-                                                }.onFailure { error ->
-                                                    lastError = error.message
-                                                    detailsViewModel.onSaveFailed(
-                                                        error.message
-                                                            ?: "Could not save account.",
-                                                    )
-                                                }
+                                        coroutineScope.launch {
+                                            val result = AccountSaveCoordinator(repository)
+                                                .save(state)
+
+                                            result.onSuccess {
+                                                detailsViewModel.onSaveCompleted()
+                                                loadAccounts()
+                                                route = AppRoute.ACCOUNTS
+                                            }.onFailure { error ->
+                                                detailsViewModel.onSaveFailed(
+                                                    error.message ?: "Could not save account.",
+                                                )
                                             }
                                         }
+                                    }
                                 },
                             )
                         }
                     }
                 }
-
-                lastError
             }
         }
     }
