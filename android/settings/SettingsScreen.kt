@@ -1,5 +1,6 @@
 package com.indoone.settings
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +36,8 @@ import com.indoone.settings.applock.AppLockViewModel
 import com.indoone.settings.applock.changeapplock.ChangeAppLockScreen
 import com.indoone.settings.applock.disableapplock.DisableAppLockScreen
 import com.indoone.settings.applock.setapplock.SetAppLockScreen
+import com.indoone.settings.autolock.AutoLockScreen
+import com.indoone.settings.autolock.AutoLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
 
@@ -50,9 +53,12 @@ fun SettingsScreen(
     val context = LocalContext.current
     val appLockStore = remember { AppLockStore(context) }
     val biometricStore = remember { BiometricUnlockStore(context) }
-    val biometricAuthenticator = remember { (context as? android.app.Activity)?.let(::BiometricAuthenticator) }
+    val autoLockStore = remember { AutoLockStore(context) }
+    val biometricAuthenticator = remember { (context as? Activity)?.let(::BiometricAuthenticator) }
     val flow = remember { AppLockViewModel() }
+
     var appLockPage by remember { mutableStateOf(false) }
+    var autoLockPage by remember { mutableStateOf(false) }
     var biometricOn by remember { mutableStateOf(biometricStore.isEnabled()) }
     var showAppLockRequired by remember { mutableStateOf(false) }
     var showBiometricUnavailable by remember { mutableStateOf(false) }
@@ -159,6 +165,7 @@ fun SettingsScreen(
                 onAction = {
                     if (appLockStore.verifyPin(state.pin)) {
                         flow.setStep(AppLockViewModel.Step.NEW)
+                        flow.resetInput()
                     } else {
                         flow.error("Incorrect current PIN")
                     }
@@ -178,6 +185,7 @@ fun SettingsScreen(
                     if (state.pin.length in 4..12) {
                         flow.setNewPin(state.pin)
                         flow.setStep(AppLockViewModel.Step.CONFIRM)
+                        flow.resetInput()
                     } else {
                         flow.error("PIN must contain 4–12 digits.")
                     }
@@ -233,6 +241,17 @@ fun SettingsScreen(
         return
     }
 
+    if (autoLockPage) {
+        AutoLockScreen(
+            currentMinutes = autoLockStore.minutes(),
+            appLockEnabled = appLockStore.isEnabled(),
+            biometricEnabled = biometricStore.isEnabled(),
+            onSelectMinutes = { autoLockStore.setMinutes(it); autoLockPage = false },
+            onBack = { autoLockPage = false },
+        )
+        return
+    }
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
             AppTopBar(onMenuClick = onMenuClick)
@@ -261,6 +280,17 @@ fun SettingsScreen(
                         }
                     },
                 )
+                Spacer(Modifier.padding(top = 12.dp))
+                SettingsCard(
+                    "Auto-Lock",
+                    if (appLockStore.isEnabled() || biometricStore.isEnabled()) {
+                        "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}"
+                    } else {
+                        "Requires App Lock or Biometric Unlock"
+                    },
+                ) {
+                    autoLockPage = true
+                }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
