@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
+import com.indoone.authentication.AuthSessionStore
 import kotlinx.coroutines.launch
 
 @Composable
@@ -49,6 +50,7 @@ fun LogoutScreen(
                     scope.launch {
                         runCatching {
                             clearLocalSession(context)
+                            AuthSessionStore(context).clear()
                             auth.signOut()
                         }.onSuccess {
                             onLoggedOut()
