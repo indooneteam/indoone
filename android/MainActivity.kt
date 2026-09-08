@@ -41,8 +41,11 @@ import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
-import com.indoone.menu.AppTab
 import com.indoone.settings.SettingsScreen
+import com.indoone.settings.profile.ProfileScreen
+import com.indoone.settings.profile.ProfileViewModel
+import com.indoone.settings.profile.change_email.ChangeEmailScreen
+import com.indoone.settings.profile.change_mobile_number.ChangeMobileNumberScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -52,6 +55,9 @@ private enum class AppRoute {
     LOBBY,
     CONNECT,
     SETTINGS,
+    PROFILE,
+    CHANGE_MOBILE,
+    CHANGE_EMAIL,
     ADD_ACCOUNT,
     SCAN_QR,
     QR_ACCOUNT_DETAILS,
@@ -78,6 +84,7 @@ class MainActivity : ComponentActivity() {
                 val importOtpUriViewModel: ImportOtpUriViewModel = viewModel()
                 val searchViewModel: SearchViewModel = viewModel()
                 val lobbyViewModel: LobbyViewModel = viewModel()
+                val profileViewModel: ProfileViewModel = viewModel()
 
                 var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
@@ -95,7 +102,6 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(Unit) { loadAccounts() }
-
                 LaunchedEffect(repository) {
                     while (true) {
                         val uiAccounts = repository.getAll().toUiAccounts(System.currentTimeMillis())
@@ -113,29 +119,18 @@ class MainActivity : ComponentActivity() {
                             onSearchChanged = accountsViewModel::updateSearchQuery,
                             onClearSearch = accountsViewModel::clearSearch,
                             onSort = accountsViewModel::toggleSort,
-                            onToggleFavorite = { id ->
-                                coroutineScope.launch {
-                                    val account = repository.getAll().firstOrNull { it.id == id }
-                                    if (account != null) {
-                                        detailActions.setFavorite(account, !account.favorite)
-                                        loadAccounts()
-                                    }
+                            onToggleFavorite = { id -> coroutineScope.launch {
+                                repository.getAll().firstOrNull { it.id == id }?.let { account ->
+                                    detailActions.setFavorite(account, !account.favorite)
+                                    loadAccounts()
                                 }
-                            },
-                            onAccountClick = { item ->
-                                coroutineScope.launch {
-                                    selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
-                                    if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
-                                }
-                            },
-                            onAddAccount = {
-                                addAccountViewModel.clearImportUri()
-                                route = AppRoute.ADD_ACCOUNT
-                            },
-                            onSearchClick = {
-                                searchViewModel.setAccounts(accountsViewModel.state.value.accounts)
-                                route = AppRoute.SEARCH
-                            },
+                            } },
+                            onAccountClick = { item -> coroutineScope.launch {
+                                selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
+                                if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
+                            } },
+                            onAddAccount = { addAccountViewModel.clearImportUri(); route = AppRoute.ADD_ACCOUNT },
+                            onSearchClick = { searchViewModel.setAccounts(state.accounts); route = AppRoute.SEARCH },
                             onLobbyClick = { route = AppRoute.LOBBY },
                             onConnectClick = { route = AppRoute.CONNECT },
                             onSettingsClick = { route = AppRoute.SETTINGS },
@@ -148,16 +143,11 @@ class MainActivity : ComponentActivity() {
                             state = state,
                             onQueryChanged = searchViewModel::updateQuery,
                             onClear = searchViewModel::clear,
-                            onBack = {
-                                searchViewModel.clear()
-                                route = AppRoute.ACCOUNTS
-                            },
-                            onAccountClick = { item ->
-                                coroutineScope.launch {
-                                    selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
-                                    if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
-                                }
-                            },
+                            onBack = { searchViewModel.clear(); route = AppRoute.ACCOUNTS },
+                            onAccountClick = { item -> coroutineScope.launch {
+                                selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
+                                if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
+                            } },
                         )
                     }
 
@@ -172,8 +162,28 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    AppRoute.CONNECT -> {
-                        ConnectScreen(
+                    AppRoute.CONNECT -> ConnectScreen(
+                        onAccountsClick = { route = AppRoute.ACCOUNTS },
+                        onLobbyClick = { route = AppRoute.LOBBY },
+                        onConnectClick = { route = AppRoute.CONNECT },
+                        onSettingsClick = { route = AppRoute.SETTINGS },
+                    )
+
+                    AppRoute.SETTINGS -> SettingsScreen(
+                        onProfileClick = { profileViewModel.loadProfile(); route = AppRoute.PROFILE },
+                        onAccountsClick = { route = AppRoute.ACCOUNTS },
+                        onLobbyClick = { route = AppRoute.LOBBY },
+                        onConnectClick = { route = AppRoute.CONNECT },
+                        onSettingsClick = { route = AppRoute.SETTINGS },
+                    )
+
+                    AppRoute.PROFILE -> {
+                        val state by profileViewModel.state.collectAsState()
+                        ProfileScreen(
+                            state = state,
+                            onBack = { route = AppRoute.SETTINGS },
+                            onMobileClick = { profileViewModel.clearFeedback(); route = AppRoute.CHANGE_MOBILE },
+                            onEmailClick = { profileViewModel.clearFeedback(); route = AppRoute.CHANGE_EMAIL },
                             onAccountsClick = { route = AppRoute.ACCOUNTS },
                             onLobbyClick = { route = AppRoute.LOBBY },
                             onConnectClick = { route = AppRoute.CONNECT },
@@ -181,8 +191,25 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    AppRoute.SETTINGS -> {
-                        SettingsScreen(
+                    AppRoute.CHANGE_MOBILE -> {
+                        val state by profileViewModel.state.collectAsState()
+                        ChangeMobileNumberScreen(
+                            state = state,
+                            onBack = { profileViewModel.loadProfile(); route = AppRoute.PROFILE },
+                            onSave = { value -> profileViewModel.updateMobile(value) },
+                            onAccountsClick = { route = AppRoute.ACCOUNTS },
+                            onLobbyClick = { route = AppRoute.LOBBY },
+                            onConnectClick = { route = AppRoute.CONNECT },
+                            onSettingsClick = { route = AppRoute.SETTINGS },
+                        )
+                    }
+
+                    AppRoute.CHANGE_EMAIL -> {
+                        val state by profileViewModel.state.collectAsState()
+                        ChangeEmailScreen(
+                            state = state,
+                            onBack = { profileViewModel.loadProfile(); route = AppRoute.PROFILE },
+                            onSave = { email, password -> profileViewModel.updateEmail(email, password) },
                             onAccountsClick = { route = AppRoute.ACCOUNTS },
                             onLobbyClick = { route = AppRoute.LOBBY },
                             onConnectClick = { route = AppRoute.CONNECT },
@@ -192,49 +219,33 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.ACCOUNT_DETAILS -> {
                         val account = selectedAccount
-                        val uiAccount = account?.let { record ->
-                            accountsViewModel.state.value.accounts.firstOrNull { it.id == record.id }
-                        }
-                        if (account == null || uiAccount == null) {
-                            route = AppRoute.ACCOUNTS
-                        } else {
-                            AccountDetailsScreen(
-                                account = account,
-                                code = uiAccount.code,
-                                secondsRemaining = uiAccount.secondsRemaining,
-                                onBack = { route = AppRoute.ACCOUNTS },
-                                onEdit = {
-                                    editAccountViewModel = EditAccountViewModel(account)
-                                    route = AppRoute.EDIT_ACCOUNT
-                                },
-                                onCopy = { detailActions.copyCode(uiAccount.code) },
-                                onToggleFavorite = {
-                                    coroutineScope.launch {
-                                        detailActions.setFavorite(account, !account.favorite)
-                                            .onSuccess { updated ->
-                                                selectedAccount = updated
-                                                loadAccounts()
-                                            }
-                                    }
-                                },
-                                onDelete = {
-                                    coroutineScope.launch {
-                                        removalService.remove(account.id).onSuccess {
-                                            selectedAccount = null
-                                            loadAccounts()
-                                            route = AppRoute.ACCOUNTS
-                                        }
-                                    }
-                                },
-                            )
-                        }
+                        val uiAccount = account?.let { record -> accountsViewModel.state.value.accounts.firstOrNull { it.id == record.id } }
+                        if (account == null || uiAccount == null) route = AppRoute.ACCOUNTS else AccountDetailsScreen(
+                            account = account,
+                            code = uiAccount.code,
+                            secondsRemaining = uiAccount.secondsRemaining,
+                            onBack = { route = AppRoute.ACCOUNTS },
+                            onEdit = { editAccountViewModel = EditAccountViewModel(account); route = AppRoute.EDIT_ACCOUNT },
+                            onCopy = { detailActions.copyCode(uiAccount.code) },
+                            onToggleFavorite = { coroutineScope.launch {
+                                detailActions.setFavorite(account, !account.favorite).onSuccess { updated ->
+                                    selectedAccount = updated
+                                    loadAccounts()
+                                }
+                            } },
+                            onDelete = { coroutineScope.launch {
+                                removalService.remove(account.id).onSuccess {
+                                    selectedAccount = null
+                                    loadAccounts()
+                                    route = AppRoute.ACCOUNTS
+                                }
+                            } },
+                        )
                     }
 
                     AppRoute.EDIT_ACCOUNT -> {
                         val editViewModel = editAccountViewModel
-                        if (editViewModel == null) {
-                            route = AppRoute.ACCOUNT_DETAILS
-                        } else {
+                        if (editViewModel == null) route = AppRoute.ACCOUNT_DETAILS else {
                             val state by editViewModel.state.collectAsState()
                             EditAccountScreen(
                                 state = state,
@@ -265,9 +276,7 @@ class MainActivity : ComponentActivity() {
                                                     repository.save(updated)
                                                     selectedAccount = updated
                                                 }.onSuccess {
-                                                    editViewModel.onSaveCompleted()
-                                                    loadAccounts()
-                                                    route = AppRoute.ACCOUNT_DETAILS
+                                                    editViewModel.onSaveCompleted(); loadAccounts(); route = AppRoute.ACCOUNT_DETAILS
                                                 }.onFailure { error -> editViewModel.onSaveFailed(error.message ?: "Could not save account.") }
                                             }
                                         }
@@ -284,10 +293,7 @@ class MainActivity : ComponentActivity() {
                             onBack = { route = AppRoute.ACCOUNTS },
                             onScanQr = { route = AppRoute.SCAN_QR },
                             onEnterSetupKey = { route = AppRoute.ENTER_SETUP_KEY },
-                            onImportOtpUri = { uri ->
-                                importOtpUriViewModel.onUriChanged(uri)
-                                route = AppRoute.IMPORT_OTP_URI
-                            },
+                            onImportOtpUri = { uri -> importOtpUriViewModel.onUriChanged(uri); route = AppRoute.IMPORT_OTP_URI },
                         )
                     }
 
@@ -297,20 +303,13 @@ class MainActivity : ComponentActivity() {
                             state = state,
                             onUriChanged = importOtpUriViewModel::onUriChanged,
                             onBack = { route = AppRoute.ADD_ACCOUNT },
-                            onContinue = {
-                                importOtpUriViewModel.parse().onSuccess { result ->
-                                    importAccountDetailsViewModel = AccountDetailsViewModel(result)
-                                    route = AppRoute.IMPORT_ACCOUNT_DETAILS
-                                }
-                            },
+                            onContinue = { importOtpUriViewModel.parse().onSuccess { result -> importAccountDetailsViewModel = AccountDetailsViewModel(result); route = AppRoute.IMPORT_ACCOUNT_DETAILS } },
                         )
                     }
 
                     AppRoute.IMPORT_ACCOUNT_DETAILS -> {
                         val detailsViewModel = importAccountDetailsViewModel
-                        if (detailsViewModel == null) {
-                            route = AppRoute.IMPORT_OTP_URI
-                        } else {
+                        if (detailsViewModel == null) route = AppRoute.IMPORT_OTP_URI else {
                             val state by detailsViewModel.state.collectAsState()
                             AccountDetailsScreen(
                                 state = state,
@@ -334,28 +333,17 @@ class MainActivity : ComponentActivity() {
                             onCameraStarting = scanQrViewModel::onCameraStarting,
                             onCameraReady = scanQrViewModel::onCameraReady,
                             onCameraError = scanQrViewModel::onCameraError,
-                            onQrDetected = { rawValue ->
-                                QrScanResultHandler(
-                                    onAccountDetailsReady = { prefill ->
-                                        qrAccountDetailsViewModel = AccountDetailsViewModel(prefill.toQrAccountResult())
-                                        scanQrViewModel.onQrDetected()
-                                        route = AppRoute.QR_ACCOUNT_DETAILS
-                                    },
-                                    onInvalidQr = scanQrViewModel::onCameraError,
-                                ).handle(rawValue)
-                            },
-                            onCancelScan = {
-                                scanQrViewModel.onScanCancelled()
-                                route = AppRoute.ADD_ACCOUNT
-                            },
+                            onQrDetected = { rawValue -> QrScanResultHandler(
+                                onAccountDetailsReady = { prefill -> qrAccountDetailsViewModel = AccountDetailsViewModel(prefill.toQrAccountResult()); scanQrViewModel.onQrDetected(); route = AppRoute.QR_ACCOUNT_DETAILS },
+                                onInvalidQr = scanQrViewModel::onCameraError,
+                            ).handle(rawValue) },
+                            onCancelScan = { scanQrViewModel.onScanCancelled(); route = AppRoute.ADD_ACCOUNT },
                         )
                     }
 
                     AppRoute.QR_ACCOUNT_DETAILS -> {
                         val detailsViewModel = qrAccountDetailsViewModel
-                        if (detailsViewModel == null) {
-                            route = AppRoute.ADD_ACCOUNT
-                        } else {
+                        if (detailsViewModel == null) route = AppRoute.ADD_ACCOUNT else {
                             val state by detailsViewModel.state.collectAsState()
                             AccountDetailsScreen(
                                 state = state,
@@ -389,11 +377,7 @@ class MainActivity : ComponentActivity() {
                                         enterSetupKeyViewModel.onSaveStarted()
                                         coroutineScope.launch {
                                             runCatching { repository.save(AccountRecordMapper.from(request)) }
-                                                .onSuccess {
-                                                    enterSetupKeyViewModel.onSaveCompleted()
-                                                    loadAccounts()
-                                                    route = AppRoute.ACCOUNTS
-                                                }
+                                                .onSuccess { enterSetupKeyViewModel.onSaveCompleted(); loadAccounts(); route = AppRoute.ACCOUNTS }
                                                 .onFailure { error -> enterSetupKeyViewModel.onSaveFailed(error.message ?: "Could not save account.") }
                                         }
                                     }
@@ -425,8 +409,8 @@ private fun saveQrLikeAccount(
         }
 }
 
-private fun QrManualPrefill.toQrAccountResult(): com.indoone.accounts.addaccount.scanqr.QrAccountResult {
-    return com.indoone.accounts.addaccount.scanqr.QrAccountResult(
+private fun QrManualPrefill.toQrAccountResult(): com.indoone.accounts.addaccount.scanqr.QrAccountResult =
+    com.indoone.accounts.addaccount.scanqr.QrAccountResult(
         name = name,
         email = email,
         secret = secret,
@@ -436,25 +420,12 @@ private fun QrManualPrefill.toQrAccountResult(): com.indoone.accounts.addaccount
         provider = provider,
         service = service,
     )
-}
 
-private fun List<AccountRecord>.toUiAccounts(nowMillis: Long = System.currentTimeMillis()): List<AccountItem> {
-    return map { record ->
-        val period = record.period.coerceAtLeast(1)
-        val nowSeconds = nowMillis / 1000L
-        val elapsed = (nowSeconds % period).toInt()
-        val secondsRemaining = (period - elapsed).coerceIn(1, period)
-        val code = runCatching {
-            AccountTotpGenerator.generate(record.secret, nowMillis, period, record.digits, record.algorithm)
-        }.getOrDefault("------")
-        AccountItem(
-            id = record.id,
-            name = record.name,
-            email = record.email,
-            code = code,
-            secondsRemaining = secondsRemaining,
-            periodSeconds = period,
-            favorite = record.favorite,
-        )
-    }
+private fun List<AccountRecord>.toUiAccounts(nowMillis: Long = System.currentTimeMillis()): List<AccountItem> = map { record ->
+    val period = record.period.coerceAtLeast(1)
+    val nowSeconds = nowMillis / 1000L
+    val elapsed = (nowSeconds % period).toInt()
+    val secondsRemaining = (period - elapsed).coerceIn(1, period)
+    val code = runCatching { AccountTotpGenerator.generate(record.secret, nowMillis, period, record.digits, record.algorithm) }.getOrDefault("------")
+    AccountItem(record.id, record.name, record.email, code, secondsRemaining, period, record.favorite)
 }
