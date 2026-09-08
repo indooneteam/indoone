@@ -82,7 +82,8 @@ class AuthActivity : ComponentActivity() {
                             busy = true
                             error = ""
                             scope.launch {
-                                runCatching { error("Please restart signup to request a new OTP.") }
+                                runCatching { service.resendSignupOtp() }
+                                    .onSuccess { status = "New OTP sent. Check your email." }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
                                 busy = false
                             }
