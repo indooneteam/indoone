@@ -5,12 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
@@ -25,7 +25,7 @@ import com.indoone.accounts.addaccount.scanqr.ScanQrViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
-import com.indoone.accounts.storage.EncryptedAccountRepository
+import com.indoone.accounts.storage.AccountRepositoryProvider
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 val repository = remember {
-                    EncryptedAccountRepository(applicationContext)
+                    AccountRepositoryProvider(applicationContext)
                 }
                 val coroutineScope = rememberCoroutineScope()
                 val accountsViewModel: AccountsViewModel = viewModel()
