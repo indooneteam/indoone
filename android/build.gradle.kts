@@ -28,6 +28,7 @@ android {
 
     sourceSets["main"].kotlin.setSrcDirs(
         listOf(
+            "AccountRecordMapper.kt",
             "IndooneApplication.kt",
             "MainActivity.kt",
             "authentication",
