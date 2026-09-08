@@ -59,12 +59,9 @@ dependencies {
     implementation("androidx.camera:camera-view:1.6.2")
 
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
     implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
-
-    implementation("androidx.security:security-crypto:1.1.0")
 }
