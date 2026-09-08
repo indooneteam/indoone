@@ -35,17 +35,18 @@ import com.indoone.accounts.addaccount.scanqr.ScanQrViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
-import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveRequest
-import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountRecordMapper
 import com.indoone.accounts.search.SearchScreen
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
+import com.indoone.lobby.LobbyScreen
+import com.indoone.lobby.LobbyViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
     ACCOUNTS,
     SEARCH,
+    LOBBY,
     ADD_ACCOUNT,
     SCAN_QR,
     QR_ACCOUNT_DETAILS,
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 val enterSetupKeyViewModel: EnterSetupKeyViewModel = viewModel()
                 val importOtpUriViewModel: ImportOtpUriViewModel = viewModel()
                 val searchViewModel: SearchViewModel = viewModel()
+                val lobbyViewModel: LobbyViewModel = viewModel()
 
                 var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
@@ -130,6 +132,7 @@ class MainActivity : ComponentActivity() {
                                 searchViewModel.setAccounts(accountsViewModel.state.value.accounts)
                                 route = AppRoute.SEARCH
                             },
+                            onLobbyClick = { route = AppRoute.LOBBY },
                         )
                     }
 
@@ -149,6 +152,16 @@ class MainActivity : ComponentActivity() {
                                     if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
                                 }
                             },
+                        )
+                    }
+
+                    AppRoute.LOBBY -> {
+                        val state by lobbyViewModel.state.collectAsState()
+                        LobbyScreen(
+                            state = state,
+                            onDone = { route = AppRoute.ACCOUNTS },
+                            onAccountsClick = { route = AppRoute.ACCOUNTS },
+                            onLobbyClick = { route = AppRoute.LOBBY },
                         )
                     }
 
