@@ -6,7 +6,7 @@
         android:allowBackup="false"
         android:label="Indoone"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Indoone">
+        android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">
