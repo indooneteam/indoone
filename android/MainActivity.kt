@@ -38,8 +38,11 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordina
 import com.indoone.accounts.search.SearchScreen
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
+import com.indoone.connect.ConnectScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
+import com.indoone.menu.AppTab
+import com.indoone.settings.SettingsScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -47,6 +50,8 @@ private enum class AppRoute {
     ACCOUNTS,
     SEARCH,
     LOBBY,
+    CONNECT,
+    SETTINGS,
     ADD_ACCOUNT,
     SCAN_QR,
     QR_ACCOUNT_DETAILS,
@@ -60,7 +65,6 @@ private enum class AppRoute {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             MaterialTheme {
                 val repository = remember { AccountRepositoryProvider(applicationContext) }
@@ -133,6 +137,8 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.SEARCH
                             },
                             onLobbyClick = { route = AppRoute.LOBBY },
+                            onConnectClick = { route = AppRoute.CONNECT },
+                            onSettingsClick = { route = AppRoute.SETTINGS },
                         )
                     }
 
@@ -161,6 +167,26 @@ class MainActivity : ComponentActivity() {
                             state = state,
                             onAccountsClick = { route = AppRoute.ACCOUNTS },
                             onLobbyClick = { route = AppRoute.LOBBY },
+                            onConnectClick = { route = AppRoute.CONNECT },
+                            onSettingsClick = { route = AppRoute.SETTINGS },
+                        )
+                    }
+
+                    AppRoute.CONNECT -> {
+                        ConnectScreen(
+                            onAccountsClick = { route = AppRoute.ACCOUNTS },
+                            onLobbyClick = { route = AppRoute.LOBBY },
+                            onConnectClick = { route = AppRoute.CONNECT },
+                            onSettingsClick = { route = AppRoute.SETTINGS },
+                        )
+                    }
+
+                    AppRoute.SETTINGS -> {
+                        SettingsScreen(
+                            onAccountsClick = { route = AppRoute.ACCOUNTS },
+                            onLobbyClick = { route = AppRoute.LOBBY },
+                            onConnectClick = { route = AppRoute.CONNECT },
+                            onSettingsClick = { route = AppRoute.SETTINGS },
                         )
                     }
 
@@ -169,7 +195,6 @@ class MainActivity : ComponentActivity() {
                         val uiAccount = account?.let { record ->
                             accountsViewModel.state.value.accounts.firstOrNull { it.id == record.id }
                         }
-
                         if (account == null || uiAccount == null) {
                             route = AppRoute.ACCOUNTS
                         } else {
@@ -182,9 +207,7 @@ class MainActivity : ComponentActivity() {
                                     editAccountViewModel = EditAccountViewModel(account)
                                     route = AppRoute.EDIT_ACCOUNT
                                 },
-                                onCopy = {
-                                    detailActions.copyCode(uiAccount.code)
-                                },
+                                onCopy = { detailActions.copyCode(uiAccount.code) },
                                 onToggleFavorite = {
                                     coroutineScope.launch {
                                         detailActions.setFavorite(account, !account.favorite)
@@ -196,12 +219,11 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onDelete = {
                                     coroutineScope.launch {
-                                        removalService.remove(account.id)
-                                            .onSuccess {
-                                                selectedAccount = null
-                                                loadAccounts()
-                                                route = AppRoute.ACCOUNTS
-                                            }
+                                        removalService.remove(account.id).onSuccess {
+                                            selectedAccount = null
+                                            loadAccounts()
+                                            route = AppRoute.ACCOUNTS
+                                        }
                                     }
                                 },
                             )
@@ -225,9 +247,7 @@ class MainActivity : ComponentActivity() {
                                 onBack = { route = AppRoute.ACCOUNT_DETAILS },
                                 onSave = {
                                     editViewModel.prepareSave()
-                                        .onFailure { error ->
-                                            editViewModel.onSaveFailed(error.message ?: "Invalid account details.")
-                                        }
+                                        .onFailure { error -> editViewModel.onSaveFailed(error.message ?: "Invalid account details.") }
                                         .onSuccess { request ->
                                             editViewModel.onSaveStarted()
                                             coroutineScope.launch {
@@ -248,9 +268,7 @@ class MainActivity : ComponentActivity() {
                                                     editViewModel.onSaveCompleted()
                                                     loadAccounts()
                                                     route = AppRoute.ACCOUNT_DETAILS
-                                                }.onFailure { error ->
-                                                    editViewModel.onSaveFailed(error.message ?: "Could not save account.")
-                                                }
+                                                }.onFailure { error -> editViewModel.onSaveFailed(error.message ?: "Could not save account.") }
                                             }
                                         }
                                 },
@@ -370,14 +388,13 @@ class MainActivity : ComponentActivity() {
                                     .onSuccess { request ->
                                         enterSetupKeyViewModel.onSaveStarted()
                                         coroutineScope.launch {
-                                            runCatching {
-                                                val record = AccountRecordMapper.from(request)
-                                                repository.save(record)
-                                            }.onSuccess {
-                                                enterSetupKeyViewModel.onSaveCompleted()
-                                                loadAccounts()
-                                                route = AppRoute.ACCOUNTS
-                                            }.onFailure { error -> enterSetupKeyViewModel.onSaveFailed(error.message ?: "Could not save account.") }
+                                            runCatching { repository.save(AccountRecordMapper.from(request)) }
+                                                .onSuccess {
+                                                    enterSetupKeyViewModel.onSaveCompleted()
+                                                    loadAccounts()
+                                                    route = AppRoute.ACCOUNTS
+                                                }
+                                                .onFailure { error -> enterSetupKeyViewModel.onSaveFailed(error.message ?: "Could not save account.") }
                                         }
                                     }
                             },
