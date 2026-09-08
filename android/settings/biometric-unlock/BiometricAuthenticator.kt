@@ -1,23 +1,16 @@
 package com.indoone.settings.biometric
 
 import android.app.Activity
-import android.content.Context
-import android.hardware.fingerprint.FingerprintManager
 import android.os.Build
 import android.os.CancellationSignal
-import androidx.core.content.ContextCompat
 
 class BiometricAuthenticator(private val activity: Activity) {
     fun canAuthenticate(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val manager = activity.getSystemService(android.hardware.biometrics.BiometricManager::class.java)
-            manager?.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val manager = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
-            manager?.isHardwareDetected == true && manager.hasEnrolledFingerprints()
-        } else {
-            false
-        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
+        val manager = activity.getSystemService(android.hardware.biometrics.BiometricManager::class.java)
+            ?: return false
+        return manager.canAuthenticate() ==
+            android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
     }
 
     fun authenticate(
@@ -53,23 +46,12 @@ class BiometricAuthenticator(private val activity: Activity) {
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
     ) {
-        when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
-                authenticateWithBiometricPrompt(title, subtitle, description, onSuccess, onError)
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-                authenticateWithFingerprint(onSuccess, onError)
-            else -> onError("Biometric authentication is not supported on this Android version.")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            onError("Biometric authentication is not supported on this Android version.")
+            return
         }
-    }
 
-    private fun authenticateWithBiometricPrompt(
-        title: String,
-        subtitle: String,
-        description: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit,
-    ) {
-        val executor = ContextCompat.getMainExecutor(activity)
+        val executor = activity.mainExecutor
         val callback = object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(
                 result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult,
@@ -100,36 +82,5 @@ class BiometricAuthenticator(private val activity: Activity) {
         }
 
         builder.build().authenticate(CancellationSignal(), executor, callback)
-    }
-
-    private fun authenticateWithFingerprint(
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit,
-    ) {
-        val manager = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
-        if (manager == null || !manager.isHardwareDetected || !manager.hasEnrolledFingerprints()) {
-            onError("Biometric authentication is unavailable on this device.")
-            return
-        }
-
-        manager.authenticate(
-            null,
-            CancellationSignal(),
-            0,
-            object : FingerprintManager.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: FingerprintManager.AuthenticationResult) {
-                    onSuccess()
-                }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    onError(errString.toString().ifBlank { "Biometric authentication failed." })
-                }
-
-                override fun onAuthenticationFailed() {
-                    onError("Fingerprint authentication failed. Try again.")
-                }
-            },
-            null,
-        )
     }
 }
