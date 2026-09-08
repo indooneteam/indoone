@@ -48,6 +48,10 @@ class AppLockViewModel : ViewModel() {
         _state.value = _state.value.copy(pin = "", error = "")
     }
 
+    fun resetInput() {
+        clear()
+    }
+
     fun setStep(step: Step) {
         _state.value = _state.value.copy(step = step, pin = "", error = "")
     }
