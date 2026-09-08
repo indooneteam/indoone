@@ -3,6 +3,7 @@ package com.indoone.settings.biometric
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
+import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.hardware.fingerprint.FingerprintManager
 import android.os.Build
@@ -14,8 +15,14 @@ class BiometricAuthenticator(private val activity: Activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
         val keyguard = activity.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
         if (keyguard?.isKeyguardSecure != true) return false
-        val fingerprint = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
-        return fingerprint?.isHardwareDetected == true && fingerprint.hasEnrolledFingerprints()
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val manager = activity.getSystemService(Context.BIOMETRIC_SERVICE) as? BiometricManager
+            manager?.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS
+        } else {
+            val fingerprint = activity.getSystemService(Context.FINGERPRINT_SERVICE) as? FingerprintManager
+            fingerprint?.isHardwareDetected == true && fingerprint.hasEnrolledFingerprints()
+        }
     }
 
     fun authenticate(
