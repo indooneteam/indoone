@@ -22,6 +22,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,11 +41,11 @@ import com.indoone.accounts.accounts.list.AccountTotpGenerator
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import kotlinx.coroutines.delay
 
 @Composable
 fun FavoritesScreen(
     accounts: List<AccountRecord>,
-    nowMillis: Long = System.currentTimeMillis(),
     onBack: () -> Unit,
     onAccountClick: (AccountRecord) -> Unit,
     onToggleFavorite: (AccountRecord) -> Unit,
@@ -49,6 +54,14 @@ fun FavoritesScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
+
     val favorites = accounts
         .filter { it.favorite }
         .sortedBy { it.name.lowercase() }
@@ -66,43 +79,13 @@ fun FavoritesScreen(
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 item {
-                    Text(
-                        text = "FAVORITES",
-                        color = Color(0xFF7650D8),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.3.sp,
-                    )
-                    Text(
-                        text = "Favorite accounts",
-                        modifier = Modifier.padding(top = 3.dp),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Quick access to the accounts you starred.",
-                        modifier = Modifier.padding(top = 5.dp, bottom = 4.dp),
-                        color = Color(0xFF85808B),
-                        fontSize = 12.sp,
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(11.dp),
-                        color = Color(0xFFFAF9FD),
-                        border = BorderStroke(1.dp, Color(0xFFEEEAF4)),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                    Text("FAVORITES", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
+                    Text("Favorite accounts", modifier = Modifier.padding(top = 3.dp), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("Quick access to the accounts you starred.", modifier = Modifier.padding(top = 5.dp, bottom = 4.dp), color = Color(0xFF85808B), fontSize = 12.sp)
+                    Surface(shape = RoundedCornerShape(11.dp), color = Color(0xFFFAF9FD), border = BorderStroke(1.dp, Color(0xFFEEEAF4)), modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("★", color = Color(0xFFF1A900), fontSize = 13.sp)
-                            Text(
-                                text = "${favorites.size} favorite account${if (favorites.size == 1) "" else "s"}",
-                                modifier = Modifier.padding(start = 8.dp),
-                                color = Color(0xFF6E6878),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            Text("${favorites.size} favorite account${if (favorites.size == 1) "" else "s"}", modifier = Modifier.padding(start = 8.dp), color = Color(0xFF6E6878), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -111,64 +94,28 @@ fun FavoritesScreen(
                     item { EmptyFavoritesState() }
                 } else {
                     items(favorites, key = { it.id }) { account ->
-                        FavoriteAccountRow(
-                            account = account,
-                            nowMillis = nowMillis,
-                            onClick = { onAccountClick(account) },
-                            onToggleFavorite = { onToggleFavorite(account) },
-                        )
+                        FavoriteAccountRow(account, nowMillis, { onAccountClick(account) }, { onToggleFavorite(account) })
                     }
                 }
             }
 
-            AppBottomNav(
-                activeTab = AppTab.SETTINGS,
-                onAccountsClick = onAccountsClick,
-                onLobbyClick = onLobbyClick,
-                onConnectClick = onConnectClick,
-                onSettingsClick = onSettingsClick,
-            )
+            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
     }
 }
 
 @Composable
-private fun FavoriteAccountRow(
-    account: AccountRecord,
-    nowMillis: Long,
-    onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
-) {
+private fun FavoriteAccountRow(account: AccountRecord, nowMillis: Long, onClick: () -> Unit, onToggleFavorite: () -> Unit) {
     val period = account.period.coerceAtLeast(1)
     val nowSeconds = nowMillis / 1000L
     val elapsed = (nowSeconds % period).toInt()
     val secondsRemaining = (period - elapsed).coerceIn(1, period)
-    val code = runCatching {
-        AccountTotpGenerator.generate(account.secret, nowMillis, period, account.digits, account.algorithm)
-    }.getOrDefault("------")
+    val code = runCatching { AccountTotpGenerator.generate(account.secret, nowMillis, period, account.digits, account.algorithm) }.getOrDefault("------")
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFECE9F0)),
-        shadowElevation = 2.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier.size(48.dp).background(Color(0xFFF5F3F8), RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = account.name.firstOrNull()?.uppercase() ?: "A",
-                    color = Color(0xFF4285F4),
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+    Surface(modifier = Modifier.fillMaxWidth(), onClick = onClick, shape = RoundedCornerShape(18.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFECE9F0)), shadowElevation = 2.dp) {
+        Row(modifier = Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(48.dp).background(Color(0xFFF5F3F8), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Text(account.name.firstOrNull()?.uppercase() ?: "A", color = Color(0xFF4285F4), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -176,9 +123,7 @@ private fun FavoriteAccountRow(
                 Text(account.email, modifier = Modifier.padding(top = 3.dp), color = Color(0xFF89838F), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(code, modifier = Modifier.padding(top = 4.dp), color = Color(0xFF6331DB), fontSize = 21.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
-            TextButton(onClick = onToggleFavorite) {
-                Text("★", color = Color(0xFFF1A900), fontSize = 22.sp)
-            }
+            TextButton(onClick = onToggleFavorite) { Text("★", color = Color(0xFFF1A900), fontSize = 22.sp) }
             CountdownRing(secondsRemaining, period)
         }
     }
@@ -198,22 +143,11 @@ private fun CountdownRing(secondsRemaining: Int, periodSeconds: Int) {
 
 @Composable
 private fun EmptyFavoritesState() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 54.dp, horizontal = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier.size(64.dp).background(Color(0xFFF3EDFF), RoundedCornerShape(20.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 54.dp, horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(modifier = Modifier.size(64.dp).background(Color(0xFFF3EDFF), RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
             Text("★", color = Color(0xFF7140DA), fontSize = 28.sp)
         }
         Text("No favorite accounts", modifier = Modifier.padding(top = 14.dp), fontSize = 17.sp, fontWeight = FontWeight.Bold)
-        Text(
-            "Star an account on the Accounts page and it will appear here.",
-            modifier = Modifier.padding(top = 5.dp),
-            color = Color(0xFF85808B),
-            fontSize = 13.sp,
-        )
+        Text("Star an account on the Accounts page and it will appear here.", modifier = Modifier.padding(top = 5.dp), color = Color(0xFF85808B), fontSize = 13.sp)
     }
 }
