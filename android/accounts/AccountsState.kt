@@ -20,6 +20,9 @@ data class AccountsState(
     val searchQuery: String = "",
     val sortOrder: AccountSortOrder = AccountSortOrder.ASCENDING,
 ) {
+    val sortAscending: Boolean
+        get() = sortOrder == AccountSortOrder.ASCENDING
+
     val filteredAccounts: List<AccountItem>
         get() {
             val query = searchQuery.trim()
