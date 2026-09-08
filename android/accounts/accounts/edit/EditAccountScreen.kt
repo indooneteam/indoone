@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun EditAccountScreen(
@@ -50,12 +51,10 @@ fun EditAccountScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
-        TextButton(onClick = onBack) {
-            Text("‹  Back", fontWeight = FontWeight.Bold)
-        }
+        TextButton(onClick = onBack) { Text("‹  Back", fontWeight = FontWeight.Bold) }
         Spacer(Modifier.height(10.dp))
-        Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = androidx.compose.ui.unit.sp(9f), fontWeight = FontWeight.ExtraBold)
-        Text("Edit Account", modifier = Modifier.padding(top = 3.dp), fontSize = androidx.compose.ui.unit.sp(22f), fontWeight = FontWeight.Bold)
+        Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp)
+        Text("Edit Account", modifier = Modifier.padding(top = 3.dp), fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text("Update the details used to generate your one-time codes.", modifier = Modifier.padding(top = 10.dp), color = Color(0xFF77717F))
 
         Card(
@@ -84,7 +83,6 @@ fun EditAccountScreen(
                 }
 
                 EditDropdown("ALGORITHM", state.algorithm, listOf("SHA1", "SHA256", "SHA512")) { onAlgorithmChanged(it) }
-
                 state.errorMessage?.let { Text(it, color = Color(0xFFB3261E)) }
                 Button(onClick = onSave, enabled = state.canSave, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                     Text(if (state.isSaving) "Saving…" else "Save Changes")
@@ -95,13 +93,7 @@ fun EditAccountScreen(
 }
 
 @Composable
-private fun EditDropdown(
-    label: String,
-    selected: String,
-    options: List<String>,
-    modifier: Modifier = Modifier,
-    onSelected: (String) -> Unit,
-) {
+private fun EditDropdown(label: String, selected: String, options: List<String>, modifier: Modifier = Modifier, onSelected: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }, modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(value = selected, onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth().menuAnchor(), label = { Text(label) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) })
