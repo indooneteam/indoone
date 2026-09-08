@@ -20,6 +20,8 @@ import com.indoone.accounts.addaccount.AddAccountScreen
 import com.indoone.accounts.addaccount.AddAccountViewModel
 import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyScreen
 import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyViewModel
+import com.indoone.accounts.addaccount.importuri.ImportOtpUriScreen
+import com.indoone.accounts.addaccount.importuri.ImportOtpUriViewModel
 import com.indoone.accounts.addaccount.scanqr.QrManualPrefill
 import com.indoone.accounts.addaccount.scanqr.QrScanResultHandler
 import com.indoone.accounts.addaccount.scanqr.ScanQrScreen
@@ -38,6 +40,7 @@ private enum class AppRoute {
     SCAN_QR,
     QR_ACCOUNT_DETAILS,
     ENTER_SETUP_KEY,
+    IMPORT_OTP_URI,
 }
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 val addAccountViewModel: AddAccountViewModel = viewModel()
                 val scanQrViewModel: ScanQrViewModel = viewModel()
                 val enterSetupKeyViewModel: EnterSetupKeyViewModel = viewModel()
+                val importOtpUriViewModel: ImportOtpUriViewModel = viewModel()
 
                 var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember {
@@ -82,6 +86,7 @@ class MainActivity : ComponentActivity() {
                             onSort = accountsViewModel::toggleSort,
                             onToggleFavorite = accountsViewModel::toggleFavorite,
                             onAddAccount = {
+                                addAccountViewModel.clearImportUri()
                                 route = AppRoute.ADD_ACCOUNT
                             },
                         )
@@ -102,8 +107,28 @@ class MainActivity : ComponentActivity() {
                             onEnterSetupKey = {
                                 route = AppRoute.ENTER_SETUP_KEY
                             },
-                            onImportOtpUri = {
-                                // Import URI flow is implemented separately.
+                            onImportOtpUri = { uri ->
+                                importOtpUriViewModel.onUriChanged(uri)
+                                route = AppRoute.IMPORT_OTP_URI
+                            },
+                        )
+                    }
+
+                    AppRoute.IMPORT_OTP_URI -> {
+                        val state by importOtpUriViewModel.state.collectAsState()
+
+                        ImportOtpUriScreen(
+                            state = state,
+                            onUriChanged = importOtpUriViewModel::onUriChanged,
+                            onBack = {
+                                route = AppRoute.ADD_ACCOUNT
+                            },
+                            onContinue = {
+                                importOtpUriViewModel.parse()
+                                    .onSuccess { result ->
+                                        qrAccountDetailsViewModel = AccountDetailsViewModel(result)
+                                        route = AppRoute.QR_ACCOUNT_DETAILS
+                                    }
                             },
                         )
                     }
