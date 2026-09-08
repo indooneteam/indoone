@@ -12,38 +12,32 @@ class AppLockViewModel : ViewModel() {
         val pin: String = "",
         val newPin: String = "",
         val error: String = "",
-        val completed: Boolean = false,
     )
 
-    enum class Step { NONE, CREATE, CURRENT, NEW, CONFIRM, UNLOCK }
+    enum class Step { NONE, CREATE, CURRENT, NEW, CONFIRM, DISABLE }
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
 
     fun sync(hasPin: Boolean) {
-        _state.value = _state.value.copy(hasPin = hasPin, error = "", completed = false)
+        _state.value = _state.value.copy(hasPin = hasPin, error = "")
     }
 
     fun startCreate() {
-        _state.value = _state.value.copy(step = Step.CREATE, pin = "", newPin = "", error = "", completed = false)
+        _state.value = State(step = Step.CREATE)
     }
 
     fun startChange() {
-        _state.value = _state.value.copy(step = Step.CURRENT, pin = "", newPin = "", error = "", completed = false)
+        _state.value = State(hasPin = true, step = Step.CURRENT)
     }
 
     fun startDisable() {
-        _state.value = _state.value.copy(step = Step.CURRENT, pin = "", newPin = "", error = "", completed = false)
-    }
-
-    fun startUnlock() {
-        _state.value = _state.value.copy(step = Step.UNLOCK, pin = "", newPin = "", error = "", completed = false)
+        _state.value = State(hasPin = true, step = Step.DISABLE)
     }
 
     fun appendDigit(digit: Char) {
         val current = _state.value.pin
-        if (current.length >= 12) return
-        _state.value = _state.value.copy(pin = current + digit, error = "")
+        if (current.length < 12) _state.value = _state.value.copy(pin = current + digit, error = "")
     }
 
     fun backspace() {
@@ -54,19 +48,15 @@ class AppLockViewModel : ViewModel() {
         _state.value = _state.value.copy(pin = "", error = "")
     }
 
+    fun setStep(step: Step) {
+        _state.value = _state.value.copy(step = step, pin = "", error = "")
+    }
+
     fun setNewPin(value: String) {
-        _state.value = _state.value.copy(newPin = value, error = "")
+        _state.value = _state.value.copy(newPin = value)
     }
 
     fun error(message: String) {
         _state.value = _state.value.copy(error = message)
-    }
-
-    fun resetInput() {
-        _state.value = _state.value.copy(pin = "", error = "")
-    }
-
-    fun markCompleted() {
-        _state.value = _state.value.copy(completed = true, error = "")
     }
 }
