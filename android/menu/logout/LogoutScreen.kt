@@ -16,10 +16,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.authentication.AuthSessionStore
-import kotlinx.coroutines.launch
 
 @Composable
 fun LogoutScreen(
@@ -36,7 +35,7 @@ fun LogoutScreen(
         onDismissRequest = { if (!working) onDismiss() },
         title = { Text("Log out on this device") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(10))) {
                 Text("This signs you out only from this device.")
                 error?.let { Text(it) }
             }
@@ -50,7 +49,6 @@ fun LogoutScreen(
                     scope.launch {
                         runCatching {
                             clearLocalSession(context)
-                            AuthSessionStore(context).clear()
                             auth.signOut()
                         }.onSuccess {
                             onLoggedOut()
@@ -76,6 +74,7 @@ fun LogoutScreen(
 
 private fun clearLocalSession(context: Context) {
     context.filesDir.resolve("accounts.enc").delete()
+    AuthSessionStore(context).clear()
     context.getSharedPreferences("indoone_app_lock", Context.MODE_PRIVATE).edit().clear().apply()
     context.getSharedPreferences("indoone_biometric_unlock", Context.MODE_PRIVATE).edit().clear().apply()
     context.getSharedPreferences("indoone_auto_lock", Context.MODE_PRIVATE).edit().clear().apply()
