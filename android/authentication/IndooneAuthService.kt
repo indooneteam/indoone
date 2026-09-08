@@ -1,9 +1,9 @@
 package com.indoone.authentication
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -24,18 +24,14 @@ class IndooneAuthService(
     suspend fun login(identifier: String, password: String) {
         val raw = identifier.trim()
         if (raw.isBlank() || password.isBlank()) throw AuthException("Enter your email/mobile number and password.")
-
-        val email = if (raw.contains('@')) {
-            raw.lowercase()
-        } else {
-            resolveMobile(raw).email
-        }
+        val email = if (raw.contains('@')) raw.lowercase() else resolveMobile(raw).email
 
         withContext(Dispatchers.IO) {
             try {
                 await(auth.signInWithEmailAndPassword(email, password))
                 val user = auth.currentUser ?: throw AuthException("Login session expired. Please login again.")
-                val profile = await(database.reference.child("users").child(user.uid).child("profile").get()).value as? Map<*, *>
+                val profileSnapshot = await(database.reference.child("users").child(user.uid).child("profile").get())
+                val profile = profileSnapshot.value as? Map<*, *>
                 val savedEmail = profile?.get("email")?.toString()?.trim()?.lowercase().orEmpty()
                 if (raw.contains('@') && savedEmail.isNotBlank() && savedEmail != email) {
                     throw AuthException("The account profile does not match this email address.")
@@ -104,9 +100,7 @@ class IndooneAuthService(
         if (password.length < 6) throw AuthException("Password should be at least 6 characters.")
 
         withContext(Dispatchers.IO) {
-            if (identityExists(email, mobile)) {
-                throw AuthException("An account already exists with this email or mobile number.")
-            }
+            if (identityExists(email, mobile)) throw AuthException("An account already exists with this email or mobile number.")
             val result = post("/api/auth/signup/request-otp", JSONObject().apply {
                 put("email", email)
                 put("name", "Indoone user")
@@ -114,6 +108,19 @@ class IndooneAuthService(
             val challengeId = result.optString("challengeId")
             if (challengeId.isBlank()) throw AuthException("OTP service did not return a challenge ID.")
             signupPending = SignupPending(email, mobile, password, challengeId)
+        }
+    }
+
+    suspend fun resendSignupOtp() {
+        val pending = signupPending ?: throw AuthException("Signup session expired. Enter your details again.")
+        withContext(Dispatchers.IO) {
+            val result = post("/api/auth/resend-otp", JSONObject().apply {
+                put("email", pending.email)
+                put("purpose", "signup")
+            })
+            val challengeId = result.optString("challengeId")
+            if (challengeId.isBlank()) throw AuthException("OTP service did not return a new challenge ID.")
+            signupPending = pending.copy(challengeId = challengeId)
         }
     }
 
@@ -139,7 +146,7 @@ class IndooneAuthService(
                 val user = await(auth.createUserWithEmailAndPassword(pending.email, pending.password)).user
                     ?: throw AuthException("Could not create the Indoone account.")
                 syncProfile(user.uid, pending.email, pending.mobile)
-                result.optString("welcomeToken")?.takeIf { it.isNotBlank() }?.let { welcomeToken ->
+                result.optString("welcomeToken").takeIf { it.isNotBlank() }?.let { welcomeToken ->
                     runCatching {
                         post("/api/auth/signup/welcome", JSONObject().apply {
                             put("email", pending.email)
@@ -228,7 +235,7 @@ class IndooneAuthService(
                 ?.use { it.readText() }
                 .orEmpty()
             val result = runCatching { JSONObject(text) }.getOrElse { JSONObject() }
-            if (connection.responseCode !in 200..299 || result.optBoolean("ok").not() && result.has("ok")) {
+            if (connection.responseCode !in 200..299 || (result.has("ok") && !result.optBoolean("ok", false))) {
                 throw AuthException(result.optString("error").ifBlank { "OTP service request failed (${connection.responseCode})." })
             }
             result
@@ -238,9 +245,9 @@ class IndooneAuthService(
     }
 
     private fun normalizeError(error: Throwable): Throwable {
+        if (error is AuthException) return error
         val message = error.message.orEmpty()
         return when {
-            error is AuthException -> error
             message.contains("INVALID_EMAIL", true) -> AuthException("Enter a valid email address.")
             message.contains("USER_NOT_FOUND", true) -> AuthException("No Indoone account was found.")
             message.contains("WRONG_PASSWORD", true) || message.contains("INVALID_CREDENTIAL", true) -> AuthException("Email or password is incorrect.")
