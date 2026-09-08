@@ -1,3 +1,3 @@
 # Privacy Policy
 
-Menu feature subfeature.
+Android menu feature implementing the Privacy Policy content from the main reference.
