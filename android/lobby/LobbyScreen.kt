@@ -3,8 +3,11 @@ package com.indoone.lobby
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,10 @@ import androidx.compose.ui.unit.dp
 fun LobbyScreen(
     state: LobbyState = LobbyState(),
     onDone: () -> Unit = {},
+    onAccountsClick: () -> Unit = {},
+    onLobbyClick: () -> Unit = {},
+    onConnectClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -72,5 +79,77 @@ fun LobbyScreen(
                 Text("Done")
             }
         }
+
+        LobbyBottomNav(
+            onAccountsClick = onAccountsClick,
+            onLobbyClick = onLobbyClick,
+            onConnectClick = onConnectClick,
+            onSettingsClick = onSettingsClick,
+        )
+    }
+}
+
+@Composable
+private fun LobbyBottomNav(
+    onAccountsClick: () -> Unit,
+    onLobbyClick: () -> Unit,
+    onConnectClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+) {
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 2.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LobbyNavItem("♟", "Accounts", false, onAccountsClick)
+                LobbyNavItem("◆", "Lobby", true, onLobbyClick)
+                LobbyNavItem("↔", "Connect", false, onConnectClick)
+                LobbyNavItem("☷", "Settings", false, onSettingsClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LobbyNavItem(
+    icon: String,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (active) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+            )
+            .padding(horizontal = 18.dp, vertical = 6.dp)
+            .then(Modifier),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = icon,
+            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
