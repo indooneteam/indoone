@@ -30,10 +30,11 @@ import androidx.compose.ui.unit.dp
 import com.indoone.accounts.AccountRepository
 import com.indoone.accounts.TrashRecord
 import com.indoone.menu.AppBottomNav
+import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import kotlinx.coroutines.launch
-import kotlin.math.max
 import kotlin.math.ceil
+import kotlin.math.max
 
 @Composable
 fun TrashScreen(
@@ -65,7 +66,10 @@ fun TrashScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(onMenuClick = onBack)
         Column(
-            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
         ) {
             Text("TRASH", style = MaterialTheme.typography.labelSmall)
             Text("Deleted accounts", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -116,7 +120,7 @@ fun TrashScreen(
             }
         }
         AppBottomNav(
-            active = "settings",
+            activeTab = AppTab.SETTINGS,
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
             onConnectClick = onConnectClick,
@@ -128,9 +132,7 @@ fun TrashScreen(
         AlertDialog(
             onDismissRequest = { selectedDelete = null },
             title = { Text("Permanently delete ${item.account.name}?") },
-            text = {
-                Text("This removes the account from Trash and cannot be undone.")
-            },
+            text = { Text("This removes the account from Trash and cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
