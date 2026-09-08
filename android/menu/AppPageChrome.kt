@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -112,7 +113,7 @@ fun AppBottomNav(
 enum class AppTab { ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
-private fun AppBottomNavItem(
+private fun RowScope.AppBottomNavItem(
     icon: String,
     label: String,
     active: Boolean,
