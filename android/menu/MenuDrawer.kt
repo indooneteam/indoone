@@ -1,0 +1,117 @@
+package com.indoone.menu
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun MenuDrawer(
+    accountCount: Int,
+    onDismiss: () -> Unit,
+    onAccounts: () -> Unit,
+    onFavorites: () -> Unit,
+    onTrash: () -> Unit,
+    onSecurity: () -> Unit,
+    onTerms: () -> Unit,
+    onPrivacy: () -> Unit,
+    onAbout: () -> Unit,
+    onLock: () -> Unit,
+    onDangerZone: () -> Unit,
+    onLogout: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(Color.Black.copy(alpha = 0.30f))
+                .clickable(onClick = onDismiss),
+        )
+        Surface(
+            modifier = Modifier
+                .width(320.dp)
+                .fillMaxHeight(),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 16.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 20.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Surface(
+                        color = Color(0xFF6D35E8),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                    ) {
+                        Text("I", color = Color.White, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp))
+                    }
+                    Column(modifier = Modifier.padding(start = 10.dp)) {
+                        Text("Indoone", style = MaterialTheme.typography.titleLarge)
+                        Text("Authenticator", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                Spacer(Modifier.padding(top = 10.dp))
+                DrawerItem("▦", "All Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
+                DrawerItem("☆", "Favorites", null, onFavorites)
+                DrawerItem("♙", "Trash", null, onTrash)
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+
+                DrawerItem("◈", "Security", null, onSecurity)
+                DrawerItem("▤", "Terms of Use", null, onTerms)
+                DrawerItem("▥", "Privacy Policy", null, onPrivacy)
+                DrawerItem("ⓘ", "About Indoone", null, onAbout)
+                DrawerItem("▣", "Lock App", null, onLock)
+                DrawerItem("⚠", "Danger Zone", null, onDangerZone)
+                DrawerItem("⇥", "Log out", null, onLogout)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawerItem(
+    icon: String,
+    title: String,
+    trailing: String?,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(icon, style = MaterialTheme.typography.titleMedium)
+        Text(title, modifier = Modifier.weight(1f).padding(start = 14.dp), style = MaterialTheme.typography.bodyLarge)
+        trailing?.let {
+            Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
