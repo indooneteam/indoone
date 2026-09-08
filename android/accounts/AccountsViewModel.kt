@@ -1,6 +1,7 @@
 package com.indoone.accounts
 
 import androidx.lifecycle.ViewModel
+import com.indoone.accounts.sort.AccountSortOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +24,7 @@ class AccountsViewModel : ViewModel() {
 
     fun toggleSort() {
         _state.value = _state.value.copy(
-            sortAscending = !_state.value.sortAscending,
+            sortOrder = _state.value.sortOrder.toggled(),
         )
     }
 
