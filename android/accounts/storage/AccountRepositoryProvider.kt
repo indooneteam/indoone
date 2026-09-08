@@ -13,7 +13,8 @@ import com.indoone.accounts.AccountRepository
 class AccountRepositoryProvider(
     context: Context,
 ) : AccountRepository {
-    private val local = EncryptedAccountRepository(context)
+    private val appContext = context.applicationContext
+    private val local = EncryptedAccountRepository(appContext)
     private val cloud = createCloudRepository()
 
     override suspend fun save(account: AccountRecord) {
@@ -25,13 +26,11 @@ class AccountRepositoryProvider(
     }
 
     private fun activeRepository(): AccountRepository {
-        val firebaseRepository = cloud
-
         return if (
-            firebaseRepository != null &&
+            cloud != null &&
             FirebaseAuth.getInstance().currentUser != null
         ) {
-            firebaseRepository
+            cloud
         } else {
             local
         }
@@ -39,19 +38,11 @@ class AccountRepositoryProvider(
 
     private fun createCloudRepository(): AccountRepository? {
         return runCatching {
-            if (FirebaseApp.getApps(localContext).isEmpty()) {
+            if (FirebaseApp.getApps(appContext).isEmpty()) {
                 null
             } else {
                 FirebaseAccountRepository()
             }
         }.getOrNull()
-    }
-
-    private companion object {
-        lateinit var localContext: Context
-    }
-
-    init {
-        localContext = context.applicationContext
     }
 }
