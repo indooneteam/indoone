@@ -27,146 +27,108 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LoginScreen(
-    onSendOtp: (identifier: String, password: String) -> Unit = { _, _ -> },
-    onVerifyOtp: (otp: String) -> Unit = {},
-    onForgotPassword: () -> Unit = {},
-    onCreateAccount: () -> Unit = {},
+    busy: Boolean,
+    status: String,
+    error: String,
+    otpVisible: Boolean,
+    onSendOtp: (identifier: String, password: String) -> Unit,
+    onVerifyOtp: (otp: String) -> Unit,
+    onResendOtp: () -> Unit,
+    onCreateAccount: () -> Unit,
 ) {
     var identifier by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var otp by rememberSaveable { mutableStateOf("") }
-    var otpVisible by rememberSaveable { mutableStateOf(false) }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 22.dp, vertical = 48.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 48.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            text = "Indoone",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        Text(
-            text = "Authenticator",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-
+        Text("Indoone", style = MaterialTheme.typography.headlineSmall)
+        Text("Authenticator", style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(44.dp))
-
-        Text(
-            text = "SECURE & PRIVATE",
-            style = MaterialTheme.typography.labelSmall,
-        )
-        Text(
-            text = "Welcome back",
-            style = MaterialTheme.typography.headlineLarge,
-        )
-        Text(
-            text = "Sign in to protect and sync your authenticator vault.",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-
+        Text("SECURE & PRIVATE", style = MaterialTheme.typography.labelSmall)
+        Text("Welcome back", style = MaterialTheme.typography.headlineLarge)
+        Text("Sign in to protect and sync your authenticator vault.", style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(20.dp))
 
-        Text(
-            text = "EMAIL OR MOBILE NUMBER",
-            style = MaterialTheme.typography.labelMedium,
-        )
+        Text("EMAIL OR MOBILE NUMBER", style = MaterialTheme.typography.labelMedium)
         OutlinedTextField(
             value = identifier,
             onValueChange = { identifier = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("you@example.com or 98765 43210") },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next,
-            ),
+            enabled = !otpVisible && !busy,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
 
         Spacer(Modifier.height(14.dp))
-
-        Text(
-            text = "PASSWORD",
-            style = MaterialTheme.typography.labelMedium,
-        )
+        Text("PASSWORD", style = MaterialTheme.typography.labelMedium)
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Enter your password") },
             singleLine = true,
-            visualTransformation = if (passwordVisible) {
-                VisualTransformation.None
-            } else {
-                PasswordVisualTransformation()
-            },
+            enabled = !otpVisible && !busy,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                TextButton(onClick = { passwordVisible = !passwordVisible }, enabled = !busy) {
                     Text(if (passwordVisible) "Hide" else "Show")
                 }
             },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done,
-            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
 
-        TextButton(
-            onClick = onForgotPassword,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Forgot password?")
-        }
-
+        Spacer(Modifier.height(14.dp))
         Button(
-            onClick = {
-                onSendOtp(identifier.trim(), password)
-                otpVisible = true
-            },
+            onClick = { onSendOtp(identifier, password) },
             modifier = Modifier.fillMaxWidth(),
+            enabled = !busy && !otpVisible && identifier.isNotBlank() && password.isNotBlank(),
         ) {
-            Text("Send OTP")
+            Text(if (busy) "Sending…" else "Send OTP")
         }
 
         if (otpVisible) {
+            Spacer(Modifier.height(16.dp))
+            Text(status.ifBlank { "OTP sent. Check your email." }, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
-            Text("OTP sent to ${identifier.ifBlank { "your account" }}")
             OutlinedTextField(
                 value = otp,
-                onValueChange = { value ->
-                    otp = value.filter(Char::isDigit).take(6)
-                },
+                onValueChange = { otp = it.filter(Char::isDigit).take(6) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("VERIFICATION OTP") },
                 placeholder = { Text("Enter 6-digit OTP") },
                 singleLine = true,
+                enabled = !busy,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Button(
                 onClick = { onVerifyOtp(otp) },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !busy && otp.length == 6,
             ) {
-                Text("Verify & Login")
+                Text(if (busy) "Verifying…" else "Verify & Login")
+            }
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = onResendOtp, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Text("Resend OTP")
             }
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        TextButton(
-            onClick = onCreateAccount,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Create Account")
+        if (error.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(Modifier.height(10.dp))
-        Text(
-            text = "Protect your Indoone account with password and email OTP verification.",
-            style = MaterialTheme.typography.bodySmall,
-        )
+        TextButton(onClick = onCreateAccount, modifier = Modifier.fillMaxWidth(), enabled = !busy) {
+            Text("Create Account")
+        }
+        Spacer(Modifier.height(10.dp))
+        Text("Protect your Indoone account with password and email OTP verification.", style = MaterialTheme.typography.bodySmall)
     }
 }
