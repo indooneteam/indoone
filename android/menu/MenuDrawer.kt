@@ -3,7 +3,6 @@ package com.indoone.menu
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.applock.lockapp.LockAppActivity
@@ -49,6 +49,7 @@ fun MenuDrawer(
 ) {
     val context = LocalContext.current
     var showTerms by remember { mutableStateOf(false) }
+    var showDangerZone by remember { mutableStateOf(false) }
 
     if (showTerms) {
         TermsOfUseScreen(
@@ -57,6 +58,17 @@ fun MenuDrawer(
             onLobbyClick = { showTerms = false },
             onConnectClick = { showTerms = false },
             onSettingsClick = { showTerms = false; onDismiss() },
+        )
+        return
+    }
+
+    if (showDangerZone) {
+        DangerZoneScreen(
+            onBack = { showDangerZone = false },
+            onAccountsClick = { showDangerZone = false; onAccounts() },
+            onLobbyClick = { showDangerZone = false },
+            onConnectClick = { showDangerZone = false },
+            onSettingsClick = { showDangerZone = false; onDismiss() },
         )
         return
     }
@@ -117,7 +129,7 @@ fun MenuDrawer(
                         onLock()
                     }
                 }
-                DrawerItem("⚠", "Danger Zone", null, onDangerZone)
+                DrawerItem("⚠", "Danger Zone", null) { showDangerZone = true }
                 DrawerItem("⇥", "Log out", null, onLogout)
             }
         }
