@@ -1,6 +1,7 @@
 package com.indoone.accounts
 
 import androidx.compose.runtime.Immutable
+import com.indoone.accounts.sort.AccountSortOrder
 
 @Immutable
 data class AccountItem(
@@ -17,7 +18,7 @@ data class AccountItem(
 data class AccountsState(
     val accounts: List<AccountItem> = emptyList(),
     val searchQuery: String = "",
-    val sortAscending: Boolean = true,
+    val sortOrder: AccountSortOrder = AccountSortOrder.ASCENDING,
 ) {
     val filteredAccounts: List<AccountItem>
         get() {
@@ -31,10 +32,9 @@ data class AccountsState(
                 }
             }
 
-            return if (sortAscending) {
-                filtered.sortedBy { it.name.lowercase() }
-            } else {
-                filtered.sortedByDescending { it.name.lowercase() }
+            return when (sortOrder) {
+                AccountSortOrder.ASCENDING -> filtered.sortedBy { it.name.lowercase() }
+                AccountSortOrder.DESCENDING -> filtered.sortedByDescending { it.name.lowercase() }
             }
         }
 }
