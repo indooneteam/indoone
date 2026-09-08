@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountRepository
+import com.indoone.accounts.TrashRecord
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -16,66 +17,97 @@ class FirebaseAccountRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : AccountRepository {
     override suspend fun save(account: AccountRecord) {
-        val uid = auth.currentUser?.uid
-            ?: throw IllegalStateException("Please login first.")
-
-        val data = hashMapOf(
-            "id" to account.id,
-            "name" to account.name,
-            "email" to account.email,
-            "secret" to account.secret,
-            "digits" to account.digits,
-            "period" to account.period,
-            "algorithm" to account.algorithm,
-            "provider" to account.provider,
-            "service" to account.service,
-            "favorite" to account.favorite,
-            "createdAt" to account.createdAt,
-            "updatedAt" to account.updatedAt,
-        )
-
+        val uid = requireUid()
         awaitTask {
-            firestore.collection("users")
-                .document(uid)
-                .collection("accounts")
-                .document(account.id)
-                .set(data)
+            accounts(uid).document(account.id).set(account.toMap())
         }
     }
 
     override suspend fun getAll(): List<AccountRecord> {
-        val uid = auth.currentUser?.uid
-            ?: throw IllegalStateException("Please login first.")
-
-        val snapshot = awaitTask {
-            firestore.collection("users")
-                .document(uid)
-                .collection("accounts")
-                .get()
-        }
-
-        return snapshot.documents.mapNotNull { it.toAccountRecord() }
-            .sortedBy { it.name.lowercase() }
+        val snapshot = awaitTask { accounts(requireUid()).get() }
+        return snapshot.documents.mapNotNull { it.toAccountRecord() }.sortedBy { it.name.lowercase() }
     }
 
     override suspend fun remove(id: String) {
-        val uid = auth.currentUser?.uid
-            ?: throw IllegalStateException("Please login first.")
-
-        awaitTask {
-            firestore.collection("users")
-                .document(uid)
-                .collection("accounts")
-                .document(id)
-                .delete()
-        }
+        awaitTask { accounts(requireUid()).document(id).delete() }
     }
+
+    override suspend fun moveToTrash(id: String) {
+        val uid = requireUid()
+        val reference = accounts(uid).document(id)
+        val snapshot = awaitTask { reference.get() }
+        val account = snapshot.toAccountRecord() ?: throw IllegalStateException("Account not found.")
+        val now = System.currentTimeMillis()
+        val trashData = account.toMap() + mapOf(
+            "deletedAt" to now,
+            "purgeAt" to now + TRASH_DURATION_MS,
+        )
+        awaitTask { trash(uid).document(id).set(trashData) }
+        awaitTask { reference.delete() }
+    }
+
+    override suspend fun listTrash(): List<TrashRecord> {
+        val uid = requireUid()
+        val snapshot = awaitTask { trash(uid).get() }
+        val now = System.currentTimeMillis()
+        val valid = mutableListOf<TrashRecord>()
+        snapshot.documents.forEach { document ->
+            val account = document.toAccountRecord() ?: return@forEach
+            val deletedAt = document.getLong("deletedAt") ?: 0L
+            val purgeAt = document.getLong("purgeAt") ?: (deletedAt + TRASH_DURATION_MS)
+            if (purgeAt > now) {
+                valid += TrashRecord(account, deletedAt, purgeAt)
+            } else {
+                document.reference.delete()
+            }
+        }
+        return valid.sortedByDescending { it.deletedAt }
+    }
+
+    override suspend fun restoreFromTrash(id: String): AccountRecord {
+        val uid = requireUid()
+        val reference = trash(uid).document(id)
+        val snapshot = awaitTask { reference.get() }
+        val account = snapshot.toAccountRecord() ?: throw IllegalStateException("Trash account not found.")
+        val purgeAt = snapshot.getLong("purgeAt") ?: 0L
+        if (purgeAt <= System.currentTimeMillis()) {
+            awaitTask { reference.delete() }
+            throw IllegalStateException("Trash item has expired.")
+        }
+        awaitTask { accounts(uid).document(id).set(account.toMap()) }
+        awaitTask { reference.delete() }
+        return account
+    }
+
+    override suspend fun permanentlyDeleteFromTrash(id: String) {
+        awaitTask { trash(requireUid()).document(id).delete() }
+    }
+
+    private fun requireUid(): String = auth.currentUser?.uid
+        ?: throw IllegalStateException("Please login first.")
+
+    private fun accounts(uid: String) = firestore.collection("users").document(uid).collection("accounts")
+    private fun trash(uid: String) = firestore.collection("users").document(uid).collection("trash")
+
+    private fun AccountRecord.toMap(): Map<String, Any> = hashMapOf(
+        "id" to id,
+        "name" to name,
+        "email" to email,
+        "secret" to secret,
+        "digits" to digits,
+        "period" to period,
+        "algorithm" to algorithm,
+        "provider" to provider,
+        "service" to service,
+        "favorite" to favorite,
+        "createdAt" to createdAt,
+        "updatedAt" to updatedAt,
+    )
 
     private fun com.google.firebase.firestore.DocumentSnapshot.toAccountRecord(): AccountRecord? {
         val recordId = getString("id") ?: id
         val name = getString("name") ?: return null
         val secret = getString("secret") ?: return null
-
         return AccountRecord(
             id = recordId,
             name = name,
@@ -102,5 +134,9 @@ class FirebaseAccountRepository(
             .addOnFailureListener { error ->
                 if (continuation.isActive) continuation.resumeWithException(error)
             }
+    }
+
+    private companion object {
+        const val TRASH_DURATION_MS = 30L * 24L * 60L * 60L * 1000L
     }
 }
