@@ -9,30 +9,41 @@ import java.nio.charset.StandardCharsets
  */
 object QrOtpAuthParser {
     fun parse(rawValue: String): Result<QrAccountResult> {
-        val uri = Uri.parse(rawValue.trim())
+        val value = rawValue.trim()
+        val uri = Uri.parse(value)
 
         if (!uri.scheme.equals("otpauth", ignoreCase = true)) {
-            return Result.failure(IllegalArgumentException("QR code is not an OTPAuth URI."))
+            return Result.failure(
+                IllegalArgumentException("QR code is not an OTPAuth URI."),
+            )
         }
 
         if (!uri.host.equals("totp", ignoreCase = true)) {
-            return Result.failure(IllegalArgumentException("Only TOTP QR codes are supported."))
+            return Result.failure(
+                IllegalArgumentException("Only TOTP QR codes are supported."),
+            )
         }
 
-        val secret = uri.getQueryParameter("secret")?.trim().orEmpty()
+        val secret = uri.getQueryParameter("secret")
+            ?.replace(" ", "")
+            ?.replace("-", "")
+            ?.uppercase()
+            .orEmpty()
+
         if (secret.isBlank()) {
-            return Result.failure(IllegalArgumentException("TOTP secret is missing."))
+            return Result.failure(
+                IllegalArgumentException("TOTP secret is missing."),
+            )
         }
 
-        val rawLabel = uri.path?.removePrefix("/").orEmpty()
-        val decodedLabel = decode(rawLabel)
+        val label = decode(uri.path?.removePrefix("/").orEmpty())
         val issuer = uri.getQueryParameter("issuer")?.trim().orEmpty()
-        val label = decodedLabel.ifBlank { issuer.ifBlank { "Account" } }
-
         val parts = label.split(":", limit = 2)
         val labelIssuer = parts.firstOrNull()?.trim().orEmpty()
-        val email = if (parts.size == 2) parts[1].trim() else label
-        val name = issuer.ifBlank { labelIssuer.ifBlank { "Account" } }
+        val account = if (parts.size == 2) parts[1].trim() else label
+        val name = issuer.ifBlank {
+            labelIssuer.ifBlank { "Account" }
+        }
 
         val algorithm = uri.getQueryParameter("algorithm")
             ?.trim()
@@ -42,7 +53,7 @@ object QrOtpAuthParser {
 
         val digits = uri.getQueryParameter("digits")
             ?.toIntOrNull()
-            ?.takeIf { it in 6..8 }
+            ?.takeIf { it == 6 || it == 8 }
             ?: 6
 
         val period = uri.getQueryParameter("period")
@@ -53,7 +64,7 @@ object QrOtpAuthParser {
         return Result.success(
             QrAccountResult(
                 name = name,
-                email = email,
+                email = account,
                 secret = secret,
                 issuer = issuer,
                 algorithm = algorithm,
