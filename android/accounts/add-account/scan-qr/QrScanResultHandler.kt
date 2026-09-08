@@ -1,10 +1,7 @@
 package com.indoone.accounts.addaccount.scanqr
 
 /**
- * Coordinates the scanner result with the account-details transition.
- *
- * Parsing remains inside the Scan QR feature. The host decides what to do with
- * the parsed result, keeping persistence and navigation outside the scanner.
+ * Converts a scanner payload into the data required by account-details.
  */
 class QrScanResultHandler(
     private val onAccountDetailsReady: (QrManualPrefill) -> Unit,
@@ -18,9 +15,8 @@ class QrScanResultHandler(
             return
         }
 
-        val result = try {
-            QrOtpAuthParser.parse(value)
-        } catch (error: IllegalArgumentException) {
+        val parsed = QrOtpAuthParser.parse(value)
+        val result = parsed.getOrElse { error ->
             onInvalidQr(error.message ?: "Unable to read this QR code.")
             return
         }
@@ -30,8 +26,6 @@ class QrScanResultHandler(
             return
         }
 
-        onAccountDetailsReady(
-            QrManualPrefill.from(result),
-        )
+        onAccountDetailsReady(QrManualPrefill.from(result))
     }
 }
