@@ -6,15 +6,15 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.MotionEvent
-import android.view.View
 import android.view.Window
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.ComposeView
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
+import com.indoone.settings.unlock.AutoLockUnlockScreen
 
 class AutoLockController(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
