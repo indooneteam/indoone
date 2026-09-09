@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -22,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -110,6 +110,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .widthIn(max = 430.dp)
                         .wrapContentHeight()
+                        .navigationBarsPadding()
                         .padding(bottom = 14.dp)
                         .clickable(onClick = {}),
                     shape = RoundedCornerShape(25.dp),
@@ -332,6 +333,7 @@ private fun ProfileFormSheet(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
+            .navigationBarsPadding()
             .padding(bottom = 14.dp)
             .clickable(onClick = {}),
         shape = RoundedCornerShape(25.dp),
