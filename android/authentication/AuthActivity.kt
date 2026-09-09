@@ -2,6 +2,7 @@ package com.indoone.authentication
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -90,6 +91,7 @@ class AuthActivity : ComponentActivity() {
                                     .onSuccess { destination ->
                                         otpEmail = destination
                                         status = "New OTP sent. Check your email."
+                                        Toast.makeText(this@AuthActivity, "New OTP sent to your email.", Toast.LENGTH_SHORT).show()
                                     }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
                                 busy = false
@@ -139,6 +141,7 @@ class AuthActivity : ComponentActivity() {
                                     .onSuccess { destination ->
                                         otpEmail = destination
                                         status = "New OTP sent. Check your email."
+                                        Toast.makeText(this@AuthActivity, "New OTP sent to your email.", Toast.LENGTH_SHORT).show()
                                     }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
                                 busy = false
