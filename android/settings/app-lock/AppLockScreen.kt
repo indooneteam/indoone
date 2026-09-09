@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -41,8 +42,7 @@ fun AppLockScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x5519141F))
-            .padding(14.dp)
+            .background(Color.White)
             .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -50,6 +50,8 @@ fun AppLockScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 430.dp)
+                .navigationBarsPadding()
+                .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
                 .clickable(onClick = {}),
             shape = RoundedCornerShape(25.dp),
             color = Color.White,
