@@ -169,12 +169,45 @@ private fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
 
 @Composable
 private fun DangerModalShell(onBack: () -> Unit, title: String? = null, content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color(0x8819141F)), contentAlignment = Alignment.BottomCenter) {
-        Surface(Modifier.fillMaxWidth().fillMaxHeight(0.88f), color = Color.White, shadowElevation = 14.dp, shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp)) {
-            Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(title ?: "Danger Zone", Modifier.weight(1f), fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E1A22))
-                    Box(Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x5519141F))
+            .clickable(onClick = onBack),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp)
+                .clickable(onClick = {}),
+            color = Color.White,
+            shadowElevation = 14.dp,
+            shape = RoundedCornerShape(25.dp),
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 21.dp, vertical = 20.dp),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        title ?: "Danger Zone",
+                        Modifier.weight(1f),
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1A22),
+                    )
+                    Box(
+                        Modifier
+                            .size(35.dp)
+                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))
+                            .clickable(onClick = onBack),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Text("×", fontSize = 23.sp, lineHeight = 23.sp, color = Color(0xFF5D5666))
                     }
                 }
