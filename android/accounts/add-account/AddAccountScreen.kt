@@ -5,9 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,12 +17,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.QrCode2
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -96,22 +100,24 @@ fun AddAccountScreen(
                 )
             }
 
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 22.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 AddAccountOption(
-                    icon = "▦",
+                    icon = Icons.Outlined.QrCode2,
                     title = "Scan QR Code",
                     description = "Use your camera to scan a TOTP QR code.",
+                    modifier = Modifier.weight(1f),
                     onClick = onScanQr,
                 )
                 AddAccountOption(
-                    icon = "⌨",
+                    icon = Icons.Outlined.Keyboard,
                     title = "Enter Setup Key",
                     description = "Enter the secret key and account details manually.",
+                    modifier = Modifier.weight(1f),
                     onClick = onEnterSetupKey,
                 )
             }
@@ -187,22 +193,27 @@ fun AddAccountScreen(
 
 @Composable
 private fun AddAccountOption(
-    icon: String,
+    icon: ImageVector,
     title: String,
     description: String,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
+        modifier = modifier
+            .height(150.dp)
             .background(Color.White, RoundedCornerShape(18.dp))
             .border(1.dp, Color(0xFFE8E3EC), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(icon, color = Color(0xFF302A38), fontSize = 28.sp, lineHeight = 28.sp)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.height(28.dp),
+            tint = Color(0xFF302A38),
+        )
         Text(title, color = Color(0xFF17141B), fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Text(description, color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 18.sp)
     }
