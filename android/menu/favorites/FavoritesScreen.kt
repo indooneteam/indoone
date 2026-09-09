@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -154,12 +155,6 @@ private fun FavoritesAccountsBackdrop(
                 onSearchClick = {},
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp)
-                    .size(height = 44.dp, width = 1.dp),
-            )
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
