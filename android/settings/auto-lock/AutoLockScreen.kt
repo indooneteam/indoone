@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -45,26 +46,31 @@ fun AutoLockScreen(
                 .fillMaxWidth()
                 .padding(14.dp)
                 .clickable(onClick = {}),
-            shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
+            shape = RoundedCornerShape(25.dp),
         ) {
-            Column(
-                modifier = Modifier.padding(23.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-            ) {
+            Column(Modifier.padding(horizontal = 23.dp, vertical = 21.dp)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "Auto-Lock",
-                        fontSize = 21.sp,
-                        lineHeight = 25.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C2733),
-                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Auto-Lock",
+                            fontSize = 21.sp,
+                            lineHeight = 25.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2C2733),
+                        )
+                        Text(
+                            "Automatically lock Indoone after a period of inactivity.",
+                            modifier = Modifier.padding(top = 5.dp),
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp,
+                            color = Color(0xFF756F7F),
+                        )
+                    }
                     IconButton(
                         onClick = onBack,
                         modifier = Modifier
@@ -76,48 +82,40 @@ fun AutoLockScreen(
                     }
                 }
 
-                Text(
-                    "Automatically lock the encrypted vault after you stop using Indoone.",
-                    modifier = Modifier.padding(top = 7.dp),
-                    fontSize = 14.sp,
-                    lineHeight = 21.sp,
-                    color = Color(0xFF756F7F),
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                listOf(
-                    1 to "After 1 minute",
-                    5 to "After 5 minutes",
-                    15 to "After 15 minutes",
-                ).forEach { (minutes, label) ->
-                    val selected = currentMinutes == minutes
-                    Surface(
-                        onClick = { onSelectMinutes(minutes) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (selected) Color(0xFFFAF7FF) else Color.White,
-                        border = BorderStroke(
-                            1.dp,
-                            if (selected) Color(0xFFCBB8EC) else Color(0xFFE6E0EE),
-                        ),
-                    ) {
-                        Row(
+                Spacer(Modifier.height(14.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(1, 5, 15).forEach { minutes ->
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                                .clickable { onSelectMinutes(minutes) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (currentMinutes == minutes) Color(0xFFFAF7FF) else Color.White,
+                            border = BorderStroke(
+                                1.dp,
+                                if (currentMinutes == minutes) Color(0xFFCBB8EC) else Color(0xFFE6E0EE),
+                            ),
                         ) {
-                            Text(
-                                label,
-                                fontSize = 14.sp,
-                                color = if (selected) Color(0xFF5C2AC7) else Color(0xFF2C2733),
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            )
-                            Text("›", fontSize = 24.sp, color = Color(0xFF9A92A1))
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    "After $minutes minute${if (minutes == 1) "" else "s"}",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (currentMinutes == minutes) Color(0xFF5C2AC7) else Color(0xFF2C2733),
+                                )
+                                Text(
+                                    if (currentMinutes == minutes) "✓" else "›",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (currentMinutes == minutes) Color(0xFF5C2AC7) else Color(0xFF9B93A5),
+                                )
+                            }
                         }
                     }
                 }
