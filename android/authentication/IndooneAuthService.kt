@@ -21,15 +21,13 @@ class IndooneAuthService(
     private var loginPending: LoginPending? = null
     private var signupPending: SignupPending? = null
 
-    suspend fun login(identifier: String, password: String) {
+    suspend fun login(identifier: String, password: String): String {
         val raw = identifier.trim()
         if (raw.isBlank() || password.isBlank()) throw AuthException("Enter your email/mobile number and password.")
 
-        withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             try {
-                // Mobile lookup uses Tasks.await(), so it must stay off the main application thread.
                 val email = if (raw.contains('@')) raw.lowercase() else resolveMobile(raw).email
-
                 await(auth.signInWithEmailAndPassword(email, password))
                 val user = auth.currentUser ?: throw AuthException("Login session expired. Please login again.")
                 val profileSnapshot = await(database.reference.child("users").child(user.uid).child("profile").get())
@@ -53,6 +51,7 @@ class IndooneAuthService(
                 val challengeId = result.optString("challengeId")
                 if (challengeId.isBlank()) throw AuthException("OTP service did not return a challenge ID.")
                 loginPending = LoginPending(email, challengeId, user.uid)
+                email
             } catch (error: Throwable) {
                 auth.signOut()
                 throw normalizeError(error)
@@ -88,7 +87,7 @@ class IndooneAuthService(
         }
     }
 
-    suspend fun resendLoginOtp() {
+    suspend fun resendLoginOtp(): String {
         val pending = loginPending ?: throw AuthException("Login session expired. Please login again.")
         withContext(Dispatchers.IO) {
             val result = post("/api/auth/resend-otp", JSONObject().apply {
@@ -99,9 +98,10 @@ class IndooneAuthService(
             if (challengeId.isBlank()) throw AuthException("OTP service did not return a new challenge ID.")
             loginPending = pending.copy(challengeId = challengeId)
         }
+        return pending.email
     }
 
-    suspend fun startSignup(emailValue: String, mobileValue: String, password: String) {
+    suspend fun startSignup(emailValue: String, mobileValue: String, password: String): String {
         val email = emailValue.trim().lowercase()
         val mobile = normalizeMobile(mobileValue)
         if (!email.contains('@')) throw AuthException("Enter a valid email address.")
@@ -118,9 +118,10 @@ class IndooneAuthService(
             if (challengeId.isBlank()) throw AuthException("OTP service did not return a challenge ID.")
             signupPending = SignupPending(email, mobile, password, challengeId)
         }
+        return email
     }
 
-    suspend fun resendSignupOtp() {
+    suspend fun resendSignupOtp(): String {
         val pending = signupPending ?: throw AuthException("Signup session expired. Enter your details again.")
         withContext(Dispatchers.IO) {
             val result = post("/api/auth/resend-otp", JSONObject().apply {
@@ -131,6 +132,7 @@ class IndooneAuthService(
             if (challengeId.isBlank()) throw AuthException("OTP service did not return a new challenge ID.")
             signupPending = pending.copy(challengeId = challengeId)
         }
+        return pending.email
     }
 
     suspend fun verifySignupOtp(otp: String): String {
