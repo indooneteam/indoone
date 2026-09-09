@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.Canvas
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppSearchIcon
@@ -60,6 +62,8 @@ fun AccountsScreen(
     onSettingsClick: () -> Unit = {},
 ) {
     var searchVisible by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val navigationInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
 
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
@@ -105,7 +109,7 @@ fun AccountsScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 78.dp)
+                .padding(end = 20.dp, bottom = 78.dp + navigationInset)
                 .size(57.dp)
                 .background(Color(0xFF703BE2), RoundedCornerShape(19.dp))
                 .clickable(onClick = onAddAccount),
