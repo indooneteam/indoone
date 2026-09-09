@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.indoone.settings.SettingsScreen
 
 private fun profileIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
     ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
@@ -87,171 +88,186 @@ fun ProfileScreen(
     }
     var password by remember(sheet) { mutableStateOf("") }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0x8819141F))
-            .clickable(onClick = onBack),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 430.dp)
-                .wrapContentHeight()
-                .clickable(onClick = {}),
-            shape = RoundedCornerShape(25.dp),
-            color = Color.White,
-            shadowElevation = 14.dp,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 22.dp, vertical = 19.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        "Profile",
-                        color = Color(0xFF17151D),
-                        fontSize = 21.sp,
-                        lineHeight = 25.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Surface(
-                        modifier = Modifier
-                            .size(35.dp)
-                            .clickable(onClick = onBack),
-                        shape = RoundedCornerShape(11.dp),
-                        color = Color(0xFFF5F2F8),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("×", color = Color(0xFF242129), fontSize = 21.sp, lineHeight = 21.sp)
-                        }
-                    }
-                }
+    Box(Modifier.fillMaxSize()) {
+        // Keep the actual Settings screen underneath so the profile sheet and
+        // the change forms match the main web modal presentation.
+        SettingsScreen(
+            onMenuClick = onMenuClick,
+            onProfileClick = {},
+            onAccountsClick = onAccountsClick,
+            onLobbyClick = onLobbyClick,
+            onConnectClick = onConnectClick,
+            onSettingsClick = onSettingsClick,
+        )
 
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x8819141F))
+                .clickable(onClick = if (sheet == ProfileSheet.NONE) onBack else { { sheet = ProfileSheet.NONE } }),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            if (sheet == ProfileSheet.NONE) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFFEEE8F5), RoundedCornerShape(14.dp)),
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFFFAF8FD),
+                        .widthIn(max = 430.dp)
+                        .wrapContentHeight()
+                        .clickable(onClick = {}),
+                    shape = RoundedCornerShape(25.dp),
+                    color = Color.White,
+                    shadowElevation = 14.dp,
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 22.dp, vertical = 19.dp),
                     ) {
-                        Surface(
-                            modifier = Modifier.size(42.dp),
-                            shape = CircleShape,
-                            color = Color(0xFFEEE6FF),
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    "P",
-                                    color = Color(0xFF6330DB),
-                                    fontSize = 16.sp,
-                                    lineHeight = 19.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                state.email,
+                                "Profile",
                                 color = Color(0xFF17151D),
-                                fontSize = 15.sp,
-                                lineHeight = 18.sp,
+                                fontSize = 21.sp,
+                                lineHeight = 25.sp,
                                 fontWeight = FontWeight.Bold,
                             )
+                            Surface(
+                                modifier = Modifier
+                                    .size(35.dp)
+                                    .clickable(onClick = onBack),
+                                shape = RoundedCornerShape(11.dp),
+                                color = Color(0xFFF5F2F8),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("×", color = Color(0xFF242129), fontSize = 21.sp, lineHeight = 21.sp)
+                                }
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, Color(0xFFEEE8F5), RoundedCornerShape(14.dp)),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color(0xFFFAF8FD),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(42.dp),
+                                    shape = CircleShape,
+                                    color = Color(0xFFEEE6FF),
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            "P",
+                                            color = Color(0xFF6330DB),
+                                            fontSize = 16.sp,
+                                            lineHeight = 19.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        state.email,
+                                        color = Color(0xFF17151D),
+                                        fontSize = 15.sp,
+                                        lineHeight = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        state.mobile,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        color = Color(0xFF77707F),
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp,
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+                        ProfileActionRow(
+                            title = "Change mobile number",
+                            description = "Update your verified phone number",
+                            onClick = {
+                                mobile = state.mobile.takeUnless { it.contains("not set", true) }.orEmpty()
+                                sheet = ProfileSheet.MOBILE
+                            },
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        ProfileActionRow(
+                            title = "Change email",
+                            description = "Update your account email address",
+                            onClick = {
+                                email = state.email.takeUnless { it.contains("not available", true) }.orEmpty()
+                                password = ""
+                                sheet = ProfileSheet.EMAIL
+                            },
+                        )
+
+                        state.error?.let {
                             Text(
-                                state.mobile,
-                                modifier = Modifier.padding(top = 4.dp),
-                                color = Color(0xFF77707F),
+                                it,
+                                modifier = Modifier.padding(top = 14.dp),
+                                color = Color(0xFFD93025),
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp,
+                            )
+                        }
+                        state.message?.let {
+                            Text(
+                                it,
+                                modifier = Modifier.padding(top = 14.dp),
+                                color = Color(0xFF6330DB),
                                 fontSize = 12.sp,
                                 lineHeight = 16.sp,
                             )
                         }
                     }
                 }
-
-                Spacer(Modifier.height(12.dp))
-                ProfileActionRow(
-                    title = "Change mobile number",
-                    description = "Update your verified phone number",
-                    onClick = {
-                        mobile = state.mobile.takeUnless { it.contains("not set", true) }.orEmpty()
-                        sheet = ProfileSheet.MOBILE
-                    },
-                )
-                Spacer(Modifier.height(10.dp))
-                ProfileActionRow(
-                    title = "Change email",
-                    description = "Update your account email address",
-                    onClick = {
-                        email = state.email.takeUnless { it.contains("not available", true) }.orEmpty()
-                        password = ""
-                        sheet = ProfileSheet.EMAIL
-                    },
-                )
-
-                state.error?.let {
-                    Text(
-                        it,
-                        modifier = Modifier.padding(top = 14.dp),
-                        color = Color(0xFFD93025),
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                    )
-                }
-                state.message?.let {
-                    Text(
-                        it,
-                        modifier = Modifier.padding(top = 14.dp),
-                        color = Color(0xFF6330DB),
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                    )
+            } else {
+                when (sheet) {
+                    ProfileSheet.MOBILE -> {
+                        ChangeMobileSheet(
+                            value = mobile,
+                            busy = state.busy,
+                            error = state.error,
+                            message = state.message,
+                            onValueChange = { mobile = it },
+                            onClose = { sheet = ProfileSheet.NONE },
+                            onSave = { profileViewModel.updateMobile(mobile) },
+                        )
+                    }
+                    ProfileSheet.EMAIL -> {
+                        ChangeEmailSheet(
+                            email = email,
+                            password = password,
+                            busy = state.busy,
+                            error = state.error,
+                            message = state.message,
+                            onEmailChange = { email = it },
+                            onPasswordChange = { password = it },
+                            onClose = { sheet = ProfileSheet.NONE },
+                            onSave = { profileViewModel.updateEmail(email, password) },
+                        )
+                    }
+                    ProfileSheet.NONE -> Unit
                 }
             }
-        }
-
-        when (sheet) {
-            ProfileSheet.MOBILE -> {
-                ChangeMobileSheet(
-                    value = mobile,
-                    busy = state.busy,
-                    error = state.error,
-                    message = state.message,
-                    onValueChange = { mobile = it },
-                    onClose = { sheet = ProfileSheet.NONE },
-                    onSave = { profileViewModel.updateMobile(mobile) },
-                )
-            }
-            ProfileSheet.EMAIL -> {
-                ChangeEmailSheet(
-                    email = email,
-                    password = password,
-                    busy = state.busy,
-                    error = state.error,
-                    message = state.message,
-                    onEmailChange = { email = it },
-                    onPasswordChange = { password = it },
-                    onClose = { sheet = ProfileSheet.NONE },
-                    onSave = { profileViewModel.updateEmail(email, password) },
-                )
-            }
-            ProfileSheet.NONE -> Unit
         }
     }
 }
@@ -317,7 +333,7 @@ private fun ProfileFormSheet(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(fraction = 0.62f)
+            .wrapContentHeight()
             .clickable(onClick = {}),
         shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
         color = Color.White,
