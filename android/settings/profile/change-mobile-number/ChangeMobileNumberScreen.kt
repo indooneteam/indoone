@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +42,10 @@ fun ChangeMobileNumberScreen(
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(onMenuClick = onMenuClick)
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).imePadding().padding(18.dp)) {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).imePadding().padding(horizontal = 18.dp, vertical = 10.dp)) {
+                TextButton(onClick = onBack, modifier = Modifier.padding(start = 0.dp, bottom = 8.dp)) {
+                    Text("← Back to Profile", fontWeight = FontWeight.Bold)
+                }
                 Text("Change mobile number", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("Update the mobile number saved to your Indoone account.", modifier = Modifier.padding(top = 5.dp, bottom = 18.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(mobile, { mobile = it }, Modifier.fillMaxWidth(), label = { Text("Mobile number") }, placeholder = { Text("+91 98765 43210") }, singleLine = true)
@@ -49,9 +53,6 @@ fun ChangeMobileNumberScreen(
                 Button(onClick = { onSave(mobile) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(if (state.busy) "Updating…" else "Update mobile number") }
                 state.error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
-                Spacer(Modifier.padding(top = 12.dp))
-                Text("← Back to Profile", Modifier.fillMaxWidth().padding(vertical = 10.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                Surface(onClick = onBack, color = MaterialTheme.colorScheme.surfaceVariant) { Text("Back to Profile", Modifier.fillMaxWidth().padding(13.dp)) }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
