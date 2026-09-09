@@ -24,8 +24,8 @@ android {
 
     defaultConfig {
         applicationId 'com.indoone.authenticator'
-        versionCode 29
-        versionName '2.1.17'
+        versionCode 30
+        versionName '2.1.18'
         minSdk 26
         targetSdk 35
 
@@ -33,7 +33,31 @@ android {
         buildConfigField 'String', 'INDOONE_CHANNEL', "\"${channel}\""
     }
 
+    signingConfigs {
+        create('developStable') {
+            def keystorePath = System.getenv('INDOONE_KEYSTORE_PATH')
+            def storePassword = System.getenv('INDOONE_KEYSTORE_PASSWORD')
+            def keyAlias = System.getenv('INDOONE_KEY_ALIAS')
+            def keyPassword = System.getenv('INDOONE_KEY_PASSWORD')
+            if (keystorePath && storePassword && keyAlias && keyPassword) {
+                storeFile file(keystorePath)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            def keystorePath = System.getenv('INDOONE_KEYSTORE_PATH')
+            def storePassword = System.getenv('INDOONE_KEYSTORE_PASSWORD')
+            def keyAlias = System.getenv('INDOONE_KEY_ALIAS')
+            def keyPassword = System.getenv('INDOONE_KEY_PASSWORD')
+            if (keystorePath && storePassword && keyAlias && keyPassword) {
+                signingConfig = signingConfigs.getByName('developStable')
+            }
+        }
         release {
             minifyEnabled false
             shrinkResources false
