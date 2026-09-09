@@ -6,11 +6,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,6 +36,7 @@ fun SignUpScreen(
     status: String,
     error: String,
     otpVisible: Boolean,
+    otpEmail: String,
     onSendOtp: (email: String, mobile: String, password: String) -> Unit,
     onVerifyOtp: (otp: String) -> Unit,
     onResendOtp: () -> Unit,
@@ -42,9 +47,14 @@ fun SignUpScreen(
     var password by rememberSaveable { mutableStateOf("") }
     var otp by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    val otpFocusRequester = FocusRequester()
 
     val hasMobile = mobile.filter(Char::isDigit).isNotEmpty()
-    val actionEnabled = !busy && if (otpVisible) true else email.isNotBlank() && mobile.isNotBlank() && password.length >= 6
+    val actionEnabled = !busy && if (otpVisible) otpEmail.isNotBlank() else email.isNotBlank() && mobile.isNotBlank() && password.length >= 6
+
+    LaunchedEffect(otpVisible) {
+        if (otpVisible) otpFocusRequester.requestFocus()
+    }
 
     AuthPage {
         AuthBrand()
@@ -69,7 +79,7 @@ fun SignUpScreen(
         AuthFieldLabel("MOBILE NUMBER")
         AuthTextField(
             value = mobile,
-            onValueChange = { mobile = it.filter(Char::isDigit).take(10) },
+            onValueChange = { mobile = it.filter { char -> char.isDigit() }.take(10) },
             placeholder = "98765 43210",
             enabled = !busy,
             leadingContent = if (hasMobile) {
@@ -110,7 +120,12 @@ fun SignUpScreen(
 
         if (otpVisible) {
             Spacer(Modifier.height(6.dp))
-            Text(status.ifBlank { "OTP sent. Check your email." }, fontSize = 12.sp)
+            Text("OTP sent to", fontSize = 12.sp)
+            Text(
+                otpEmail,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
             Spacer(Modifier.height(12.dp))
             AuthFieldLabel("VERIFICATION OTP")
             AuthTextField(
@@ -118,6 +133,7 @@ fun SignUpScreen(
                 onValueChange = { otp = it.filter(Char::isDigit).take(6) },
                 placeholder = "Enter 6-digit OTP",
                 enabled = !busy,
+                modifier = Modifier.focusRequester(otpFocusRequester),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             )
             Spacer(Modifier.height(4.dp))
@@ -126,6 +142,7 @@ fun SignUpScreen(
                 enabled = !busy && otp.length == 6,
                 onClick = { onVerifyOtp(otp) },
             )
+            AuthStatus(status, error = false)
         }
 
         AuthStatus(error, error = true)
