@@ -1,16 +1,17 @@
 package com.indoone.menu.security
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -34,28 +35,34 @@ fun SecurityScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x8819141F)),
+            .background(Color(0x5519141F))
+            .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.88f),
+                .padding(bottom = 14.dp)
+                .clickable(onClick = {}),
             shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
         ) {
-            Column(modifier = Modifier.fillMaxSize().padding(23.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 23.dp, vertical = 21.dp),
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         "Security",
+                        modifier = Modifier.weight(1f),
                         fontSize = 21.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C2733),
+                        color = Color(0xFF201C25),
                     )
                     IconButton(
                         onClick = onBack,
@@ -63,25 +70,30 @@ fun SecurityScreen(
                             .size(35.dp)
                             .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
                     ) {
-                        Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                        Text("×", fontSize = 22.sp, lineHeight = 22.sp, color = Color(0xFF5D5666))
                     }
                 }
-
-                Spacer(Modifier.size(10.dp))
-
-                Surface(
+                Spacer(Modifier.height(10.dp))
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(
-                        text = "When creating an account, the user provides email or mobile, password, and OTP. OTP is securely verified via IndoVerification system. Upon verification, the account is created securely in Firebase. During login, email or mobile, password, and OTP are entered again. The app features auto-lock, app lock, and biometric. Once enabled, the app is secure. Additionally, the accounts page prevents screenshots. This ensures complete security.",
-                        modifier = Modifier.padding(vertical = 10.dp),
-                        color = Color(0xFF211D27),
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                    ) {
+                        Text(
+                            text = "When creating an account, the user provides email or mobile, password, and OTP. OTP is securely verified via IndoVerification system. Upon verification, the account is created securely in Firebase. During login, email or mobile, password, and OTP are entered again. The app features auto-lock, app lock, and biometric. Once enabled, the app is secure. Additionally, the accounts page prevents screenshots. This ensures complete security.",
+                            color = Color(0xFF211D27),
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                        )
                     )
                 }
             }
         }
     }
+
+    @Suppress("UNUSED_VARIABLE")
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
 }
