@@ -22,7 +22,7 @@ jobs:
         with:
           gradle-version: '9.6.0'
       - name: Assemble debug APK
-        run: gradle -p android assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace
       - name: Verify APK output
         shell: bash
         run: |
