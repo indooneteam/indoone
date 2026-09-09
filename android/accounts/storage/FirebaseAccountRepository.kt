@@ -178,8 +178,12 @@ class FirebaseAccountRepository(
         val email = child("email").stringValue().orEmpty()
         val provider = child("provider").stringValue().orEmpty()
         val service = child("service").stringValue().orEmpty()
-        val icon = child("icon").stringValue().ifBlank { name.firstOrNull()?.uppercase() ?: "?" }
-        val cls = child("cls").stringValue().ifBlank { classify(name, provider, service) }
+        val icon = child("icon").stringValue().orEmpty().ifBlank {
+            name.firstOrNull()?.uppercase() ?: "?"
+        }
+        val cls = child("cls").stringValue().orEmpty().ifBlank {
+            classify(name, provider, service)
+        }
 
         return AccountRecord(
             id = normalizedId,
