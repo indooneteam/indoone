@@ -1,6 +1,9 @@
 package com.indoone.settings.applock.setapplock
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,17 +11,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+private val Purple = Color(0xFF6330DB)
+private val PurpleLight = Color(0xFF9147ED)
+private val TextDark = Color(0xFF231D2B)
+private val Muted = Color(0xFF76717D)
+private val KeyBorder = Color(0xFFE5DFEC)
+private val KeyBackground = Color(0xFFFAF9FC)
 
 @Composable
 fun SetAppLockScreen(
@@ -59,50 +75,120 @@ internal fun PinPadScaffold(
     onAction: () -> Unit,
     onCancel: (() -> Unit)? = null,
 ) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 28.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("INDOONE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Text(title, modifier = Modifier.padding(top = 10.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(description, modifier = Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyMedium)
+            Column(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 430.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    modifier = Modifier.padding(top = 2.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .background(
+                                Brush.linearGradient(listOf(Color(0xFF5E2CE2), PurpleLight)),
+                                RoundedCornerShape(11.dp),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("I", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black) }
+                    Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Text(title, fontSize = 27.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Text(
-                    text = if (pin.isEmpty()) "Enter PIN" else "• ".repeat(pin.length).trim(),
-                    modifier = Modifier.padding(top = 22.dp),
-                    style = MaterialTheme.typography.titleLarge,
+                    description,
+                    modifier = Modifier.padding(top = 6.dp),
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = Muted,
                 )
-                Text(error, modifier = Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+
+                Row(
+                    modifier = Modifier.padding(top = 15.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    repeat(12) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .background(if (index < pin.length) Purple else Color.White, CircleShape)
+                                .then(
+                                    if (index < pin.length) Modifier
+                                    else Modifier.background(Color.Transparent, CircleShape)
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (index >= pin.length) {
+                                Box(Modifier.size(9.dp).background(Color.White, CircleShape))
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    error,
+                    modifier = Modifier.height(18.dp),
+                    color = Color(0xFFCF2F2F),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+
                 Button(
                     onClick = onAction,
                     enabled = actionEnabled,
-                    modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-                ) { Text(actionLabel) }
+                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Purple,
+                        disabledContainerColor = Purple.copy(alpha = 0.45f),
+                    ),
+                ) { Text(actionLabel, fontWeight = FontWeight.Bold) }
             }
 
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 330.dp).align(Alignment.CenterHorizontally),
+            ) {
                 val keys = listOf('1','2','3','4','5','6','7','8','9','C','0','⌫')
                 keys.chunked(3).forEach { row ->
                     Row(modifier = Modifier.fillMaxWidth()) {
                         row.forEach { key ->
-                            val label = key.toString()
                             OutlinedButton(
                                 onClick = when (key) {
                                     'C' -> onClear
                                     '⌫' -> onBackspace
                                     else -> ({ onDigit(key) })
                                 },
-                                modifier = Modifier.weight(1f).padding(4.dp).height(54.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(),
-                            ) { Text(label) }
+                                modifier = Modifier.weight(1f).padding(3.dp).height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, KeyBorder),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = KeyBackground,
+                                    contentColor = if (key == 'C' || key == '⌫') Color(0xFF726A7B) else TextDark,
+                                ),
+                            ) { Text(key.toString(), fontSize = if (key == 'C' || key == '⌫') 13.sp else 23.sp, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }
+
+                Spacer(Modifier.height(5.dp))
                 if (onCancel != null) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
+                    Text(
+                        "Cancel",
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        color = Color(0xFF655B70),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
                 }
             }
         }
