@@ -86,9 +86,9 @@ fun MenuDrawer(
         MenuAboutScreen(
             onBack = onDismiss,
             onAccountsClick = onAccounts,
-            onLobbyClick = { onDismiss(); onLobby() },
-            onConnectClick = { onDismiss(); onConnect() },
-            onSettingsClick = { onDismiss(); onSettings() },
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
         )
         return
     }
@@ -97,9 +97,9 @@ fun MenuDrawer(
         TermsOfUseScreen(
             onBack = onDismiss,
             onAccountsClick = onAccounts,
-            onLobbyClick = { onDismiss(); onLobby() },
-            onConnectClick = { onDismiss(); onConnect() },
-            onSettingsClick = { onDismiss(); onSettings() },
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
         )
         return
     }
@@ -108,9 +108,9 @@ fun MenuDrawer(
         DangerZoneScreen(
             onBack = onDismiss,
             onAccountsClick = onAccounts,
-            onLobbyClick = { onDismiss(); onLobby() },
-            onConnectClick = { onDismiss(); onConnect() },
-            onSettingsClick = { onDismiss(); onSettings() },
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
         )
         return
     }
@@ -120,9 +120,9 @@ fun MenuDrawer(
             repository = repository,
             onBack = onDismiss,
             onAccountsClick = onAccounts,
-            onLobbyClick = { onDismiss(); onLobby() },
-            onConnectClick = { onDismiss(); onConnect() },
-            onSettingsClick = { onDismiss(); onSettings() },
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
         )
         return
     }
