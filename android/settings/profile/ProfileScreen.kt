@@ -100,7 +100,7 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0x8819141F))
+                .background(Color(0x5519141F))
                 .clickable(onClick = if (sheet == ProfileSheet.NONE) onBack else { { sheet = ProfileSheet.NONE } }),
             contentAlignment = Alignment.BottomCenter,
         ) {
@@ -472,7 +472,7 @@ private fun ProfileActionRow(
                     lineHeight = 16.sp,
                 )
             }
-            Icon(
+            androidx.compose.material3.Icon(
                 ProfileChevron,
                 contentDescription = null,
                 modifier = Modifier.size(22.dp),
