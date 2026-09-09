@@ -24,14 +24,20 @@ jobs:
       - name: Assemble debug APK
         run: gradle -p android assembleDebug --stacktrace
       - name: Verify APK output
-        run: test -f android/build/outputs/apk/debug/indoonone-debug.apk || test -f android/build/outputs/apk/debug/app-debug.apk
+        run: |
+          set -euo pipefail
+          apk=(android/build/outputs/apk/debug/*.apk)
+          if [ ${#apk[@]} -eq 0 ] || [ ! -f "${apk[0]}" ]; then
+            echo "No debug APK found under android/build/outputs/apk/debug"
+            find android/build/outputs -maxdepth 4 -type f -name '*.apk' -print || true
+            exit 1
+          fi
+          printf 'Found APK: %s\n' "${apk[@]}"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: indoone-debug-apk
-          path: |
-            android/build/outputs/apk/debug/*.apk
-            !android/build/outputs/apk/debug/*-unsigned.apk
+          path: android/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   sync-main-to-develop:
