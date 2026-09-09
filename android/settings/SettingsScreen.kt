@@ -145,11 +145,6 @@ fun SettingsScreen(
         )
     }
 
-    if (aboutPage) {
-        AboutScreen(onBack = { aboutPage = false }, onAccountsClick = onAccountsClick, onLobbyClick = onLobbyClick, onConnectClick = onConnectClick, onSettingsClick = onSettingsClick)
-        return
-    }
-
     if (showAppLockRequired) {
         AlertDialog(
             onDismissRequest = { showAppLockRequired = false },
@@ -231,6 +226,16 @@ fun SettingsScreen(
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
     }
+
+    if (aboutPage) {
+        AboutScreen(
+            onBack = { aboutPage = false },
+            onAccountsClick = onAccountsClick,
+            onLobbyClick = onLobbyClick,
+            onConnectClick = onConnectClick,
+            onSettingsClick = onSettingsClick,
+        )
+    }
 }
 
 @Composable
@@ -268,7 +273,7 @@ private fun SettingsToggleRow(title: String, subtitle: String, icon: ImageVector
             Icon(icon, null, Modifier.size(22.dp), tint = Color(0xFF756D80))
             Column(Modifier.weight(1f)) {
                 Text(title, color = Color(0xFF2C2733), fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.sp)
+                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.dp)
             }
             Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
