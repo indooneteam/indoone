@@ -1,32 +1,32 @@
 package com.indoone.settings.about
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+private data class AboutSection(
+    val title: String,
+    val description: String,
+)
 
 @Composable
 fun AboutScreen(
@@ -36,107 +36,122 @@ fun AboutScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    // Keep the existing navigation callbacks/API intact; only the presentation
-    // is changed to match Main's About Indoone modal.
+    // Keep the existing navigation callback/API intact; only the presentation
+    // is updated to match the current Main About Indoone modal.
+    val sections = listOf(
+        AboutSection(
+            "About Indoone",
+            "Securely generate and manage time-based one-time passwords for your accounts.",
+        ),
+        AboutSection(
+            "Sync",
+            "Secure cloud sync across your signed-in devices",
+        ),
+        AboutSection(
+            "OTP Standard",
+            "TOTP • 6/8 digits • SHA-1 / SHA-256 / SHA-512",
+        ),
+        AboutSection(
+            "Account Storage",
+            "Cloud synced with your Indoone account",
+        ),
+        AboutSection(
+            "Legal",
+            "Privacy Policy • Terms of Service",
+        ),
+        AboutSection(
+            "Licenses",
+            "Open Source Licenses",
+        ),
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x8819141F))
-            .clickable(onClick = onBack),
+            .background(Color(0x8819141F)),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(25.dp))
-                .clickable(enabled = true, onClick = {}),
-            shape = RoundedCornerShape(25.dp),
+                .fillMaxHeight(0.88f),
             color = Color.White,
             shadowElevation = 14.dp,
+            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
         ) {
             Column(
-                modifier = Modifier.padding(23.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        "About Indoone",
+                        text = "About Indoone",
+                        modifier = Modifier.weight(1f),
                         fontSize = 21.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C2733),
+                        color = Color(0xFF1E1A22),
                     )
-                    IconButton(
+
+                    Surface(
+                        modifier = Modifier.size(35.dp),
+                        shape = RoundedCornerShape(11.dp),
+                        color = Color(0xFFF5F2F8),
                         onClick = onBack,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .clip(RoundedCornerShape(11.dp))
-                            .background(Color(0xFFF5F2F8)),
                     ) {
-                        Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "×",
+                                fontSize = 23.sp,
+                                lineHeight = 23.sp,
+                                color = Color(0xFF5D5666),
+                            )
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    sections.forEach { section ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE9E5EF)),
+                            shadowElevation = 1.dp,
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            ) {
+                                Text(
+                                    text = section.title,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E1A22),
+                                )
+                                Text(
+                                    text = section.description,
+                                    modifier = Modifier.padding(top = 3.dp),
+                                    fontSize = 10.sp,
+                                    lineHeight = 15.sp,
+                                    color = Color(0xFF8A8492),
+                                )
+                            }
+                        }
                     }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 8.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFF6D35E8), Color(0xFF8744EE)))),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("I", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
-                }
-
-                Text(
-                    "Indoone Authenticator",
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2C2733),
-                )
-                Text(
-                    "A private authenticator focused on secure local storage, cloud sync, and device pairing.",
-                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
-                    color = Color(0xFF756F7F),
-                )
-
-                Spacer(Modifier.height(18.dp))
-
-                AboutMetaRow("Version", "1.8")
-                AboutMetaRow("Security", "Encrypted vault")
-
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.fillMaxWidth().padding(top = 18.dp).height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6330DB)),
-                ) {
-                    Text("Done", fontWeight = FontWeight.Bold)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AboutMetaRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(label, fontSize = 13.sp, color = Color(0xFF756F7F))
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF2C2733))
     }
 }
