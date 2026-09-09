@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -75,12 +76,8 @@ fun TrashScreen(
     fun refresh() {
         scope.launch {
             runCatching { repository.listTrash() }
-                .onSuccess {
-                    trash = it
-                    error = null
-                }
+                .onSuccess { trash = it; error = null }
                 .onFailure { error = it.message ?: "Could not load Trash" }
-
             runCatching { repository.getAll() }
                 .onSuccess { accounts = it }
         }
@@ -89,9 +86,7 @@ fun TrashScreen(
     LaunchedEffect(repository) { refresh() }
 
     Box(Modifier.fillMaxSize()) {
-        TrashAccountsBackdrop(
-            accounts = accounts,
-        )
+        TrashAccountsBackdrop(accounts)
 
         Box(
             modifier = Modifier
@@ -103,64 +98,35 @@ fun TrashScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.88f)
+                    .padding(start = 5.dp, end = 5.dp, bottom = 14.dp)
                     .clickable(onClick = {}),
                 shape = RoundedCornerShape(25.dp),
                 color = Color.White,
                 shadowElevation = 14.dp,
             ) {
-                Column(modifier = Modifier.fillMaxSize().padding(23.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TrashIndooneLogo(modifier = Modifier.size(36.dp))
-                            Spacer(Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    "Trash",
-                                    fontSize = 21.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2C2733),
-                                )
-                                Text(
-                                    "Deleted accounts",
-                                    modifier = Modifier.padding(top = 2.dp),
-                                    color = Color(0xFF8A8492),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 21.dp, vertical = 20.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        TrashIndooneLogo(Modifier.size(36.dp))
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Trash", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
+                            Text("Deleted accounts", Modifier.padding(top = 2.dp), color = Color(0xFF8A8492), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
                         }
-
                         IconButton(
                             onClick = onBack,
-                            modifier = Modifier
-                                .size(35.dp)
-                                .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
-                        ) {
-                            Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
-                        }
+                            modifier = Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
+                        ) { Text("×", fontSize = 21.sp, color = Color(0xFF2C2733)) }
                     }
 
-                    Spacer(Modifier.size(10.dp))
-
-                    error?.let {
-                        Text(
-                            it,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            color = Color(0xFFB3261E),
-                            fontSize = 11.sp,
-                        )
-                    }
+                    Spacer(Modifier.height(10.dp))
+                    error?.let { Text(it, Modifier.padding(bottom = 8.dp), color = Color(0xFFB3261E), fontSize = 11.sp) }
 
                     if (trash.isEmpty()) {
                         EmptyTrashState()
                     } else {
+                        Spacer(Modifier.height(6.dp))
                         LazyColumn(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 470.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             items(trash, key = { it.account.id }) { item ->
@@ -187,22 +153,16 @@ fun TrashScreen(
         AlertDialog(
             onDismissRequest = { selectedDelete = null },
             title = { Text("Permanently delete ${item.account.name}?") },
-            text = {
-                Text(
-                    "This removes the account from Trash and all synced account copies. This action cannot be undone.",
-                )
-            },
+            text = { Text("This removes the account from Trash and all synced account copies. This action cannot be undone.") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        selectedDelete = null
-                        scope.launch {
-                            runCatching { repository.permanentlyDeleteFromTrash(item.account.id) }
-                                .onSuccess { refresh() }
-                                .onFailure { error = it.message ?: "Could not permanently delete account" }
-                        }
-                    },
-                ) { Text("Delete", color = Color(0xFFB3261E)) }
+                TextButton(onClick = {
+                    selectedDelete = null
+                    scope.launch {
+                        runCatching { repository.permanentlyDeleteFromTrash(item.account.id) }
+                            .onSuccess { refresh() }
+                            .onFailure { error = it.message ?: "Could not permanently delete account" }
+                    }
+                }) { Text("Delete", color = Color(0xFFB3261E)) }
             },
             dismissButton = { TextButton(onClick = { selectedDelete = null }) { Text("Cancel") } },
         )
@@ -214,73 +174,32 @@ private fun TrashAccountsBackdrop(accounts: List<AccountRecord>) {
     val nowMillis = System.currentTimeMillis()
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
-            AppTopBar(
-                onMenuClick = {},
-                onSearchClick = {},
-            )
-
+            AppTopBar(onMenuClick = {}, onSearchClick = {})
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp)
-                    .height(44.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = Color(0xFFFAF9FC),
-                border = BorderStroke(1.dp, Color(0xFFE6E2ED)),
+                modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp).height(44.dp),
+                shape = RoundedCornerShape(14.dp), color = Color(0xFFFAF9FC), border = BorderStroke(1.dp, Color(0xFFE6E2ED)),
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("⌕", color = Color(0xFF77717F), fontSize = 19.sp)
-                    Spacer(Modifier.width(9.dp))
-                    Text("Search accounts", color = Color(0xFF77717F), fontSize = 14.sp)
-                    Spacer(Modifier.weight(1f))
-                    Text("×", color = Color(0xFF77717F), fontSize = 22.sp)
+                    Spacer(Modifier.width(9.dp)); Text("Search accounts", color = Color(0xFF77717F), fontSize = 14.sp)
+                    Spacer(Modifier.weight(1f)); Text("×", color = Color(0xFF77717F), fontSize = 22.sp)
                 }
             }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 104.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom,
-                ) {
+            Column(Modifier.fillMaxWidth().weight(1f).padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 104.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                     Column {
                         Text("SECURE & PRIVATE", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
-                        Text("Your accounts", modifier = Modifier.padding(top = 1.dp), color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                        Text("Your accounts", Modifier.padding(top = 1.dp), color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     }
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE5E0ED)),
-                    ) {
-                        Text("Sort ↕", modifier = Modifier.padding(horizontal = 11.dp, vertical = 8.dp), color = Color(0xFF5F566B), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Surface(shape = RoundedCornerShape(10.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0ED))) {
+                        Text("Sort ↕", Modifier.padding(horizontal = 11.dp, vertical = 8.dp), color = Color(0xFF5F566B), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-
-                Spacer(Modifier.size(14.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-                    accounts.take(4).forEach { account ->
-                        TrashBackdropAccountRow(account, nowMillis)
-                    }
-                }
+                Spacer(Modifier.height(14.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(11.dp)) { accounts.take(4).forEach { TrashBackdropAccountRow(it, nowMillis) } }
             }
         }
-
-        AppBottomNav(
-            activeTab = AppTab.ACCOUNTS,
-            onAccountsClick = {},
-            onLobbyClick = {},
-            onConnectClick = {},
-            onSettingsClick = {},
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+        AppBottomNav(activeTab = AppTab.ACCOUNTS, onAccountsClick = {}, onLobbyClick = {}, onConnectClick = {}, onSettingsClick = {}, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -288,33 +207,15 @@ private fun TrashAccountsBackdrop(accounts: List<AccountRecord>) {
 private fun TrashBackdropAccountRow(account: AccountRecord, nowMillis: Long) {
     val period = account.period.coerceAtLeast(1)
     val seconds = (period - ((nowMillis / 1000L) % period).toInt()).coerceIn(1, period)
-    val code = runCatching {
-        AccountTotpGenerator.generate(account.secret, nowMillis, period, account.digits, account.algorithm)
-    }.getOrDefault("------")
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFECE9F0)),
-        shadowElevation = 2.dp,
-    ) {
+    val code = runCatching { AccountTotpGenerator.generate(account.secret, nowMillis, period, account.digits, account.algorithm) }.getOrDefault("------")
+    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFECE9F0)), shadowElevation = 2.dp) {
         Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).background(Color(0xFFF5F3F8), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                Text(account.name.firstOrNull()?.uppercase() ?: "?", color = Color(0xFF4285F4), fontSize = 21.sp, fontWeight = FontWeight.Black)
-            }
+            Box(Modifier.size(48.dp).background(Color(0xFFF5F3F8), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) { Text(account.name.firstOrNull()?.uppercase() ?: "?", color = Color(0xFF4285F4), fontSize = 21.sp, fontWeight = FontWeight.Black) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(account.name, color = Color(0xFF17151D), fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(account.email, Modifier.padding(top = 3.dp), color = Color(0xFF89838F), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    code,
-                    Modifier.padding(top = 2.dp),
-                    color = if (seconds >= 15) Color(0xFF20883E) else if (seconds >= 5) Color(0xFFAD8500) else Color(0xFFC62828),
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
-                )
+                Text(code, Modifier.padding(top = 2.dp), color = if (seconds >= 15) Color(0xFF20883E) else if (seconds >= 5) Color(0xFFAD8500) else Color(0xFFC62828), fontSize = 23.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
             Text("☆", color = Color(0xFFB7A8D3), fontSize = 20.sp)
             Spacer(Modifier.width(7.dp))
@@ -337,136 +238,48 @@ private fun TrashIndooneLogo(modifier: Modifier = Modifier) {
         androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
             androidx.compose.ui.graphics.drawscope.rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
                 drawRoundRect(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                        colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)),
-                        start = androidx.compose.ui.geometry.Offset(11f, 11f),
-                        end = androidx.compose.ui.geometry.Offset(37f, 37f),
-                    ),
-                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f),
-                    size = androidx.compose.ui.geometry.Size(26f, 26f),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)), androidx.compose.ui.geometry.Offset(11f, 11f), androidx.compose.ui.geometry.Offset(37f, 37f)),
+                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f), size = androidx.compose.ui.geometry.Size(26f, 26f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
                 )
             }
-            val outer = Path().apply {
-                moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f)
-                lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close()
-            }
+            val outer = Path().apply { moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f); lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close() }
             drawPath(outer, color = Color(0xFF0A0A18))
-            val inner = Path().apply {
-                moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f)
-                lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close()
-            }
+            val inner = Path().apply { moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f); lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close() }
             drawPath(inner, color = Color(0xFF60A5FA))
         }
     }
 }
 
 @Composable
-private fun TrashRow(
-    item: TrashRecord,
-    onRestore: () -> Unit,
-    onPermanentDelete: () -> Unit,
-) {
+private fun TrashRow(item: TrashRecord, onRestore: () -> Unit, onPermanentDelete: () -> Unit) {
     val remainingMs = max(0L, item.purgeAt - System.currentTimeMillis())
     val days = max(1, ceil(remainingMs / (24.0 * 60.0 * 60.0 * 1000.0)).toInt())
     var offsetX by remember(item.account.id) { mutableFloatStateOf(0f) }
     val maxReveal = 84.dp.value
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFF7EDEE), RoundedCornerShape(16.dp)),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(84.dp)
-                .align(Alignment.CenterEnd)
-                .background(Color(0xFFF7E0E1), RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("Delete", color = Color(0xFFB3261E), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        }
-
+    Box(Modifier.fillMaxWidth().background(Color(0xFFF7EDEE), RoundedCornerShape(16.dp))) {
+        Box(Modifier.fillMaxHeight().width(84.dp).align(Alignment.CenterEnd).background(Color(0xFFF7E0E1), RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp)), contentAlignment = Alignment.Center) { Text("Delete", color = Color(0xFFB3261E), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset { IntOffset(offsetX.roundToInt(), 0) }
-                .pointerInput(item.account.id) {
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
-                            offsetX = (offsetX + dragAmount).coerceIn(-maxReveal, 0f)
-                        },
-                        onDragEnd = {
-                            offsetX = if (offsetX <= -maxReveal / 2f) -maxReveal else 0f
-                        },
-                        onDragCancel = { offsetX = 0f },
-                    )
-                },
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, Color(0xFFE9E5EF)),
-            shadowElevation = 3.dp,
+            Modifier.fillMaxWidth().offset { IntOffset(offsetX.roundToInt(), 0) }.pointerInput(item.account.id) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, dragAmount -> offsetX = (offsetX + dragAmount).coerceIn(-maxReveal, 0f) },
+                    onDragEnd = { offsetX = if (offsetX <= -maxReveal / 2f) -maxReveal else 0f },
+                    onDragCancel = { offsetX = 0f },
+                )
+            },
+            shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE9E5EF)), shadowElevation = 3.dp,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .background(Color(0xFFF4F1F8), RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        item.account.name.firstOrNull()?.uppercase() ?: "A",
-                        color = Color(0xFF4285F4),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
+            Row(Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(42.dp).background(Color(0xFFF4F1F8), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) { Text(item.account.name.firstOrNull()?.uppercase() ?: "A", color = Color(0xFF4285F4), fontSize = 18.sp, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(11.dp))
-
-                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text(
-                        item.account.name.ifBlank { "Account" },
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF211D27),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        "${item.account.email.ifBlank { "Authenticator account" }} · $days day${if (days == 1) "" else "s"} left",
-                        modifier = Modifier.padding(top = 4.dp),
-                        color = Color(0xFF8A8490),
-                        fontSize = 10.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text(item.account.name.ifBlank { "Account" }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF211D27), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${item.account.email.ifBlank { "Authenticator account" }} · $days day${if (days == 1) "" else "s"} left", Modifier.padding(top = 4.dp), color = Color(0xFF8A8490), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-
-                Button(
-                    onClick = onRestore,
-                    modifier = Modifier.height(34.dp),
-                ) {
-                    Text("Restore", fontSize = 11.sp)
-                }
+                Button(onClick = onRestore, modifier = Modifier.height(34.dp)) { Text("Restore", fontSize = 11.sp) }
             }
         }
-
         if (offsetX <= -maxReveal / 2f) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(84.dp, 64.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                TextButton(onClick = onPermanentDelete) {
-                    Text("Delete", color = Color(0xFFB3261E), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
+            Box(Modifier.align(Alignment.CenterEnd).size(84.dp, 64.dp), contentAlignment = Alignment.Center) { TextButton(onClick = onPermanentDelete) { Text("Delete", color = Color(0xFFB3261E), fontSize = 12.sp, fontWeight = FontWeight.Bold) } }
         }
     }
 }
@@ -474,43 +287,11 @@ private fun TrashRow(
 @Composable
 private fun EmptyTrashState() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, top = 32.dp, bottom = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(Color(0xFFF0EAFF), RoundedCornerShape(18.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Canvas(Modifier.size(28.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width / 2f, 2f)
-                    lineTo(size.width * 0.62f, size.height * 0.36f)
-                    lineTo(size.width - 2f, size.height * 0.5f)
-                    lineTo(size.width * 0.62f, size.height * 0.64f)
-                    lineTo(size.width / 2f, size.height - 2f)
-                    lineTo(size.width * 0.38f, size.height * 0.64f)
-                    lineTo(2f, size.height * 0.5f)
-                    lineTo(size.width * 0.38f, size.height * 0.36f)
-                    close()
-                }
-                drawPath(path, color = Color(0xFF7140DA))
-            }
-        }
-        Text(
-            "Trash is empty",
-            modifier = Modifier.padding(top = 12.dp),
-            color = Color(0xFF211D27),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            "Deleted accounts stay here for 30 days. Swipe left on an account to permanently delete it sooner.",
-            modifier = Modifier.padding(top = 5.dp),
-            color = Color(0xFF85808B),
-            fontSize = 12.sp,
-        )
+        Box(Modifier.size(56.dp).background(Color(0xFFF0EAFF), RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) { Text("⌫", color = Color(0xFF7140DA), fontSize = 27.sp) }
+        Text("Trash is empty", Modifier.padding(top = 12.dp), color = Color(0xFF211D27), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("Deleted accounts stay here for 30 days. Swipe left on an account to permanently delete it sooner.", Modifier.padding(top = 5.dp), color = Color(0xFF85808B), fontSize = 12.sp)
     }
 }
