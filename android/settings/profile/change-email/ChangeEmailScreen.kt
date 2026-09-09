@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -44,7 +45,13 @@ fun ChangeEmailScreen(
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(onMenuClick = onMenuClick)
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).imePadding().padding(18.dp)) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(18.dp),
+            ) {
                 Text(
                     "← Back to Profile",
                     modifier = Modifier
@@ -64,6 +71,7 @@ fun ChangeEmailScreen(
                 Button(onClick = { onSave(email, password) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(if (state.busy) "Changing…" else "Change email") }
                 state.error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
+                Spacer(Modifier.navigationBarsPadding())
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
