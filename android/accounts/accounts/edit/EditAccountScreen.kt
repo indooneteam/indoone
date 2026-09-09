@@ -2,7 +2,6 @@ package com.indoone.accounts.accounts.edit
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -68,18 +67,12 @@ fun EditAccountScreen(
                 OutlinedTextField(value = state.email, onValueChange = onEmailChanged, modifier = Modifier.fillMaxWidth(), label = { Text("EMAIL / USERNAME") }, placeholder = { Text("you@example.com") }, singleLine = true)
                 OutlinedTextField(value = state.secret, onValueChange = onSecretChanged, modifier = Modifier.fillMaxWidth(), label = { Text("SECRET KEY") }, placeholder = { Text("Base32 secret key") }, singleLine = true)
 
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    if (maxWidth < 500.dp) {
-                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            EditDropdown("DIGITS", state.digits.toString(), listOf("6", "8")) { onDigitsChanged(it.toInt()) }
-                            EditDropdown("PERIOD", state.period.toString(), listOf("30", "60")) { onPeriodChanged(it.toInt()) }
-                        }
-                    } else {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            EditDropdown("DIGITS", state.digits.toString(), listOf("6", "8"), Modifier.weight(1f)) { onDigitsChanged(it.toInt()) }
-                            EditDropdown("PERIOD", state.period.toString(), listOf("30", "60"), Modifier.weight(1f)) { onPeriodChanged(it.toInt()) }
-                        }
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    EditDropdown("DIGITS", state.digits.toString(), listOf("6", "8"), Modifier.weight(1f)) { onDigitsChanged(it.toInt()) }
+                    EditDropdown("PERIOD", state.period.toString(), listOf("30", "60"), Modifier.weight(1f)) { onPeriodChanged(it.toInt()) }
                 }
 
                 EditDropdown("ALGORITHM", state.algorithm, listOf("SHA1", "SHA256", "SHA512")) { onAlgorithmChanged(it) }
