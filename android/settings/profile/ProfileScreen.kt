@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -89,8 +88,6 @@ fun ProfileScreen(
     var password by remember(sheet) { mutableStateOf("") }
 
     Box(Modifier.fillMaxSize()) {
-        // Keep the actual Settings screen underneath so the profile sheet and
-        // the change forms match the main web modal presentation.
         SettingsScreen(
             onMenuClick = onMenuClick,
             onProfileClick = {},
@@ -113,6 +110,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .widthIn(max = 430.dp)
                         .wrapContentHeight()
+                        .padding(bottom = 14.dp)
                         .clickable(onClick = {}),
                     shape = RoundedCornerShape(25.dp),
                     color = Color.White,
@@ -334,8 +332,9 @@ private fun ProfileFormSheet(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
+            .padding(bottom = 14.dp)
             .clickable(onClick = {}),
-        shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
+        shape = RoundedCornerShape(25.dp),
         color = Color.White,
         shadowElevation = 14.dp,
     ) {
