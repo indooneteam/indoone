@@ -46,7 +46,7 @@ private fun iconBuilder(name: String, content: androidx.compose.ui.graphics.vect
             strokeLineWidth = 1.8f,
             strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
             strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-            content = content,
+            pathBuilder = content,
         )
     }.build()
 
