@@ -1,6 +1,9 @@
 package com.indoone.settings.applock
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,15 +11,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun AppLockScreen(
@@ -26,27 +38,83 @@ fun AppLockScreen(
     onDisable: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x8819141F))
+            .clickable(onClick = onBack),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 430.dp)
+                .clickable(enabled = true, onClick = {}),
+            shape = RoundedCornerShape(25.dp),
+            color = Color.White,
+            shadowElevation = 14.dp,
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("App Lock", fontWeight = FontWeight.Bold)
-                OutlinedButton(onClick = onBack) { Text("Back") }
-            }
-            Text(
-                if (hasPin) "Manage your Indoone App PIN."
-                else "Protect Indoone with a 4–12 digit App PIN.",
-            )
-            Spacer(Modifier.height(4.dp))
-            if (hasPin) {
-                Button(onClick = onChange, modifier = Modifier.fillMaxWidth()) { Text("Change App PIN") }
-                OutlinedButton(onClick = onDisable, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors()) {
-                    Text("Disable App Lock")
+            Column(
+                modifier = Modifier.padding(23.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("App Lock", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(35.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(Color(0xFFF5F2F8)),
+                    ) {
+                        Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                    }
                 }
-            } else {
-                Button(onClick = onSet, modifier = Modifier.fillMaxWidth()) { Text("Set App Lock") }
+
+                Text(
+                    text = if (hasPin) "Manage your Indoone App PIN." else "Protect Indoone with a 4–12 digit App PIN.",
+                    modifier = Modifier.padding(top = 7.dp),
+                    fontSize = 14.sp,
+                    lineHeight = 21.sp,
+                    color = Color(0xFF756F7F),
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                if (hasPin) {
+                    Button(
+                        onClick = onChange,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6330DB)),
+                    ) { Text("Change App PIN", fontWeight = FontWeight.Bold) }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = onDisable,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6330DB)),
+                    ) { Text("Disable App Lock", fontWeight = FontWeight.Bold) }
+                } else {
+                    Button(
+                        onClick = onSet,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .background(
+                                Brush.horizontalGradient(listOf(Color(0xFF6330DB), Color(0xFF9147ED))),
+                                RoundedCornerShape(14.dp),
+                            ),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    ) { Text("Set App Lock", fontWeight = FontWeight.Bold) }
+                }
             }
         }
     }
