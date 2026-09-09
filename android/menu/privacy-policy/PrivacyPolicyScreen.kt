@@ -1,28 +1,31 @@
 package com.indoone.menu.privacypolicy
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.menu.AppBottomNav
-import com.indoone.menu.AppTab
-import com.indoone.menu.AppTopBar
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.unit.Dp
 
 data class PrivacySection(val title: String, val body: String)
 
@@ -50,32 +53,95 @@ fun PrivacyPolicyScreen(
         PrivacySection("13. Contact", "Email: indoone@zohomail.in"),
     )
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-            AppTopBar(onMenuClick = onBack)
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x8819141F)),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f),
+            color = Color.White,
+            shadowElevation = 14.dp,
+            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
             ) {
-                item {
-                    Text("PRIVACY POLICY", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
-                    Text("Privacy Policy", modifier = Modifier.padding(top = 3.dp), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("Last Updated: 08/09/2026", modifier = Modifier.padding(top = 6.dp), color = Color(0xFF8A8492), fontSize = 11.sp)
-                }
-                items(sections) { section ->
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(section.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text(section.body, modifier = Modifier.padding(top = 5.dp), style = MaterialTheme.typography.bodySmall, color = Color(0xFF8A8492), lineHeight = MaterialTheme.typography.bodySmall.lineHeight)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Privacy Policy",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1A22),
+                    )
+                    TextButton(
+                        onClick = onBack,
+                        modifier = Modifier.size(35.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(35.dp),
+                            shape = RoundedCornerShape(11.dp),
+                            color = Color(0xFFF5F2F8),
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "×",
+                                    fontSize = 23.sp,
+                                    lineHeight = 23.sp,
+                                    color = Color(0xFF5D5666),
+                                )
+                            }
+                        }
                     }
                 }
-                item {
-                    Surface(shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, Color(0xFFECE8F1)), color = Color(0xFFFAF9FD), modifier = Modifier.fillMaxWidth()) {
-                        Text("This Privacy Policy may change as Indoone features and services evolve.", modifier = Modifier.padding(14.dp), style = MaterialTheme.typography.bodySmall, color = Color(0xFF6E6878))
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Last Updated: 08/09/2026",
+                    color = Color(0xFF8A8492),
+                    fontSize = 11.sp,
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(sections) { section ->
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = section.title,
+                                fontSize = 14.sp,
+                                lineHeight = 19.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E1A22),
+                            )
+                            Text(
+                                text = section.body,
+                                modifier = Modifier.padding(top = 3.dp),
+                                color = Color(0xFF8A8492),
+                                fontSize = 12.sp,
+                                lineHeight = 19.sp,
+                            )
+                        }
                     }
                 }
             }
-            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
     }
 }
