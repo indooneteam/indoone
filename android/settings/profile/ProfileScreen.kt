@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private fun profileIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
     ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
@@ -75,9 +76,8 @@ fun ProfileScreen(
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onMobileSave: (String) -> Unit = {},
-    onEmailSave: (String, String) -> Unit = { _, _ -> },
 ) {
+    val profileViewModel: ProfileViewModel = viewModel()
     var sheet by remember { mutableStateOf(ProfileSheet.NONE) }
     var mobile by remember(state.mobile, sheet) {
         mutableStateOf(state.mobile.takeUnless { it.contains("not set", true) }.orEmpty())
@@ -100,7 +100,7 @@ fun ProfileScreen(
                 .widthIn(max = 430.dp)
                 .wrapContentHeight()
                 .clickable(onClick = {}),
-            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp, bottomStart = 25.dp, bottomEnd = 25.dp),
+            shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
         ) {
@@ -235,7 +235,7 @@ fun ProfileScreen(
                     message = state.message,
                     onValueChange = { mobile = it },
                     onClose = { sheet = ProfileSheet.NONE },
-                    onSave = { onMobileSave(mobile) },
+                    onSave = { profileViewModel.updateMobile(mobile) },
                 )
             }
             ProfileSheet.EMAIL -> {
@@ -248,7 +248,7 @@ fun ProfileScreen(
                     onEmailChange = { email = it },
                     onPasswordChange = { password = it },
                     onClose = { sheet = ProfileSheet.NONE },
-                    onSave = { onEmailSave(email, password) },
+                    onSave = { profileViewModel.updateEmail(email, password) },
                 )
             }
             ProfileSheet.NONE -> Unit
