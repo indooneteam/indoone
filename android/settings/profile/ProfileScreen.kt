@@ -66,6 +66,7 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0x8819141F))
+            .clickable(onClick = onBack)
             .padding(14.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -73,7 +74,8 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 430.dp)
-                .fillMaxHeight(fraction = 0.88f),
+                .fillMaxHeight(fraction = 0.88f)
+                .clickable(onClick = {}),
             shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
@@ -223,7 +225,7 @@ private fun ProfileActionRow(
                     modifier = Modifier.padding(top = 3.dp),
                     color = Color(0xFF8A8392),
                     fontSize = 12.sp,
-                    lineHeight = 16.sp,
+                    lineHeight = 16.dp.value.sp,
                 )
             }
             Icon(
