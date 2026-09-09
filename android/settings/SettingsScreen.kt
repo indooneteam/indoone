@@ -1,16 +1,19 @@
 package com.indoone.settings
 
 import android.app.Activity
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -23,10 +26,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -41,6 +50,63 @@ import com.indoone.settings.autolock.AutoLockScreen
 import com.indoone.settings.autolock.AutoLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
+
+private fun settingsIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
+    ImageVector.Builder(
+        name = name,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 1.8f,
+            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+            pathBuilder = content,
+        )
+    }.build()
+
+private val ProfileSettingsIcon = settingsIcon("SettingsProfile") {
+    moveTo(12f, 4.9f); curveTo(10.287f, 4.9f, 8.9f, 6.287f, 8.9f, 8f); curveTo(8.9f, 9.713f, 10.287f, 11.1f, 12f, 11.1f); curveTo(13.713f, 11.1f, 15.1f, 9.713f, 15.1f, 8f); curveTo(15.1f, 6.287f, 13.713f, 4.9f, 12f, 4.9f)
+    moveTo(5.5f, 19.5f); curveTo(6.3f, 16.4f, 8.6f, 14.7f, 12f, 14.7f); curveTo(15.4f, 14.7f, 17.7f, 16.4f, 18.5f, 19.5f)
+}
+private val LockSettingsIcon = settingsIcon("SettingsLock") {
+    moveTo(5f, 10f); lineTo(19f, 10f); lineTo(19f, 20f); lineTo(5f, 20f); close()
+    moveTo(8f, 10f); lineTo(8f, 7f); curveTo(8f, 4.791f, 9.791f, 3f, 12f, 3f); curveTo(14.209f, 3f, 16f, 4.791f, 16f, 7f); lineTo(16f, 10f)
+}
+private val BiometricSettingsIcon = settingsIcon("SettingsBiometric") {
+    moveTo(8f, 7.5f); curveTo(8f, 5.015f, 10.015f, 3f, 12.5f, 3f); curveTo(14.985f, 3f, 17f, 5.015f, 17f, 7.5f)
+    moveTo(6f, 10f); curveTo(6f, 6.686f, 8.686f, 4f, 12f, 4f); curveTo(15.314f, 4f, 18f, 6.686f, 18f, 10f)
+    moveTo(8.5f, 12.5f); curveTo(8.5f, 10.567f, 10.067f, 9f, 12f, 9f); curveTo(13.933f, 9f, 15.5f, 10.567f, 15.5f, 12.5f)
+    moveTo(10.5f, 15f); lineTo(10.5f, 16.5f); curveTo(10.5f, 17.328f, 9.828f, 18f, 9f, 18f); curveTo(8.172f, 18f, 7.5f, 17.328f, 7.5f, 16.5f); lineTo(7.5f, 15.3f)
+    moveTo(13.5f, 15f); lineTo(13.5f, 18f); curveTo(13.5f, 19.105f, 12.605f, 20f, 11.5f, 20f); curveTo(10.395f, 20f, 9.5f, 19.105f, 9.5f, 18f); lineTo(9.5f, 16.5f)
+    moveTo(16f, 13f); lineTo(16f, 17f); curveTo(16f, 18.105f, 15.105f, 19f, 14f, 19f); curveTo(12.895f, 19f, 12f, 18.105f, 12f, 17f); lineTo(12f, 16f)
+}
+private val TimerSettingsIcon = settingsIcon("SettingsTimer") {
+    moveTo(12f, 6f); curveTo(8.134f, 6f, 5f, 9.134f, 5f, 13f); curveTo(5f, 16.866f, 8.134f, 20f, 12f, 20f); curveTo(15.866f, 20f, 19f, 16.866f, 19f, 13f); curveTo(19f, 9.134f, 15.866f, 6f, 12f, 6f)
+    moveTo(12f, 13f); lineTo(12f, 9f)
+    moveTo(9.5f, 3.5f); lineTo(14.5f, 3.5f)
+    moveTo(12f, 6f); lineTo(12f, 3.5f)
+    moveTo(18f, 7f); lineTo(19.5f, 5.5f)
+}
+private val InfoSettingsIcon = settingsIcon("SettingsInfo") {
+    moveTo(12f, 4f); curveTo(16.418f, 4f, 20f, 7.582f, 20f, 12f); curveTo(20f, 16.418f, 16.418f, 20f, 12f, 20f); curveTo(7.582f, 20f, 4f, 16.418f, 4f, 12f); curveTo(4f, 7.582f, 7.582f, 4f, 12f, 4f)
+    moveTo(12f, 10.5f); lineTo(12f, 15.5f)
+    moveTo(12f, 7.5f); lineTo(12.01f, 7.5f)
+}
+private val SettingsChevronIcon = settingsIcon("SettingsNext") {
+    moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
+}
+
+private data class SettingsRowSpec(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val onClick: (() -> Unit)? = null,
+)
 
 @Composable
 fun SettingsScreen(
@@ -214,22 +280,87 @@ fun SettingsScreen(
         return
     }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
             AppTopBar(onMenuClick = onMenuClick)
-            Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 18.dp)) {
-                Text("SETTINGS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Text("Settings", modifier = Modifier.padding(top = 3.dp), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.padding(top = 18.dp))
-                SettingsCard("Profile", "Manage your email and mobile number", onProfileClick)
-                Spacer(Modifier.padding(top = 12.dp))
-                SettingsCard("App Lock", if (appLockStore.isEnabled()) "PIN enabled" else "Protect Indoone with a PIN") { flow.sync(appLockStore.isEnabled()); appLockPage = true }
-                Spacer(Modifier.padding(top = 12.dp))
-                BiometricCard(biometricOn) { enabled -> if (enabled) requestBiometricEnable() else { biometricStore.setEnabled(false); biometricOn = false; biometricError = null } }
-                Spacer(Modifier.padding(top = 12.dp))
-                SettingsCard("Auto-Lock", if (appLockStore.isEnabled() || biometricStore.isEnabled()) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Requires App Lock or Biometric Unlock") { autoLockPage = true }
-                Spacer(Modifier.padding(top = 12.dp))
-                SettingsCard("About Indoone", "Version 0.1.0 · Updates", { aboutPage = true })
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 18.dp, vertical = 18.dp),
+            ) {
+                Column(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
+                    Text(
+                        "PREFERENCES & SECURITY",
+                        color = Color(0xFF2877E8),
+                        fontSize = 9.sp,
+                        lineHeight = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Settings",
+                        modifier = Modifier.padding(top = 3.dp),
+                        color = Color(0xFF1F1B24),
+                        fontSize = 26.sp,
+                        lineHeight = 29.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Manage your account, security and app preferences.",
+                        modifier = Modifier.padding(top = 7.dp),
+                        color = Color(0xFF77717F),
+                        fontSize = 12.sp,
+                        lineHeight = 19.sp,
+                    )
+                }
+
+                SettingsSectionLabel("Account", first = true)
+                SettingsActionRow(
+                    title = "Profile",
+                    subtitle = "Email & mobile number",
+                    icon = ProfileSettingsIcon,
+                    onClick = onProfileClick,
+                )
+
+                SettingsSectionLabel("Security")
+                SettingsActionRow(
+                    title = "App Lock",
+                    subtitle = "PIN",
+                    icon = LockSettingsIcon,
+                    onClick = { flow.sync(appLockStore.isEnabled()); appLockPage = true },
+                )
+                SettingsToggleRow(
+                    title = "Biometric Unlock",
+                    subtitle = "Fingerprint / device credential",
+                    icon = BiometricSettingsIcon,
+                    checked = biometricOn,
+                    onCheckedChange = { enabled ->
+                        if (enabled) requestBiometricEnable()
+                        else {
+                            biometricStore.setEnabled(false)
+                            biometricOn = false
+                            biometricError = null
+                        }
+                    },
+                )
+                SettingsActionRow(
+                    title = "Auto-Lock",
+                    subtitle = if (autoLockStore.minutes() > 0) {
+                        "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}"
+                    } else {
+                        "Never"
+                    },
+                    icon = TimerSettingsIcon,
+                    onClick = { autoLockPage = true },
+                )
+
+                SettingsSectionLabel("App")
+                SettingsActionRow(
+                    title = "About Indoone",
+                    subtitle = "Version 0.1.0 · Updates",
+                    icon = InfoSettingsIcon,
+                    onClick = { aboutPage = true },
+                )
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
@@ -237,24 +368,109 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsCard(title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(subtitle, modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun SettingsSectionLabel(label: String, first: Boolean = false) {
+    Text(
+        label,
+        modifier = Modifier.padding(top = if (first) 0.dp else 18.dp, bottom = 7.dp),
+        color = Color(0xFF8A8392),
+        fontSize = 11.sp,
+        lineHeight = 13.sp,
+        fontWeight = FontWeight.Bold,
+    )
+}
+
+@Composable
+private fun SettingsActionRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = Color(0xFF756D80),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    color = Color(0xFF2C2733),
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    subtitle,
+                    modifier = Modifier.padding(top = 3.dp),
+                    color = Color(0xFF8A8392),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
+            }
+            Icon(
+                SettingsChevronIcon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = Color(0xFFAAA3B0),
+            )
         }
+        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
     }
 }
 
 @Composable
-private fun BiometricCard(enabled: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun SettingsToggleRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = Color(0xFF756D80),
+            )
             Column(modifier = Modifier.weight(1f)) {
-                Text("Biometric Unlock", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("Fingerprint / device biometric", modifier = Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    title,
+                    color = Color(0xFF2C2733),
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    subtitle,
+                    modifier = Modifier.padding(top = 3.dp),
+                    color = Color(0xFF8A8392),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
             }
-            Switch(checked = enabled, onCheckedChange = onCheckedChange)
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+            )
         }
+        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
     }
 }
