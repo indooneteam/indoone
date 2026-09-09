@@ -50,7 +50,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
 import com.indoone.accounts.storage.AccountRepositoryProvider
-import com.indoone.settings.about.AboutScreen
+import com.indoone.menu.about.MenuAboutScreen
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
@@ -82,7 +82,7 @@ fun MenuDrawer(
     var showTrash by remember { mutableStateOf(false) }
 
     if (showAbout) {
-        AboutScreen(
+        MenuAboutScreen(
             onBack = { showAbout = false },
             onAccountsClick = { showAbout = false; onAccounts() },
             onLobbyClick = { showAbout = false },
