@@ -1,10 +1,10 @@
 package com.indoone.connect
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,7 +44,7 @@ fun ConnectScreen(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+        color = Color.White,
     ) {
         Column(
             modifier = Modifier
@@ -55,43 +55,40 @@ fun ConnectScreen(
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    start = 18.dp,
-                    end = 18.dp,
-                    top = 18.dp,
-                    bottom = 18.dp,
-                ),
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
-                    Text(
-                        text = state.eyebrow,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = state.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = state.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                item {
-                    ConnectStatusCard()
+                    Column(modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)) {
+                        Text(
+                            text = state.eyebrow,
+                            color = Color(0xFF2877E8),
+                            fontSize = 9.sp,
+                            lineHeight = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = state.title,
+                            modifier = Modifier.padding(top = 3.dp),
+                            color = Color(0xFF1F1B24),
+                            fontSize = 26.sp,
+                            lineHeight = 29.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = state.description,
+                            modifier = Modifier.padding(top = 7.dp),
+                            color = Color(0xFF77717E),
+                            fontSize = 12.sp,
+                            lineHeight = 19.sp,
+                        )
+                    }
                 }
 
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(11.dp),
                     ) {
                         ConnectActionCard(
                             title = "Pair",
@@ -133,51 +130,6 @@ fun ConnectScreen(
 }
 
 @Composable
-private fun ConnectStatusCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = Color(0xFFF7F4FC),
-        border = BorderStroke(1.dp, Color(0xFFE8E1F3)),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(
-                        color = Color(0xFFEDE5FA),
-                        shape = RoundedCornerShape(13.dp),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "⌁",
-                    color = Color(0xFF703BE2),
-                    fontSize = 22.sp,
-                )
-            }
-            Spacer(Modifier.size(12.dp))
-            Column {
-                Text(
-                    text = "Remote & nearby connection",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = "Connect features are under development.",
-                    color = Color(0xFF81798E),
-                    fontSize = 11.sp,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ConnectActionCard(
     title: String,
     description: String,
@@ -188,38 +140,48 @@ private fun ConnectActionCard(
     Surface(
         modifier = modifier.alpha(0.62f),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, Color(0xFFE8E4EC)),
+        color = Color.White,
+        border = BorderStroke(1.dp, Color(0xFFE8E5EE)),
+        shadowElevation = 5.dp,
         onClick = {},
         enabled = false,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 16.dp),
         ) {
-            Text(
-                text = icon,
-                fontSize = 23.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier.size(23.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = icon,
+                    fontSize = 20.sp,
+                    color = Color(0xFF413C48),
+                )
+            }
+            Spacer(Modifier.height(11.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFF2C2830),
             )
-            Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = description,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp,
+                lineHeight = 14.sp,
+                color = Color(0xFF89838F),
             )
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = "COMING SOON",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 9.sp,
+                lineHeight = 11.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.8.sp,
+                letterSpacing = 0.35.sp,
+                color = Color(0xFF7C7485),
             )
         }
     }
