@@ -1,33 +1,131 @@
 package com.indoone.menu
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathBuilder
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+
+private val AccountsNavIcon: ImageVector = ImageVector.Builder(
+    name = "AccountsNav",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = null, stroke = androidx.compose.ui.graphics.SolidColor(Color.Unspecified), strokeLineWidth = 1.8f) {
+        moveTo(9f, 5f)
+        curveTo(7.343f, 5f, 6f, 6.343f, 6f, 8f)
+        curveTo(6f, 9.657f, 7.343f, 11f, 9f, 11f)
+        curveTo(10.657f, 11f, 12f, 9.657f, 12f, 8f)
+        curveTo(12f, 6.343f, 10.657f, 5f, 9f, 5f)
+        moveTo(4.5f, 19f)
+        curveTo(5.1f, 16f, 6.6f, 14.5f, 9f, 14.5f)
+        curveTo(11.4f, 14.5f, 12.9f, 16f, 13.5f, 19f)
+        moveTo(16f, 6.5f)
+        curveTo(14.619f, 6.5f, 13.5f, 7.619f, 13.5f, 9f)
+        curveTo(13.5f, 10.381f, 14.619f, 11.5f, 16f, 11.5f)
+        curveTo(17.381f, 11.5f, 18.5f, 10.381f, 18.5f, 9f)
+        curveTo(18.5f, 7.619f, 17.381f, 6.5f, 16f, 6.5f)
+        moveTo(13.5f, 18.5f)
+        curveTo(14f, 16.3f, 15.2f, 15.1f, 17f, 15.1f)
+        curveTo(18.7f, 15.1f, 19.9f, 16.3f, 20.5f, 18.5f)
+    }
+}.build()
+
+private val LobbyNavIcon: ImageVector = ImageVector.Builder(
+    name = "LobbyNav",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = null, stroke = androidx.compose.ui.graphics.SolidColor(Color.Unspecified), strokeLineWidth = 1.8f) {
+        moveTo(12f, 3.5f)
+        lineTo(20.5f, 12f)
+        lineTo(12f, 20.5f)
+        lineTo(3.5f, 12f)
+        close()
+        moveTo(12f, 9.6f)
+        curveTo(10.675f, 9.6f, 9.6f, 10.675f, 9.6f, 12f)
+        curveTo(9.6f, 13.325f, 10.675f, 14.4f, 12f, 14.4f)
+        curveTo(13.325f, 14.4f, 14.4f, 13.325f, 14.4f, 12f)
+        curveTo(14.4f, 10.675f, 13.325f, 9.6f, 12f, 9.6f)
+    }
+}.build()
+
+private val ConnectNavIcon: ImageVector = ImageVector.Builder(
+    name = "ConnectNav",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = null, stroke = androidx.compose.ui.graphics.SolidColor(Color.Unspecified), strokeLineWidth = 1.8f) {
+        moveTo(5f, 12f)
+        lineTo(19f, 12f)
+        moveTo(8f, 7f)
+        lineTo(3f, 12f)
+        lineTo(8f, 17f)
+        moveTo(16f, 7f)
+        lineTo(21f, 12f)
+        lineTo(16f, 17f)
+    }
+}.build()
+
+private val SettingsNavIcon: ImageVector = ImageVector.Builder(
+    name = "SettingsNav",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(fill = null, stroke = androidx.compose.ui.graphics.SolidColor(Color.Unspecified), strokeLineWidth = 1.8f) {
+        moveTo(5f, 7f)
+        lineTo(19f, 7f)
+        moveTo(5f, 17f)
+        lineTo(19f, 17f)
+        moveTo(10f, 7f)
+        curveTo(10f, 8.105f, 9.105f, 9f, 8f, 9f)
+        curveTo(6.895f, 9f, 6f, 8.105f, 6f, 7f)
+        curveTo(6f, 5.895f, 6.895f, 5f, 8f, 5f)
+        curveTo(9.105f, 5f, 10f, 5.895f, 10f, 7f)
+        moveTo(18f, 17f)
+        curveTo(18f, 18.105f, 17.105f, 19f, 16f, 19f)
+        curveTo(14.895f, 19f, 14f, 18.105f, 14f, 17f)
+        curveTo(14f, 15.895f, 14.895f, 15f, 16f, 15f)
+        curveTo(17.105f, 15f, 18f, 15.895f, 18f, 17f)
+    }
+}.build()
 
 @Composable
 fun AppTopBar(
     onMenuClick: () -> Unit,
+    onSearchClick: () -> Unit = {},
     trailingIcon: String? = null,
     onTrailingClick: () -> Unit = {},
 ) {
@@ -40,42 +138,52 @@ fun AppTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clickable(onClick = onMenuClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("☰", color = Color(0xFF242129), fontSize = 22.sp)
-            }
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(30.dp)
-                        .background(Color(0xFF6D35E8), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center,
+                        .clickable(onClick = {})
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
-                    Text("✦", color = Color.White, fontSize = 16.sp)
+                    Image(
+                        painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
+                        contentDescription = "Indoone",
+                        modifier = Modifier.size(34.dp),
+                    )
+                    Column {
+                        Text(
+                            text = "Indoone",
+                            color = Color(0xFF5E2DD2),
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp,
+                        )
+                        Text(
+                            text = "Authenticator",
+                            color = Color(0xFF6F6B77),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
-                Text(
-                    text = "Indoone",
-                    color = Color(0xFF5E2DD2),
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+
+                androidx.compose.material3.TextButton(
+                    onClick = onMenuClick,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp),
+                ) {
+                    Text("☰", color = Color(0xFF242129), fontSize = 22.sp)
+                }
             }
 
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clickable(enabled = trailingIcon != null, onClick = onTrailingClick),
-                contentAlignment = Alignment.Center,
+            androidx.compose.material3.TextButton(
+                onClick = if (trailingIcon != null) onTrailingClick else onSearchClick,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp),
             ) {
-                trailingIcon?.let { Text(it, color = Color(0xFF242129), fontSize = 24.sp) }
+                Text(trailingIcon ?: "⌕", color = Color(0xFF242129), fontSize = 24.sp)
             }
         }
         HorizontalDivider(color = Color(0xFFF0EEF5))
@@ -96,16 +204,18 @@ fun AppBottomNav(
             .fillMaxWidth()
             .navigationBarsPadding(),
         color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEAF2)),
+        border = BorderStroke(1.dp, Color(0xFFEEEAF2)),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(67.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(67.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppBottomNavItem("♟", "Accounts", activeTab == AppTab.ACCOUNTS, onAccountsClick)
-            AppBottomNavItem("◆", "Lobby", activeTab == AppTab.LOBBY, onLobbyClick)
-            AppBottomNavItem("↔", "Connect", activeTab == AppTab.CONNECT, onConnectClick)
-            AppBottomNavItem("☷", "Settings", activeTab == AppTab.SETTINGS, onSettingsClick)
+            AppBottomNavItem(AccountsNavIcon, "Accounts", activeTab == AppTab.ACCOUNTS, onAccountsClick)
+            AppBottomNavItem(LobbyNavIcon, "Lobby", activeTab == AppTab.LOBBY, onLobbyClick)
+            AppBottomNavItem(ConnectNavIcon, "Connect", activeTab == AppTab.CONNECT, onConnectClick)
+            AppBottomNavItem(SettingsNavIcon, "Settings", activeTab == AppTab.SETTINGS, onSettingsClick)
         }
     }
 }
@@ -114,7 +224,7 @@ enum class AppTab { ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
 private fun RowScope.AppBottomNavItem(
-    icon: String,
+    icon: ImageVector,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
@@ -129,7 +239,16 @@ private fun RowScope.AppBottomNavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(icon, color = contentColor)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = contentColor)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = contentColor,
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+        )
     }
 }
