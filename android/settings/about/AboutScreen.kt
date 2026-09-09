@@ -1,14 +1,11 @@
 package com.indoone.settings.about
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,12 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private data class AboutSection(val title: String, val description: String)
 
 @Composable
 fun AboutScreen(
@@ -35,47 +31,111 @@ fun AboutScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    val sections = listOf(
-        AboutSection("About Indoone", "Securely generate and manage time-based one-time passwords for your accounts."),
-        AboutSection("Sync", "Secure cloud sync across your signed-in devices"),
-        AboutSection("OTP Standard", "TOTP • 6/8 digits • SHA-1 / SHA-256 / SHA-512"),
-        AboutSection("Account Storage", "Cloud synced with your Indoone account"),
-        AboutSection("Legal", "Privacy Policy • Terms of Service"),
-        AboutSection("Licenses", "Open Source Licenses"),
-    )
-
-    Box(Modifier.fillMaxSize().background(Color(0x8819141F)), contentAlignment = Alignment.BottomCenter) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x5519141F))
+            .clickable(onClick = onBack),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         Surface(
-            Modifier.fillMaxWidth().fillMaxHeight(0.88f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp)
+                .clickable(onClick = {}),
+            shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
-            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
         ) {
-            Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("About Indoone", Modifier.weight(1f), fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E1A22))
+            Column(
+                modifier = Modifier.padding(horizontal = 23.dp, vertical = 21.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "About Indoone",
+                        modifier = Modifier.weight(1f),
+                        color = Color(0xFF201C25),
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                     Box(
-                        Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)).clickable(onClick = onBack),
+                        modifier = Modifier
+                            .size(35.dp)
+                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))
+                            .clickable(onClick = onBack),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("×", fontSize = 23.sp, lineHeight = 23.sp, color = Color(0xFF5D5666))
+                        Text("×", color = Color(0xFF5D5666), fontSize = 22.sp, lineHeight = 22.sp)
                     }
                 }
+
+                Spacer(Modifier.height(12.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color(0xFF6B2FE8), Color(0xFF8B43EC)),
+                            ),
+                            shape = RoundedCornerShape(9.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("I", color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Black)
+                }
+
+                Text(
+                    text = "Indoone Authenticator",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = Color(0xFF201C25),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Text(
+                    text = "Private authenticator with cloud sync and secure device pairing.\nUpdates are checked automatically when the app opens.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 5.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = Color(0xFF756F7F),
+                    fontSize = 12.sp,
+                    lineHeight = 19.sp,
+                )
+
                 Spacer(Modifier.height(14.dp))
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    sections.forEach { section ->
-                        Surface(
-                            Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.dp, Color(0xFFE9E5EF)),
-                            shadowElevation = 1.dp,
-                        ) {
-                            Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-                                Text(section.title, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E1A22))
-                                Text(section.description, Modifier.padding(top = 3.dp), fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF8A8492))
-                            }
-                        }
+                AboutMetaRow("Version", "2.1.16")
+                AboutMetaRow("Updates", "Automatic")
+
+                Spacer(Modifier.height(1.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .padding(top = 0.dp)
+                        .clickable(onClick = onBack),
+                    shape = RoundedCornerShape(13.dp),
+                    color = Color.Transparent,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(listOf(Color(0xFF6330DB), Color(0xFF9147ED))),
+                                RoundedCornerShape(13.dp),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("Done", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -84,4 +144,21 @@ fun AboutScreen(
 
     @Suppress("UNUSED_VARIABLE")
     val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
+}
+
+@Composable
+private fun AboutMetaRow(label: String, value: String) {
+    Column(Modifier.fillMaxWidth()) {
+        androidx.compose.material3.HorizontalDivider(color = Color(0xFFEEE8F4))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(37.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, color = Color(0xFF756F7F), fontSize = 12.sp)
+            Spacer(Modifier.weight(1f))
+            Text(value, color = Color(0xFF24202A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+    }
 }
