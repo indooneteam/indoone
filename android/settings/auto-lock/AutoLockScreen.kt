@@ -63,7 +63,6 @@ fun AutoLockScreen(
             Spacer(Modifier.padding(top = 16.dp))
 
             listOf(
-                0 to "Never",
                 1 to "After 1 minute",
                 5 to "After 5 minutes",
                 15 to "After 15 minutes",
