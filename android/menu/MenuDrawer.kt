@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
@@ -50,7 +54,7 @@ fun MenuDrawer(
     onDangerZone: () -> Unit,
     onLogout: () -> Unit,
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
     var showDangerZone by remember { mutableStateOf(false) }
@@ -123,7 +127,7 @@ fun MenuDrawer(
                 ) {
                     Surface(
                         color = Color(0xFF5E2CE2),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(11.dp),
+                        shape = RoundedCornerShape(11.dp),
                     ) {
                         Text(
                             "I",
@@ -135,19 +139,20 @@ fun MenuDrawer(
                         Text(
                             "Indoone",
                             color = Color(0xFF5E2DD2),
-                            fontSize = androidx.compose.ui.unit.sp.sp(19f),
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp,
                         )
                         Text(
                             "Authenticator",
                             color = Color(0xFF77717D),
-                            fontSize = androidx.compose.ui.unit.sp.sp(10f),
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
 
-                Spacer(Modifier.padding(top = 17.dp))
+                Spacer(Modifier.height(17.dp))
                 DrawerItem("▦", "All Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
                 DrawerItem("☆", "Favorites", null, onFavorites)
                 DrawerItem("♙", "Trash", null) { showTrash = true }
@@ -195,7 +200,7 @@ private fun DrawerItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 0.dp)
+            .padding(horizontal = 12.dp)
             .height(48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -203,24 +208,24 @@ private fun DrawerItem(
             icon,
             modifier = Modifier.width(32.dp),
             color = Color(0xFF413C48),
-            fontSize = androidx.compose.ui.unit.sp.sp(19f),
+            fontSize = 19.sp,
         )
         Text(
             title,
             modifier = Modifier.weight(1f),
             color = Color(0xFF413C48),
-            fontSize = androidx.compose.ui.unit.sp.sp(13f),
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
         )
         trailing?.let {
             Surface(
                 color = Color(0xFFF0EBFA),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(10.dp),
             ) {
                 Text(
                     it,
                     color = Color(0xFF7041CE),
-                    fontSize = androidx.compose.ui.unit.sp.sp(11f),
+                    fontSize = 11.sp,
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                 )
             }
