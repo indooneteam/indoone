@@ -4,13 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.PasswordVisualTransformation
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,10 +18,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthFieldLabel
 import com.indoone.authentication.AuthHeading
@@ -73,7 +73,7 @@ fun LoginScreen(
             enabled = !busy,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
             leadingContent = if (mobileOnly) {
-                { Text("+91", fontSize = 13.dp.value.spCompat(), fontWeight = FontWeight.Normal) }
+                { Text("+91", fontSize = 13.sp) }
             } else null,
         )
 
@@ -86,7 +86,7 @@ fun LoginScreen(
             enabled = !busy,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingContent = {
-                androidx.compose.material3.TextButton(onClick = { passwordVisible = !passwordVisible }, enabled = !busy) {
+                TextButton(onClick = { passwordVisible = !passwordVisible }, enabled = !busy) {
                     Text(if (passwordVisible) "◌" else "◉", fontSize = 17.sp)
                 }
             },
@@ -109,7 +109,7 @@ fun LoginScreen(
 
         if (otpVisible) {
             Spacer(Modifier.padding(top = 6.dp))
-            Text("OTP sent. Check your email.", fontSize = 12.sp)
+            Text(status.ifBlank { "OTP sent. Check your email." }, fontSize = 12.sp)
             Spacer(Modifier.padding(top = 12.dp))
             AuthFieldLabel("VERIFICATION OTP")
             AuthTextField(
@@ -139,5 +139,3 @@ fun LoginScreen(
         )
     }
 }
-
-private fun Float.spCompat() = androidx.compose.ui.unit.sp
