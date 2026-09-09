@@ -31,11 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +48,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
 import com.indoone.accounts.storage.AccountRepositoryProvider
+import com.indoone.menu.about.AboutScreen
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
@@ -77,9 +74,21 @@ fun MenuDrawer(
     val context = LocalContext.current
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
     var showDangerZone by remember { mutableStateOf(false) }
     var showLogout by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
+
+    if (showAbout) {
+        AboutScreen(
+            onBack = { showAbout = false },
+            onAccountsClick = { showAbout = false; onAccounts() },
+            onLobbyClick = { showAbout = false },
+            onConnectClick = { showAbout = false },
+            onSettingsClick = { showAbout = false; onDismiss() },
+        )
+        return
+    }
 
     if (showTerms) {
         TermsOfUseScreen(
@@ -166,7 +175,7 @@ fun MenuDrawer(
                 DrawerItem(Icons.Outlined.Security, "Security", null, onSecurity)
                 DrawerItem(Icons.Outlined.Description, "Terms of Use", null) { showTerms = true }
                 DrawerItem(Icons.Outlined.Visibility, "Privacy Policy", null, onPrivacy)
-                DrawerItem(Icons.Outlined.Info, "About Indoone", null, onAbout)
+                DrawerItem(Icons.Outlined.Info, "About Indoone", null) { showAbout = true }
                 DrawerItem(Icons.Outlined.Lock, "Lock App", null) {
                     if (AppLockStore(context).isEnabled()) {
                         onDismiss()
