@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -58,7 +59,9 @@ fun EnterSetupKeyScreen(
     onSettingsClick: () -> Unit = {},
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(Color.White),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
     ) {
         AppTopBar(onMenuClick = onMenuClick, onSearchClick = onSearchClick)
 
@@ -125,10 +128,13 @@ fun EnterSetupKeyScreen(
                     Text(it, color = Color(0xFFB3261E), fontSize = 12.sp)
                 }
 
-                androidx.compose.material3.Button(
+                Button(
                     onClick = onSave,
                     enabled = state.canSave,
-                    modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .padding(top = 6.dp),
                     shape = RoundedCornerShape(13.dp),
                     contentPadding = PaddingValues(vertical = 0.dp),
                 ) {
