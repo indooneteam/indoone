@@ -183,11 +183,23 @@ private fun RowScope.AppBottomNavItem(
         modifier = Modifier.weight(1f).height(67.dp).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            icon,
-            contentDescription = label,
-            modifier = Modifier.size(23.dp),
-            tint = contentColor.copy(alpha = if (active) 1f else 0.78f),
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                modifier = Modifier.size(23.dp),
+                tint = contentColor.copy(alpha = if (active) 1f else 0.78f),
+            )
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 9.sp,
+                fontWeight = if (active) FontWeight.Bold else FontWeight.SemiBold,
+                lineHeight = 10.sp,
+            )
+        }
     }
 }
