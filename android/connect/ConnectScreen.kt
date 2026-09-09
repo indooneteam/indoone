@@ -1,6 +1,7 @@
 package com.indoone.connect
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,20 +16,55 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
-import com.indoone.menu.AppTopBar
+
+private fun headerIconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
+    ImageVector.Builder(
+        name = name,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 1.8f,
+            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+            pathBuilder = content,
+        )
+    }.build()
+
+private val ConnectMenuIcon = headerIconBuilder("ConnectMenu") {
+    moveTo(4f, 7f); lineTo(20f, 7f); moveTo(4f, 12f); lineTo(20f, 12f); moveTo(4f, 17f); lineTo(20f, 17f)
+}
+
+private val ConnectSearchIcon = headerIconBuilder("ConnectSearch") {
+    moveTo(11f, 17.5f); curveTo(7.41f, 17.5f, 4.5f, 14.59f, 4.5f, 11f); curveTo(4.5f, 7.41f, 7.41f, 4.5f, 11f, 4.5f); curveTo(14.59f, 4.5f, 17.5f, 7.41f, 17.5f, 11f); curveTo(17.5f, 14.59f, 14.59f, 17.5f, 11f, 17.5f)
+    moveTo(16f, 16f); lineTo(20f, 20f)
+}
 
 @Composable
 fun ConnectScreen(
@@ -51,7 +87,7 @@ fun ConnectScreen(
                 .fillMaxSize()
                 .safeDrawingPadding(),
         ) {
-            AppTopBar(onMenuClick = onMenuClick)
+            ConnectTopBar(onMenuClick = onMenuClick)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -125,6 +161,93 @@ fun ConnectScreen(
                 onConnectClick = onConnectClick,
                 onSettingsClick = onSettingsClick,
             )
+        }
+    }
+}
+
+@Composable
+private fun ConnectTopBar(
+    onMenuClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(76.dp)
+                .padding(horizontal = 18.dp, vertical = 8.dp),
+        ) {
+            TextButton(
+                onClick = onMenuClick,
+                modifier = Modifier.align(Alignment.CenterStart),
+                contentPadding = PaddingValues(8.dp),
+            ) {
+                Icon(
+                    ConnectMenuIcon,
+                    contentDescription = "Open menu",
+                    modifier = Modifier.size(21.dp),
+                    tint = Color(0xFF242129),
+                )
+            }
+
+            Row(
+                modifier = Modifier.align(Alignment.Center),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                ConnectIndooneLogo(modifier = Modifier.size(34.dp))
+                Text(
+                    "Indoone",
+                    color = Color(0xFF5E2DD2),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 18.sp,
+                )
+            }
+
+            TextButton(
+                onClick = {},
+                modifier = Modifier.align(Alignment.CenterEnd),
+                contentPadding = PaddingValues(8.dp),
+            ) {
+                Icon(
+                    ConnectSearchIcon,
+                    contentDescription = "Search accounts",
+                    modifier = Modifier.size(21.dp),
+                    tint = Color(0xFF242129),
+                )
+            }
+        }
+        HorizontalDivider(color = Color(0xFFF0EEF5))
+    }
+}
+
+@Composable
+private fun ConnectIndooneLogo(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val scaleFactor = size.minDimension / 48f
+        scale(scaleFactor) {
+            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
+                drawRoundRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)),
+                        start = androidx.compose.ui.geometry.Offset(11f, 11f),
+                        end = androidx.compose.ui.geometry.Offset(37f, 37f),
+                    ),
+                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f),
+                    size = androidx.compose.ui.geometry.Size(26f, 26f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
+                )
+            }
+            val outer = Path().apply {
+                moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f)
+                lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close()
+            }
+            drawPath(outer, color = Color(0xFF0A0A18))
+            val inner = Path().apply {
+                moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f)
+                lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close()
+            }
+            drawPath(inner, color = Color(0xFF60A5FA))
         }
     }
 }
