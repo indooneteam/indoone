@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -83,58 +84,55 @@ fun AppTopBar(
     onTrailingClick: () -> Unit = {},
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(76.dp)
                 .padding(horizontal = 18.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            TextButton(
+                onClick = onMenuClick,
+                modifier = Modifier.align(Alignment.CenterStart),
+                contentPadding = PaddingValues(8.dp),
             ) {
-                TextButton(
-                    onClick = onMenuClick,
-                    contentPadding = PaddingValues(8.dp),
-                ) {
-                    Icon(
-                        MenuIcon,
-                        contentDescription = "Open menu",
-                        modifier = Modifier.size(21.dp),
-                        tint = Color(0xFF242129),
+                Icon(
+                    MenuIcon,
+                    contentDescription = "Open menu",
+                    modifier = Modifier.size(21.dp),
+                    tint = Color(0xFF242129),
+                )
+            }
+
+            Row(
+                modifier = Modifier.align(Alignment.Center),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                Image(
+                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
+                    contentDescription = "Indoone",
+                    modifier = Modifier.size(34.dp),
+                )
+                Column {
+                    Text(
+                        "Indoone",
+                        color = Color(0xFF5E2DD2),
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 18.sp,
                     )
-                }
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(9.dp),
-                ) {
-                    Image(
-                        painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
-                        contentDescription = "Indoone",
-                        modifier = Modifier.size(34.dp),
+                    Text(
+                        "Authenticator",
+                        color = Color(0xFF6F6B77),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                     )
-                    Column {
-                        Text(
-                            "Indoone",
-                            color = Color(0xFF5E2DD2),
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 18.sp,
-                        )
-                        Text(
-                            "Authenticator",
-                            color = Color(0xFF6F6B77),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
                 }
             }
+
             TextButton(
                 onClick = if (trailingIcon != null) onTrailingClick else onSearchClick,
+                modifier = Modifier.align(Alignment.CenterEnd),
                 contentPadding = PaddingValues(8.dp),
             ) {
                 if (trailingIcon == null) {
