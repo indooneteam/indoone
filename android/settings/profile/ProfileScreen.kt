@@ -225,7 +225,7 @@ private fun ProfileActionRow(
                     modifier = Modifier.padding(top = 3.dp),
                     color = Color(0xFF8A8392),
                     fontSize = 12.sp,
-                    lineHeight = 16.dp.value.sp,
+                    lineHeight = 16.sp,
                 )
             }
             Icon(
