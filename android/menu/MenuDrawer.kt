@@ -19,14 +19,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.dangerzone.DangerZoneScreen
@@ -51,7 +50,7 @@ fun MenuDrawer(
     onDangerZone: () -> Unit,
     onLogout: () -> Unit,
 ) {
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
     var showDangerZone by remember { mutableStateOf(false) }
@@ -105,48 +104,58 @@ fun MenuDrawer(
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        Spacer(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .background(Color.Black.copy(alpha = 0.30f))
-                .clickable(onClick = onDismiss),
-        )
         Surface(
             modifier = Modifier
-                .width(320.dp)
+                .width(310.dp)
                 .fillMaxHeight(),
-            color = MaterialTheme.colorScheme.surface,
+            color = Color.White,
             shadowElevation = 16.dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(vertical = 20.dp),
+                    .padding(horizontal = 14.dp, vertical = 25.dp),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Surface(
-                        color = Color(0xFF6D35E8),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                        color = Color(0xFF5E2CE2),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(11.dp),
                     ) {
-                        Text("I", color = Color.White, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp))
+                        Text(
+                            "I",
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        )
                     }
-                    Column(modifier = Modifier.padding(start = 10.dp)) {
-                        Text("Indoone", style = MaterialTheme.typography.titleLarge)
-                        Text("Authenticator", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(modifier = Modifier.padding(start = 9.dp)) {
+                        Text(
+                            "Indoone",
+                            color = Color(0xFF5E2DD2),
+                            fontSize = androidx.compose.ui.unit.sp.sp(19f),
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        )
+                        Text(
+                            "Authenticator",
+                            color = Color(0xFF77717D),
+                            fontSize = androidx.compose.ui.unit.sp.sp(10f),
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        )
                     }
                 }
 
-                Spacer(Modifier.padding(top = 10.dp))
+                Spacer(Modifier.padding(top = 17.dp))
                 DrawerItem("▦", "All Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
                 DrawerItem("☆", "Favorites", null, onFavorites)
                 DrawerItem("♙", "Trash", null) { showTrash = true }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                    color = Color(0xFFEEEAF2),
+                )
 
                 DrawerItem("◈", "Security", null, onSecurity)
                 DrawerItem("▤", "Terms of Use", null) { showTerms = true }
@@ -164,6 +173,14 @@ fun MenuDrawer(
                 DrawerItem("⇥", "Log out", null) { showLogout = true }
             }
         }
+
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(Color.Black.copy(alpha = 0.33f))
+                .clickable(onClick = onDismiss),
+        )
     }
 }
 
@@ -178,13 +195,35 @@ private fun DrawerItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 13.dp),
+            .padding(horizontal = 12.dp, vertical = 0.dp)
+            .height(48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(icon, modifier = Modifier.width(32.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            icon,
+            modifier = Modifier.width(32.dp),
+            color = Color(0xFF413C48),
+            fontSize = androidx.compose.ui.unit.sp.sp(19f),
+        )
+        Text(
+            title,
+            modifier = Modifier.weight(1f),
+            color = Color(0xFF413C48),
+            fontSize = androidx.compose.ui.unit.sp.sp(13f),
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        )
         trailing?.let {
-            Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(
+                color = Color(0xFFF0EBFA),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+            ) {
+                Text(
+                    it,
+                    color = Color(0xFF7041CE),
+                    fontSize = androidx.compose.ui.unit.sp.sp(11f),
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                )
+            }
         }
     }
 }
