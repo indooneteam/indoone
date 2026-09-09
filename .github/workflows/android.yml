@@ -21,7 +21,23 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+      - name: Prepare stable develop signing key
+        if: github.ref == 'refs/heads/develop'
+        shell: bash
+        env:
+          INDOONE_KEYSTORE_BASE64: ${{ secrets.INDOONE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$INDOONE_KEYSTORE_BASE64"
+          printf '%s' "$INDOONE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/indoone-develop.keystore"
+          test -s "$RUNNER_TEMP/indoone-develop.keystore"
       - name: Assemble debug APK
+        shell: bash
+        env:
+          INDOONE_KEYSTORE_PATH: ${{ github.ref == 'refs/heads/develop' && format('{0}/indoone-develop.keystore', runner.temp) || '' }}
+          INDOONE_KEYSTORE_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
+          INDOONE_KEY_ALIAS: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_ALIAS || '' }}
+          INDOONE_KEY_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_PASSWORD || '' }}
         run: gradle assembleDebug --stacktrace
       - name: Verify APK output
         shell: bash
