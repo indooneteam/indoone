@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
 import com.indoone.accounts.storage.AccountRepositoryProvider
+import com.indoone.authentication.AuthActivity
 import com.indoone.menu.about.MenuAboutScreen
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
@@ -83,33 +84,33 @@ fun MenuDrawer(
 
     if (showAbout) {
         MenuAboutScreen(
-            onBack = { showAbout = false },
-            onAccountsClick = { showAbout = false; onAccounts() },
-            onLobbyClick = { showAbout = false },
-            onConnectClick = { showAbout = false },
-            onSettingsClick = { showAbout = false; onDismiss() },
+            onBack = onDismiss,
+            onAccountsClick = { onAccounts() },
+            onLobbyClick = { onDismiss(); context.startActivity(Intent(context, com.indoone.lobby.LobbyActivity::class.java)) },
+            onConnectClick = { onDismiss() },
+            onSettingsClick = { onDismiss() },
         )
         return
     }
 
     if (showTerms) {
         TermsOfUseScreen(
-            onBack = { showTerms = false },
-            onAccountsClick = { showTerms = false; onAccounts() },
-            onLobbyClick = { showTerms = false },
-            onConnectClick = { showTerms = false },
-            onSettingsClick = { showTerms = false; onDismiss() },
+            onBack = onDismiss,
+            onAccountsClick = { onAccounts() },
+            onLobbyClick = { onDismiss() },
+            onConnectClick = { onDismiss() },
+            onSettingsClick = { onDismiss() },
         )
         return
     }
 
     if (showDangerZone) {
         DangerZoneScreen(
-            onBack = { showDangerZone = false },
-            onAccountsClick = { showDangerZone = false; onAccounts() },
-            onLobbyClick = { showDangerZone = false },
-            onConnectClick = { showDangerZone = false },
-            onSettingsClick = { showDangerZone = false; onDismiss() },
+            onBack = onDismiss,
+            onAccountsClick = { onAccounts() },
+            onLobbyClick = { onDismiss() },
+            onConnectClick = { onDismiss() },
+            onSettingsClick = { onDismiss() },
         )
         return
     }
@@ -117,22 +118,27 @@ fun MenuDrawer(
     if (showTrash) {
         TrashScreen(
             repository = repository,
-            onBack = { showTrash = false },
-            onAccountsClick = { showTrash = false; onAccounts() },
-            onLobbyClick = { showTrash = false },
-            onConnectClick = { showTrash = false },
-            onSettingsClick = { showTrash = false; onDismiss() },
+            onBack = onDismiss,
+            onAccountsClick = { onAccounts() },
+            onLobbyClick = { onDismiss() },
+            onConnectClick = { onDismiss() },
+            onSettingsClick = { onDismiss() },
         )
         return
     }
 
     if (showLogout) {
         LogoutScreen(
-            onDismiss = { showLogout = false },
+            onDismiss = onDismiss,
             onLoggedOut = {
                 showLogout = false
-                onDismiss()
-                (context as? Activity)?.finishAndRemoveTask()
+                val activity = context as? Activity
+                context.startActivity(
+                    Intent(context, AuthActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    },
+                )
+                activity?.finish()
             },
         )
         return
