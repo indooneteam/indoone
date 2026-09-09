@@ -121,8 +121,22 @@ private fun LogoutThisDevice(onBack: () -> Unit, onLoggedOut: () -> Unit) {
 
 @Composable
 private fun LogoutModalShell(onBack: () -> Unit, title: String, content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color(0x8819141F)), contentAlignment = Alignment.BottomCenter) {
-        Surface(Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 14.dp, shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp)) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(0x5519141F))
+            .clickable(onClick = onBack),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp)
+                .clickable(onClick = {}),
+            color = Color.White,
+            shadowElevation = 14.dp,
+            shape = RoundedCornerShape(25.dp),
+        ) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(title, Modifier.weight(1f), fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E1A22))
