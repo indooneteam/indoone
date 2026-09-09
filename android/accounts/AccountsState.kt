@@ -12,13 +12,15 @@ data class AccountItem(
     val secondsRemaining: Int,
     val periodSeconds: Int = 30,
     val favorite: Boolean = false,
+    val icon: String = "",
+    val serviceClass: String = "google",
 )
 
 @Immutable
 data class AccountsState(
     val accounts: List<AccountItem> = emptyList(),
     val searchQuery: String = "",
-    val sortOrder: AccountSortOrder = AccountSortOrder.ASCENDING,
+    val sortOrder: AccountSortOrder = AccountSortOrder.DESCENDING,
 ) {
     val sortAscending: Boolean
         get() = sortOrder == AccountSortOrder.ASCENDING
@@ -29,9 +31,9 @@ data class AccountsState(
             val filtered = if (query.isEmpty()) {
                 accounts
             } else {
+                // Main searches by account/service name only, not email.
                 accounts.filter { account ->
-                    account.name.contains(query, ignoreCase = true) ||
-                        account.email.contains(query, ignoreCase = true)
+                    account.name.contains(query, ignoreCase = true)
                 }
             }
 
