@@ -1,5 +1,6 @@
 package com.indoone.settings.profile.change_email
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +45,16 @@ fun ChangeEmailScreen(
         Column(Modifier.fillMaxSize()) {
             AppTopBar(onMenuClick = onMenuClick)
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).imePadding().padding(18.dp)) {
+                Text(
+                    "← Back to Profile",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 18.dp)
+                        .clickable(onClick = onBack),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Text("Change email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text("Change the email used for your Indoone account. Enter your current password to confirm.", modifier = Modifier.padding(top = 5.dp, bottom = 18.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(email, { email = it }, Modifier.fillMaxWidth(), label = { Text("Email address") }, placeholder = { Text("you@example.com") }, singleLine = true)
@@ -53,8 +64,6 @@ fun ChangeEmailScreen(
                 Button(onClick = { onSave(email, password) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(if (state.busy) "Changing…" else "Change email") }
                 state.error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
-                Spacer(Modifier.padding(top = 12.dp))
-                Surface(onClick = onBack, color = MaterialTheme.colorScheme.surfaceVariant) { Text("Back to Profile", Modifier.fillMaxWidth().padding(13.dp)) }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
