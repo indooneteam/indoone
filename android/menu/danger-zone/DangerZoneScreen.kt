@@ -2,41 +2,49 @@ package com.indoone.menu.dangerzone
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.launch
+
+private enum class DangerView {
+    ROOT,
+    LOCAL_DATA,
+    ACCOUNT_DELETE,
+}
 
 @Composable
 fun DangerZoneScreen(
@@ -46,96 +54,118 @@ fun DangerZoneScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    var showLocalDelete by remember { mutableStateOf(false) }
-    var showAccountDelete by remember { mutableStateOf(false) }
+    var view by remember { mutableStateOf(DangerView.ROOT) }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Danger Zone", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                OutlinedButton(onClick = onBack) { Text("Back") }
-            }
+    when (view) {
+        DangerView.ROOT -> DangerZoneRoot(
+            onBack = onBack,
+            onDeleteLocal = { view = DangerView.LOCAL_DATA },
+            onDeleteAccount = { view = DangerView.ACCOUNT_DELETE },
+        )
 
-            Text(
-                "These actions can permanently remove Indoone data. Continue only when you are sure.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+        DangerView.LOCAL_DATA -> DeleteLocalDataScreen(
+            onBack = { view = DangerView.ROOT },
+            onDeleted = onAccountsClick,
+        )
 
-            DangerActionRow(
-                title = "Delete local data",
-                subtitle = "Remove data stored on this device",
-                onClick = { showLocalDelete = true },
-            )
-            DangerActionRow(
-                title = "Delete Indoone account",
-                subtitle = "Permanently delete your Indoone account and cloud data",
-                onClick = { showAccountDelete = true },
-            )
-        }
-    }
-
-    if (showLocalDelete) {
-        LocalDataDeleteDialog(
-            onDismiss = { showLocalDelete = false },
-            onDeleted = {
-                showLocalDelete = false
-                onAccountsClick()
-            },
+        DangerView.ACCOUNT_DELETE -> DeleteAccountScreen(
+            onBack = { view = DangerView.ROOT },
+            onDeleted = onAccountsClick,
         )
     }
 
-    if (showAccountDelete) {
-        AccountDeleteDialog(
-            onDismiss = { showAccountDelete = false },
-            onDeleted = {
-                showAccountDelete = false
-                onAccountsClick()
-            },
-        )
-    }
+    @Suppress("UNUSED_VARIABLE")
+    val keepNavigationContract = onLobbyClick to onConnectClick to onSettingsClick
+}
 
-    // Kept in the signature so this screen can use the same app chrome/navigation contract.
-    LaunchedEffect(Unit) {
-        onLobbyClick
-        onConnectClick
-        onSettingsClick
+@Composable
+private fun DangerZoneRoot(
+    onBack: () -> Unit,
+    onDeleteLocal: () -> Unit,
+    onDeleteAccount: () -> Unit,
+) {
+    DangerModalShell(onBack = onBack) {
+        Text(
+            text = "Danger Zone",
+            fontSize = 21.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E1A22),
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "These actions can permanently remove Indoone data. Continue only when you are sure.",
+            color = Color(0xFF8A8492),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        DangerRow(
+            title = "Delete local data",
+            subtitle = "Remove data stored on this device",
+            onClick = onDeleteLocal,
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        DangerRow(
+            title = "Delete Indoone account",
+            subtitle = "Permanently delete your Indoone account and cloud data",
+            onClick = onDeleteAccount,
+        )
     }
 }
 
 @Composable
-private fun DangerActionRow(
+private fun DangerRow(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 2.dp,
-        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        color = Color.White,
+        shape = RoundedCornerShape(16.dp),
     ) {
-        TextButton(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth().padding(4.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 15.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.padding(top = 2.dp))
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3A3442),
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    color = Color(0xFF8A8492),
+                )
             }
+            Text(
+                text = "›",
+                fontSize = 24.sp,
+                color = Color(0xFF8A8492),
+                modifier = Modifier.padding(start = 10.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun LocalDataDeleteDialog(
-    onDismiss: () -> Unit,
+private fun DeleteLocalDataScreen(
+    onBack: () -> Unit,
     onDeleted: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -144,46 +174,66 @@ private fun LocalDataDeleteDialog(
     var working by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    AlertDialog(
-        onDismissRequest = { if (!working) onDismiss() },
-        title = { Text("Delete local data?") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.")
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (working) return@Button
-                    working = true
-                    error = null
-                    scope.launch {
-                        runCatching {
-                            clearLocalData(context)
-                            auth.signOut()
-                        }.onSuccess {
-                            onDeleted()
-                        }.onFailure {
-                            error = it.message ?: "Could not delete local data"
-                            working = false
-                        }
+    DangerModalShell(
+        onBack = onBack,
+        title = "Delete local data?",
+    ) {
+        Text(
+            text = "This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.",
+            color = Color(0xFF8A8492),
+            fontSize = 12.sp,
+            lineHeight = 19.sp,
+        )
+
+        error?.let {
+            Spacer(Modifier.height(10.dp))
+            Text(it, color = Color(0xFFB42318), fontSize = 12.sp, lineHeight = 18.sp)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                if (working) return@Button
+                working = true
+                error = null
+                scope.launch {
+                    runCatching {
+                        clearLocalData(context)
+                        auth.signOut()
+                    }.onSuccess {
+                        onDeleted()
+                    }.onFailure {
+                        working = false
+                        error = it.message ?: "Could not delete local data"
                     }
-                },
-                enabled = !working,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            ) { Text("Delete local data") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !working) { Text("Cancel") }
-        },
-    )
+                }
+            },
+            enabled = !working,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB42318)),
+        ) {
+            Text("Delete local data", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onBack,
+            enabled = !working,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            Text("Cancel", fontWeight = FontWeight.Bold, color = Color(0xFF6330DB))
+        }
+    }
 }
 
 @Composable
-private fun AccountDeleteDialog(
-    onDismiss: () -> Unit,
+private fun DeleteAccountScreen(
+    onBack: () -> Unit,
     onDeleted: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -198,88 +248,193 @@ private fun AccountDeleteDialog(
     var working by remember { mutableStateOf(false) }
 
     if (user == null) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text("Delete Indoone account?") },
-            text = { Text("Please login first.") },
-            confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
-        )
+        DangerModalShell(onBack = onBack, title = "Delete Indoone account?") {
+            Text(
+                "Please login first.",
+                color = Color(0xFF8A8492),
+                fontSize = 12.sp,
+                lineHeight = 19.sp,
+            )
+            Spacer(Modifier.height(16.dp))
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Text("Close", fontWeight = FontWeight.Bold, color = Color(0xFF6330DB))
+            }
+        }
         return
     }
 
-    AlertDialog(
-        onDismissRequest = { if (!working) onDismiss() },
-        title = { Text("Delete Indoone account?") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.")
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("ACCOUNT PASSWORD") },
-                    placeholder = { Text("Enter your password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    enabled = !working,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = confirmation,
-                    onValueChange = { confirmation = it.uppercase() },
-                    label = { Text("TYPE DELETE TO CONFIRM") },
-                    placeholder = { Text("DELETE") },
-                    singleLine = true,
-                    enabled = !working,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                status?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (working) return@Button
-                    if (password.isBlank()) {
-                        status = "Enter your account password"
-                        return@Button
-                    }
-                    if (confirmation.trim().uppercase() != "DELETE") {
-                        status = "Type DELETE to confirm"
-                        return@Button
-                    }
-                    val email = user.email
-                    if (email.isNullOrBlank()) {
-                        status = "This account cannot be re-authenticated here."
-                        return@Button
-                    }
+    DangerModalShell(
+        onBack = onBack,
+        title = "Delete Indoone account?",
+    ) {
+        Text(
+            text = "This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.",
+            color = Color(0xFF8A8492),
+            fontSize = 12.sp,
+            lineHeight = 19.sp,
+        )
 
-                    working = true
-                    status = "Verifying your account…"
-                    deleteAccount(
-                        context = context,
-                        auth = auth,
-                        db = db,
-                        password = password,
-                        scope = scope,
-                        onStatus = { status = it },
-                        onSuccess = {
-                            working = false
-                            onDeleted()
-                        },
-                        onError = {
-                            working = false
-                            status = it
-                        },
+        Spacer(Modifier.height(14.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("ACCOUNT PASSWORD") },
+            placeholder = { Text("Enter your password") },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            enabled = !working,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+        )
+
+        Spacer(Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = confirmation,
+            onValueChange = { confirmation = it.uppercase() },
+            label = { Text("TYPE DELETE TO CONFIRM") },
+            placeholder = { Text("DELETE") },
+            singleLine = true,
+            enabled = !working,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+        )
+
+        status?.let {
+            Spacer(Modifier.height(10.dp))
+            Text(it, color = Color(0xFFB42318), fontSize = 12.sp, lineHeight = 18.sp)
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Button(
+            onClick = {
+                if (working) return@Button
+                if (password.isBlank()) {
+                    status = "Enter your account password"
+                    return@Button
+                }
+                if (confirmation.trim().uppercase() != "DELETE") {
+                    status = "Type DELETE to confirm"
+                    return@Button
+                }
+                val email = user.email
+                if (email.isNullOrBlank()) {
+                    status = "This account cannot be re-authenticated here."
+                    return@Button
+                }
+
+                working = true
+                status = "Verifying your account…"
+                deleteAccount(
+                    context = context,
+                    auth = auth,
+                    db = db,
+                    password = password,
+                    scope = scope,
+                    onStatus = { status = it },
+                    onSuccess = {
+                        working = false
+                        onDeleted()
+                    },
+                    onError = {
+                        working = false
+                        status = it
+                    },
+                )
+            },
+            enabled = !working,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB42318)),
+        ) {
+            Text("Delete Indoone account", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onBack,
+            enabled = !working,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            Text("Cancel", fontWeight = FontWeight.Bold, color = Color(0xFF6330DB))
+        }
+    }
+}
+
+@Composable
+private fun DangerModalShell(
+    onBack: () -> Unit,
+    title: String? = null,
+    content: @Composable Column.() -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x8819141F)),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f),
+            color = Color.White,
+            shadowElevation = 14.dp,
+            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = title ?: "Danger Zone",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1A22),
                     )
-                },
-                enabled = !working,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            ) { Text("Delete Indoone account") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !working) { Text("Cancel") }
-        },
-    )
+                    TextButton(
+                        onClick = onBack,
+                        modifier = Modifier.size(35.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(35.dp),
+                            shape = RoundedCornerShape(11.dp),
+                            color = Color(0xFFF5F2F8),
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "×",
+                                    fontSize = 23.sp,
+                                    lineHeight = 23.sp,
+                                    color = Color(0xFF5D5666),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+                content()
+            }
+        }
+    }
 }
 
 private fun clearLocalData(context: Context) {
