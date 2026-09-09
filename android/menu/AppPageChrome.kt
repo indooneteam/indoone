@@ -113,21 +113,13 @@ fun AppTopBar(
                     contentDescription = "Indoone",
                     modifier = Modifier.size(34.dp),
                 )
-                Column {
-                    Text(
-                        "Indoone",
-                        color = Color(0xFF5E2DD2),
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 18.sp,
-                    )
-                    Text(
-                        "Authenticator",
-                        color = Color(0xFF6F6B77),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+                Text(
+                    "Indoone",
+                    color = Color(0xFF5E2DD2),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 18.sp,
+                )
             }
 
             TextButton(
@@ -187,12 +179,15 @@ private fun RowScope.AppBottomNavItem(
     onClick: () -> Unit,
 ) {
     val contentColor = if (active) Color(0xFF6B34DF) else Color(0xFF99939F)
-    Column(
+    Box(
         modifier = Modifier.weight(1f).height(67.dp).clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(23.dp), tint = contentColor.copy(alpha = if (active) 1f else 0.78f))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = contentColor)
+        Icon(
+            icon,
+            contentDescription = label,
+            modifier = Modifier.size(23.dp),
+            tint = contentColor.copy(alpha = if (active) 1f else 0.78f),
+        )
     }
 }
