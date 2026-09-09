@@ -184,7 +184,7 @@ fun SettingsScreen(
             AppLockViewModel.Step.NEW -> ChangeAppLockScreen("Create new PIN", "Choose a new 4–12 digit App PIN.", state.pin, state.error, "Continue", flow::appendDigit, flow::backspace, flow::clear, {
                 if (state.pin.length in 4..12) { flow.setNewPin(state.pin); flow.setStep(AppLockViewModel.Step.CONFIRM); flow.resetInput() } else flow.error("PIN must contain 4–12 digits.")
             }, ::resetToSettings)
-            AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen("Confirm new PIN", "Enter the new PIN again to confirm it.", state.pin, state.error, "Change PIN", flow::appendDigit, flow::backspace, flow::clear, {
+            AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen("Confirm new PIN", "Enter the new App PIN again to confirm it.", state.pin, state.error, "Change PIN", flow::appendDigit, flow::backspace, flow::clear, {
                 if (state.pin != state.newPin) flow.error("New PINs do not match") else runCatching { appLockStore.setPin(state.newPin) }.onSuccess { resetToSettings() }.onFailure { flow.error("Could not change App PIN.") }
             }, ::resetToSettings)
             AppLockViewModel.Step.DISABLE -> DisableAppLockScreen(state.pin, state.error, flow::appendDigit, flow::backspace, flow::clear, {
@@ -273,7 +273,7 @@ private fun SettingsToggleRow(title: String, subtitle: String, icon: ImageVector
             Icon(icon, null, Modifier.size(22.dp), tint = Color(0xFF756D80))
             Column(Modifier.weight(1f)) {
                 Text(title, color = Color(0xFF2C2733), fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.dp)
+                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.sp)
             }
             Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
