@@ -42,8 +42,8 @@ fun AppLockScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0x5519141F))
-            .clickable(onClick = onBack)
-            .padding(14.dp),
+            .padding(14.dp)
+            .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(
