@@ -3,11 +3,7 @@ package com.indoone.authentication.login
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.PasswordVisualTransformation
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,18 +13,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthFieldLabel
 import com.indoone.authentication.AuthHeading
+import com.indoone.authentication.AuthPage
 import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
 import com.indoone.authentication.AuthTextField
+import androidx.compose.ui.Modifier
 
 @Composable
 fun LoginScreen(
@@ -49,21 +46,15 @@ fun LoginScreen(
     val mobileOnly = identifier.isNotBlank() && identifier.none(Char::isLetter) && identifier.none { it == '@' }
     val actionEnabled = !busy && if (otpVisible) true else identifier.isNotBlank() && password.isNotBlank()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp, vertical = 48.dp),
-        verticalArrangement = Arrangement.Center,
-    ) {
+    AuthPage {
         AuthBrand()
-        Spacer(Modifier.padding(top = 44.dp))
+        Spacer(Modifier.height(44.dp))
         AuthHeading(
             eyebrow = "SECURE & PRIVATE",
             title = "Welcome back",
             description = "Sign in to protect and sync your authenticator vault.",
         )
-        Spacer(Modifier.padding(top = 20.dp))
+        Spacer(Modifier.height(20.dp))
 
         AuthFieldLabel("EMAIL OR MOBILE NUMBER")
         AuthTextField(
@@ -77,7 +68,7 @@ fun LoginScreen(
             } else null,
         )
 
-        Spacer(Modifier.padding(top = 14.dp))
+        Spacer(Modifier.height(14.dp))
         AuthFieldLabel("PASSWORD")
         AuthTextField(
             value = password,
@@ -93,7 +84,7 @@ fun LoginScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
 
-        Spacer(Modifier.padding(top = 20.dp))
+        Spacer(Modifier.height(20.dp))
         AuthPrimaryButton(
             text = when {
                 busy && otpVisible -> "Sending…"
@@ -108,9 +99,9 @@ fun LoginScreen(
         )
 
         if (otpVisible) {
-            Spacer(Modifier.padding(top = 6.dp))
+            Spacer(Modifier.height(6.dp))
             Text(status.ifBlank { "OTP sent. Check your email." }, fontSize = 12.sp)
-            Spacer(Modifier.padding(top = 12.dp))
+            Spacer(Modifier.height(12.dp))
             AuthFieldLabel("VERIFICATION OTP")
             AuthTextField(
                 value = otp,
@@ -119,7 +110,7 @@ fun LoginScreen(
                 enabled = !busy,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             )
-            Spacer(Modifier.padding(top = 4.dp))
+            Spacer(Modifier.height(4.dp))
             AuthPrimaryButton(
                 text = if (busy) "Verifying…" else "Verify & Login",
                 enabled = !busy && otp.length == 6,
@@ -128,9 +119,9 @@ fun LoginScreen(
         }
 
         AuthStatus(error, error = true)
-        Spacer(Modifier.padding(top = 10.dp))
+        Spacer(Modifier.height(10.dp))
         AuthSecondaryButton("Create Account", !busy, onCreateAccount)
-        Spacer(Modifier.padding(top = 10.dp))
+        Spacer(Modifier.height(10.dp))
         Text(
             "Protect your Indoone account with password and email OTP verification.",
             color = androidx.compose.ui.graphics.Color(0xFF76717D),
