@@ -24,10 +24,12 @@ class IndooneAuthService(
     suspend fun login(identifier: String, password: String) {
         val raw = identifier.trim()
         if (raw.isBlank() || password.isBlank()) throw AuthException("Enter your email/mobile number and password.")
-        val email = if (raw.contains('@')) raw.lowercase() else resolveMobile(raw).email
 
         withContext(Dispatchers.IO) {
             try {
+                // Mobile lookup uses Tasks.await(), so it must stay off the main application thread.
+                val email = if (raw.contains('@')) raw.lowercase() else resolveMobile(raw).email
+
                 await(auth.signInWithEmailAndPassword(email, password))
                 val user = auth.currentUser ?: throw AuthException("Login session expired. Please login again.")
                 val profileSnapshot = await(database.reference.child("users").child(user.uid).child("profile").get())
