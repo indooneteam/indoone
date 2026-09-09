@@ -25,10 +25,6 @@
             </aapt:attr>
         </path>
     </group>
-    <path
-        android:fillColor="#0A0A18"
-        android:pathData="M54,31.5 L61.2,46.2 L75.9,54 L61.2,61.8 L54,76.5 L46.8,61.8 L32.1,54 L46.8,46.2 Z" />
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M54,46.1 L56.6,51.4 L61.9,54 L56.6,56.6 L54,61.9 L51.4,56.6 L46.1,54 L51.4,51.4 Z" />
+    <path android:fillColor="#0A0A18" android:pathData="M54,31.5 L61.2,46.2 L75.9,54 L61.2,61.8 L54,76.5 L46.8,61.8 L32.1,54 L46.8,46.2 Z" />
+    <path android:fillColor="#60A5FA" android:pathData="M54,46.1 L56.6,51.4 L61.9,54 L56.6,56.6 L54,61.9 L51.4,56.6 L46.1,54 L51.4,51.4 Z" />
 </vector>

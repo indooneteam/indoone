@@ -4,13 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.PasswordVisualTransformation
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -19,10 +16,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.indoone.authentication.AuthBrand
+import com.indoone.authentication.AuthFieldLabel
+import com.indoone.authentication.AuthHeading
+import com.indoone.authentication.AuthPrimaryButton
+import com.indoone.authentication.AuthSecondaryButton
+import com.indoone.authentication.AuthStatus
+import com.indoone.authentication.AuthTextField
 
 @Composable
 fun SignUpScreen(
@@ -38,122 +43,109 @@ fun SignUpScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var mobile by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
     var otp by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
-    val canSend = !busy && !otpVisible && email.isNotBlank() && mobile.isNotBlank() && password.length >= 6 && password == confirmPassword
+    val hasMobile = mobile.filter(Char::isDigit).isNotEmpty()
+    val actionEnabled = !busy && if (otpVisible) true else email.isNotBlank() && mobile.isNotBlank() && password.length >= 6
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 40.dp),
-        verticalArrangement = Arrangement.Top,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 22.dp, vertical = 48.dp),
+        verticalArrangement = Arrangement.Center,
     ) {
-        Text("Indoone", style = MaterialTheme.typography.headlineSmall)
-        Text("Authenticator", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(36.dp))
-        Text("GET STARTED", style = MaterialTheme.typography.labelSmall)
-        Text("Create your account", style = MaterialTheme.typography.headlineLarge)
-        Text("Securely create an Indoone account for your authenticator vault.", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(22.dp))
+        AuthBrand()
+        Spacer(Modifier.height(44.dp))
+        AuthHeading(
+            eyebrow = "GET STARTED",
+            title = "Create your account",
+            description = "Securely create an Indoone account for your authenticator vault.",
+        )
+        Spacer(Modifier.height(20.dp))
 
-        Text("EMAIL ID", style = MaterialTheme.typography.labelMedium)
-        OutlinedTextField(
+        AuthFieldLabel("EMAIL ID")
+        AuthTextField(
             value = email,
             onValueChange = { email = it },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("you@example.com") },
-            singleLine = true,
-            enabled = !otpVisible && !busy,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            placeholder = "you@example.com",
+            enabled = !busy,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
-        Spacer(Modifier.height(12.dp))
 
-        Text("MOBILE NUMBER", style = MaterialTheme.typography.labelMedium)
-        OutlinedTextField(
+        Spacer(Modifier.height(14.dp))
+        AuthFieldLabel("MOBILE NUMBER")
+        AuthTextField(
             value = mobile,
-            onValueChange = { mobile = it },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("98765 43210") },
-            singleLine = true,
-            enabled = !otpVisible && !busy,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            onValueChange = { mobile = it.filter { char -> char.isDigit() }.take(10) },
+            placeholder = "98765 43210",
+            enabled = !busy,
+            leadingContent = if (hasMobile) {
+                { Text("+91", fontSize = 13.sp) }
+            } else null,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
         )
-        Spacer(Modifier.height(12.dp))
 
-        Text("PASSWORD", style = MaterialTheme.typography.labelMedium)
-        OutlinedTextField(
+        Spacer(Modifier.height(14.dp))
+        AuthFieldLabel("PASSWORD")
+        AuthTextField(
             value = password,
             onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Create a strong password") },
-            singleLine = true,
-            enabled = !otpVisible && !busy,
+            placeholder = "Create a strong password",
+            enabled = !busy,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
+            trailingContent = {
                 TextButton(onClick = { passwordVisible = !passwordVisible }, enabled = !busy) {
-                    Text(if (passwordVisible) "Hide" else "Show")
+                    Text(if (passwordVisible) "◌" else "◉", fontSize = 17.sp)
                 }
             },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
-        Spacer(Modifier.height(12.dp))
 
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Confirm password") },
-            singleLine = true,
-            enabled = !otpVisible && !busy,
-            visualTransformation = PasswordVisualTransformation(),
+        Spacer(Modifier.height(20.dp))
+        AuthPrimaryButton(
+            text = when {
+                busy && otpVisible -> "Sending…"
+                busy -> "Sending OTP…"
+                otpVisible -> "Resend OTP"
+                else -> "Send OTP"
+            },
+            enabled = actionEnabled,
+            onClick = {
+                if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password)
+            },
         )
-        Spacer(Modifier.height(18.dp))
-
-        Button(
-            onClick = { onSendOtp(email, mobile, password) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = canSend,
-        ) {
-            Text(if (busy) "Sending OTP…" else "Send OTP")
-        }
 
         if (otpVisible) {
-            Spacer(Modifier.height(16.dp))
-            Text(status.ifBlank { "OTP sent. Check your email." }, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
+            Spacer(Modifier.height(6.dp))
+            Text(status.ifBlank { "OTP sent. Check your email." }, fontSize = 12.sp)
+            Spacer(Modifier.height(12.dp))
+            AuthFieldLabel("VERIFICATION OTP")
+            AuthTextField(
                 value = otp,
                 onValueChange = { otp = it.filter(Char::isDigit).take(6) },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("VERIFICATION OTP") },
-                placeholder = { Text("Enter 6-digit OTP") },
-                singleLine = true,
+                placeholder = "Enter 6-digit OTP",
                 enabled = !busy,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             )
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { onVerifyOtp(otp) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !busy && otp.length == 6,
-            ) {
-                Text(if (busy) "Verifying…" else "Verify & Create Account")
-            }
             Spacer(Modifier.height(4.dp))
-            TextButton(onClick = onResendOtp, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                Text("Resend OTP")
-            }
+            AuthPrimaryButton(
+                text = if (busy) "Verifying…" else "Verify & Create Account",
+                enabled = !busy && otp.length == 6,
+                onClick = { onVerifyOtp(otp) },
+            )
         }
 
-        if (error.isNotBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
-
+        AuthStatus(error, error = true)
         Spacer(Modifier.height(10.dp))
-        TextButton(onClick = onLogin, modifier = Modifier.fillMaxWidth(), enabled = !busy) {
-            Text("Already have an account? Login")
-        }
+        AuthSecondaryButton("Already have an account? Login", !busy, onLogin)
         Spacer(Modifier.height(10.dp))
-        Text("Your Indoone account is activated after successful email OTP verification.", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Your Indoone account is activated after successful email OTP verification.",
+            color = androidx.compose.ui.graphics.Color(0xFF76717D),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+        )
     }
 }

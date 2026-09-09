@@ -1,3 +1,3 @@
 # Indoone App Icon
 
-Uses the exact launcher artwork from the main Android reference: rotated purple-to-cyan rounded square with the dark central spark and blue inner spark.
+Canonical launcher artwork from the main Android reference. Do not redesign, recolor, or replace these vectors without an explicit branding change.
