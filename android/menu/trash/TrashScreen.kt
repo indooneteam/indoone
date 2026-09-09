@@ -1,5 +1,6 @@
 package com.indoone.menu.trash
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -238,7 +240,7 @@ private fun TrashRow(
                 },
             shape = RoundedCornerShape(16.dp),
             color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE9E5EF)),
+            border = BorderStroke(1.dp, Color(0xFFE9E5EF)),
             shadowElevation = 3.dp,
         ) {
             Row(
