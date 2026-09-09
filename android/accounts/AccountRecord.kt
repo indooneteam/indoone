@@ -2,6 +2,8 @@ package com.indoone.accounts
 
 /**
  * Stored TOTP account independent from the UI list model.
+ *
+ * Field names intentionally follow Main's Firebase Realtime Database schema.
  */
 data class AccountRecord(
     val id: String,
@@ -14,6 +16,8 @@ data class AccountRecord(
     val provider: String = "",
     val service: String = "",
     val favorite: Boolean = false,
+    val icon: String = "",
+    val cls: String = "google",
     val createdAt: Long,
     val updatedAt: Long,
 )
