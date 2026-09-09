@@ -19,6 +19,12 @@ import com.indoone.authentication.login.LoginScreen
 import com.indoone.authentication.signup.SignUpScreen
 import kotlinx.coroutines.launch
 
+enum class AuthBusyAction {
+    SEND_OTP,
+    VERIFY_OTP,
+    RESEND_OTP,
+}
+
 class AuthActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +39,7 @@ class AuthActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 var showingSignup by remember { mutableStateOf(false) }
-                var busy by remember { mutableStateOf(false) }
+                var busyAction by remember { mutableStateOf<AuthBusyAction?>(null) }
                 var otpVisible by remember { mutableStateOf(false) }
                 var otpEmail by remember { mutableStateOf("") }
                 var status by remember { mutableStateOf("") }
@@ -42,22 +48,25 @@ class AuthActivity : ComponentActivity() {
                 val service = remember { IndooneAuthService(auth, FirebaseDatabase.getInstance()) }
 
                 LaunchedEffect(showingSignup) {
-                    busy = false
+                    busyAction = null
                     otpVisible = false
                     otpEmail = ""
                     status = ""
                     error = ""
                 }
 
+                val busy = busyAction != null
+
                 if (showingSignup) {
                     SignUpScreen(
                         busy = busy,
+                        busyAction = busyAction,
                         status = status,
                         error = error,
                         otpVisible = otpVisible,
                         otpEmail = otpEmail,
                         onSendOtp = { email, mobile, password ->
-                            busy = true
+                            busyAction = AuthBusyAction.SEND_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.startSignup(email, mobile, password) }
@@ -67,11 +76,11 @@ class AuthActivity : ComponentActivity() {
                                         status = ""
                                     }
                                     .onFailure { error = it.message ?: "Could not start signup." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onVerifyOtp = { otp ->
-                            busy = true
+                            busyAction = AuthBusyAction.VERIFY_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.verifySignupOtp(otp) }
@@ -80,21 +89,21 @@ class AuthActivity : ComponentActivity() {
                                         openMain()
                                     }
                                     .onFailure { error = it.message ?: "Could not create account." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onResendOtp = {
-                            busy = true
+                            busyAction = AuthBusyAction.RESEND_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.resendSignupOtp() }
                                     .onSuccess { destination ->
                                         otpEmail = destination
-                                        status = "New OTP sent. Check your email."
+                                        status = "New OTP sent to your email."
                                         Toast.makeText(this@AuthActivity, "New OTP sent to your email.", Toast.LENGTH_SHORT).show()
                                     }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onLogin = { showingSignup = false },
@@ -102,12 +111,13 @@ class AuthActivity : ComponentActivity() {
                 } else {
                     LoginScreen(
                         busy = busy,
+                        busyAction = busyAction,
                         status = status,
                         error = error,
                         otpVisible = otpVisible,
                         otpEmail = otpEmail,
                         onSendOtp = { identifier, password ->
-                            busy = true
+                            busyAction = AuthBusyAction.SEND_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.login(identifier, password) }
@@ -117,11 +127,11 @@ class AuthActivity : ComponentActivity() {
                                         status = ""
                                     }
                                     .onFailure { error = it.message ?: "Login failed." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onVerifyOtp = { otp ->
-                            busy = true
+                            busyAction = AuthBusyAction.VERIFY_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.verifyLoginOtp(otp) }
@@ -130,21 +140,21 @@ class AuthActivity : ComponentActivity() {
                                         openMain()
                                     }
                                     .onFailure { error = it.message ?: "Login failed." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onResendOtp = {
-                            busy = true
+                            busyAction = AuthBusyAction.RESEND_OTP
                             error = ""
                             scope.launch {
                                 runCatching { service.resendLoginOtp() }
                                     .onSuccess { destination ->
                                         otpEmail = destination
-                                        status = "New OTP sent. Check your email."
+                                        status = "New OTP sent to your email."
                                         Toast.makeText(this@AuthActivity, "New OTP sent to your email.", Toast.LENGTH_SHORT).show()
                                     }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
-                                busy = false
+                                busyAction = null
                             }
                         },
                         onCreateAccount = { showingSignup = true },
