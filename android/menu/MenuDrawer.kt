@@ -48,7 +48,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
 import com.indoone.accounts.storage.AccountRepositoryProvider
-import com.indoone.menu.about.AboutScreen
+import com.indoone.settings.about.AboutScreen
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
