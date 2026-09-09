@@ -1,21 +1,21 @@
 package com.indoone.authentication.login
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthFieldLabel
@@ -25,7 +25,6 @@ import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
 import com.indoone.authentication.AuthTextField
-import androidx.compose.ui.Modifier
 
 @Composable
 fun LoginScreen(
