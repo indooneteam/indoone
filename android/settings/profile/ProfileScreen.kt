@@ -15,22 +15,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -50,6 +58,12 @@ private val ProfileChevron = profileIcon("ProfileChevron") {
     moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
 }
 
+private enum class ProfileSheet {
+    NONE,
+    MOBILE,
+    EMAIL,
+}
+
 @Composable
 fun ProfileScreen(
     state: ProfileState,
@@ -61,30 +75,40 @@ fun ProfileScreen(
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onMobileSave: (String) -> Unit = {},
+    onEmailSave: (String, String) -> Unit = { _, _ -> },
 ) {
+    var sheet by remember { mutableStateOf(ProfileSheet.NONE) }
+    var mobile by remember(state.mobile, sheet) {
+        mutableStateOf(state.mobile.takeUnless { it.contains("not set", true) }.orEmpty())
+    }
+    var email by remember(state.email, sheet) {
+        mutableStateOf(state.email.takeUnless { it.contains("not available", true) }.orEmpty())
+    }
+    var password by remember(sheet) { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0x8819141F))
-            .clickable(onClick = onBack)
-            .padding(14.dp),
+            .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 430.dp)
-                .fillMaxHeight(fraction = 0.88f)
+                .wrapContentHeight()
                 .clickable(onClick = {}),
-            shape = RoundedCornerShape(25.dp),
+            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp, bottomStart = 25.dp, bottomEnd = 25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(23.dp),
+                    .padding(horizontal = 22.dp, vertical = 19.dp),
             ) {
                 Row(
                     modifier = Modifier
@@ -165,13 +189,20 @@ fun ProfileScreen(
                 ProfileActionRow(
                     title = "Change mobile number",
                     description = "Update your verified phone number",
-                    onClick = onMobileClick,
+                    onClick = {
+                        mobile = state.mobile.takeUnless { it.contains("not set", true) }.orEmpty()
+                        sheet = ProfileSheet.MOBILE
+                    },
                 )
                 Spacer(Modifier.height(10.dp))
                 ProfileActionRow(
                     title = "Change email",
                     description = "Update your account email address",
-                    onClick = onEmailClick,
+                    onClick = {
+                        email = state.email.takeUnless { it.contains("not available", true) }.orEmpty()
+                        password = ""
+                        sheet = ProfileSheet.EMAIL
+                    },
                 )
 
                 state.error?.let {
@@ -194,6 +225,204 @@ fun ProfileScreen(
                 }
             }
         }
+
+        when (sheet) {
+            ProfileSheet.MOBILE -> {
+                ChangeMobileSheet(
+                    value = mobile,
+                    busy = state.busy,
+                    error = state.error,
+                    message = state.message,
+                    onValueChange = { mobile = it },
+                    onClose = { sheet = ProfileSheet.NONE },
+                    onSave = { onMobileSave(mobile) },
+                )
+            }
+            ProfileSheet.EMAIL -> {
+                ChangeEmailSheet(
+                    email = email,
+                    password = password,
+                    busy = state.busy,
+                    error = state.error,
+                    message = state.message,
+                    onEmailChange = { email = it },
+                    onPasswordChange = { password = it },
+                    onClose = { sheet = ProfileSheet.NONE },
+                    onSave = { onEmailSave(email, password) },
+                )
+            }
+            ProfileSheet.NONE -> Unit
+        }
+    }
+}
+
+@Composable
+private fun ChangeMobileSheet(
+    value: String,
+    busy: Boolean,
+    error: String?,
+    message: String?,
+    onValueChange: (String) -> Unit,
+    onClose: () -> Unit,
+    onSave: () -> Unit,
+) {
+    ProfileFormSheet(
+        title = "Change mobile number",
+        description = "Update the mobile number saved to your Indoone account.",
+        onClose = onClose,
+    ) {
+        SheetFieldLabel("Mobile number")
+        SheetTextField(value, onValueChange)
+        Spacer(Modifier.height(24.dp))
+        SheetGradientButton(if (busy) "Updating…" else "Update mobile number", enabled = !busy, onClick = onSave)
+        FormFeedback(error, message)
+    }
+}
+
+@Composable
+private fun ChangeEmailSheet(
+    email: String,
+    password: String,
+    busy: Boolean,
+    error: String?,
+    message: String?,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onClose: () -> Unit,
+    onSave: () -> Unit,
+) {
+    ProfileFormSheet(
+        title = "Change email",
+        description = "Change the email used for your Indoone account. Enter your current password to confirm.",
+        onClose = onClose,
+    ) {
+        SheetFieldLabel("Email address")
+        SheetTextField(email, onEmailChange)
+        Spacer(Modifier.height(12.dp))
+        SheetFieldLabel("Current password")
+        SheetTextField(password, onPasswordChange, placeholder = "Enter your current password", password = true)
+        Spacer(Modifier.height(24.dp))
+        SheetGradientButton(if (busy) "Changing…" else "Change email", enabled = !busy, onClick = onSave)
+        FormFeedback(error, message)
+    }
+}
+
+@Composable
+private fun ProfileFormSheet(
+    title: String,
+    description: String,
+    onClose: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(fraction = 0.62f)
+            .clickable(onClick = {}),
+        shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
+        color = Color.White,
+        shadowElevation = 14.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 22.dp, vertical = 19.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(title, color = Color(0xFF17151D), fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+                Surface(
+                    modifier = Modifier.size(35.dp).clickable(onClick = onClose),
+                    shape = RoundedCornerShape(11.dp),
+                    color = Color(0xFFF5F2F8),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("×", color = Color(0xFF242129), fontSize = 21.sp, lineHeight = 21.sp)
+                    }
+                }
+            }
+            Text(
+                description,
+                modifier = Modifier.padding(top = 17.dp, bottom = 14.dp),
+                color = Color(0xFF77707F),
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SheetFieldLabel(text: String) {
+    Text(text, color = Color(0xFF625D68), fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(5.dp))
+}
+
+@Composable
+private fun SheetTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String = "",
+    password: Boolean = false,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(41.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFAF8FD))
+            .border(1.dp, Color(0xFFE4DDEA), RoundedCornerShape(12.dp))
+            .padding(horizontal = 11.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF2C2733), fontSize = 12.sp, lineHeight = 16.sp),
+            visualTransformation = if (password) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            cursorBrush = SolidColor(Color(0xFF6330DB)),
+            modifier = Modifier.fillMaxWidth(),
+            decorationBox = { inner ->
+                if (value.isEmpty() && placeholder.isNotEmpty()) {
+                    Text(placeholder, color = Color(0xFF9A92A1), fontSize = 12.sp, lineHeight = 16.sp)
+                }
+                inner()
+            },
+        )
+    }
+}
+
+@Composable
+private fun SheetGradientButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(
+                if (enabled) Brush.horizontalGradient(listOf(Color(0xFF632FE5), Color(0xFF9648EE)))
+                else SolidColor(Color(0xFFB9A9D3)),
+            )
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = Color.White, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun FormFeedback(error: String?, message: String?) {
+    error?.let {
+        Text(it, Modifier.padding(top = 12.dp), color = Color(0xFFD93025), fontSize = 11.sp)
+    }
+    message?.let {
+        Text(it, Modifier.padding(top = 12.dp), color = Color(0xFF6330DB), fontSize = 11.sp)
     }
 }
 
