@@ -11,7 +11,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,21 +18,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -55,10 +50,10 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import com.indoone.menu.AppBottomNav
+import com.indoone.menu.AppTab
+import com.indoone.menu.AppTopBar
 
-/**
- * Scan QR Code screen matching the current main reference.
- */
 @Composable
 fun ScanQrScreen(
     state: ScanQrState,
@@ -77,169 +72,53 @@ fun ScanQrScreen(
 ) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        onCameraPermissionChanged(granted)
-    }
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> onCameraPermissionChanged(granted) }
 
     LaunchedEffect(Unit) {
-        val granted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.CAMERA,
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (granted) {
-            onCameraPermissionChanged(true)
-        } else {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        if (granted) onCameraPermissionChanged(true) else permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-    ) {
-        ScanQrTopBar(
-            onMenuClick = onMenuClick,
-            onSearchClick = onSearchClick,
-        )
-
+    Column(Modifier.fillMaxSize().background(Color.White)) {
+        AppTopBar(onMenuClick = onMenuClick, onSearchClick = onSearchClick)
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 15.dp),
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = "Scan QR Code",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF242129),
-            )
-
-            Text(
-                text = "Place the TOTP QR code inside the frame.",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp),
-                textAlign = TextAlign.Start,
-                fontSize = 10.sp,
-                color = Color(0xFF3B3741),
-            )
-
-            Spacer(modifier = Modifier.height(22.dp))
-
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("‹", color = Color(0xFF242129), fontSize = 20.sp)
+                Spacer(Modifier.width(8.dp))
+                androidx.compose.material3.TextButton(onClick = onCancelScan, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
+                    Text("Back", color = Color(0xFF242129), fontWeight = FontWeight.Bold)
+                }
+            }
+            Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                Text("ADD ACCOUNT", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
+                Text("Scan QR Code", Modifier.padding(top = 2.dp), color = Color(0xFF17151D), fontSize = 25.sp, fontWeight = FontWeight.Bold)
+                Text("Place the TOTP QR code inside the frame.", Modifier.padding(top = 8.dp), color = Color(0xFF2E2A33), fontSize = 14.sp, lineHeight = 20.sp)
+            }
+            Spacer(Modifier.height(22.dp))
             CameraScannerSurface(
                 hasPermission = state.hasCameraPermission,
                 onCameraStarting = onCameraStarting,
                 onCameraReady = onCameraReady,
                 onCameraError = onCameraError,
                 onQrDetected = onQrDetected,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp)),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
             )
-
-            Text(
-                text = state.statusMessage,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 9.dp),
-                textAlign = TextAlign.Center,
-                fontSize = 9.sp,
-                color = Color(0xFF77717F),
-            )
-
-            OutlinedButton(
-                onClick = onCancelScan,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp),
-                border = BorderStroke(1.dp, Color(0xFFE4DDEA)),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(
-                    text = "Cancel Scan",
-                    color = Color(0xFF5F566B),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+            Text(state.statusMessage, Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center, fontSize = 12.sp, color = Color(0xFF77717F))
+            OutlinedButton(onClick = onCancelScan, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(12.dp)) {
+                Text("Cancel Scan", color = Color(0xFF5F566B), fontWeight = FontWeight.Bold)
             }
         }
-
-        ScanQrBottomNav(
+        AppBottomNav(
+            activeTab = AppTab.ACCOUNTS,
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
             onConnectClick = onConnectClick,
             onSettingsClick = onSettingsClick,
         )
-    }
-}
-
-@Composable
-private fun ScanQrTopBar(
-    onMenuClick: () -> Unit,
-    onSearchClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFF0EEF5)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp)
-                .padding(horizontal = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            TextButton(onClick = onMenuClick) {
-                Text(
-                    text = "☰",
-                    fontSize = 14.sp,
-                    color = Color(0xFF242129),
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(Color(0xFF703BE2)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "✦",
-                        color = Color.White,
-                        fontSize = 9.sp,
-                    )
-                }
-
-                Text(
-                    text = "Indoone",
-                    color = Color(0xFF6B34DF),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            TextButton(onClick = onSearchClick) {
-                Text(
-                    text = "⌕",
-                    fontSize = 18.sp,
-                    color = Color(0xFF242129),
-                )
-            }
-        }
     }
 }
 
@@ -252,41 +131,15 @@ private fun CameraScannerSurface(
     onQrDetected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0xFF111111))
-            .aspectRatio(3f / 4f),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier.fillMaxWidth().background(Color(0xFF111111)).aspectRatio(3f / 4f), contentAlignment = Alignment.Center) {
         if (hasPermission) {
-            CameraPreview(
-                onCameraStarting = onCameraStarting,
-                onCameraReady = onCameraReady,
-                onCameraError = onCameraError,
-                onQrDetected = onQrDetected,
-                modifier = Modifier.fillMaxSize(),
-            )
+            CameraPreview(onCameraStarting, onCameraReady, onCameraError, onQrDetected, Modifier.fillMaxSize())
         } else {
-            Text(
-                text = "Camera permission is required.",
-                color = Color.White,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 28.dp),
-            )
+            Text("Camera permission is required.", color = Color.White, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 28.dp))
         }
-
         Box(
-            modifier = Modifier
-                .fillMaxWidth(0.66f)
-                .fillMaxHeight(0.64f)
-                .align(Alignment.Center)
-                .border(
-                    width = 1.5.dp,
-                    color = Color.White,
-                    shape = RoundedCornerShape(15.dp),
-                ),
+            modifier = Modifier.fillMaxWidth(0.66f).fillMaxHeight(0.64f).align(Alignment.Center)
+                .border(1.5.dp, Color.White, RoundedCornerShape(15.dp)),
         )
     }
 }
@@ -305,207 +158,54 @@ private fun CameraPreview(
     val latestCameraStarting by rememberUpdatedState(onCameraStarting)
     val latestCameraReady by rememberUpdatedState(onCameraReady)
     val latestCameraError by rememberUpdatedState(onCameraError)
-
     val previewView = remember(context) {
         PreviewView(context).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             scaleType = PreviewView.ScaleType.FILL_CENTER
         }
     }
-
     DisposableEffect(lifecycleOwner, previewView) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val analysisExecutor = ContextCompat.getMainExecutor(context)
         var scanner: BarcodeScanner? = null
-
         latestCameraStarting()
-
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().apply {
-                    surfaceProvider = previewView.surfaceProvider
-                }
-
+                val preview = Preview.Builder().build().apply { surfaceProvider = previewView.surfaceProvider }
                 scanner = BarcodeScanning.getClient()
-
-                val analysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(
-                        ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST,
-                    )
-                    .build()
-                    .apply {
-                        setAnalyzer(analysisExecutor) { imageProxy ->
-                            analyzeFrame(
-                                scanner = scanner,
-                                imageProxy = imageProxy,
-                                onQrDetected = latestQrDetected,
-                                onError = latestCameraError,
-                            )
-                        }
+                val analysis = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().apply {
+                    setAnalyzer(analysisExecutor) { imageProxy ->
+                        analyzeFrame(scanner, imageProxy, latestQrDetected, latestCameraError)
                     }
-
+                }
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    analysis,
-                )
-
+                cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
                 latestCameraReady()
             } catch (error: Exception) {
-                latestCameraError(
-                    error.message ?: "Unable to open the camera."
-                )
+                latestCameraError(error.message ?: "Unable to open the camera.")
             }
         }, analysisExecutor)
-
         onDispose {
-            try {
-                cameraProviderFuture.get().unbindAll()
-            } catch (_: Exception) {
-                // Lifecycle may already have released the camera.
-            }
+            runCatching { cameraProviderFuture.get().unbindAll() }
             scanner?.close()
         }
     }
-
-    AndroidView(
-        factory = { previewView },
-        modifier = modifier,
-    )
+    AndroidView(factory = { previewView }, modifier = modifier)
 }
 
-private fun analyzeFrame(
-    scanner: BarcodeScanner?,
-    imageProxy: ImageProxy,
-    onQrDetected: (String) -> Unit,
-    onError: (String) -> Unit,
-) {
+private fun analyzeFrame(scanner: BarcodeScanner?, imageProxy: ImageProxy, onQrDetected: (String) -> Unit, onError: (String) -> Unit) {
     val mediaImage = imageProxy.image
-
     if (scanner == null || mediaImage == null) {
         imageProxy.close()
         return
     }
-
-    val image = InputImage.fromMediaImage(
-        mediaImage,
-        imageProxy.imageInfo.rotationDegrees,
-    )
-
+    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
     scanner.process(image)
         .addOnSuccessListener { barcodes ->
-            val rawValue = barcodes
-                .asSequence()
-                .mapNotNull { it.rawValue?.trim() }
-                .firstOrNull {
-                    it.startsWith("otpauth://", ignoreCase = true)
-                }
-
-            if (!rawValue.isNullOrBlank()) {
-                onQrDetected(rawValue)
-            }
+            val rawValue = barcodes.asSequence().mapNotNull { it.rawValue?.trim() }.firstOrNull { it.startsWith("otpauth://", ignoreCase = true) }
+            if (!rawValue.isNullOrBlank()) onQrDetected(rawValue)
         }
-        .addOnFailureListener { error ->
-            onError(
-                error.message ?: "Unable to read this QR code."
-            )
-        }
-        .addOnCompleteListener {
-            imageProxy.close()
-        }
-}
-
-@Composable
-private fun ScanQrBottomNav(
-    onAccountsClick: () -> Unit,
-    onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFEEEAF2)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ScanQrBottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "♟",
-                label = "Accounts",
-                active = true,
-                onClick = onAccountsClick,
-            )
-            ScanQrBottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "◆",
-                label = "Lobby",
-                active = false,
-                onClick = onLobbyClick,
-            )
-            ScanQrBottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "↔",
-                label = "Connect",
-                active = false,
-                onClick = onConnectClick,
-            )
-            ScanQrBottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "☷",
-                label = "Settings",
-                active = false,
-                onClick = onSettingsClick,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ScanQrBottomNavItem(
-    modifier: Modifier,
-    icon: String,
-    label: String,
-    active: Boolean,
-    onClick: () -> Unit,
-) {
-    val color = if (active) Color(0xFF6B34DF) else Color(0xFF99939F)
-
-    TextButton(
-        onClick = onClick,
-        modifier = modifier.fillMaxHeight(),
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = icon,
-                color = color,
-                fontSize = 11.sp,
-            )
-            Text(
-                text = label,
-                color = color,
-                fontSize = 7.sp,
-                fontWeight = if (active) {
-                    FontWeight.Bold
-                } else {
-                    FontWeight.Normal
-                },
-            )
-        }
-    }
+        .addOnFailureListener { error -> onError(error.message ?: "Unable to read this QR code.") }
+        .addOnCompleteListener { imageProxy.close() }
 }
