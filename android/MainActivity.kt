@@ -37,7 +37,6 @@ import com.indoone.accounts.addaccount.scanqr.ScanQrViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
-import com.indoone.accounts.search.SearchScreen
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
@@ -57,7 +56,6 @@ import kotlinx.coroutines.launch
 
 private enum class AppRoute {
     ACCOUNTS,
-    SEARCH,
     LOBBY,
     CONNECT,
     SETTINGS,
@@ -113,19 +111,31 @@ class MainActivity : ComponentActivity() {
 
                 fun loadAccounts() {
                     coroutineScope.launch {
-                        val records = repository.getAll()
-                        val uiAccounts = records.toUiAccounts()
-                        accountsViewModel.setAccounts(uiAccounts)
-                        searchViewModel.setAccounts(uiAccounts)
+                        runCatching {
+                            repository.getAll()
+                        }.onSuccess { records ->
+                            val uiAccounts = records.toUiAccounts()
+                            accountsViewModel.setAccounts(uiAccounts)
+                            searchViewModel.setAccounts(uiAccounts)
+                        }.onFailure { error ->
+                            Toast.makeText(
+                                this@MainActivity,
+                                error.message ?: "Could not load accounts.",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     }
                 }
 
                 LaunchedEffect(Unit) { loadAccounts() }
                 LaunchedEffect(repository) {
                     while (true) {
-                        val uiAccounts = repository.getAll().toUiAccounts(System.currentTimeMillis())
-                        accountsViewModel.setAccounts(uiAccounts)
-                        searchViewModel.setAccounts(uiAccounts)
+                        runCatching { repository.getAll() }
+                            .onSuccess { records ->
+                                val uiAccounts = records.toUiAccounts(System.currentTimeMillis())
+                                accountsViewModel.setAccounts(uiAccounts)
+                                searchViewModel.setAccounts(uiAccounts)
+                            }
                         delay(1_000L)
                     }
                 }
@@ -156,30 +166,11 @@ class MainActivity : ComponentActivity() {
                                 addAccountViewModel.clearImportUri()
                                 route = AppRoute.ADD_ACCOUNT
                             },
-                            onSearchClick = {
-                                searchViewModel.setAccounts(state.accounts)
-                                route = AppRoute.SEARCH
-                            },
+                            onSearchClick = {},
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                             onMenuClick = { menuOpen = true },
-                        )
-                    }
-
-                    AppRoute.SEARCH -> {
-                        val state by searchViewModel.state.collectAsState()
-                        SearchScreen(
-                            state = state,
-                            onQueryChanged = searchViewModel::updateQuery,
-                            onClear = searchViewModel::clear,
-                            onBack = { route = AppRoute.ACCOUNTS },
-                            onAccountClick = { item ->
-                                coroutineScope.launch {
-                                    selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
-                                    if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
-                                }
-                            },
                         )
                     }
 
@@ -404,6 +395,12 @@ class MainActivity : ComponentActivity() {
                                 importOtpUriViewModel.onUriChanged(uri)
                                 route = AppRoute.IMPORT_OTP_URI
                             },
+                            onMenuClick = { menuOpen = true },
+                            onSearchClick = {},
+                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onLobbyClick = { navigate(AppRoute.LOBBY) },
+                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
 
@@ -629,5 +626,7 @@ private fun List<AccountRecord>.toUiAccounts(nowMillis: Long = System.currentTim
             secondsRemaining = secondsRemaining,
             periodSeconds = period,
             favorite = record.favorite,
+            icon = record.icon.ifBlank { record.name.firstOrNull()?.uppercase() ?: "?" },
+            serviceClass = record.cls,
         )
     }
