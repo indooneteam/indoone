@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,7 +43,13 @@ fun ChangeMobileNumberScreen(
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(onMenuClick = onMenuClick)
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).imePadding().padding(horizontal = 18.dp, vertical = 10.dp)) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(horizontal = 18.dp, vertical = 10.dp),
+            ) {
                 TextButton(onClick = onBack, modifier = Modifier.padding(start = 0.dp, bottom = 8.dp)) {
                     Text("← Back to Profile", fontWeight = FontWeight.Bold)
                 }
@@ -53,6 +60,7 @@ fun ChangeMobileNumberScreen(
                 Button(onClick = { onSave(mobile) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(if (state.busy) "Updating…" else "Update mobile number") }
                 state.error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
+                Spacer(Modifier.navigationBarsPadding())
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
