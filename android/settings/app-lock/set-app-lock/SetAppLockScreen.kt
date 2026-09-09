@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,11 +85,13 @@ internal fun PinPadScaffold(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().widthIn(max = 430.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 430.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(
-                    modifier = Modifier.padding(top = 2.dp, bottom = 12.dp),
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
@@ -122,19 +125,10 @@ internal fun PinPadScaffold(
                             modifier = Modifier
                                 .size(9.dp)
                                 .background(
-                                    color = if (index < pin.length) Purple else Color.White,
+                                    color = if (index < pin.length) Purple else Color.Transparent,
                                     shape = CircleShape,
                                 ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (index >= pin.length) {
-                                Box(
-                                    Modifier
-                                        .size(9.dp)
-                                        .background(Color.White, CircleShape),
-                                )
-                            }
-                        }
+                        )
                     }
                 }
 
@@ -149,19 +143,35 @@ internal fun PinPadScaffold(
                 Button(
                     onClick = onAction,
                     enabled = actionEnabled,
-                    modifier = Modifier.fillMaxWidth().height(46.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp),
                     shape = RoundedCornerShape(14.dp),
+                    contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Purple,
-                        disabledContainerColor = Purple.copy(alpha = 0.45f),
+                        containerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
                     ),
-                ) { Text(actionLabel, fontWeight = FontWeight.Bold) }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(listOf(Purple, PurpleLight)),
+                                RoundedCornerShape(14.dp),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(actionLabel, color = Color.White, fontWeight = FontWeight.Bold) }
+                }
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().widthIn(max = 330.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 330.dp)
+                    .align(Alignment.CenterHorizontally),
             ) {
-                val keys = listOf('1','2','3','4','5','6','7','8','9','C','0','⌫')
+                val keys = listOf('1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫')
                 keys.chunked(3).forEach { row ->
                     Row(modifier = Modifier.fillMaxWidth()) {
                         row.forEach { key ->
@@ -171,9 +181,13 @@ internal fun PinPadScaffold(
                                     '⌫' -> onBackspace
                                     else -> ({ onDigit(key) })
                                 },
-                                modifier = Modifier.weight(1f).padding(3.dp).height(56.dp),
-                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(3.dp)
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(15.dp),
                                 border = BorderStroke(1.dp, KeyBorder),
+                                contentPadding = PaddingValues(0.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     containerColor = KeyBackground,
                                     contentColor = if (key == 'C' || key == '⌫') Color(0xFF726A7B) else TextDark,
@@ -181,7 +195,7 @@ internal fun PinPadScaffold(
                             ) {
                                 Text(
                                     key.toString(),
-                                    fontSize = if (key == 'C' || key == '⌫') 13.sp else 23.sp,
+                                    fontSize = if (key == 'C' || key == '⌫') 11.sp else 22.sp,
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
@@ -195,7 +209,7 @@ internal fun PinPadScaffold(
                         onClick = onCancel,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Cancel", color = Color(0xFF655B70), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("Cancel", color = Color(0xFF655B70), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
