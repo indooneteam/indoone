@@ -34,6 +34,7 @@ class AuthActivity : ComponentActivity() {
                 var showingSignup by remember { mutableStateOf(false) }
                 var busy by remember { mutableStateOf(false) }
                 var otpVisible by remember { mutableStateOf(false) }
+                var otpEmail by remember { mutableStateOf("") }
                 var status by remember { mutableStateOf("") }
                 var error by remember { mutableStateOf("") }
                 val scope = rememberCoroutineScope()
@@ -42,6 +43,7 @@ class AuthActivity : ComponentActivity() {
                 LaunchedEffect(showingSignup) {
                     busy = false
                     otpVisible = false
+                    otpEmail = ""
                     status = ""
                     error = ""
                 }
@@ -52,14 +54,16 @@ class AuthActivity : ComponentActivity() {
                         status = status,
                         error = error,
                         otpVisible = otpVisible,
+                        otpEmail = otpEmail,
                         onSendOtp = { email, mobile, password ->
                             busy = true
                             error = ""
                             scope.launch {
                                 runCatching { service.startSignup(email, mobile, password) }
-                                    .onSuccess {
+                                    .onSuccess { destination ->
+                                        otpEmail = destination
                                         otpVisible = true
-                                        status = "OTP sent. Check your email."
+                                        status = ""
                                     }
                                     .onFailure { error = it.message ?: "Could not start signup." }
                                 busy = false
@@ -83,7 +87,10 @@ class AuthActivity : ComponentActivity() {
                             error = ""
                             scope.launch {
                                 runCatching { service.resendSignupOtp() }
-                                    .onSuccess { status = "New OTP sent. Check your email." }
+                                    .onSuccess { destination ->
+                                        otpEmail = destination
+                                        status = "New OTP sent. Check your email."
+                                    }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
                                 busy = false
                             }
@@ -96,14 +103,16 @@ class AuthActivity : ComponentActivity() {
                         status = status,
                         error = error,
                         otpVisible = otpVisible,
+                        otpEmail = otpEmail,
                         onSendOtp = { identifier, password ->
                             busy = true
                             error = ""
                             scope.launch {
                                 runCatching { service.login(identifier, password) }
-                                    .onSuccess {
+                                    .onSuccess { destination ->
+                                        otpEmail = destination
                                         otpVisible = true
-                                        status = "OTP sent. Check your email."
+                                        status = ""
                                     }
                                     .onFailure { error = it.message ?: "Login failed." }
                                 busy = false
@@ -127,7 +136,10 @@ class AuthActivity : ComponentActivity() {
                             error = ""
                             scope.launch {
                                 runCatching { service.resendLoginOtp() }
-                                    .onSuccess { status = "New OTP sent. Check your email." }
+                                    .onSuccess { destination ->
+                                        otpEmail = destination
+                                        status = "New OTP sent. Check your email."
+                                    }
                                     .onFailure { error = it.message ?: "Could not resend OTP." }
                                 busy = false
                             }
