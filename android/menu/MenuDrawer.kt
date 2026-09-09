@@ -85,10 +85,10 @@ fun MenuDrawer(
     if (showAbout) {
         MenuAboutScreen(
             onBack = onDismiss,
-            onAccountsClick = { onAccounts() },
-            onLobbyClick = { onDismiss(); context.startActivity(Intent(context, com.indoone.lobby.LobbyActivity::class.java)) },
-            onConnectClick = { onDismiss() },
-            onSettingsClick = { onDismiss() },
+            onAccountsClick = onAccounts,
+            onLobbyClick = { onDismiss(); onLobby() },
+            onConnectClick = { onDismiss(); onConnect() },
+            onSettingsClick = { onDismiss(); onSettings() },
         )
         return
     }
@@ -96,10 +96,10 @@ fun MenuDrawer(
     if (showTerms) {
         TermsOfUseScreen(
             onBack = onDismiss,
-            onAccountsClick = { onAccounts() },
-            onLobbyClick = { onDismiss() },
-            onConnectClick = { onDismiss() },
-            onSettingsClick = { onDismiss() },
+            onAccountsClick = onAccounts,
+            onLobbyClick = { onDismiss(); onLobby() },
+            onConnectClick = { onDismiss(); onConnect() },
+            onSettingsClick = { onDismiss(); onSettings() },
         )
         return
     }
@@ -107,10 +107,10 @@ fun MenuDrawer(
     if (showDangerZone) {
         DangerZoneScreen(
             onBack = onDismiss,
-            onAccountsClick = { onAccounts() },
-            onLobbyClick = { onDismiss() },
-            onConnectClick = { onDismiss() },
-            onSettingsClick = { onDismiss() },
+            onAccountsClick = onAccounts,
+            onLobbyClick = { onDismiss(); onLobby() },
+            onConnectClick = { onDismiss(); onConnect() },
+            onSettingsClick = { onDismiss(); onSettings() },
         )
         return
     }
@@ -119,10 +119,10 @@ fun MenuDrawer(
         TrashScreen(
             repository = repository,
             onBack = onDismiss,
-            onAccountsClick = { onAccounts() },
-            onLobbyClick = { onDismiss() },
-            onConnectClick = { onDismiss() },
-            onSettingsClick = { onDismiss() },
+            onAccountsClick = onAccounts,
+            onLobbyClick = { onDismiss(); onLobby() },
+            onConnectClick = { onDismiss(); onConnect() },
+            onSettingsClick = { onDismiss(); onSettings() },
         )
         return
     }
