@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,8 +84,8 @@ fun AboutScreen(
                 ) {
                     androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
                         val scaleFactor = size.minDimension / 48f
-                        androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
-                            androidx.compose.ui.graphics.drawscope.rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
+                        scale(scaleFactor) {
+                            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
                                 drawRoundRect(
                                     brush = Brush.linearGradient(
                                         colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)),
