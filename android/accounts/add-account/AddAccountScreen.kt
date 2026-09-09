@@ -1,9 +1,13 @@
 package com.indoone.accounts.addaccount
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,30 +15,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppBottomNav
+import com.indoone.menu.AppTab
+import com.indoone.menu.AppTopBar
 
-/**
- * Add Account method-selection screen.
- *
- * The layout adapts from two side-by-side options on wider screens to
- * a single-column layout on compact screens.
- */
 @Composable
 fun AddAccountScreen(
     state: AddAccountState,
@@ -47,102 +47,83 @@ fun AddAccountScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 10.dp),
+            .background(Color.White),
     ) {
-        TextButton(
-            onClick = onBack,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                horizontal = 12.dp,
-                vertical = 8.dp,
-            ),
+        AppTopBar(onMenuClick = {}, onSearchClick = {})
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 8.dp)
+                .navigationBarsPadding(),
         ) {
-            Text(
-                text = "‹  Back",
-                color = Color(0xFF242129),
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "NEW AUTHENTICATOR",
-            color = Color(0xFF7650D8),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.3.sp,
-        )
-
-        Text(
-            text = "Add Account",
-            modifier = Modifier.padding(top = 2.dp),
-            color = Color(0xFF242129),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Text(
-            text = "Choose how you want to add your TOTP account.",
-            modifier = Modifier.padding(top = 11.dp),
-            color = Color(0xFF2E2A33),
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-        )
-
-        Spacer(modifier = Modifier.height(22.dp))
-
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val isCompact = maxWidth < 600.dp
-
-            if (isCompact) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    AddAccountOptionCard(
-                        icon = "▦",
-                        title = "Scan QR Code",
-                        description = "Use your camera to scan a TOTP QR code.",
-                        onClick = onScanQr,
-                    )
-                    AddAccountOptionCard(
-                        icon = "⌨",
-                        title = "Enter Setup Key",
-                        description = "Enter the secret key and account details manually.",
-                        onClick = onEnterSetupKey,
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    AddAccountOptionCard(
-                        modifier = Modifier.weight(1f),
-                        icon = "▦",
-                        title = "Scan QR Code",
-                        description = "Use your camera to scan a TOTP QR code.",
-                        onClick = onScanQr,
-                    )
-                    AddAccountOptionCard(
-                        modifier = Modifier.weight(1f),
-                        icon = "⌨",
-                        title = "Enter Setup Key",
-                        description = "Enter the secret key and account details manually.",
-                        onClick = onEnterSetupKey,
-                    )
-                }
+            Row(
+                modifier = Modifier
+                    .clickable(onClick = onBack)
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("‹", color = Color(0xFF242129), fontSize = 20.sp)
+                Spacer(Modifier.width(8.dp))
+                Text("Back", color = Color(0xFF242129), fontWeight = FontWeight.Bold)
             }
-        }
 
-        Spacer(modifier = Modifier.height(18.dp))
+            Column(modifier = Modifier.padding(top = 14.dp)) {
+                Text(
+                    text = "NEW AUTHENTICATOR",
+                    color = Color(0xFF7650D8),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.3.sp,
+                )
+                Text(
+                    text = "Add Account",
+                    modifier = Modifier.padding(top = 2.dp),
+                    color = Color(0xFF17151D),
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "Choose how you want to add your TOTP account.",
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = Color(0xFF2E2A33),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                )
+            }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF9FC)),
-            border = BorderStroke(1.dp, Color(0xFFEEE9F1)),
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
+            Spacer(Modifier.height(22.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                AddAccountOption(
+                    modifier = Modifier.weight(1f),
+                    icon = "▦",
+                    title = "Scan QR Code",
+                    description = "Use your camera to scan a TOTP QR code.",
+                    onClick = onScanQr,
+                )
+                AddAccountOption(
+                    modifier = Modifier.weight(1f),
+                    icon = "⌨",
+                    title = "Enter Setup Key",
+                    description = "Enter the secret key and account details manually.",
+                    onClick = onEnterSetupKey,
+                )
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFEEE9F1), RoundedCornerShape(18.dp))
+                    .background(Color(0xFFFAF9FC), RoundedCornerShape(18.dp))
+                    .padding(18.dp),
+            ) {
                 Text(
                     text = "PASTE OTPAUTH URI",
                     color = Color(0xFF66606E),
@@ -151,68 +132,84 @@ fun AddAccountScreen(
                     letterSpacing = 0.8.sp,
                 )
 
-                OutlinedTextField(
+                BasicTextField(
                     value = state.otpUri,
                     onValueChange = onOtpUriChanged,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp),
+                        .padding(top = 10.dp)
+                        .height(48.dp)
+                        .border(1.dp, Color(0xFFE6E2ED), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
                     singleLine = true,
-                    placeholder = {
-                        Text(
-                            text = "otpauth://totp/...",
-                            color = Color(0xFF9B95A1),
-                        )
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = Color(0xFF17151D),
+                        fontSize = 14.sp,
+                    ),
+                    decorationBox = { inner ->
+                        if (state.otpUri.isBlank()) {
+                            Text(
+                                text = "otpauth://totp/...",
+                                color = Color(0xFF9B95A1),
+                                fontSize = 14.sp,
+                            )
+                        }
+                        inner()
                     },
-                    shape = RoundedCornerShape(14.dp),
                 )
 
-                Button(
+                OutlinedButton(
                     onClick = { onImportOtpUri(state.otpUri) },
                     enabled = state.isImportEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE3DFE8)),
+                    contentPadding = PaddingValues(vertical = 11.dp),
                 ) {
                     Text(
                         text = "Import OTP URI",
+                        color = Color(0xFF5F5966),
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
+
+            Spacer(Modifier.height(10.dp))
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        AppBottomNav(
+            activeTab = AppTab.ACCOUNTS,
+            onAccountsClick = onBack,
+            onLobbyClick = {},
+            onConnectClick = {},
+            onSettingsClick = {},
+        )
     }
 }
 
 @Composable
-private fun AddAccountOptionCard(
-    modifier: Modifier = Modifier,
+private fun AddAccountOption(
+    modifier: Modifier,
     icon: String,
     title: String,
     description: String,
     onClick: () -> Unit,
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, Color(0xFFE8E3EC)),
+    Column(
+        modifier = modifier
+            .height(150.dp)
+            .background(Color.White, RoundedCornerShape(18.dp))
+            .border(1.dp, Color(0xFFE8E3EC), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(text = icon, color = Color(0xFF302A38), fontSize = 28.sp, lineHeight = 30.sp)
-            Text(text = title, color = Color(0xFF17141B), fontSize = 17.sp, fontWeight = FontWeight.Bold)
-            Text(text = description, color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 18.sp)
-        }
+        Text(text = icon, color = Color(0xFF302A38), fontSize = 28.sp, lineHeight = 28.sp)
+        Text(text = title, color = Color(0xFF17141B), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(text = description, color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 18.sp)
     }
 }
