@@ -3,27 +3,26 @@ package com.indoone.authentication.signup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.PasswordVisualTransformation
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthFieldLabel
 import com.indoone.authentication.AuthHeading
+import com.indoone.authentication.AuthPage
 import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
@@ -49,13 +48,7 @@ fun SignUpScreen(
     val hasMobile = mobile.filter(Char::isDigit).isNotEmpty()
     val actionEnabled = !busy && if (otpVisible) true else email.isNotBlank() && mobile.isNotBlank() && password.length >= 6
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp, vertical = 48.dp),
-        verticalArrangement = Arrangement.Center,
-    ) {
+    AuthPage {
         AuthBrand()
         Spacer(Modifier.height(44.dp))
         AuthHeading(
@@ -78,7 +71,7 @@ fun SignUpScreen(
         AuthFieldLabel("MOBILE NUMBER")
         AuthTextField(
             value = mobile,
-            onValueChange = { mobile = it.filter { char -> char.isDigit() }.take(10) },
+            onValueChange = { mobile = it.filter(Char::isDigit).take(10) },
             placeholder = "98765 43210",
             enabled = !busy,
             leadingContent = if (hasMobile) {
