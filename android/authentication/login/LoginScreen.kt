@@ -25,6 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
+import com.indoone.authentication.AuthBusyAction
 import com.indoone.authentication.AuthFieldLabel
 import com.indoone.authentication.AuthHeading
 import com.indoone.authentication.AuthPage
@@ -36,6 +37,7 @@ import com.indoone.authentication.AuthTextField
 @Composable
 fun LoginScreen(
     busy: Boolean,
+    busyAction: AuthBusyAction?,
     status: String,
     error: String,
     otpVisible: Boolean,
@@ -99,8 +101,8 @@ fun LoginScreen(
         Spacer(Modifier.height(20.dp))
         AuthPrimaryButton(
             text = when {
-                busy && otpVisible -> "Sending…"
-                busy -> "Checking…"
+                !otpVisible && busyAction == AuthBusyAction.SEND_OTP -> "Checking…"
+                otpVisible && busyAction == AuthBusyAction.RESEND_OTP -> "Sending…"
                 otpVisible -> "Resend OTP"
                 else -> "Send OTP"
             },
@@ -129,7 +131,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(4.dp))
             AuthPrimaryButton(
-                text = if (busy) "Verifying…" else "Verify & Login",
+                text = if (busyAction == AuthBusyAction.VERIFY_OTP) "Verifying…" else "Verify & Login",
                 enabled = !busy && otp.length == 6,
                 onClick = { onVerifyOtp(otp) },
             )
