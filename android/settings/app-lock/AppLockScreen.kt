@@ -41,7 +41,8 @@ fun AppLockScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x8819141F))
+            .background(Color(0x5519141F))
+            .padding(14.dp)
             .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -49,7 +50,7 @@ fun AppLockScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 430.dp)
-                .clickable(enabled = true, onClick = {}),
+                .clickable(onClick = {}),
             shape = RoundedCornerShape(25.dp),
             color = Color.White,
             shadowElevation = 14.dp,
@@ -63,7 +64,13 @@ fun AppLockScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text("App Lock", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
+                    Text(
+                        "App Lock",
+                        fontSize = 21.sp,
+                        lineHeight = 25.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2C2733),
+                    )
                     IconButton(
                         onClick = onBack,
                         modifier = Modifier
@@ -88,31 +95,46 @@ fun AppLockScreen(
                 if (hasPin) {
                     Button(
                         onClick = onChange,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6330DB)),
-                    ) { Text("Change App PIN", fontWeight = FontWeight.Bold) }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(13.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(Brush.horizontalGradient(listOf(Color(0xFF6330DB), Color(0xFF9147ED)))),
+                            contentAlignment = Alignment.Center,
+                        ) { Text("Change App PIN", fontWeight = FontWeight.Bold) }
+                    }
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(8.dp))
 
                     OutlinedButton(
                         onClick = onDisable,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6330DB)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(13.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE4DDEA)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF655B70)),
                     ) { Text("Disable App Lock", fontWeight = FontWeight.Bold) }
                 } else {
                     Button(
                         onClick = onSet,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(44.dp)
                             .background(
                                 Brush.horizontalGradient(listOf(Color(0xFF6330DB), Color(0xFF9147ED))),
-                                RoundedCornerShape(14.dp),
+                                RoundedCornerShape(13.dp),
                             ),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(13.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                     ) { Text("Set App Lock", fontWeight = FontWeight.Bold) }
                 }
             }
