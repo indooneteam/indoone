@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -94,8 +93,19 @@ fun AppTopBar(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
+                TextButton(
+                    onClick = onMenuClick,
+                    contentPadding = PaddingValues(8.dp),
+                ) {
+                    Icon(
+                        MenuIcon,
+                        contentDescription = "Open menu",
+                        modifier = Modifier.size(21.dp),
+                        tint = Color(0xFF242129),
+                    )
+                }
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -107,12 +117,20 @@ fun AppTopBar(
                         modifier = Modifier.size(34.dp),
                     )
                     Column {
-                        Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
-                        Text("Authenticator", color = Color(0xFF6F6B77), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Indoone",
+                            color = Color(0xFF5E2DD2),
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp,
+                        )
+                        Text(
+                            "Authenticator",
+                            color = Color(0xFF6F6B77),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
-                }
-                TextButton(onClick = onMenuClick, contentPadding = PaddingValues(8.dp)) {
-                    Icon(MenuIcon, contentDescription = "Open menu", modifier = Modifier.size(21.dp), tint = Color(0xFF242129))
                 }
             }
             TextButton(
@@ -120,7 +138,12 @@ fun AppTopBar(
                 contentPadding = PaddingValues(8.dp),
             ) {
                 if (trailingIcon == null) {
-                    Icon(AppSearchIcon, contentDescription = "Search accounts", modifier = Modifier.size(21.dp), tint = Color(0xFF242129))
+                    Icon(
+                        AppSearchIcon,
+                        contentDescription = "Search accounts",
+                        modifier = Modifier.size(21.dp),
+                        tint = Color(0xFF242129),
+                    )
                 } else {
                     Text(trailingIcon, color = Color(0xFF242129), fontSize = 24.sp)
                 }
