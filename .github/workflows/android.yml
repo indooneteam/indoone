@@ -24,15 +24,17 @@ jobs:
       - name: Assemble debug APK
         run: gradle -p android assembleDebug --stacktrace
       - name: Verify APK output
+        shell: bash
         run: |
           set -euo pipefail
-          apk=(android/build/outputs/apk/debug/*.apk)
-          if [ ${#apk[@]} -eq 0 ] || [ ! -f "${apk[0]}" ]; then
+          apk="$(find android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          if [ -z "$apk" ]; then
             echo "No debug APK found under android/build/outputs/apk/debug"
-            find android/build/outputs -maxdepth 4 -type f -name '*.apk' -print || true
+            echo "APK files produced anywhere under android/build/outputs:"
+            find android/build/outputs -type f -name '*.apk' -print || true
             exit 1
           fi
-          printf 'Found APK: %s\n' "${apk[@]}"
+          echo "Found APK: $apk"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
