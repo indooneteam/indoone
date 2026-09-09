@@ -14,11 +14,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
@@ -113,18 +116,17 @@ fun SignUpScreen(
                 else -> "Send OTP"
             },
             enabled = actionEnabled,
-            onClick = {
-                if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password)
-            },
+            onClick = { if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
         )
 
         if (otpVisible) {
             Spacer(Modifier.height(6.dp))
-            Text("OTP sent to", fontSize = 12.sp)
             Text(
-                otpEmail,
+                buildAnnotatedString {
+                    append("OTP sent to ")
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(otpEmail) }
+                },
                 fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
             )
             Spacer(Modifier.height(12.dp))
             AuthFieldLabel("VERIFICATION OTP")
