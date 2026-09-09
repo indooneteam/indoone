@@ -93,7 +93,4 @@ fun SecurityScreen(
             }
         }
     }
-
-    @Suppress("UNUSED_VARIABLE")
-    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
 }
