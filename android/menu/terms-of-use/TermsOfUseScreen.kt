@@ -1,24 +1,29 @@
 package com.indoone.menu.termsofuse
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.indoone.menu.AppBottomNav
-import com.indoone.menu.AppTab
-import com.indoone.menu.AppTopBar
+import androidx.compose.ui.unit.sp
 
 data class TermsSection(
     val title: String,
@@ -53,60 +58,74 @@ fun TermsOfUseScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x8819141F)),
+        contentAlignment = Alignment.BottomCenter,
     ) {
-        Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-            AppTopBar(onMenuClick = onBack)
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item {
-                    Text(
-                        text = "TERMS OF USE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f),
+            shape = RoundedCornerShape(25.dp),
+            color = Color.White,
+            shadowElevation = 14.dp,
+        ) {
+            Column(modifier = Modifier.fillMaxSize().padding(23.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     Text(
                         text = "Terms of Use",
-                        modifier = Modifier.padding(top = 3.dp),
-                        style = MaterialTheme.typography.headlineSmall,
+                        fontSize = 21.sp,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2C2733),
                     )
-                    Text(
-                        text = "Last Updated: 08/09/2026",
-                        modifier = Modifier.padding(top = 5.dp, bottom = 4.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(35.dp)
+                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
+                    ) {
+                        Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                    }
                 }
-                items(TERMS_SECTIONS) { section ->
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = section.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = section.body,
-                            modifier = Modifier.padding(top = 4.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+
+                Text(
+                    text = "Last Updated: 08/09/2026",
+                    modifier = Modifier.padding(top = 1.dp, bottom = 14.dp),
+                    color = Color(0xFF8A8492),
+                    fontSize = 11.sp,
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(TERMS_SECTIONS) { section ->
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = section.title,
+                                modifier = Modifier.padding(top = 4.dp),
+                                fontSize = 14.sp,
+                                lineHeight = 19.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF211D27),
+                            )
+                            Text(
+                                text = section.body,
+                                modifier = Modifier.padding(top = 2.dp),
+                                fontSize = 12.sp,
+                                lineHeight = 19.sp,
+                                color = Color(0xFF8A8492),
+                            )
+                        }
                     }
                 }
             }
-            AppBottomNav(
-                activeTab = AppTab.SETTINGS,
-                onAccountsClick = onAccountsClick,
-                onLobbyClick = onLobbyClick,
-                onConnectClick = onConnectClick,
-                onSettingsClick = onSettingsClick,
-            )
         }
     }
 }
