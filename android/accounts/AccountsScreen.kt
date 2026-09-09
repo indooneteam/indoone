@@ -2,30 +2,28 @@ package com.indoone.accounts
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,21 +34,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardOptions
+import com.indoone.menu.AppBottomNav
+import com.indoone.menu.AppSearchIcon
+import com.indoone.menu.AppTab
+import com.indoone.menu.AppTopBar
 
 @Composable
 fun AccountsScreen(
@@ -67,30 +63,37 @@ fun AccountsScreen(
     onConnectClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
+    var searchVisible by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeDrawingPadding(),
+            .background(Color.White),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AccountsTopBar(
+            AppTopBar(
                 onMenuClick = onMenuClick,
-                onSearchClick = onSearchClick,
+                onSearchClick = {
+                    searchVisible = true
+                    onSearchClick()
+                },
             )
 
-            SearchAccountsField(
-                query = state.searchQuery,
-                onQueryChanged = onSearchChanged,
-                onClear = onClearSearch,
-            )
+            if (searchVisible) {
+                SearchAccountsField(
+                    query = state.searchQuery,
+                    onQueryChanged = onSearchChanged,
+                    onClear = onClearSearch,
+                    onClose = { searchVisible = false },
+                )
+            }
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                contentPadding = PaddingValues(
                     start = 18.dp,
                     end = 18.dp,
-                    top = 12.dp,
+                    top = 18.dp,
                     bottom = 104.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
@@ -115,102 +118,39 @@ fun AccountsScreen(
                 }
 
                 if (state.filteredAccounts.isEmpty()) {
-                    item {
-                        EmptyAccountsState(
-                            hasSearch = state.searchQuery.isNotBlank(),
-                        )
-                    }
+                    item { EmptyAccountsState() }
                 }
             }
         }
 
-        FloatingActionButton(
-            onClick = onAddAccount,
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 80.dp)
-                .size(57.dp),
-            shape = RoundedCornerShape(19.dp),
-            containerColor = Color(0xFF703BE2),
-            contentColor = Color.White,
+                .padding(end = 20.dp, bottom = 78.dp)
+                .size(57.dp)
+                .background(
+                    color = Color(0xFF703BE2),
+                    shape = RoundedCornerShape(19.dp),
+                )
+                .clickable(onClick = onAddAccount),
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "+",
+                color = Color.White,
                 fontSize = 31.sp,
                 fontWeight = FontWeight.Medium,
             )
         }
 
-        AccountsBottomNav(
-            modifier = Modifier.align(Alignment.BottomCenter),
+        AppBottomNav(
+            activeTab = AppTab.ACCOUNTS,
             onAccountsClick = {},
             onLobbyClick = onLobbyClick,
             onConnectClick = onConnectClick,
             onSettingsClick = onSettingsClick,
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
-    }
-}
-
-@Composable
-private fun AccountsTopBar(
-    onMenuClick: () -> Unit,
-    onSearchClick: () -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(76.dp)
-                .padding(horizontal = 18.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            IconButton(onClick = onMenuClick) {
-                Text(
-                    text = "☰",
-                    color = Color(0xFF242129),
-                    fontSize = 21.sp,
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-                modifier = Modifier.clickable(onClick = onSearchClick),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(
-                            color = Color(0xFF6D35E8),
-                            shape = RoundedCornerShape(10.dp),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "✦",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                    )
-                }
-                Text(
-                    text = "Indoone",
-                    color = Color(0xFF5E2DD2),
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            IconButton(onClick = onSearchClick) {
-                Text(
-                    text = "⌕",
-                    color = Color(0xFF242129),
-                    fontSize = 25.sp,
-                )
-            }
-        }
-
-        HorizontalDivider(color = Color(0xFFF0EEF5))
     }
 }
 
@@ -219,45 +159,50 @@ private fun SearchAccountsField(
     query: String,
     onQueryChanged: (String) -> Unit,
     onClear: () -> Unit,
+    onClose: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 12.dp),
+            .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 4.dp)
+            .height(44.dp)
+            .border(1.dp, Color(0xFFE6E2ED), RoundedCornerShape(14.dp))
+            .background(Color(0xFFFAF9FC), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedTextField(
+        Icon(
+            imageVector = AppSearchIcon,
+            contentDescription = null,
+            tint = Color(0xFF77717F),
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(9.dp))
+        BasicTextField(
             value = query,
             onValueChange = onQueryChanged,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
             singleLine = true,
-            placeholder = {
-                Text(
-                    text = "Search accounts",
-                    color = Color(0xFF77717F),
-                )
-            },
-            leadingIcon = {
-                Text(
-                    text = "⌕",
-                    color = Color(0xFF77717F),
-                    fontSize = 20.sp,
-                )
-            },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    TextButton(onClick = onClear) {
-                        Text(
-                            text = "×",
-                            color = Color(0xFF77717F),
-                            fontSize = 20.sp,
-                        )
+            textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, color = Color(0xFF17151D)),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (query.isEmpty()) {
+                        Text("Search accounts", color = Color(0xFF77717F), fontSize = 14.sp)
                     }
+                    innerTextField()
                 }
             },
-            shape = RoundedCornerShape(14.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         )
+
+        if (query.isNotEmpty()) {
+            TextButton(onClick = onClear, contentPadding = PaddingValues(0.dp)) {
+                Text("×", color = Color(0xFF77717F), fontSize = 22.sp)
+            }
+        } else {
+            TextButton(onClick = onClose, contentPadding = PaddingValues(0.dp)) {
+                Text("×", color = Color(0xFF77717F), fontSize = 22.sp)
+            }
+        }
     }
 }
 
@@ -268,9 +213,7 @@ private fun AccountsHeading(
     onSort: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -284,6 +227,8 @@ private fun AccountsHeading(
             )
             Text(
                 text = "Your accounts",
+                modifier = Modifier.padding(top = 1.dp),
+                color = Color(0xFF17151D),
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-0.25).sp,
@@ -296,23 +241,13 @@ private fun AccountsHeading(
             color = Color.White,
             border = BorderStroke(1.dp, Color(0xFFE5E0ED)),
         ) {
-            Row(
+            Text(
+                text = "Sort ↕",
                 modifier = Modifier.padding(horizontal = 11.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Text(
-                    text = "Sort",
-                    color = Color(0xFF5F566B),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = if (sortAscending) "↕" else "↕",
-                    color = Color(0xFF5F566B),
-                    fontSize = 15.sp,
-                )
-            }
+                color = Color(0xFF5F566B),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }
@@ -323,6 +258,9 @@ private fun AccountRow(
     onClick: () -> Unit,
     onFavoriteClick: () -> Unit,
 ) {
+    val seconds = account.secondsRemaining.coerceAtLeast(0)
+    val codeColor = codeColor(seconds)
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
@@ -340,25 +278,23 @@ private fun AccountRow(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(
-                        color = Color(0xFFF5F3F8),
-                        shape = RoundedCornerShape(14.dp),
-                    ),
+                    .background(Color(0xFFF5F3F8), RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = account.name.firstOrNull()?.uppercase() ?: "A",
-                    color = Color(0xFF4285F4),
+                    text = account.icon,
+                    color = account.serviceColor,
                     fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                 )
             }
 
-            Spacer(Modifier.size(12.dp))
+            Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = account.name,
+                    color = Color(0xFF17151D),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -374,24 +310,24 @@ private fun AccountRow(
                 )
                 Text(
                     text = account.code,
-                    modifier = Modifier.padding(top = 4.dp),
-                    color = codeColor(account.secondsRemaining),
+                    modifier = Modifier.padding(top = 2.dp),
+                    color = codeColor,
                     fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
                 )
             }
 
-            TextButton(onClick = onFavoriteClick) {
+            TextButton(onClick = onFavoriteClick, contentPadding = PaddingValues(4.dp)) {
                 Text(
                     text = if (account.favorite) "★" else "☆",
                     color = if (account.favorite) Color(0xFFF1A900) else Color(0xFFB7A8D3),
-                    fontSize = 22.sp,
+                    fontSize = 19.sp,
                 )
             }
 
             CountdownRing(
-                secondsRemaining = account.secondsRemaining,
+                secondsRemaining = seconds,
                 periodSeconds = account.periodSeconds,
             )
         }
@@ -406,167 +342,95 @@ private fun CountdownRing(
     val safePeriod = periodSeconds.coerceAtLeast(1)
     val progress = (secondsRemaining.toFloat() / safePeriod).coerceIn(0f, 1f)
     val ringColor = codeColor(secondsRemaining)
-
-    Box(
-        modifier = Modifier.size(35.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.size(35.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
-                color = Color(0xFFEADFFB),
-                style = Stroke(width = 3.dp.toPx()),
+                color = ringBackground(secondsRemaining),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx()),
             )
             drawArc(
                 color = ringColor,
                 startAngle = -90f,
                 sweepAngle = progress * 360f,
                 useCenter = false,
-                style = Stroke(
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
                     width = 3.dp.toPx(),
                     cap = StrokeCap.Round,
                 ),
             )
         }
-        Text(
-            text = secondsRemaining.coerceAtLeast(0).toString(),
-            color = ringColor,
-            fontSize = 10.sp,
-        )
+        Text(text = secondsRemaining.toString(), color = ringColor, fontSize = 10.sp)
     }
 }
 
 @Composable
-private fun EmptyAccountsState(hasSearch: Boolean) {
+private fun EmptyAccountsState() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 56.dp, horizontal = 20.dp),
+            .padding(vertical = 70.dp, horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
                 .size(64.dp)
-                .background(
-                    color = Color(0xFFF3EDFF),
-                    shape = RoundedCornerShape(20.dp),
-                ),
+                .background(Color(0xFFF3EDFF), RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "+",
-                color = Color(0xFF703BE2),
-                fontSize = 30.sp,
-            )
+            Text("+", color = Color(0xFF703BE2), fontSize = 30.sp)
         }
         Text(
-            text = if (hasSearch) "No matching accounts" else "No accounts yet",
+            text = "No accounts found",
             modifier = Modifier.padding(top = 14.dp),
+            color = Color(0xFF17151D),
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = if (hasSearch) {
-                "Try a different account name or email."
-            } else {
-                "Add an authenticator account to get started."
-            },
+            text = "Add an account or try a different search.",
             modifier = Modifier.padding(top = 5.dp),
             color = Color(0xFF85808B),
             fontSize = 13.sp,
         )
-    }
-}
-
-@Composable
-private fun AccountsBottomNav(
-    modifier: Modifier = Modifier,
-    onAccountsClick: () -> Unit,
-    onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFEEEAF2)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(67.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "♟",
-                label = "Accounts",
-                active = true,
-                onClick = onAccountsClick,
-            )
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "◆",
-                label = "Lobby",
-                active = false,
-                onClick = onLobbyClick,
-            )
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "↔",
-                label = "Connect",
-                active = false,
-                onClick = onConnectClick,
-            )
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                icon = "☷",
-                label = "Settings",
-                active = false,
-                onClick = onSettingsClick,
-            )
+        TextButton(onClick = {}, modifier = Modifier.padding(top = 4.dp)) {
+            Text("Add account", color = Color(0xFF703BE2), fontWeight = FontWeight.Bold)
         }
     }
 }
 
-@Composable
-private fun BottomNavItem(
-    modifier: Modifier,
-    icon: String,
-    label: String,
-    active: Boolean,
-    onClick: () -> Unit,
-) {
-    val contentColor = if (active) Color(0xFF6B34DF) else Color(0xFF99939F)
+private fun codeColor(seconds: Int): Color = when {
+    seconds >= 15 -> Color(0xFF20883E)
+    seconds >= 5 -> Color(0xFFAD8500)
+    else -> Color(0xFFC62828)
+}
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(67.dp)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = icon,
-            color = contentColor,
-            fontSize = 21.sp,
-            fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-        )
-        Text(
-            text = label,
-            modifier = Modifier.padding(top = 2.dp),
-            color = contentColor,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-        )
+private fun ringBackground(seconds: Int): Color = when {
+    seconds >= 15 -> Color(0xFFD9F0DF)
+    seconds >= 5 -> Color(0xFFF4EBC7)
+    else -> Color(0xFFF3D7D7)
+}
+
+private val AccountItem.icon: String
+    get() = name.firstOrNull()?.uppercase() ?: "?"
+
+private val AccountItem.serviceColor: Color
+    get() = when (serviceClass) {
+        "github" -> Color(0xFF111111)
+        "microsoft" -> Color(0xFFEF5B35)
+        "binance" -> Color(0xFFD99C00)
+        "dropbox" -> Color(0xFF1976FF)
+        "zoho" -> Color(0xFFE42525)
+        else -> Color(0xFF4285F4)
     }
-}
 
-private fun codeColor(secondsRemaining: Int): Color = when {
-    secondsRemaining <= 5 -> Color(0xFFD93025)
-    secondsRemaining <= 10 -> Color(0xFFD7A500)
-    else -> Color(0xFF24A148)
-}
+private val AccountItem.serviceClass: String
+    get() = name.trim().lowercase().let { value ->
+        when {
+            "github" in value -> "github"
+            "microsoft" in value -> "microsoft"
+            "binance" in value -> "binance"
+            "dropbox" in value -> "dropbox"
+            "zoho" in value -> "zoho"
+            else -> "google"
+        }
+    }
