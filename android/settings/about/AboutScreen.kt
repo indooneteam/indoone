@@ -3,6 +3,7 @@ package com.indoone.settings.about
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,10 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -26,7 +27,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.material3.Text
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -84,10 +84,10 @@ fun AboutScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                    horizontalArrangement = Arrangement.Center,
                 ) {
-                    IndooneAboutLogo(modifier = Modifier.size(48.dp))
-                    Column(modifier = Modifier.padding(start = 10.dp)) {
+                    IndooneAboutLogo(modifier = Modifier.size(36.dp))
+                    Column(modifier = Modifier.padding(start = 9.dp)) {
                         Text(
                             "Indoone",
                             color = Color(0xFF5E2DD2),
@@ -108,9 +108,7 @@ fun AboutScreen(
 
                 Text(
                     text = "Private authenticator with cloud sync and secure device pairing.\nUpdates are checked automatically when the app opens.",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 0.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     color = Color(0xFF756F7F),
                     fontSize = 12.sp,
