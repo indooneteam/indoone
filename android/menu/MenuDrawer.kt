@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.ExitToApp
@@ -204,8 +206,8 @@ fun MenuDrawer(
 private fun IndooneMenuLogo(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val scaleFactor = size.minDimension / 48f
-        androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
-            androidx.compose.ui.graphics.drawscope.rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
+        scale(scaleFactor) {
+            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
                 drawRoundRect(
                     brush = androidx.compose.ui.graphics.Brush.linearGradient(
                         colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)),
