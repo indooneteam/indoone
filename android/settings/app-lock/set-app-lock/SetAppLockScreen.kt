@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -120,15 +121,18 @@ internal fun PinPadScaffold(
                         Box(
                             modifier = Modifier
                                 .size(9.dp)
-                                .background(if (index < pin.length) Purple else Color.White, CircleShape)
-                                .then(
-                                    if (index < pin.length) Modifier
-                                    else Modifier.background(Color.Transparent, CircleShape)
+                                .background(
+                                    color = if (index < pin.length) Purple else Color.White,
+                                    shape = CircleShape,
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (index >= pin.length) {
-                                Box(Modifier.size(9.dp).background(Color.White, CircleShape))
+                                Box(
+                                    Modifier
+                                        .size(9.dp)
+                                        .background(Color.White, CircleShape),
+                                )
                             }
                         }
                     }
@@ -174,21 +178,25 @@ internal fun PinPadScaffold(
                                     containerColor = KeyBackground,
                                     contentColor = if (key == 'C' || key == '⌫') Color(0xFF726A7B) else TextDark,
                                 ),
-                            ) { Text(key.toString(), fontSize = if (key == 'C' || key == '⌫') 13.sp else 23.sp, fontWeight = FontWeight.Bold) }
+                            ) {
+                                Text(
+                                    key.toString(),
+                                    fontSize = if (key == 'C' || key == '⌫') 13.sp else 23.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
                     }
                 }
 
                 Spacer(Modifier.height(5.dp))
                 if (onCancel != null) {
-                    Text(
-                        "Cancel",
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        color = Color(0xFF655B70),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    )
+                    TextButton(
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Cancel", color = Color(0xFF655B70), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
