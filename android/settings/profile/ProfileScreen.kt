@@ -40,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.indoone.settings.SettingsScreen
 
 private fun profileIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
@@ -68,6 +67,7 @@ private enum class ProfileSheet {
 @Composable
 fun ProfileScreen(
     state: ProfileState,
+    profileViewModel: ProfileViewModel,
     onMenuClick: () -> Unit = {},
     onBack: () -> Unit,
     onMobileClick: () -> Unit,
@@ -77,7 +77,6 @@ fun ProfileScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    val profileViewModel: ProfileViewModel = viewModel()
     var sheet by remember { mutableStateOf(ProfileSheet.NONE) }
     var mobile by remember(state.mobile, sheet) {
         mutableStateOf(state.mobile.takeUnless { it.contains("not set", true) }.orEmpty())
