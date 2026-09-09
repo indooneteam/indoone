@@ -32,23 +32,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 
-private fun iconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
-    ImageVector.Builder(
-        name = name,
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f,
-    ).apply {
-        path(
-            fill = null,
-            stroke = SolidColor(Color.Black),
-            strokeLineWidth = 1.8f,
-            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-            pathBuilder = content,
-        )
-    }.build()
+private fun iconBuilder(
+    name: String,
+    content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit,
+): ImageVector = ImageVector.Builder(
+    name = name,
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 1.8f,
+        strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
+        strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+        pathBuilder = content,
+    )
+}.build()
 
 private val AccountsNavIcon = iconBuilder("AccountsNav") {
     moveTo(9f, 5f); curveTo(7.343f, 5f, 6f, 6.343f, 6f, 8f); curveTo(6f, 9.657f, 7.343f, 11f, 9f, 11f); curveTo(10.657f, 11f, 12f, 9.657f, 12f, 8f); curveTo(12f, 6.343f, 10.657f, 5f, 9f, 5f)
@@ -88,39 +90,63 @@ fun AppTopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(76.dp)
-                .padding(horizontal = 18.dp, vertical = 8.dp),
+                .padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
+            TextButton(
+                onClick = onMenuClick,
+                modifier = Modifier.size(40.dp),
+                contentPadding = PaddingValues(0.dp),
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(9.dp),
-                ) {
-                    Image(
-                        painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
-                        contentDescription = "Indoone",
-                        modifier = Modifier.size(34.dp),
+                Icon(
+                    MenuIcon,
+                    contentDescription = "Open menu",
+                    modifier = Modifier.size(21.dp),
+                    tint = Color(0xFF242129),
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .padding(start = 1.dp)
+                    .weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                Image(
+                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
+                    contentDescription = "Indoone",
+                    modifier = Modifier.size(34.dp),
+                )
+                Column {
+                    Text(
+                        "Indoone",
+                        color = Color(0xFF5E2DD2),
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 18.sp,
                     )
-                    Column {
-                        Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
-                        Text("Authenticator", color = Color(0xFF6F6B77), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                TextButton(onClick = onMenuClick, contentPadding = PaddingValues(8.dp)) {
-                    Icon(MenuIcon, contentDescription = "Open menu", modifier = Modifier.size(21.dp), tint = Color(0xFF242129))
+                    Text(
+                        "Authenticator",
+                        color = Color(0xFF6F6B77),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
+
             TextButton(
                 onClick = if (trailingIcon != null) onTrailingClick else onSearchClick,
-                contentPadding = PaddingValues(8.dp),
+                modifier = Modifier.size(40.dp),
+                contentPadding = PaddingValues(0.dp),
             ) {
                 if (trailingIcon == null) {
-                    Icon(AppSearchIcon, contentDescription = "Search accounts", modifier = Modifier.size(21.dp), tint = Color(0xFF242129))
+                    Icon(
+                        AppSearchIcon,
+                        contentDescription = "Search accounts",
+                        modifier = Modifier.size(21.dp),
+                        tint = Color(0xFF242129),
+                    )
                 } else {
                     Text(trailingIcon, color = Color(0xFF242129), fontSize = 24.sp)
                 }
@@ -140,7 +166,9 @@ fun AppBottomNav(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().navigationBarsPadding(),
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
         color = Color.White,
         border = BorderStroke(1.dp, Color(0xFFEEEAF2)),
     ) {
@@ -167,11 +195,19 @@ private fun RowScope.AppBottomNavItem(
 ) {
     val contentColor = if (active) Color(0xFF6B34DF) else Color(0xFF99939F)
     Column(
-        modifier = Modifier.weight(1f).height(67.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .weight(1f)
+            .height(67.dp)
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(23.dp), tint = contentColor.copy(alpha = if (active) 1f else 0.78f))
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(23.dp),
+            tint = contentColor.copy(alpha = if (active) 1f else 0.78f),
+        )
         Text(label, style = MaterialTheme.typography.labelSmall, color = contentColor)
     }
 }
