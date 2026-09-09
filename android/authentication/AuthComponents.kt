@@ -1,5 +1,6 @@
 package com.indoone.authentication
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -203,13 +205,14 @@ fun AuthPrimaryButton(
             .height(48.dp)
             .clip(RoundedCornerShape(13.dp))
             .background(
-                if (enabled) Brush.horizontalGradient(listOf(IndoonePurple, IndoonePurpleLight))
-                else Brush.horizontalGradient(listOf(Color(0xFFCBC5D4), Color(0xFFD8D3DF)))
+                Brush.horizontalGradient(listOf(IndoonePurple, IndoonePurpleLight))
             ),
         shape = RoundedCornerShape(13.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
+            contentColor = Color.White,
+            disabledContentColor = Color.White,
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
@@ -219,17 +222,23 @@ fun AuthPrimaryButton(
 
 @Composable
 fun AuthSecondaryButton(text: String, enabled: Boolean, onClick: () -> Unit) {
-    TextButton(
+    OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(46.dp),
+        shape = RoundedCornerShape(13.dp),
+        border = BorderStroke(1.dp, IndooneBorder),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.White,
+            contentColor = Color(0xFF5F5966),
+            disabledContainerColor = Color.White,
+            disabledContentColor = Color(0xFF8A8490),
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
-        Text(
-            text,
-            color = IndoonePurpleDark,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
+        Text(text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
