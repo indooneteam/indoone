@@ -1,17 +1,23 @@
 package com.indoone.authentication
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -26,12 +32,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Image
 import com.indoone.R
 
 private val IndoonePurple = Color(0xFF6330DB)
@@ -44,6 +48,39 @@ private val IndooneField = Color(0xFFFBFAFC)
 private val IndooneEyebrow = Color(0xFF7650D8)
 
 @Composable
+fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.White, Color(0xFFFBFAFF)),
+                )
+            ),
+    ) {
+        val wideLayout = maxWidth >= 700.dp
+        val horizontalPadding = if (wideLayout) 34.dp else 22.dp
+        val verticalPadding = if (wideLayout) 64.dp else 48.dp
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 460.dp),
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
 fun AuthBrand() {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -53,7 +90,9 @@ fun AuthBrand() {
         Image(
             painter = painterResource(R.drawable.ic_indoone_logo),
             contentDescription = "Indoone logo",
-            modifier = Modifier.width(72.dp).height(72.dp),
+            modifier = Modifier
+                .width(72.dp)
+                .height(72.dp),
         )
         Column {
             Text(
@@ -121,7 +160,7 @@ fun AuthTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     enabled: Boolean = true,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingContent: (@Composable (() -> Unit))? = null,
@@ -168,7 +207,10 @@ fun AuthPrimaryButton(
                 else Brush.horizontalGradient(listOf(Color(0xFFCBC5D4), Color(0xFFD8D3DF)))
             ),
         shape = RoundedCornerShape(13.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, disabledContainerColor = Color.Transparent),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+        ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
         Text(text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
@@ -199,6 +241,8 @@ fun AuthStatus(text: String, error: Boolean) {
         color = if (error) MaterialTheme.colorScheme.error else IndooneMuted,
         fontSize = 12.sp,
         lineHeight = 18.sp,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
     )
 }
