@@ -1,6 +1,7 @@
 package com.indoone.menu.termsofuse
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,67 +62,76 @@ fun TermsOfUseScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x8819141F)),
+            .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Surface(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.88f),
-            shape = RoundedCornerShape(25.dp),
-            color = Color.White,
-            shadowElevation = 14.dp,
+                .fillMaxSize()
+                .background(Color(0x5519141F))
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Column(modifier = Modifier.fillMaxSize().padding(23.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Terms of Use",
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2C2733),
-                    )
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.88f)
+                    .clickable(onClick = {}),
+                shape = RoundedCornerShape(25.dp),
+                color = Color.White,
+                shadowElevation = 14.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxSize().padding(23.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                        Text(
+                            text = "Terms of Use",
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2C2733),
+                        )
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier
+                                .size(35.dp)
+                                .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
+                        ) {
+                            Text("×", fontSize = 21.sp, color = Color(0xFF2C2733))
+                        }
                     }
-                }
 
-                Text(
-                    text = "Last Updated: 08/09/2026",
-                    modifier = Modifier.padding(top = 1.dp, bottom = 14.dp),
-                    color = Color(0xFF8A8492),
-                    fontSize = 11.sp,
-                )
+                    Text(
+                        text = "Last Updated: 08/09/2026",
+                        modifier = Modifier.padding(top = 1.dp, bottom = 14.dp),
+                        color = Color(0xFF8A8492),
+                        fontSize = 11.sp,
+                    )
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(TERMS_SECTIONS) { section ->
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = section.title,
-                                modifier = Modifier.padding(top = 4.dp),
-                                fontSize = 14.sp,
-                                lineHeight = 19.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF211D27),
-                            )
-                            Text(
-                                text = section.body,
-                                modifier = Modifier.padding(top = 2.dp),
-                                fontSize = 12.sp,
-                                lineHeight = 19.sp,
-                                color = Color(0xFF8A8492),
-                            )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(TERMS_SECTIONS) { section ->
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = section.title,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    fontSize = 14.sp,
+                                    lineHeight = 19.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF211D27),
+                                )
+                                Text(
+                                    text = section.body,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    fontSize = 12.sp,
+                                    lineHeight = 19.sp,
+                                    color = Color(0xFF8A8492),
+                                )
+                            }
                         }
                     }
                 }
