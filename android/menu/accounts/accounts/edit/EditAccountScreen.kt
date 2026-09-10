@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppTopBar
 
 @Composable
 fun EditAccountScreen(
@@ -43,42 +44,50 @@ fun EditAccountScreen(
     onAlgorithmChanged: (String) -> Unit,
     onBack: () -> Unit,
     onSave: () -> Unit,
+    onMenuClick: () -> Unit = onBack,
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 10.dp),
+            .fillMaxSize(),
     ) {
-        TextButton(onClick = onBack) { Text("‹  Back", fontWeight = FontWeight.Bold) }
-        Spacer(Modifier.height(10.dp))
-        Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp)
-        Text("Edit Account", modifier = Modifier.padding(top = 3.dp), fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("Update the details used to generate your one-time codes.", modifier = Modifier.padding(top = 10.dp), color = Color(0xFF77717F))
-
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE8E3EC)),
+        AppTopBar(onMenuClick = onMenuClick)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 10.dp),
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                OutlinedTextField(value = state.name, onValueChange = onNameChanged, modifier = Modifier.fillMaxWidth(), label = { Text("ACCOUNT NAME") }, placeholder = { Text("e.g. Google") }, singleLine = true)
-                OutlinedTextField(value = state.email, onValueChange = onEmailChanged, modifier = Modifier.fillMaxWidth(), label = { Text("EMAIL / USERNAME") }, placeholder = { Text("you@example.com") }, singleLine = true)
-                OutlinedTextField(value = state.secret, onValueChange = onSecretChanged, modifier = Modifier.fillMaxWidth(), label = { Text("SECRET KEY") }, placeholder = { Text("Base32 secret key") }, singleLine = true)
+            TextButton(onClick = onBack) { Text("‹  Back", fontWeight = FontWeight.Bold) }
+            Spacer(Modifier.height(10.dp))
+            Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp)
+            Text("Edit Account", modifier = Modifier.padding(top = 3.dp), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Update the details used to generate your one-time codes.", modifier = Modifier.padding(top = 10.dp), color = Color(0xFF77717F))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    EditDropdown("DIGITS", state.digits.toString(), listOf("6", "8"), Modifier.weight(1f)) { onDigitsChanged(it.toInt()) }
-                    EditDropdown("PERIOD", state.period.toString(), listOf("30", "60"), Modifier.weight(1f)) { onPeriodChanged(it.toInt()) }
-                }
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, Color(0xFFE8E3EC)),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    OutlinedTextField(value = state.name, onValueChange = onNameChanged, modifier = Modifier.fillMaxWidth(), label = { Text("ACCOUNT NAME") }, placeholder = { Text("e.g. Google") }, singleLine = true)
+                    OutlinedTextField(value = state.email, onValueChange = onEmailChanged, modifier = Modifier.fillMaxWidth(), label = { Text("EMAIL / USERNAME") }, placeholder = { Text("you@example.com") }, singleLine = true)
+                    OutlinedTextField(value = state.secret, onValueChange = onSecretChanged, modifier = Modifier.fillMaxWidth(), label = { Text("SECRET KEY") }, placeholder = { Text("Base32 secret key") }, singleLine = true)
 
-                EditDropdown("ALGORITHM", state.algorithm, listOf("SHA1", "SHA256", "SHA512")) { onAlgorithmChanged(it) }
-                state.errorMessage?.let { Text(it, color = Color(0xFFB3261E)) }
-                Button(onClick = onSave, enabled = state.canSave, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
-                    Text(if (state.isSaving) "Saving…" else "Save Changes")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        EditDropdown("DIGITS", state.digits.toString(), listOf("6", "8"), Modifier.weight(1f)) { onDigitsChanged(it.toInt()) }
+                        EditDropdown("PERIOD", state.period.toString(), listOf("30", "60"), Modifier.weight(1f)) { onPeriodChanged(it.toInt()) }
+                    }
+
+                    EditDropdown("ALGORITHM", state.algorithm, listOf("SHA1", "SHA256", "SHA512")) { onAlgorithmChanged(it) }
+                    state.errorMessage?.let { Text(it, color = Color(0xFFB3261E)) }
+                    Button(onClick = onSave, enabled = state.canSave, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
+                        Text(if (state.isSaving) "Saving…" else "Save Changes")
+                    }
                 }
             }
         }
@@ -90,7 +99,7 @@ private fun EditDropdown(label: String, selected: String, options: List<String>,
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }, modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(value = selected, onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth().menuAnchor(), label = { Text(label) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) })
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        androidx.compose.material3.ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option -> DropdownMenuItem(text = { Text(option) }, onClick = { expanded = false; onSelected(option) }) }
         }
     }
