@@ -55,7 +55,7 @@ fun AddAccountScreen(
             .fillMaxSize()
             .background(Color.White),
     ) {
-        AppTopBar(onMenuClick = onMenuClick, onSearchClick = onSearchClick)
+        AppTopBar(onMenuClick = onMenuClick, onSearchClick = onAccountsClick)
 
         Column(
             modifier = Modifier

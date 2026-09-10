@@ -38,6 +38,13 @@ private data class ChatMessage(
     val fromUser: Boolean,
 )
 
+private val initialChatMessages = listOf(
+    ChatMessage(
+        "Namaskara 👋 I’m Indoone AI. Ask me anything.",
+        fromUser = false,
+    ),
+)
+
 @Composable
 fun HomeScreen(
     onMenuClick: () -> Unit,
@@ -46,16 +53,7 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
 ) {
     var input by remember { mutableStateOf("") }
-    var messages by remember {
-        mutableStateOf(
-            listOf(
-                ChatMessage(
-                    "Namaskara 👋 I’m Indoone AI. Ask me anything.",
-                    fromUser = false,
-                ),
-            ),
-        )
-    }
+    var messages by remember { mutableStateOf(initialChatMessages) }
 
     fun sendMessage() {
         val text = input.trim()
@@ -68,11 +66,17 @@ fun HomeScreen(
         )
     }
 
+    fun startNewChat() {
+        input = ""
+        messages = initialChatMessages
+    }
+
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(
                 onMenuClick = onMenuClick,
                 trailingIcon = "✦",
+                onTrailingClick = ::startNewChat,
             )
 
             Column(
