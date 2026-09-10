@@ -73,6 +73,13 @@
           button.firstChild
         );
       }
+
+      if (id === 'accountsNav') {
+        const label = button.querySelector(':scope > span:last-child');
+        if (label) {
+          label.textContent = 'Home';
+        }
+      }
     });
 
     document
