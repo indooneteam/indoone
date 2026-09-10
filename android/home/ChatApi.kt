@@ -6,11 +6,16 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
+data class ChatResponse(
+    val conversationId: String,
+    val reply: String,
+)
+
 object ChatApi {
     private const val BACKEND_URL = "http://10.0.2.2:8000"
     private const val REQUEST_TIMEOUT_MS = 15_000
 
-    fun sendMessage(message: String): String {
+    fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
         val connection = (URL("$BACKEND_URL/api/chat").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = REQUEST_TIMEOUT_MS
@@ -23,6 +28,7 @@ object ChatApi {
         return try {
             val payload = JSONObject().apply {
                 put("message", message)
+                conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
             }.toString()
 
             connection.outputStream.use { output ->
@@ -49,11 +55,19 @@ object ChatApi {
                 )
             }
 
-            val reply = JSONObject(body).optString("reply")
+            val json = JSONObject(body)
+            val reply = json.optString("reply")
+            val returnedConversationId = json.optString("conversation_id")
+            if (returnedConversationId.isBlank()) {
+                throw ChatApiException("Indoone backend returned no conversation id")
+            }
             if (reply.isBlank()) {
                 throw ChatApiException("Indoone backend returned an empty reply")
             }
-            reply
+            ChatResponse(
+                conversationId = returnedConversationId,
+                reply = reply,
+            )
         } finally {
             connection.disconnect()
         }
