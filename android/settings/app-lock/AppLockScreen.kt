@@ -42,7 +42,7 @@ fun AppLockScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0x5519141F))
             .clickable(onClick = onBack),
         contentAlignment = Alignment.BottomCenter,
     ) {
