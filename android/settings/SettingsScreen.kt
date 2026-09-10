@@ -3,6 +3,7 @@ package com.indoone.settings
 import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -150,10 +150,18 @@ fun SettingsScreen(
             onDismissRequest = { showAppLockRequired = false },
             title = { Text("App Lock required") },
             text = { Text("Set App Lock before enabling Biometric Unlock.") },
-            confirmButton = { TextButton(onClick = { showAppLockRequired = false; flow.sync(appLockStore.isEnabled()); flow.startCreate(); appLockPage = true }) { Text("Set App Lock") } },
+            confirmButton = {
+                TextButton(onClick = {
+                    showAppLockRequired = false
+                    flow.sync(appLockStore.isEnabled())
+                    flow.startCreate()
+                    appLockPage = true
+                }) { Text("Set App Lock") }
+            },
             dismissButton = { TextButton(onClick = { showAppLockRequired = false }) { Text("Cancel") } },
         )
     }
+
     if (showBiometricUnavailable) {
         AlertDialog(
             onDismissRequest = { showBiometricUnavailable = false },
@@ -162,6 +170,7 @@ fun SettingsScreen(
             confirmButton = { TextButton(onClick = { showBiometricUnavailable = false }) { Text("OK") } },
         )
     }
+
     biometricError?.let { message ->
         AlertDialog(
             onDismissRequest = { biometricError = null },
@@ -169,35 +178,6 @@ fun SettingsScreen(
             text = { Text(message) },
             confirmButton = { TextButton(onClick = { biometricError = null }) { Text("OK") } },
         )
-    }
-
-    if (appLockPage) {
-        val state = flow.state.value
-        when (state.step) {
-            AppLockViewModel.Step.CREATE -> SetAppLockScreen(state.pin, state.error, flow::appendDigit, flow::backspace, flow::clear, {
-                if (state.pin.length !in 4..12) flow.error("PIN must contain 4–12 digits.")
-                else runCatching { appLockStore.setPin(state.pin) }.onSuccess { resetToSettings() }.onFailure { flow.error("Could not create App PIN.") }
-            }, ::resetToSettings)
-            AppLockViewModel.Step.CURRENT -> ChangeAppLockScreen("Verify current PIN", "Enter your current App PIN to continue.", state.pin, state.error, "Continue", flow::appendDigit, flow::backspace, flow::clear, {
-                if (appLockStore.verifyPin(state.pin)) { flow.setStep(AppLockViewModel.Step.NEW); flow.resetInput() } else flow.error("Incorrect current PIN")
-            }, ::resetToSettings)
-            AppLockViewModel.Step.NEW -> ChangeAppLockScreen("Create new PIN", "Choose a new 4–12 digit App PIN.", state.pin, state.error, "Continue", flow::appendDigit, flow::backspace, flow::clear, {
-                if (state.pin.length in 4..12) { flow.setNewPin(state.pin); flow.setStep(AppLockViewModel.Step.CONFIRM); flow.resetInput() } else flow.error("PIN must contain 4–12 digits.")
-            }, ::resetToSettings)
-            AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen("Confirm new PIN", "Enter the new App PIN again to confirm it.", state.pin, state.error, "Change PIN", flow::appendDigit, flow::backspace, flow::clear, {
-                if (state.pin != state.newPin) flow.error("New PINs do not match") else runCatching { appLockStore.setPin(state.newPin) }.onSuccess { resetToSettings() }.onFailure { flow.error("Could not change App PIN.") }
-            }, ::resetToSettings)
-            AppLockViewModel.Step.DISABLE -> DisableAppLockScreen(state.pin, state.error, flow::appendDigit, flow::backspace, flow::clear, {
-                if (appLockStore.verifyPin(state.pin)) { appLockStore.clear(); biometricStore.setEnabled(false); biometricOn = false; resetToSettings() } else flow.error("Incorrect current PIN")
-            }, ::resetToSettings)
-            else -> AppLockScreen(appLockStore.isEnabled(), { flow.startCreate(); appLockPage = true }, { flow.startChange(); appLockPage = true }, { flow.startDisable(); appLockPage = true }, ::resetToSettings)
-        }
-        return
-    }
-
-    if (autoLockPage) {
-        AutoLockScreen(autoLockStore.minutes(), appLockStore.isEnabled(), biometricStore.isEnabled(), { autoLockStore.setMinutes(it); autoLockPage = false }, { autoLockPage = false })
-        return
     }
 
     Surface(Modifier.fillMaxSize(), color = Color.White) {
@@ -217,14 +197,131 @@ fun SettingsScreen(
                 SettingsSectionLabel("Account", true)
                 SettingsActionRow("Profile", "Email & mobile number", ProfileIcon, onProfileClick)
                 SettingsSectionLabel("Security")
-                SettingsActionRow("App Lock", "PIN", LockIcon) { flow.sync(appLockStore.isEnabled()); appLockPage = true }
-                SettingsToggleRow("Biometric Unlock", "Fingerprint / device credential", BiometricIcon, biometricOn) { enabled -> if (enabled) requestBiometricEnable() else { biometricStore.setEnabled(false); biometricOn = false; biometricError = null } }
-                SettingsActionRow("Auto-Lock", if (autoLockStore.minutes() > 0) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Never", TimerIcon) { autoLockPage = true }
+                SettingsActionRow("App Lock", "PIN", LockIcon) {
+                    flow.sync(appLockStore.isEnabled())
+                    appLockPage = true
+                }
+                SettingsToggleRow("Biometric Unlock", "Fingerprint / device credential", BiometricIcon, biometricOn) { enabled ->
+                    if (enabled) requestBiometricEnable() else {
+                        biometricStore.setEnabled(false)
+                        biometricOn = false
+                        biometricError = null
+                    }
+                }
+                SettingsActionRow(
+                    "Auto-Lock",
+                    if (autoLockStore.minutes() > 0) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Never",
+                    TimerIcon,
+                ) { autoLockPage = true }
                 SettingsSectionLabel("App")
                 SettingsActionRow("About Indoone", "Version 0.1.0 · Updates", InfoIcon) { aboutPage = true }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
+    }
+
+    if (appLockPage) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x5519141F)),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            val state = flow.state.value
+            when (state.step) {
+                AppLockViewModel.Step.CREATE -> SetAppLockScreen(state.pin, state.error, flow::appendDigit, flow::backspace, flow::clear, {
+                    if (state.pin.length !in 4..12) flow.error("PIN must contain 4–12 digits.")
+                    else runCatching { appLockStore.setPin(state.pin) }
+                        .onSuccess { resetToSettings() }
+                        .onFailure { flow.error("Could not create App PIN.") }
+                }, ::resetToSettings)
+                AppLockViewModel.Step.CURRENT -> ChangeAppLockScreen(
+                    "Verify current PIN",
+                    "Enter your current App PIN to continue.",
+                    state.pin,
+                    state.error,
+                    "Continue",
+                    flow::appendDigit,
+                    flow::backspace,
+                    flow::clear,
+                    {
+                        if (appLockStore.verifyPin(state.pin)) {
+                            flow.setStep(AppLockViewModel.Step.NEW)
+                            flow.resetInput()
+                        } else flow.error("Incorrect current PIN")
+                    },
+                    ::resetToSettings,
+                )
+                AppLockViewModel.Step.NEW -> ChangeAppLockScreen(
+                    "Create new PIN",
+                    "Choose a new 4–12 digit App PIN.",
+                    state.pin,
+                    state.error,
+                    "Continue",
+                    flow::appendDigit,
+                    flow::backspace,
+                    flow::clear,
+                    {
+                        if (state.pin.length in 4..12) {
+                            flow.setNewPin(state.pin)
+                            flow.setStep(AppLockViewModel.Step.CONFIRM)
+                            flow.resetInput()
+                        } else flow.error("PIN must contain 4–12 digits.")
+                    },
+                    ::resetToSettings,
+                )
+                AppLockViewModel.Step.CONFIRM -> ChangeAppLockScreen(
+                    "Confirm new PIN",
+                    "Enter the new App PIN again to confirm it.",
+                    state.pin,
+                    state.error,
+                    "Change PIN",
+                    flow::appendDigit,
+                    flow::backspace,
+                    flow::clear,
+                    {
+                        if (state.pin != state.newPin) flow.error("New PINs do not match")
+                        else runCatching { appLockStore.setPin(state.newPin) }
+                            .onSuccess { resetToSettings() }
+                            .onFailure { flow.error("Could not change App PIN.") }
+                    },
+                    ::resetToSettings,
+                )
+                AppLockViewModel.Step.DISABLE -> DisableAppLockScreen(
+                    state.pin,
+                    state.error,
+                    flow::appendDigit,
+                    flow::backspace,
+                    flow::clear,
+                    {
+                        if (appLockStore.verifyPin(state.pin)) {
+                            appLockStore.clear()
+                            biometricStore.setEnabled(false)
+                            biometricOn = false
+                            resetToSettings()
+                        } else flow.error("Incorrect current PIN")
+                    },
+                    ::resetToSettings,
+                )
+                else -> AppLockScreen(
+                    appLockStore.isEnabled(),
+                    { flow.startCreate(); appLockPage = true },
+                    { flow.startChange(); appLockPage = true },
+                    { flow.startDisable(); appLockPage = true },
+                    ::resetToSettings,
+                )
+            }
+        }
+    }
+
+    if (autoLockPage) {
+        AutoLockScreen(
+            autoLockStore.minutes(),
+            appLockStore.isEnabled(),
+            biometricStore.isEnabled(),
+            { autoLockStore.setMinutes(it); autoLockPage = false },
+            { autoLockPage = false },
+        )
     }
 
     if (aboutPage) {
@@ -240,7 +337,14 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsSectionLabel(label: String, first: Boolean = false) {
-    Text(label, Modifier.padding(top = if (first) 0.dp else 18.dp, bottom = 7.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold)
+    Text(
+        label,
+        Modifier.padding(top = if (first) 0.dp else 18.dp, bottom = 7.dp),
+        color = Color(0xFF8A8392),
+        fontSize = 11.sp,
+        lineHeight = 13.sp,
+        fontWeight = FontWeight.Bold,
+    )
 }
 
 @Composable
