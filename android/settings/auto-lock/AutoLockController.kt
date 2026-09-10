@@ -2,6 +2,7 @@ package com.indoone.settings.autolock
 
 import android.app.Dialog
 import android.content.Context
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -11,7 +12,8 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
-import com.indoone.configureIndooneSystemBars
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
@@ -41,7 +43,7 @@ class AutoLockController(private val context: Context) {
 
     fun onResumed(activity: ComponentActivity) {
         this.activity = activity
-        activity.configureIndooneSystemBars()
+        configureActivitySystemBars(activity)
         lastActivity = SystemClock.elapsedRealtime().coerceAtMost(lastActivity)
         if (!checking) {
             checking = true
@@ -70,6 +72,17 @@ class AutoLockController(private val context: Context) {
 
     private fun shouldLock(): Boolean = appLockStore.isEnabled() || biometricStore.isEnabled()
 
+    private fun configureActivitySystemBars(activity: ComponentActivity) {
+        val window = activity.window
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+    }
+
     private fun installActivityTouchWatcher(activity: ComponentActivity) {
         val decor = activity.window.decorView
         if (decor.getTag(TAG_TOUCH_WATCHER) == true) return
@@ -90,8 +103,8 @@ class AutoLockController(private val context: Context) {
         lockDialog.setCancelable(false)
         lockDialog.setCanceledOnTouchOutside(false)
         lockDialog.window?.let { dialogWindow ->
-            dialogWindow.statusBarColor = android.graphics.Color.WHITE
-            dialogWindow.navigationBarColor = android.graphics.Color.WHITE
+            dialogWindow.statusBarColor = Color.WHITE
+            dialogWindow.navigationBarColor = Color.WHITE
         }
 
         val root = FrameLayout(currentActivity)
@@ -130,9 +143,10 @@ class AutoLockController(private val context: Context) {
         dialog = lockDialog
         lockDialog.show()
         lockDialog.window?.let { dialogWindow ->
-            dialogWindow.statusBarColor = android.graphics.Color.WHITE
-            dialogWindow.navigationBarColor = android.graphics.Color.WHITE
-            androidx.core.view.WindowInsetsControllerCompat(dialogWindow, dialogWindow.decorView).apply {
+            dialogWindow.statusBarColor = Color.WHITE
+            dialogWindow.navigationBarColor = Color.WHITE
+            WindowCompat.setDecorFitsSystemWindows(dialogWindow, true)
+            WindowInsetsControllerCompat(dialogWindow, dialogWindow.decorView).apply {
                 isAppearanceLightStatusBars = true
                 isAppearanceLightNavigationBars = true
             }
