@@ -1,5 +1,6 @@
 package com.indoone.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,13 +9,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +34,9 @@ import androidx.compose.ui.unit.sp
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private data class ChatMessage(
     val text: String,
@@ -54,20 +59,36 @@ fun HomeScreen(
 ) {
     var input by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf(initialChatMessages) }
+    var isSending by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     fun sendMessage() {
         val text = input.trim()
-        if (text.isEmpty()) return
+        if (text.isEmpty() || isSending) return
+
         messages = messages + ChatMessage(text, fromUser = true)
         input = ""
-        messages = messages + ChatMessage(
-            "Your message is ready for the Indoone AI backend. AI responses will appear here once the backend connection is enabled.",
-            fromUser = false,
-        )
+        isSending = true
+
+        scope.launch {
+            val result = runCatching {
+                withContext(Dispatchers.IO) {
+                    ChatApi.sendMessage(text)
+                }
+            }
+            messages = messages + ChatMessage(
+                result.getOrElse { error ->
+                    "I couldn’t reach the Indoone AI backend. ${error.message ?: "Please try again."}"
+                },
+                fromUser = false,
+            )
+            isSending = false
+        }
     }
 
     fun startNewChat() {
         input = ""
+        isSending = false
         messages = initialChatMessages
     }
 
@@ -135,7 +156,7 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(18.dp),
                     color = Color(0xFFFAF9FC),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E0ED)),
+                    border = BorderStroke(1.dp, Color(0xFFE5E0ED)),
                 ) {
                     BasicTextField(
                         value = input,
@@ -143,6 +164,7 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 15.dp, vertical = 13.dp),
+                        enabled = !isSending,
                         singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(
                             color = Color(0xFF17151D),
@@ -161,10 +183,18 @@ fun HomeScreen(
 
                 TextButton(
                     onClick = ::sendMessage,
+                    enabled = !isSending && input.isNotBlank(),
                     modifier = Modifier.padding(start = 6.dp).size(54.dp),
                     contentPadding = PaddingValues(0.dp),
                 ) {
-                    Text("↑", color = Color(0xFF703BE2), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                    if (isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Text("↑", color = Color(0xFF703BE2), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
