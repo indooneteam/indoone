@@ -1,3 +1,0 @@
-# Favorites
-
-Menu feature subfeature.
