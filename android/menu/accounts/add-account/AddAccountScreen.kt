@@ -44,7 +44,7 @@ fun AddAccountScreen(
     onEnterSetupKey: () -> Unit,
     onImportOtpUri: (String) -> Unit,
     onMenuClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {},
+    onSearchClick: () -> Unit = onBack,
     onAccountsClick: () -> Unit = onBack,
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
