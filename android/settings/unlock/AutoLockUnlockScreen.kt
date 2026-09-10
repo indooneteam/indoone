@@ -1,6 +1,8 @@
 package com.indoone.settings.unlock
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,10 +67,21 @@ fun AutoLockUnlockScreen(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.size(20.dp))
-            Text(
-                "${"• ".repeat(pin.length)}${"○ ".repeat((4 - pin.length.coerceAtMost(4)).coerceAtLeast(0))}".trim(),
-                style = MaterialTheme.typography.titleLarge,
-            )
+            Row(
+                modifier = Modifier.padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                repeat(12) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(9.dp)
+                            .background(
+                                color = if (index < pin.length) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                shape = CircleShape,
+                            ),
+                    )
+                }
+            }
             if (error.isNotBlank()) {
                 Text(error, modifier = Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.error)
             }
