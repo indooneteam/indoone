@@ -8,14 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
@@ -77,12 +79,22 @@ internal fun PinPadScaffold(
     onAction: () -> Unit,
     onCancel: (() -> Unit)? = null,
 ) {
-    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 430.dp)
+            .heightIn(max = 680.dp)
+            .padding(14.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = Color.White,
+        shadowElevation = 14.dp,
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(
                 modifier = Modifier
@@ -155,7 +167,8 @@ internal fun PinPadScaffold(
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .height(46.dp)
                             .background(
                                 Brush.horizontalGradient(listOf(Purple, PurpleLight)),
                                 RoundedCornerShape(14.dp),
