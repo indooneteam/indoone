@@ -1,5 +1,6 @@
 package com.indoone.settings.unlock
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,13 +9,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.indoone.configureIndooneSystemBars
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.indoone.settings.applock.AppLockStore
 
 class UnlockAppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        configureIndooneSystemBars()
+
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
 
         val store = AppLockStore(applicationContext)
         if (!store.isEnabled()) {
