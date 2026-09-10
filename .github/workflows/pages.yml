@@ -1,10 +1,9 @@
-name: Deploy Indoone Pages
+name: Deploy Indoone Web
 
 on:
   push:
     branches:
-      - main
-      - develop
+      - web
   workflow_dispatch:
 
 permissions:
@@ -23,69 +22,25 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout main source
+      - name: Checkout web source
         uses: actions/checkout@v4
         with:
-          ref: main
-          path: main-source
+          ref: web
+          path: web-source
           fetch-depth: 1
-
-      - name: Checkout develop source
-        uses: actions/checkout@v4
-        with:
-          ref: develop
-          path: develop-source
-          fetch-depth: 1
-
-      - name: Validate branding
-        run: node main-source/scripts/validate-branding.js
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.6.0'
-
-      - name: Build main APK
-        run: GITHUB_REF_NAME=main gradle -p main-source/android assembleDebug --stacktrace
-
-      - name: Build develop APK
-        run: GITHUB_REF_NAME=develop gradle -p develop-source/android assembleDebug --stacktrace
 
       - name: Build Pages package
         shell: bash
         run: |
           set -euo pipefail
           rm -rf publish
-          mkdir -p publish/downloads publish/main/downloads publish/develop/downloads
-
-          rsync -a --exclude='.git' main-source/ publish/
-          rsync -a --exclude='.git' develop-source/ publish/develop/
-
-          MAIN_APK="$(find main-source/android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
-          DEVELOP_APK="$(find develop-source/android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
-
-          test -s "$MAIN_APK"
-          test -s "$DEVELOP_APK"
-
-          cp "$MAIN_APK" publish/downloads/indoone.apk
-          cp "$MAIN_APK" publish/main/downloads/indoone.apk
-          cp "$DEVELOP_APK" publish/develop/downloads/indoone.apk
+          mkdir -p publish
+          rsync -a --exclude='.git' web-source/ publish/
 
           test -f publish/index.html
           test -f publish/update.json
-          test -f publish/downloads/indoone.apk
-          test -f publish/main/downloads/indoone.apk
-          test -f publish/develop/index.html
-          test -f publish/develop/update.json
-          test -f publish/develop/downloads/indoone.apk
 
-          echo "Published main at / and /main/; published develop at /develop/."
+          echo "Published web branch at /."
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
