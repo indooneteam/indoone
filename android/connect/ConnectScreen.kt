@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
+import com.indoone.menu.AppTopBar
 
 @Composable
 fun ConnectScreen(
@@ -72,12 +72,8 @@ fun ConnectScreen(
         modifier = Modifier.fillMaxSize(),
         color = Color.White,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-        ) {
-            ConnectTopBar(onMenuClick = onMenuClick)
+        Column(modifier = Modifier.fillMaxSize()) {
+            AppTopBar(onMenuClick = onMenuClick)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -297,52 +293,5 @@ private fun IntegrationCard(
                 color = Color(0xFF6B34DF),
             )
         }
-    }
-}
-
-@Composable
-private fun ConnectTopBar(
-    onMenuClick: () -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(76.dp)
-                .padding(horizontal = 18.dp, vertical = 8.dp),
-        ) {
-            TextButton(
-                onClick = onMenuClick,
-                modifier = Modifier.align(Alignment.CenterStart),
-                contentPadding = PaddingValues(8.dp),
-            ) {
-                Text(
-                    text = "☰",
-                    color = Color(0xFF242129),
-                    fontSize = 21.sp,
-                )
-            }
-
-            Text(
-                text = "Indoone",
-                modifier = Modifier.align(Alignment.Center),
-                color = Color(0xFF5E2DD2),
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold,
-            )
-
-            TextButton(
-                onClick = {},
-                modifier = Modifier.align(Alignment.CenterEnd),
-                contentPadding = PaddingValues(8.dp),
-            ) {
-                Text(
-                    text = "⌕",
-                    color = Color(0xFF242129),
-                    fontSize = 24.sp,
-                )
-            }
-        }
-        HorizontalDivider(color = Color(0xFFF0EEF5))
     }
 }
