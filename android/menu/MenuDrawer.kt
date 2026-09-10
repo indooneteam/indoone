@@ -54,6 +54,8 @@ import com.indoone.authentication.AuthActivity
 import com.indoone.menu.about.MenuAboutScreen
 import com.indoone.menu.dangerzone.DangerZoneScreen
 import com.indoone.menu.logout.LogoutScreen
+import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
+import com.indoone.menu.security.SecurityScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
 import com.indoone.menu.trash.TrashScreen
 import com.indoone.settings.applock.AppLockStore
@@ -81,6 +83,8 @@ fun MenuDrawer(
     var showDangerZone by remember { mutableStateOf(false) }
     var showLogout by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
+    var showSecurity by remember { mutableStateOf(false) }
+    var showPrivacy by remember { mutableStateOf(false) }
 
     if (showAbout) {
         MenuAboutScreen(
@@ -118,6 +122,28 @@ fun MenuDrawer(
     if (showTrash) {
         TrashScreen(
             repository = repository,
+            onBack = onDismiss,
+            onAccountsClick = onAccounts,
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
+        )
+        return
+    }
+
+    if (showSecurity) {
+        SecurityScreen(
+            onBack = onDismiss,
+            onAccountsClick = onAccounts,
+            onLobbyClick = onDismiss,
+            onConnectClick = onDismiss,
+            onSettingsClick = onDismiss,
+        )
+        return
+    }
+
+    if (showPrivacy) {
+        PrivacyPolicyScreen(
             onBack = onDismiss,
             onAccountsClick = onAccounts,
             onLobbyClick = onDismiss,
@@ -180,9 +206,9 @@ fun MenuDrawer(
                     color = Color(0xFFEEEAF2),
                 )
 
-                DrawerItem(Icons.Outlined.Security, "Security", null, onSecurity)
+                DrawerItem(Icons.Outlined.Security, "Security", null) { showSecurity = true }
                 DrawerItem(Icons.Outlined.Description, "Terms of Use", null) { showTerms = true }
-                DrawerItem(Icons.Outlined.Visibility, "Privacy Policy", null, onPrivacy)
+                DrawerItem(Icons.Outlined.Visibility, "Privacy Policy", null) { showPrivacy = true }
                 DrawerItem(Icons.Outlined.Info, "About Indoone", null) { showAbout = true }
                 DrawerItem(Icons.Outlined.Lock, "Lock App", null) {
                     if (AppLockStore(context).isEnabled()) {
