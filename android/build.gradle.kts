@@ -34,6 +34,7 @@ android {
             "authentication",
             "accounts",
             "menu",
+            "home",
             "lobby",
             "connect",
             "settings"
