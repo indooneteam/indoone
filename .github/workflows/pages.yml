@@ -36,11 +36,8 @@ jobs:
           rm -rf publish
           mkdir -p publish
           rsync -a --exclude='.git' web-source/ publish/
-
           test -f publish/index.html
           test -f publish/update.json
-
-          echo "Published web branch at /."
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
