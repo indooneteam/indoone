@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +61,7 @@ fun HomeScreen(
     var input by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf(initialChatMessages) }
     var isSending by remember { mutableStateOf(false) }
+    var conversationId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     fun sendMessage() {
@@ -73,15 +75,18 @@ fun HomeScreen(
         scope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    ChatApi.sendMessage(text)
+                    ChatApi.sendMessage(text, conversationId)
                 }
             }
-            messages = messages + ChatMessage(
-                result.getOrElse { error ->
-                    "I couldn’t reach the Indoone AI backend. ${error.message ?: "Please try again."}"
-                },
-                fromUser = false,
-            )
+            result.onSuccess { response ->
+                conversationId = response.conversationId
+                messages = messages + ChatMessage(response.reply, fromUser = false)
+            }.onFailure { error ->
+                messages = messages + ChatMessage(
+                    "I couldn’t reach the Indoone AI backend. ${error.message ?: "Please try again."}",
+                    fromUser = false,
+                )
+            }
             isSending = false
         }
     }
@@ -89,6 +94,7 @@ fun HomeScreen(
     fun startNewChat() {
         input = ""
         isSending = false
+        conversationId = null
         messages = initialChatMessages
     }
 
