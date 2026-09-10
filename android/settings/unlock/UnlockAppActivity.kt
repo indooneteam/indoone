@@ -8,11 +8,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.indoone.AppSystemBars
+import com.indoone.configureIndooneSystemBars
 import com.indoone.settings.applock.AppLockStore
 
 class UnlockAppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        configureIndooneSystemBars()
 
         val store = AppLockStore(applicationContext)
         if (!store.isEnabled()) {
@@ -21,36 +24,38 @@ class UnlockAppActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
-                var pin by remember { mutableStateOf("") }
-                var error by remember { mutableStateOf("") }
+            AppSystemBars {
+                MaterialTheme {
+                    var pin by remember { mutableStateOf("") }
+                    var error by remember { mutableStateOf("") }
 
-                UnlockAppScreen(
-                    pin = pin,
-                    error = error,
-                    onDigit = { digit ->
-                        if (pin.length < 12) {
-                            pin += digit
+                    UnlockAppScreen(
+                        pin = pin,
+                        error = error,
+                        onDigit = { digit ->
+                            if (pin.length < 12) {
+                                pin += digit
+                                error = ""
+                            }
+                        },
+                        onBackspace = {
+                            pin = pin.dropLast(1)
                             error = ""
-                        }
-                    },
-                    onBackspace = {
-                        pin = pin.dropLast(1)
-                        error = ""
-                    },
-                    onClear = {
-                        pin = ""
-                        error = ""
-                    },
-                    onUnlock = {
-                        if (store.verifyPin(pin)) {
-                            finish()
-                        } else {
+                        },
+                        onClear = {
                             pin = ""
-                            error = "Incorrect App PIN"
-                        }
-                    },
-                )
+                            error = ""
+                        },
+                        onUnlock = {
+                            if (store.verifyPin(pin)) {
+                                finish()
+                            } else {
+                                pin = ""
+                                error = "Incorrect App PIN"
+                            }
+                        },
+                    )
+                }
             }
         }
     }
