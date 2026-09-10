@@ -16,6 +16,7 @@ class IndooneApplication : Application() {
         super.onCreate()
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                configureIndooneSystemBarsIfSupported(activity)
                 if (activity is ComponentActivity) {
                     controllers[activity] = AutoLockController(activity.applicationContext)
                     installStatusBarInset(activity)
@@ -23,6 +24,7 @@ class IndooneApplication : Application() {
             }
 
             override fun onActivityResumed(activity: Activity) {
+                configureIndooneSystemBarsIfSupported(activity)
                 controllers[activity]?.onResumed(activity as? ComponentActivity ?: return)
                 if (activity is ComponentActivity) installStatusBarInset(activity)
             }
@@ -39,6 +41,10 @@ class IndooneApplication : Application() {
             override fun onActivityStopped(activity: Activity) = Unit
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
+    }
+
+    private fun configureIndooneSystemBarsIfSupported(activity: Activity) {
+        activity.configureIndooneSystemBars()
     }
 
     private fun installStatusBarInset(activity: ComponentActivity) {
