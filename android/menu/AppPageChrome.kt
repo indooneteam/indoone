@@ -161,7 +161,7 @@ fun AppBottomNav(
             modifier = Modifier.fillMaxWidth().height(67.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppBottomNavItem(AccountsNavIcon, "Accounts", activeTab == AppTab.ACCOUNTS, onAccountsClick)
+            AppBottomNavItem(AccountsNavIcon, "Home", activeTab == AppTab.ACCOUNTS, onAccountsClick)
             AppBottomNavItem(LobbyNavIcon, "Lobby", activeTab == AppTab.LOBBY, onLobbyClick)
             AppBottomNavItem(ConnectNavIcon, "Connect", activeTab == AppTab.CONNECT, onConnectClick)
             AppBottomNavItem(SettingsNavIcon, "Settings", activeTab == AppTab.SETTINGS, onSettingsClick)
