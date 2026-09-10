@@ -12,7 +12,8 @@
         android:label="Indoone"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Indoone">
+        android:theme="@style/Theme.Indoone"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".settings.unlock.UnlockAppActivity"
             android:exported="false" />
