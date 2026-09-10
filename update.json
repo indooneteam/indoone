@@ -1,6 +1,0 @@
-{
-  "versionCode": 28,
-  "versionName": "2.1.16",
-  "downloadUrl": "https://indooneteam.github.io/indoone/main/downloads/indoone.apk",
-  "notes": "Indoone 2.1.16. Fix extra bottom navigation gap in Android 3-button system navigation mode."
-}
