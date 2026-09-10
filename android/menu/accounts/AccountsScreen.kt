@@ -42,9 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.Canvas
-import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppSearchIcon
-import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 
 @Composable
@@ -99,7 +97,7 @@ fun AccountsScreen(
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 item {
@@ -123,7 +121,7 @@ fun AccountsScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 78.dp + navigationInset)
+                .padding(end = 20.dp, bottom = 20.dp + navigationInset)
                 .size(57.dp)
                 .background(Color(0xFF703BE2), RoundedCornerShape(19.dp))
                 .clickable(onClick = onAddAccount),
@@ -131,15 +129,6 @@ fun AccountsScreen(
         ) {
             Text("+", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Medium)
         }
-
-        AppBottomNav(
-            activeTab = AppTab.ACCOUNTS,
-            onAccountsClick = {},
-            onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
-            onSettingsClick = onSettingsClick,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
     }
 }
 
