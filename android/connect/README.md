@@ -1,10 +1,14 @@
 # Connect
 
-Native Android Connect feature area.
+Business integrations area for Indoone.
 
-The Connect home screen currently mirrors the main reference for the unfinished feature:
-- Pair — Coming soon
-- Connect — Coming soon
-- Devices — Coming soon
+Sections:
+- Balance
+- Usage
+- WhatsApp
+- Instagram
+- Android
+- Web
+- iOS
 
-Child feature areas are prepared under `pair/`, `connect/`, and `devices/` for later implementation.
+Each integration gets its own setup and automation area as implementation is added.
