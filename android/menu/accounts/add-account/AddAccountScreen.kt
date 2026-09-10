@@ -44,7 +44,7 @@ fun AddAccountScreen(
     onEnterSetupKey: () -> Unit,
     onImportOtpUri: (String) -> Unit,
     onMenuClick: () -> Unit = {},
-    onSearchClick: () -> Unit = onBack,
+    onSearchClick: () -> Unit = {},
     onAccountsClick: () -> Unit = onBack,
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
@@ -55,7 +55,7 @@ fun AddAccountScreen(
             .fillMaxSize()
             .background(Color.White),
     ) {
-        AppTopBar(onMenuClick = onMenuClick, onSearchClick = onSearchClick)
+        AppTopBar(onMenuClick = onMenuClick, onSearchClick = onAccountsClick)
 
         Column(
             modifier = Modifier
