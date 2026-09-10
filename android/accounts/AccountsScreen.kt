@@ -57,6 +57,7 @@ fun AccountsScreen(
     onAccountClick: (AccountItem) -> Unit = {},
     onAddAccount: () -> Unit = {},
     onMenuClick: () -> Unit = {},
+    onBack: () -> Unit = onMenuClick,
     onSearchClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
@@ -75,6 +76,18 @@ fun AccountsScreen(
                     onSearchClick()
                 },
             )
+
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 0.dp),
+            ) {
+                Text(
+                    "← Back to Menu",
+                    color = Color(0xFF6B34DF),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
             if (searchVisible) {
                 SearchAccountsField(
