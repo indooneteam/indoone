@@ -171,7 +171,7 @@ fun MenuDrawer(
                 }
 
                 Spacer(Modifier.height(17.dp))
-                DrawerItem(Icons.Outlined.GridView, "All Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
+                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
                 DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onFavorites)
                 DrawerItem(Icons.Outlined.DeleteOutline, "Trash", null) { showTrash = true }
 
