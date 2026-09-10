@@ -166,7 +166,7 @@ fun HomeScreen(
 
             AppBottomNav(
                 activeTab = AppTab.HOME,
-                onAccountsClick = onMenuClick,
+                onAccountsClick = {},
                 onLobbyClick = onLobbyClick,
                 onConnectClick = onConnectClick,
                 onSettingsClick = onSettingsClick,
