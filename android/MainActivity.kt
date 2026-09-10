@@ -96,7 +96,9 @@ class MainActivity : ComponentActivity() {
                 val profileViewModel: ProfileViewModel = viewModel()
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
+                var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
+                var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
@@ -104,6 +106,16 @@ class MainActivity : ComponentActivity() {
                 fun navigate(target: AppRoute) {
                     menuOpen = false
                     route = target
+                }
+
+                fun openMenu() {
+                    menuOriginRoute = route
+                    menuOpen = true
+                }
+
+                fun backToMenu() {
+                    route = menuOriginRoute
+                    menuOpen = true
                 }
 
                 fun menuToast(message: String) {
@@ -144,7 +156,7 @@ class MainActivity : ComponentActivity() {
 
                 when (route) {
                     AppRoute.HOME -> HomeScreen(
-                        onMenuClick = { menuOpen = true },
+                        onMenuClick = ::openMenu,
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -168,7 +180,10 @@ class MainActivity : ComponentActivity() {
                             onAccountClick = { item ->
                                 coroutineScope.launch {
                                     selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
-                                    if (selectedAccount != null) route = AppRoute.ACCOUNT_DETAILS
+                                    if (selectedAccount != null) {
+                                        accountDetailReturnRoute = AppRoute.ACCOUNTS
+                                        route = AppRoute.ACCOUNT_DETAILS
+                                    }
                                 }
                             },
                             onAddAccount = {
@@ -179,7 +194,7 @@ class MainActivity : ComponentActivity() {
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                            onMenuClick = { menuOpen = true },
+                            onMenuClick = ::openMenu,
                         )
                     }
 
@@ -187,7 +202,7 @@ class MainActivity : ComponentActivity() {
                         val state by lobbyViewModel.state.collectAsState()
                         LobbyScreen(
                             state = state,
-                            onMenuClick = { menuOpen = true },
+                            onMenuClick = ::openMenu,
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
@@ -196,7 +211,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     AppRoute.CONNECT -> ConnectScreen(
-                        onMenuClick = { menuOpen = true },
+                        onMenuClick = ::openMenu,
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
@@ -204,7 +219,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     AppRoute.SETTINGS -> SettingsScreen(
-                        onMenuClick = { menuOpen = true },
+                        onMenuClick = ::openMenu,
                         onProfileClick = {
                             profileViewModel.loadProfile()
                             navigate(AppRoute.PROFILE)
@@ -270,9 +285,10 @@ class MainActivity : ComponentActivity() {
                     AppRoute.FAVORITES -> {
                         FavoritesRoute(
                             repository = repository,
-                            onBack = { navigate(AppRoute.ACCOUNTS) },
+                            onBack = ::backToMenu,
                             onAccountClick = { account ->
                                 selectedAccount = account
+                                accountDetailReturnRoute = AppRoute.FAVORITES
                                 route = AppRoute.ACCOUNT_DETAILS
                             },
                             onToggleFavorite = { account ->
@@ -290,7 +306,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     AppRoute.SECURITY -> SecurityScreen(
-                        onBack = { navigate(AppRoute.ACCOUNTS) },
+                        onBack = ::backToMenu,
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
@@ -298,7 +314,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     AppRoute.PRIVACY_POLICY -> PrivacyPolicyScreen(
-                        onBack = { navigate(AppRoute.ACCOUNTS) },
+                        onBack = ::backToMenu,
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
@@ -311,13 +327,13 @@ class MainActivity : ComponentActivity() {
                             accountsViewModel.state.value.accounts.firstOrNull { item -> item.id == account.id }
                         }
                         if (account == null || uiAccount == null) {
-                            route = AppRoute.ACCOUNTS
+                            route = accountDetailReturnRoute
                         } else {
                             AccountDetailsScreen(
                                 account = account,
                                 code = uiAccount.code,
                                 secondsRemaining = uiAccount.secondsRemaining,
-                                onBack = { route = AppRoute.ACCOUNTS },
+                                onBack = { route = accountDetailReturnRoute },
                                 onEdit = {
                                     editAccountViewModel = EditAccountViewModel(account)
                                     route = AppRoute.EDIT_ACCOUNT
@@ -336,7 +352,7 @@ class MainActivity : ComponentActivity() {
                                         removalService.remove(account.id).onSuccess {
                                             selectedAccount = null
                                             loadAccounts()
-                                            route = AppRoute.ACCOUNTS
+                                            route = accountDetailReturnRoute
                                         }
                                     }
                                 },
@@ -404,7 +420,7 @@ class MainActivity : ComponentActivity() {
                                 importOtpUriViewModel.onUriChanged(uri)
                                 route = AppRoute.IMPORT_OTP_URI
                             },
-                            onMenuClick = { menuOpen = true },
+                            onMenuClick = ::openMenu,
                             onSearchClick = {},
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
