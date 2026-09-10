@@ -1,4 +1,4 @@
-package com.indoone.authentication.login
+package com.indoone.authentication.signup
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
@@ -35,26 +35,27 @@ import com.indoone.authentication.AuthStatus
 import com.indoone.authentication.AuthTextField
 
 @Composable
-fun LoginScreen(
+fun SignUpScreen(
     busy: Boolean,
     busyAction: AuthBusyAction?,
     status: String,
     error: String,
     otpVisible: Boolean,
     otpEmail: String,
-    onSendOtp: (identifier: String, password: String) -> Unit,
+    onSendOtp: (email: String, mobile: String, password: String) -> Unit,
     onVerifyOtp: (otp: String) -> Unit,
     onResendOtp: () -> Unit,
-    onCreateAccount: () -> Unit,
+    onLogin: () -> Unit,
 ) {
-    var identifier by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var mobile by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var otp by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val otpFocusRequester = FocusRequester()
 
-    val mobileOnly = identifier.isNotBlank() && identifier.none(Char::isLetter) && identifier.none { it == '@' }
-    val actionEnabled = !busy && if (otpVisible) otpEmail.isNotBlank() else identifier.isNotBlank() && password.isNotBlank()
+    val hasMobile = mobile.filter(Char::isDigit).isNotEmpty()
+    val actionEnabled = !busy && if (otpVisible) otpEmail.isNotBlank() else email.isNotBlank() && mobile.isNotBlank() && password.length >= 6
 
     LaunchedEffect(otpVisible) {
         if (otpVisible) otpFocusRequester.requestFocus()
@@ -64,22 +65,32 @@ fun LoginScreen(
         AuthBrand()
         Spacer(Modifier.height(44.dp))
         AuthHeading(
-            eyebrow = "SECURE & PRIVATE",
-            title = "Welcome back",
-            description = "Sign in to protect and sync your authenticator vault.",
+            eyebrow = "GET STARTED",
+            title = "Create your account",
+            description = "Securely create an Indoone account for your authenticator vault.",
         )
         Spacer(Modifier.height(20.dp))
 
-        AuthFieldLabel("EMAIL OR MOBILE NUMBER")
+        AuthFieldLabel("EMAIL ID")
         AuthTextField(
-            value = identifier,
-            onValueChange = { identifier = it },
-            placeholder = "you@example.com or 98765 43210",
+            value = email,
+            onValueChange = { email = it },
+            placeholder = "you@example.com",
             enabled = !busy,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-            leadingContent = if (mobileOnly) {
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        )
+
+        Spacer(Modifier.height(14.dp))
+        AuthFieldLabel("MOBILE NUMBER")
+        AuthTextField(
+            value = mobile,
+            onValueChange = { mobile = it.filter { char -> char.isDigit() }.take(10) },
+            placeholder = "98765 43210",
+            enabled = !busy,
+            leadingContent = if (hasMobile) {
                 { Text("+91", fontSize = 13.sp) }
             } else null,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
         )
 
         Spacer(Modifier.height(14.dp))
@@ -87,7 +98,7 @@ fun LoginScreen(
         AuthTextField(
             value = password,
             onValueChange = { password = it },
-            placeholder = "Enter your password",
+            placeholder = "Create a strong password",
             enabled = !busy,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingContent = {
@@ -101,13 +112,13 @@ fun LoginScreen(
         Spacer(Modifier.height(20.dp))
         AuthPrimaryButton(
             text = when {
-                !otpVisible && busyAction == AuthBusyAction.SEND_OTP -> "Checking…"
+                !otpVisible && busyAction == AuthBusyAction.SEND_OTP -> "Sending OTP…"
                 otpVisible && busyAction == AuthBusyAction.RESEND_OTP -> "Sending…"
                 otpVisible -> "Resend OTP"
                 else -> "Send OTP"
             },
             enabled = actionEnabled,
-            onClick = { if (otpVisible) onResendOtp() else onSendOtp(identifier, password) },
+            onClick = { if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
         )
 
         if (otpVisible) {
@@ -131,7 +142,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(4.dp))
             AuthPrimaryButton(
-                text = if (busyAction == AuthBusyAction.VERIFY_OTP) "Verifying…" else "Verify & Login",
+                text = if (busyAction == AuthBusyAction.VERIFY_OTP) "Verifying…" else "Verify & Create Account",
                 enabled = !busy && otp.length == 6,
                 onClick = { onVerifyOtp(otp) },
             )
@@ -140,10 +151,10 @@ fun LoginScreen(
 
         AuthStatus(error, error = true)
         Spacer(Modifier.height(10.dp))
-        AuthSecondaryButton("Create Account", !busy, onCreateAccount)
+        AuthSecondaryButton("Already have an account? Login", !busy, onLogin)
         Spacer(Modifier.height(10.dp))
         Text(
-            "Protect your Indoone account with password and email OTP verification.",
+            "Your Indoone account is activated after successful email OTP verification.",
             color = androidx.compose.ui.graphics.Color(0xFF76717D),
             fontSize = 12.sp,
             lineHeight = 18.sp,
