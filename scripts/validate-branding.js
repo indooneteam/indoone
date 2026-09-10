@@ -15,15 +15,15 @@ const gradle = read('android/app/build.gradle');
 assert(!gradle.includes('exact-logo'), 'Android Gradle still contains stale exact-logo references.');
 assert(!gradle.includes('exact-logo-v2'), 'Android Gradle still contains stale exact-logo-v2 references.');
 
-read('android/app/src/main/AndroidManifest.xml');
+read('android/AndroidManifest.xml');
 const branding = read('app/shared/branding.js');
-const launcher = read('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
-const splashLogo = read('android/app/src/main/res/drawable/indoone_splash_logo.xml');
-const splashGlow = read('android/app/src/main/res/drawable/indoone_splash_glow.xml');
-const splashScreen = read('android/app/src/main/res/drawable/splash_screen.xml');
-const splashAndroid12Icon = read('android/app/src/main/res/drawable/indoone_android12_splash_icon.xml');
-const splashColors = read('android/app/src/main/res/values/colors.xml');
-const splashAndroid12Style = read('android/app/src/main/res/values-v31/styles.xml');
+const launcher = read('android/src/main/res/drawable/ic_launcher_foreground.xml');
+const splashLogo = read('android/src/main/res/drawable/indoone_splash_logo.xml');
+const splashGlow = read('android/src/main/res/drawable/indoone_splash_glow.xml');
+const splashScreen = read('android/src/main/res/drawable/splash_screen.xml');
+const splashAndroid12Icon = read('android/src/main/res/drawable/indoone_android12_splash_icon.xml');
+const splashColors = read('android/src/main/res/values/colors.xml');
+const splashAndroid12Style = read('android/src/main/res/values-v31/styles.xml');
 
 for (const [name, content] of Object.entries({ branding, launcher, splashLogo })) {
   assert(content.includes('#C15CFF'), `${name} is missing the Spark 06 pink-purple palette.`);
