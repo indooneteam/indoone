@@ -2,11 +2,15 @@ package com.indoone
 
 import android.app.Activity
 import android.app.Application
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.indoone.settings.autolock.AutoLockController
 
 class IndooneApplication : Application() {
@@ -16,7 +20,7 @@ class IndooneApplication : Application() {
         super.onCreate()
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                configureIndooneSystemBarsIfSupported(activity)
+                configureSystemBars(activity)
                 if (activity is ComponentActivity) {
                     controllers[activity] = AutoLockController(activity.applicationContext)
                     installStatusBarInset(activity)
@@ -24,7 +28,7 @@ class IndooneApplication : Application() {
             }
 
             override fun onActivityResumed(activity: Activity) {
-                configureIndooneSystemBarsIfSupported(activity)
+                configureSystemBars(activity)
                 controllers[activity]?.onResumed(activity as? ComponentActivity ?: return)
                 if (activity is ComponentActivity) installStatusBarInset(activity)
             }
@@ -43,8 +47,18 @@ class IndooneApplication : Application() {
         })
     }
 
-    private fun configureIndooneSystemBarsIfSupported(activity: Activity) {
-        activity.configureIndooneSystemBars()
+    private fun configureSystemBars(activity: Activity) {
+        val window = activity.window
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
     }
 
     private fun installStatusBarInset(activity: ComponentActivity) {
