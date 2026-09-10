@@ -40,6 +40,7 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordina
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
+import com.indoone.home.HomeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
@@ -55,6 +56,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
+    HOME,
     ACCOUNTS,
     LOBBY,
     CONNECT,
@@ -92,7 +94,7 @@ class MainActivity : ComponentActivity() {
                 val searchViewModel: SearchViewModel = viewModel()
                 val lobbyViewModel: LobbyViewModel = viewModel()
                 val profileViewModel: ProfileViewModel = viewModel()
-                var route by remember { mutableStateOf(AppRoute.ACCOUNTS) }
+                var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
@@ -141,6 +143,13 @@ class MainActivity : ComponentActivity() {
                 }
 
                 when (route) {
+                    AppRoute.HOME -> HomeScreen(
+                        onMenuClick = { menuOpen = true },
+                        onLobbyClick = { navigate(AppRoute.LOBBY) },
+                        onConnectClick = { navigate(AppRoute.CONNECT) },
+                        onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                    )
+
                     AppRoute.ACCOUNTS -> {
                         val state by accountsViewModel.state.collectAsState()
                         AccountsScreen(
@@ -179,7 +188,7 @@ class MainActivity : ComponentActivity() {
                         LobbyScreen(
                             state = state,
                             onMenuClick = { menuOpen = true },
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -188,7 +197,7 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.CONNECT -> ConnectScreen(
                         onMenuClick = { menuOpen = true },
-                        onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                        onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -200,7 +209,7 @@ class MainActivity : ComponentActivity() {
                             profileViewModel.loadProfile()
                             navigate(AppRoute.PROFILE)
                         },
-                        onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                        onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -219,7 +228,7 @@ class MainActivity : ComponentActivity() {
                                 profileViewModel.clearFeedback()
                                 route = AppRoute.CHANGE_EMAIL
                             },
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -235,7 +244,7 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.PROFILE
                             },
                             onSave = profileViewModel::updateMobile,
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -251,7 +260,7 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.PROFILE
                             },
                             onSave = profileViewModel::updateEmail,
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -273,7 +282,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             },
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -282,7 +291,7 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.SECURITY -> SecurityScreen(
                         onBack = { navigate(AppRoute.ACCOUNTS) },
-                        onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                        onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -290,7 +299,7 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.PRIVACY_POLICY -> PrivacyPolicyScreen(
                         onBack = { navigate(AppRoute.ACCOUNTS) },
-                        onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                        onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
@@ -397,7 +406,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onMenuClick = { menuOpen = true },
                             onSearchClick = {},
-                            onAccountsClick = { navigate(AppRoute.ACCOUNTS) },
+                            onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
