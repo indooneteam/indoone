@@ -1,11 +1,9 @@
 package com.indoone.lobby
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,40 +28,38 @@ fun LobbyScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                AppTopBar(onMenuClick = onMenuClick)
-                Column(
-                    modifier = Modifier.weight(1f).padding(horizontal = 22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = "INDOONE LOBBY",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = state.title,
-                        modifier = Modifier.padding(top = 6.dp),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    Text(
-                        text = state.message,
-                        modifier = Modifier.padding(top = 10.dp, start = 12.dp, end = 12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                AppBottomNav(
-                    activeTab = AppTab.LOBBY,
-                    onAccountsClick = onAccountsClick,
-                    onLobbyClick = onLobbyClick,
-                    onConnectClick = onConnectClick,
-                    onSettingsClick = onSettingsClick,
+        Column(modifier = Modifier.fillMaxSize()) {
+            AppTopBar(onMenuClick = onMenuClick)
+            Column(
+                modifier = Modifier.weight(1f).padding(horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "INDOONE LOBBY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = state.title,
+                    modifier = Modifier.padding(top = 6.dp),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = state.message,
+                    modifier = Modifier.padding(top = 10.dp, start = 12.dp, end = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            AppBottomNav(
+                activeTab = AppTab.LOBBY,
+                onAccountsClick = onAccountsClick,
+                onLobbyClick = onLobbyClick,
+                onConnectClick = onConnectClick,
+                onSettingsClick = onSettingsClick,
+            )
         }
     }
 }
