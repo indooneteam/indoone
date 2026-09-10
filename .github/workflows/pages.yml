@@ -49,7 +49,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '9.6.0'
 
       - name: Build main APK
         run: GITHUB_REF_NAME=main gradle -p main-source/android assembleDebug --stacktrace
@@ -67,8 +67,8 @@ jobs:
           rsync -a --exclude='.git' main-source/ publish/
           rsync -a --exclude='.git' develop-source/ publish/develop/
 
-          MAIN_APK="main-source/android/app/build/outputs/apk/debug/app-debug.apk"
-          DEVELOP_APK="develop-source/android/app/build/outputs/apk/debug/app-debug.apk"
+          MAIN_APK="$(find main-source/android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          DEVELOP_APK="$(find develop-source/android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
 
           test -s "$MAIN_APK"
           test -s "$DEVELOP_APK"
