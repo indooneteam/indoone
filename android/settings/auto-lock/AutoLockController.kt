@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
+import com.indoone.configureIndooneSystemBars
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
@@ -40,6 +41,7 @@ class AutoLockController(private val context: Context) {
 
     fun onResumed(activity: ComponentActivity) {
         this.activity = activity
+        activity.configureIndooneSystemBars()
         lastActivity = SystemClock.elapsedRealtime().coerceAtMost(lastActivity)
         if (!checking) {
             checking = true
@@ -87,6 +89,10 @@ class AutoLockController(private val context: Context) {
         lockDialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         lockDialog.setCancelable(false)
         lockDialog.setCanceledOnTouchOutside(false)
+        lockDialog.window?.let { dialogWindow ->
+            dialogWindow.statusBarColor = android.graphics.Color.WHITE
+            dialogWindow.navigationBarColor = android.graphics.Color.WHITE
+        }
 
         val root = FrameLayout(currentActivity)
         val compose = ComposeView(currentActivity).apply {
@@ -123,7 +129,15 @@ class AutoLockController(private val context: Context) {
         lockDialog.setOnDismissListener { dialog = null }
         dialog = lockDialog
         lockDialog.show()
-        lockDialog.window?.setLayout(-1, -1)
+        lockDialog.window?.let { dialogWindow ->
+            dialogWindow.statusBarColor = android.graphics.Color.WHITE
+            dialogWindow.navigationBarColor = android.graphics.Color.WHITE
+            androidx.core.view.WindowInsetsControllerCompat(dialogWindow, dialogWindow.decorView).apply {
+                isAppearanceLightStatusBars = true
+                isAppearanceLightNavigationBars = true
+            }
+            dialogWindow.setLayout(-1, -1)
+        }
     }
 
     private fun dismissLock() {
