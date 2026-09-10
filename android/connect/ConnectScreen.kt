@@ -1,7 +1,6 @@
 package com.indoone.connect
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,77 +28,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
-
-private fun headerIconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
-    ImageVector.Builder(
-        name = name,
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f,
-    ).apply {
-        path(
-            fill = null,
-            stroke = SolidColor(Color.Black),
-            strokeLineWidth = 1.8f,
-            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-            pathBuilder = content,
-        )
-    }.build()
-
-private val ConnectMenuIcon = headerIconBuilder("ConnectMenu") {
-    moveTo(4f, 7f); lineTo(20f, 7f); moveTo(4f, 12f); lineTo(20f, 12f); moveTo(4f, 17f); lineTo(20f, 17f)
-}
-
-private val ConnectSearchIcon = headerIconBuilder("ConnectSearch") {
-    moveTo(11f, 17.5f); curveTo(7.41f, 17.5f, 4.5f, 14.59f, 4.5f, 11f); curveTo(4.5f, 7.41f, 7.41f, 4.5f, 11f, 4.5f); curveTo(14.59f, 4.5f, 17.5f, 7.41f, 17.5f, 11f); curveTo(17.5f, 14.59f, 14.59f, 17.5f, 11f, 17.5f)
-    moveTo(16f, 16f); lineTo(20f, 20f)
-}
 
 @Composable
 fun ConnectScreen(
     state: ConnectState = ConnectState(),
     onMenuClick: () -> Unit = {},
-    onPair: () -> Unit = {},
-    onConnect: () -> Unit = {},
-    onDevices: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
-    var action by remember { mutableStateOf<String?>(null) }
+    var selectedIntegration by remember { mutableStateOf<String?>(null) }
 
-    action?.let { selectedAction ->
+    selectedIntegration?.let { integration ->
         AlertDialog(
-            onDismissRequest = { action = null },
-            title = { Text(selectedAction) },
+            onDismissRequest = { selectedIntegration = null },
+            title = { Text(integration) },
             text = {
                 Text(
-                    when (selectedAction) {
-                        "Pair" -> "Pair another Indoone device."
-                        "Connect" -> "Choose a nearby Indoone device to connect."
-                        else -> "Manage connected Indoone devices."
-                    },
+                    "Connect this service to Indoone AI to receive requests, fetch permitted data and send replies back to the same channel.",
                 )
             },
             confirmButton = {
-                TextButton(onClick = { action = null }) { Text("OK") }
+                TextButton(onClick = { selectedIntegration = null }) {
+                    Text("SETUP")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedIntegration = null }) {
+                    Text("CANCEL")
+                }
             },
         )
     }
@@ -121,7 +85,7 @@ fun ConnectScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
-                    Column(modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)) {
+                    Column(modifier = Modifier.padding(top = 6.dp, bottom = 10.dp)) {
                         Text(
                             text = state.eyebrow,
                             color = Color(0xFF2877E8),
@@ -150,32 +114,83 @@ fun ConnectScreen(
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(11.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        ConnectActionCard(
-                            title = "Pair",
-                            description = "Pair another Indoone device",
-                            icon = "⌁",
+                        SummaryCard(
+                            title = "Balance",
+                            value = state.balance,
                             modifier = Modifier.weight(1f),
-                            onClick = { onPair(); action = "Pair" },
                         )
-                        ConnectActionCard(
-                            title = "Connect",
-                            description = "Choose a nearby device",
-                            icon = "↔",
+                        SummaryCard(
+                            title = "Usage",
+                            value = "${state.usage} / ${state.usageLimit}",
                             modifier = Modifier.weight(1f),
-                            onClick = { onConnect(); action = "Connect" },
                         )
                     }
                 }
 
                 item {
-                    ConnectActionCard(
-                        title = "Devices",
-                        description = "Manage connected devices",
-                        icon = "▣",
+                    Text(
+                        text = "BUSINESS CONNECTIONS",
+                        modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
+                        color = Color(0xFF6F6876),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                    )
+                }
+
+                item {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { onDevices(); action = "Devices" },
+                        horizontalArrangement = Arrangement.spacedBy(11.dp),
+                    ) {
+                        IntegrationCard(
+                            title = "WhatsApp",
+                            description = "Customer messages & automated replies",
+                            icon = "WA",
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedIntegration = "WhatsApp" },
+                        )
+                        IntegrationCard(
+                            title = "Instagram",
+                            description = "DM automation & support",
+                            icon = "IG",
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedIntegration = "Instagram" },
+                        )
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(11.dp),
+                    ) {
+                        IntegrationCard(
+                            title = "App",
+                            description = "Connect your app backend",
+                            icon = "AP",
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedIntegration = "App" },
+                        )
+                        IntegrationCard(
+                            title = "Website",
+                            description = "AI support for your website",
+                            icon = "WEB",
+                            modifier = Modifier.weight(1f),
+                            onClick = { selectedIntegration = "Website" },
+                        )
+                    }
+                }
+
+                item {
+                    IntegrationCard(
+                        title = "Telegram",
+                        description = "Connect Telegram support and automation",
+                        icon = "TG",
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { selectedIntegration = "Telegram" },
                     )
                 }
             }
@@ -186,6 +201,100 @@ fun ConnectScreen(
                 onLobbyClick = onLobbyClick,
                 onConnectClick = onConnectClick,
                 onSettingsClick = onSettingsClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryCard(
+    title: String,
+    value: String,
+    modifier: Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFFBFAFD),
+        border = BorderStroke(1.dp, Color(0xFFE8E5EE)),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
+            Text(
+                text = title,
+                color = Color(0xFF77717E),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = value,
+                modifier = Modifier.padding(top = 4.dp),
+                color = Color(0xFF2C2830),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun IntegrationCard(
+    title: String,
+    description: String,
+    icon: String,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, Color(0xFFE8E5EE)),
+        shadowElevation = 4.dp,
+        onClick = onClick,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 13.dp, vertical = 14.dp)) {
+            Box(
+                modifier = Modifier.size(34.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFFF2EFF9),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = icon,
+                            color = Color(0xFF5E2DD2),
+                            fontSize = if (icon.length > 2) 8.sp else 10.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2C2830),
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = description,
+                fontSize = 10.sp,
+                lineHeight = 14.sp,
+                color = Color(0xFF89838F),
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "CONNECT",
+                fontSize = 9.sp,
+                lineHeight = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.35.sp,
+                color = Color(0xFF6B34DF),
             )
         }
     }
@@ -207,130 +316,33 @@ private fun ConnectTopBar(
                 modifier = Modifier.align(Alignment.CenterStart),
                 contentPadding = PaddingValues(8.dp),
             ) {
-                Icon(
-                    ConnectMenuIcon,
-                    contentDescription = "Open menu",
-                    modifier = Modifier.size(21.dp),
-                    tint = Color(0xFF242129),
+                Text(
+                    text = "☰",
+                    color = Color(0xFF242129),
+                    fontSize = 21.sp,
                 )
             }
 
-            Row(
+            Text(
+                text = "Indoone",
                 modifier = Modifier.align(Alignment.Center),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-            ) {
-                ConnectIndooneLogo(modifier = Modifier.size(34.dp))
-                Text(
-                    "Indoone",
-                    color = Color(0xFF5E2DD2),
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 18.sp,
-                )
-            }
+                color = Color(0xFF5E2DD2),
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+            )
 
             TextButton(
                 onClick = {},
                 modifier = Modifier.align(Alignment.CenterEnd),
                 contentPadding = PaddingValues(8.dp),
             ) {
-                Icon(
-                    ConnectSearchIcon,
-                    contentDescription = "Search accounts",
-                    modifier = Modifier.size(21.dp),
-                    tint = Color(0xFF242129),
+                Text(
+                    text = "⌕",
+                    color = Color(0xFF242129),
+                    fontSize = 24.sp,
                 )
             }
         }
         HorizontalDivider(color = Color(0xFFF0EEF5))
-    }
-}
-
-@Composable
-private fun ConnectIndooneLogo(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val scaleFactor = size.minDimension / 48f
-        scale(scaleFactor) {
-            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
-                drawRoundRect(
-                    brush = Brush.linearGradient(
-                        colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)),
-                        start = androidx.compose.ui.geometry.Offset(11f, 11f),
-                        end = androidx.compose.ui.geometry.Offset(37f, 37f),
-                    ),
-                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f),
-                    size = androidx.compose.ui.geometry.Size(26f, 26f),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
-                )
-            }
-            val outer = Path().apply {
-                moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f)
-                lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close()
-            }
-            drawPath(outer, color = Color(0xFF0A0A18))
-            val inner = Path().apply {
-                moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f)
-                lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close()
-            }
-            drawPath(inner, color = Color(0xFF60A5FA))
-        }
-    }
-}
-
-@Composable
-private fun ConnectActionCard(
-    title: String,
-    description: String,
-    icon: String,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE8E5EE)),
-        shadowElevation = 5.dp,
-        onClick = onClick,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 13.dp, vertical = 16.dp),
-        ) {
-            Box(
-                modifier = Modifier.size(23.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = icon,
-                    fontSize = 20.sp,
-                    color = Color(0xFF413C48),
-                )
-            }
-            Spacer(Modifier.height(11.dp))
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2C2830),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = description,
-                fontSize = 10.sp,
-                lineHeight = 14.sp,
-                color = Color(0xFF89838F),
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "OPEN",
-                fontSize = 9.sp,
-                lineHeight = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.35.sp,
-                color = Color(0xFF7C7485),
-            )
-        }
     }
 }
