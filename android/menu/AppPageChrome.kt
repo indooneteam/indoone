@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -161,7 +160,7 @@ fun AppBottomNav(
             modifier = Modifier.fillMaxWidth().height(67.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppBottomNavItem(AccountsNavIcon, "Home", activeTab == AppTab.HOME, onAccountsClick)
+            AppBottomNavItem(AccountsNavIcon, "Home", activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS, onAccountsClick)
             AppBottomNavItem(LobbyNavIcon, "Lobby", activeTab == AppTab.LOBBY, onLobbyClick)
             AppBottomNavItem(ConnectNavIcon, "Connect", activeTab == AppTab.CONNECT, onConnectClick)
             AppBottomNavItem(SettingsNavIcon, "Settings", activeTab == AppTab.SETTINGS, onSettingsClick)
@@ -169,7 +168,7 @@ fun AppBottomNav(
     }
 }
 
-enum class AppTab { HOME, LOBBY, CONNECT, SETTINGS }
+enum class AppTab { HOME, ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
 private fun RowScope.AppBottomNavItem(
