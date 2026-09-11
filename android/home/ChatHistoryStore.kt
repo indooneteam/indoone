@@ -9,6 +9,7 @@ object ChatHistoryStore {
     private const val PREFS_NAME = "indoone_ai_chat_history"
     private const val KEY_CHATS = "chats"
     private const val MAX_CHATS = 50
+    private const val LOCAL_USER_KEY = "local"
 
     data class StoredMessage(
         val text: String,
@@ -28,8 +29,8 @@ object ChatHistoryStore {
             Context.MODE_PRIVATE,
         )
 
-    fun load(context: Context, userKey: String): List<StoredChat> {
-        val raw = prefs(context, userKey).getString(KEY_CHATS, null) ?: return emptyList()
+    private fun parseChats(raw: String?): List<StoredChat> {
+        if (raw.isNullOrBlank()) return emptyList()
         return runCatching {
             val array = JSONArray(raw)
             buildList(array.length()) {
@@ -63,6 +64,15 @@ object ChatHistoryStore {
                 }
             }.sortedByDescending { it.updatedAt }
         }.getOrDefault(emptyList())
+    }
+
+    fun load(context: Context, userKey: String): List<StoredChat> {
+        val primary = parseChats(prefs(context, userKey).getString(KEY_CHATS, null))
+        if (primary.isNotEmpty() || userKey == LOCAL_USER_KEY) return primary
+
+        // Auth can be restored after the first composition. Older chats may have
+        // been written under the local key before Firebase returned a user UID.
+        return parseChats(prefs(context, LOCAL_USER_KEY).getString(KEY_CHATS, null))
     }
 
     fun save(context: Context, userKey: String, id: String, messages: List<StoredMessage>) {
