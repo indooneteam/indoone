@@ -55,7 +55,7 @@ private data class ChatMessage(
 
 private val initialChatMessages = listOf(
     ChatMessage(
-        "Namaskara 👋 I’m Indoone AI. Ask me anything.",
+        "How can I help you?",
         fromUser = false,
     ),
 )
