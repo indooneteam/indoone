@@ -17,9 +17,17 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+
+        val channel = if (System.getenv("GITHUB_REF_NAME") == "develop") "develop" else "main"
+        val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: "http://10.0.2.2:8000"
+        buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
+        buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
