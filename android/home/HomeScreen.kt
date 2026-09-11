@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -67,12 +68,15 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
 ) {
     val context = LocalContext.current
+    val userKey = remember {
+        FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "local"
+    }
     var input by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf(initialChatMessages) }
     var isSending by remember { mutableStateOf(false) }
     var conversationId by rememberSaveable { mutableStateOf<String?>(null) }
     var showHistory by rememberSaveable { mutableStateOf(false) }
-    var history by remember { mutableStateOf(ChatHistoryStore.load(context)) }
+    var history by remember { mutableStateOf(ChatHistoryStore.load(context, userKey)) }
     var openMenuId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -83,8 +87,8 @@ fun HomeScreen(
                 fromUser = it.fromUser,
             )
         }
-        ChatHistoryStore.save(context, id, storedMessages)
-        history = ChatHistoryStore.load(context)
+        ChatHistoryStore.save(context, userKey, id, storedMessages)
+        history = ChatHistoryStore.load(context, userKey)
     }
 
     fun sendMessage() {
@@ -132,8 +136,8 @@ fun HomeScreen(
     }
 
     fun deleteChat(chatId: String) {
-        ChatHistoryStore.delete(context, chatId)
-        history = ChatHistoryStore.load(context)
+        ChatHistoryStore.delete(context, userKey, chatId)
+        history = ChatHistoryStore.load(context, userKey)
         openMenuId = null
         if (conversationId == chatId) {
             startNewChat()
@@ -141,7 +145,7 @@ fun HomeScreen(
     }
 
     fun onHistoryClick() {
-        history = ChatHistoryStore.load(context)
+        history = ChatHistoryStore.load(context, userKey)
         openMenuId = null
         showHistory = true
     }
