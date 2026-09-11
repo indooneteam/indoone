@@ -30,7 +30,9 @@ android {
         targetSdk 35
 
         def channel = System.getenv('GITHUB_REF_NAME') == 'develop' ? 'develop' : 'main'
+        def backendUrl = System.getenv('INDOONE_BACKEND_URL') ?: 'http://10.0.2.2:8000'
         buildConfigField 'String', 'INDOONE_CHANNEL', "\"${channel}\""
+        buildConfigField 'String', 'INDOONE_BACKEND_URL', "\"${backendUrl}\""
     }
 
     signingConfigs {
