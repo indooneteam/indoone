@@ -100,6 +100,10 @@ fun HomeScreen(
         messages = initialChatMessages
     }
 
+    fun onPlusClick() {
+        // Attachment/actions will be added here during the next Home AI development pass.
+    }
+
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(
@@ -160,6 +164,23 @@ fun HomeScreen(
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF5F2FB))
+                        .clickable(onClick = ::onPlusClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "+",
+                        color = Color(0xFF703BE2),
+                        fontSize = 25.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(18.dp),
