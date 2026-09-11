@@ -2,6 +2,7 @@ package com.indoone.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -187,19 +189,29 @@ fun HomeScreen(
                     )
                 }
 
-                TextButton(
-                    onClick = ::sendMessage,
-                    enabled = !isSending && input.isNotBlank(),
-                    modifier = Modifier.padding(start = 6.dp).size(54.dp),
-                    contentPadding = PaddingValues(0.dp),
+                val canSend = !isSending && input.isNotBlank()
+                Box(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE9E5F0))
+                        .clickable(enabled = canSend, onClick = ::sendMessage),
+                    contentAlignment = Alignment.Center,
                 ) {
                     if (isSending) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.2.dp,
                         )
                     } else {
-                        Text("↑", color = Color(0xFF703BE2), fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "➤",
+                            color = if (canSend) Color.White else Color(0xFF9992A3),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
