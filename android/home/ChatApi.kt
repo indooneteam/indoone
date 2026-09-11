@@ -13,7 +13,8 @@ data class ChatResponse(
 )
 
 object ChatApi {
-    private const val REQUEST_TIMEOUT_MS = 15_000
+    private const val CONNECT_TIMEOUT_MS = 10_000
+    private const val READ_TIMEOUT_MS = 60_000
 
     fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
         val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
@@ -23,8 +24,8 @@ object ChatApi {
 
         val connection = (URL("$backendUrl/api/chat").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = REQUEST_TIMEOUT_MS
-            readTimeout = REQUEST_TIMEOUT_MS
+            connectTimeout = CONNECT_TIMEOUT_MS
+            readTimeout = READ_TIMEOUT_MS
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Accept", "application/json")
