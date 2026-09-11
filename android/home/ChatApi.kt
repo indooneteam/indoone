@@ -6,6 +6,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+
 
 data class ChatResponse(
     val conversationId: String,
@@ -14,7 +17,7 @@ data class ChatResponse(
 
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
-    private const val READ_TIMEOUT_MS = 60_000
+    private const val READ_TIMEOUT_MS = 120_000
 
     fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
         val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
@@ -27,7 +30,10 @@ object ChatApi {
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             doOutput = true
-            setRequestProperty("Content-Type", "application/json")
+            doInput = true
+            useCaches = false
+            instanceFollowRedirects = true
+            setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("Accept", "application/json")
         }
 
@@ -61,7 +67,8 @@ object ChatApi {
                 )
             }
 
-            val json = JSONObject(body)
+            val json = runCatching { JSONObject(body) }
+                .getOrElse { throw ChatApiException("Indoone backend returned invalid JSON") }
             val reply = json.optString("reply")
             val returnedConversationId = json.optString("conversation_id")
             if (returnedConversationId.isBlank()) {
@@ -74,10 +81,14 @@ object ChatApi {
                 conversationId = returnedConversationId,
                 reply = reply,
             )
+        } catch (error: SocketTimeoutException) {
+            throw ChatApiException("Indoone AI is taking too long to respond. Please try again.", error)
+        } catch (error: UnknownHostException) {
+            throw ChatApiException("Indoone AI backend could not be reached. Check your internet connection.", error)
         } finally {
             connection.disconnect()
         }
     }
 }
 
-class ChatApiException(message: String) : Exception(message)
+class ChatApiException(message: String, cause: Throwable? = null) : Exception(message, cause)
