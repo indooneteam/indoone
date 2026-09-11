@@ -1,5 +1,6 @@
 package com.indoone.home
 
+import com.indoone.authenticator.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -12,11 +13,15 @@ data class ChatResponse(
 )
 
 object ChatApi {
-    private const val BACKEND_URL = "http://10.0.2.2:8000"
     private const val REQUEST_TIMEOUT_MS = 15_000
 
     fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
-        val connection = (URL("$BACKEND_URL/api/chat").openConnection() as HttpURLConnection).apply {
+        val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
+        if (backendUrl.isBlank()) {
+            throw ChatApiException("Indoone backend URL is not configured")
+        }
+
+        val connection = (URL("$backendUrl/api/chat").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = REQUEST_TIMEOUT_MS
             readTimeout = REQUEST_TIMEOUT_MS
