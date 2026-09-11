@@ -22,11 +22,14 @@ object ChatHistoryStore {
         val updatedAt: Long,
     )
 
-    private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private fun prefs(context: Context, userKey: String) =
+        context.applicationContext.getSharedPreferences(
+            "$PREFS_NAME.$userKey",
+            Context.MODE_PRIVATE,
+        )
 
-    fun load(context: Context): List<StoredChat> {
-        val raw = prefs(context).getString(KEY_CHATS, null) ?: return emptyList()
+    fun load(context: Context, userKey: String): List<StoredChat> {
+        val raw = prefs(context, userKey).getString(KEY_CHATS, null) ?: return emptyList()
         return runCatching {
             val array = JSONArray(raw)
             buildList(array.length()) {
@@ -62,8 +65,8 @@ object ChatHistoryStore {
         }.getOrDefault(emptyList())
     }
 
-    fun save(context: Context, id: String, messages: List<StoredMessage>) {
-        if (id.isBlank() || messages.isEmpty()) return
+    fun save(context: Context, userKey: String, id: String, messages: List<StoredMessage>) {
+        if (userKey.isBlank() || id.isBlank() || messages.isEmpty()) return
 
         val title = messages
             .firstOrNull { it.fromUser }
@@ -80,18 +83,18 @@ object ChatHistoryStore {
             updatedAt = System.currentTimeMillis(),
         )
 
-        val next = (load(context).filterNot { it.id == id } + updated)
+        val next = (load(context, userKey).filterNot { it.id == id } + updated)
             .sortedByDescending { it.updatedAt }
             .take(MAX_CHATS)
-        write(context, next)
+        write(context, userKey, next)
     }
 
-    fun delete(context: Context, id: String) {
-        if (id.isBlank()) return
-        write(context, load(context).filterNot { it.id == id })
+    fun delete(context: Context, userKey: String, id: String) {
+        if (userKey.isBlank() || id.isBlank()) return
+        write(context, userKey, load(context, userKey).filterNot { it.id == id })
     }
 
-    private fun write(context: Context, chats: List<StoredChat>) {
+    private fun write(context: Context, userKey: String, chats: List<StoredChat>) {
         val array = JSONArray()
         chats.forEach { chat ->
             val messages = JSONArray()
@@ -110,6 +113,6 @@ object ChatHistoryStore {
                     .put("messages", messages)
             )
         }
-        prefs(context).edit().putString(KEY_CHATS, array.toString()).apply()
+        prefs(context, userKey).edit().putString(KEY_CHATS, array.toString()).apply()
     }
 }
