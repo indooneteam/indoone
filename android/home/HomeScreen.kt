@@ -71,12 +71,25 @@ fun HomeScreen(
     val userKey = remember {
         FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "local"
     }
+    val loadedHistory = remember(userKey) {
+        ChatHistoryStore.load(context, userKey)
+    }
+    val latestSavedChat = loadedHistory.firstOrNull()
+
     var input by remember { mutableStateOf("") }
-    var messages by remember { mutableStateOf(initialChatMessages) }
+    var history by remember(userKey) { mutableStateOf(loadedHistory) }
+    var messages by remember(userKey) {
+        mutableStateOf(
+            latestSavedChat?.messages?.map {
+                ChatMessage(it.text, it.fromUser)
+            } ?: initialChatMessages
+        )
+    }
     var isSending by remember { mutableStateOf(false) }
-    var conversationId by rememberSaveable { mutableStateOf<String?>(null) }
+    var conversationId by rememberSaveable(userKey) {
+        mutableStateOf(latestSavedChat?.id)
+    }
     var showHistory by rememberSaveable { mutableStateOf(false) }
-    var history by remember { mutableStateOf(ChatHistoryStore.load(context, userKey)) }
     var openMenuId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
