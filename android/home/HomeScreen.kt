@@ -258,3 +258,167 @@ fun HomeScreen(
                             .padding(horizontal = 15.dp, vertical = 13.dp),
                         enabled = !isSending,
                         singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = Color(0xFF17151D),
+                            fontSize = 14.sp,
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box {
+                                if (input.isEmpty()) {
+                                    Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 14.sp)
+                                }
+                                innerTextField()
+                            }
+                        },
+                    )
+                }
+
+                val canSend = !isSending && input.isNotBlank()
+                Box(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE9E5F0))
+                        .clickable(enabled = canSend, onClick = ::sendMessage),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.2.dp,
+                        )
+                    } else {
+                        Text(
+                            "➤",
+                            color = if (canSend) Color.White else Color(0xFF9992A3),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+
+            AppBottomNav(
+                activeTab = AppTab.HOME,
+                onAccountsClick = {},
+                onLobbyClick = onLobbyClick,
+                onConnectClick = onConnectClick,
+                onSettingsClick = onSettingsClick,
+            )
+        }
+
+        if (showHistory) {
+            Dialog(onDismissRequest = {
+                openMenuId = null
+                showHistory = false
+            }) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color.White,
+                    shadowElevation = 12.dp,
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column {
+                                Text(
+                                    "Chat history",
+                                    color = Color(0xFF17151D),
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    "Saved on this device",
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    color = Color(0xFF8A8492),
+                                    fontSize = 12.sp,
+                                )
+                            }
+                            TextButton(onClick = {
+                                openMenuId = null
+                                startNewChat()
+                                showHistory = false
+                            }) {
+                                Text("New chat", color = Color(0xFF703BE2), fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        if (history.isEmpty()) {
+                            Text(
+                                "No saved chats yet.",
+                                modifier = Modifier.padding(top = 28.dp, bottom = 20.dp),
+                                color = Color(0xFF77717F),
+                                fontSize = 13.sp,
+                            )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 520.dp)
+                                    .padding(top = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                items(history, key = { it.id }) { chat ->
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .clickable(onClick = { openChat(chat) })
+                                                .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    chat.title,
+                                                    color = Color(0xFF292331),
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    "${chat.messages.size} messages",
+                                                    modifier = Modifier.padding(top = 3.dp),
+                                                    color = Color(0xFF9992A3),
+                                                    fontSize = 11.sp,
+                                                )
+                                            }
+
+                                            Box {
+                                                TextButton(
+                                                    onClick = {
+                                                        openMenuId = if (openMenuId == chat.id) null else chat.id
+                                                    },
+                                                    modifier = Modifier.size(42.dp),
+                                                    contentPadding = PaddingValues(0.dp),
+                                                ) {
+                                                    Text("⋮", color = Color(0xFF6F6878), fontSize = 22.sp)
+                                                }
+                                                DropdownMenu(
+                                                    expanded = openMenuId == chat.id,
+                                                    onDismissRequest = { openMenuId = null },
+                                                ) {
+                                                    DropdownMenuItem(
+                                                        text = { Text("Delete", color = Color(0xFFC13D52)) },
+                                                        onClick = { deleteChat(chat.id) },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
