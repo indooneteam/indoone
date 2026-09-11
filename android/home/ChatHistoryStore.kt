@@ -113,6 +113,7 @@ object ChatHistoryStore {
                     .put("messages", messages)
             )
         }
-        prefs(context, userKey).edit().putString(KEY_CHATS, array.toString()).apply()
+        // Commit synchronously so the chat is on disk before Android can kill the process.
+        prefs(context, userKey).edit().putString(KEY_CHATS, array.toString()).commit()
     }
 }
