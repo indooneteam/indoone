@@ -1,6 +1,6 @@
 package com.indoone.home
 
-import com.indoone.BuildConfig
+import com.indoone.authenticator.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
