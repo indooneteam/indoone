@@ -49,6 +49,10 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PrivacyTip
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.authentication.AuthActivity
 import com.indoone.menu.about.MenuAboutScreen
@@ -58,6 +62,10 @@ import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
 import com.indoone.menu.trash.TrashScreen
+import com.indoone.menu.profile.ProfileMenuScreen
+import com.indoone.menu.memory.MemoryMenuScreen
+import com.indoone.menu.chathistory.ChatHistoryMenuScreen
+import com.indoone.menu.dataprivacy.DataPrivacyMenuScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.unlock.UnlockAppActivity
 
@@ -85,6 +93,42 @@ fun MenuDrawer(
     var showTrash by remember { mutableStateOf(false) }
     var showSecurity by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
+    var showProfile by remember { mutableStateOf(false) }
+    var showMemory by remember { mutableStateOf(false) }
+    var showChatHistory by remember { mutableStateOf(false) }
+    var showDataPrivacy by remember { mutableStateOf(false) }
+
+    if (showProfile) {
+        ProfileMenuScreen(onBack = {
+            showProfile = false
+            onDismiss()
+        })
+        return
+    }
+
+    if (showMemory) {
+        MemoryMenuScreen(onBack = {
+            showMemory = false
+            onDismiss()
+        })
+        return
+    }
+
+    if (showChatHistory) {
+        ChatHistoryMenuScreen(onBack = {
+            showChatHistory = false
+            onDismiss()
+        })
+        return
+    }
+
+    if (showDataPrivacy) {
+        DataPrivacyMenuScreen(onBack = {
+            showDataPrivacy = false
+            onDismiss()
+        })
+        return
+    }
 
     if (showAbout) {
         MenuAboutScreen(
@@ -197,6 +241,17 @@ fun MenuDrawer(
                 }
 
                 Spacer(Modifier.height(17.dp))
+
+                DrawerItem(Icons.Outlined.PersonOutline, "Profile", null) { showProfile = true }
+                DrawerItem(Icons.Outlined.Memory, "Memory", null) { showMemory = true }
+                DrawerItem(Icons.Outlined.History, "Chat History", null) { showChatHistory = true }
+                DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                    color = Color(0xFFEEEAF2),
+                )
+
                 DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
                 DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onFavorites)
                 DrawerItem(Icons.Outlined.DeleteOutline, "Trash", null) { showTrash = true }
