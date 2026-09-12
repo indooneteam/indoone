@@ -1,6 +1,5 @@
 package com.indoone.menu
 
-import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -40,24 +39,19 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
 import com.indoone.accounts.storage.AccountRepositoryProvider
-import com.indoone.authentication.AuthActivity
 import com.indoone.menu.about.MenuAboutScreen
-import com.indoone.menu.dangerzone.DangerZoneScreen
-import com.indoone.menu.logout.LogoutScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.menu.termsofuse.TermsOfUseScreen
@@ -88,8 +82,6 @@ fun MenuDrawer(
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
-    var showDangerZone by remember { mutableStateOf(false) }
-    var showLogout by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
     var showSecurity by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
@@ -160,17 +152,6 @@ fun MenuDrawer(
         return
     }
 
-    if (showDangerZone) {
-        DangerZoneScreen(
-            onBack = onDismiss,
-            onAccountsClick = onAccounts,
-            onLobbyClick = onDismiss,
-            onConnectClick = onDismiss,
-            onSettingsClick = onDismiss,
-        )
-        return
-    }
-
     if (showTrash) {
         TrashScreen(
             repository = repository,
@@ -201,23 +182,6 @@ fun MenuDrawer(
             onLobbyClick = onDismiss,
             onConnectClick = onDismiss,
             onSettingsClick = onDismiss,
-        )
-        return
-    }
-
-    if (showLogout) {
-        LogoutScreen(
-            onDismiss = onDismiss,
-            onLoggedOut = {
-                showLogout = false
-                val activity = context as? Activity
-                context.startActivity(
-                    Intent(context, AuthActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    },
-                )
-                activity?.finish()
-            },
         )
         return
     }
@@ -282,8 +246,6 @@ fun MenuDrawer(
                         Toast.makeText(context, "App Lock is not enabled.", Toast.LENGTH_SHORT).show()
                     }
                 }
-                DrawerItem(Icons.Outlined.WarningAmber, "Danger Zone", null) { showDangerZone = true }
-                DrawerItem(Icons.Outlined.ExitToApp, "Log out", null) { showLogout = true }
             }
         }
 
