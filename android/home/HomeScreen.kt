@@ -32,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.FontWeight
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
@@ -47,13 +47,6 @@ import kotlinx.coroutines.withContext
 private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
-)
-
-private val initialChatMessages = listOf(
-    ChatMessage(
-        "How can I help you?",
-        fromUser = false,
-    ),
 )
 
 @Composable
@@ -78,7 +71,7 @@ fun HomeScreen(
         mutableStateOf(
             latestSavedChat?.messages?.map {
                 ChatMessage(it.text, it.fromUser)
-            } ?: initialChatMessages
+            } ?: emptyList()
         )
     }
     var isSending by remember { mutableStateOf(false) }
@@ -124,11 +117,11 @@ fun HomeScreen(
                     )
                 }
 
-                if (updatedMessages.count { it.text != "How can I help you?" } >= 50) {
+                if (updatedMessages.size >= 50) {
                     input = ""
                     isSending = false
                     conversationId = null
-                    messages = initialChatMessages
+                    messages = emptyList()
                 }
             }.onFailure { error ->
                 messages = messages + ChatMessage(
@@ -140,36 +133,19 @@ fun HomeScreen(
         }
     }
 
+    fun onPlusClick() {
+        // Attachment/actions will be added here during the next Home AI development pass.
+    }
+
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(
                 onMenuClick = onMenuClick,
             )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-            ) {
-                Text(
-                    "INDOONE AI",
-                    color = Color(0xFF7650D8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.3.sp,
-                )
-                Text(
-                    "How can I help?",
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = Color(0xFF17151D),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(messages) { message ->
@@ -204,9 +180,7 @@ fun HomeScreen(
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFF5F2FB))
-                        .clickable {
-                            // Attachment/actions will be added here during the next Home AI development pass.
-                        },
+                        .clickable(onClick = ::onPlusClick),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
