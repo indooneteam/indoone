@@ -43,9 +43,10 @@ fun ChatHistoryMenuScreen(onBack: () -> Unit) {
                 .whereEqualTo("userId", uid)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        status = error.message ?: "Could not load chat history."
+                        status = "Chat history could not be loaded right now."
                         return@addSnapshotListener
                     }
+                    status = null
                     conversations = snapshot?.documents.orEmpty().map { document ->
                         ConversationItem(
                             id = document.id,
@@ -62,8 +63,7 @@ fun ChatHistoryMenuScreen(onBack: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(22.dp)) {
         Button(onClick = onBack) { Text("Back") }
         Text("Chat History", color = Color(0xFF5E2DD2), fontSize = 24.sp, modifier = Modifier.padding(top = 12.dp))
-        Text("Chats sync by account through Firestore. A conversation closes at 50 messages. Closed chats are eligible for the 7-day inactivity retention policy.", color = Color(0xFF77707F), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
-        status?.let { Text(it, color = Color(0xFFD93025), fontSize = 12.sp) }
+        status?.let { Text(it, color = Color(0xFFD93025), fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp)) }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 12.dp)) {
             items(conversations, key = { it.id }) { chat ->
