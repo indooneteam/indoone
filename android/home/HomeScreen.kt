@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,11 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +35,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
@@ -79,7 +74,6 @@ fun HomeScreen(
     val cloudChatRepository = remember { CloudChatRepository() }
 
     var input by remember { mutableStateOf("") }
-    var history by remember(userKey) { mutableStateOf(loadedHistory) }
     var messages by remember(userKey) {
         mutableStateOf(
             latestSavedChat?.messages?.map {
@@ -91,8 +85,6 @@ fun HomeScreen(
     var conversationId by rememberSaveable(userKey) {
         mutableStateOf(latestSavedChat?.id)
     }
-    var showHistory by rememberSaveable { mutableStateOf(false) }
-    var openMenuId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     fun saveCurrentChat(id: String, snapshot: List<ChatMessage> = messages) {
@@ -103,7 +95,6 @@ fun HomeScreen(
             )
         }
         ChatHistoryStore.save(context, userKey, id, storedMessages)
-        history = ChatHistoryStore.load(context, userKey)
     }
 
     fun sendMessage() {
@@ -147,41 +138,6 @@ fun HomeScreen(
             }
             isSending = false
         }
-    }
-
-    fun startNewChat() {
-        input = ""
-        isSending = false
-        conversationId = null
-        messages = initialChatMessages
-    }
-
-    fun openChat(chat: ChatHistoryStore.StoredChat) {
-        conversationId = chat.id
-        messages = chat.messages.map { ChatMessage(it.text, it.fromUser) }
-        input = ""
-        isSending = false
-        openMenuId = null
-        showHistory = false
-    }
-
-    fun deleteChat(chatId: String) {
-        ChatHistoryStore.delete(context, userKey, chatId)
-        history = ChatHistoryStore.load(context, userKey)
-        openMenuId = null
-        if (conversationId == chatId) {
-            startNewChat()
-        }
-    }
-
-    fun onHistoryClick() {
-        history = ChatHistoryStore.load(context, userKey)
-        openMenuId = null
-        showHistory = true
-    }
-
-    fun onPlusClick() {
-        // Attachment/actions will be added here during the next Home AI development pass.
     }
 
     Box(Modifier.fillMaxSize().background(Color.White)) {
@@ -248,7 +204,9 @@ fun HomeScreen(
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFF5F2FB))
-                        .clickable(onClick = ::onPlusClick),
+                        .clickable {
+                            // Attachment/actions will be added here during the next Home AI development pass.
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -322,118 +280,6 @@ fun HomeScreen(
                 onConnectClick = onConnectClick,
                 onSettingsClick = onSettingsClick,
             )
-        }
-
-        if (showHistory) {
-            Dialog(onDismissRequest = {
-                openMenuId = null
-                showHistory = false
-            }) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = Color.White,
-                    shadowElevation = 12.dp,
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column {
-                                Text(
-                                    "Chat history",
-                                    color = Color(0xFF17151D),
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(
-                                    "Saved on this device",
-                                    modifier = Modifier.padding(top = 2.dp),
-                                    color = Color(0xFF8A8492),
-                                    fontSize = 12.sp,
-                                )
-                            }
-                            TextButton(onClick = {
-                                openMenuId = null
-                                startNewChat()
-                                showHistory = false
-                            }) {
-                                Text("New chat", color = Color(0xFF703BE2), fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        if (history.isEmpty()) {
-                            Text(
-                                "No saved chats yet.",
-                                modifier = Modifier.padding(top = 28.dp, bottom = 20.dp),
-                                color = Color(0xFF77717F),
-                                fontSize = 13.sp,
-                            )
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 520.dp)
-                                    .padding(top = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                items(history, key = { it.id }) { chat ->
-                                    Box(modifier = Modifier.fillMaxWidth()) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(14.dp))
-                                                .clickable(onClick = { openChat(chat) })
-                                                .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    chat.title,
-                                                    color = Color(0xFF292331),
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    maxLines = 1,
-                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                                )
-                                                Text(
-                                                    "${chat.messages.size} messages",
-                                                    modifier = Modifier.padding(top = 3.dp),
-                                                    color = Color(0xFF9992A3),
-                                                    fontSize = 11.sp,
-                                                )
-                                            }
-
-                                            Box {
-                                                TextButton(
-                                                    onClick = {
-                                                        openMenuId = if (openMenuId == chat.id) null else chat.id
-                                                    },
-                                                    modifier = Modifier.size(42.dp),
-                                                    contentPadding = PaddingValues(0.dp),
-                                                ) {
-                                                    Text("⋮", color = Color(0xFF6F6878), fontSize = 22.sp)
-                                                }
-                                                DropdownMenu(
-                                                    expanded = openMenuId == chat.id,
-                                                    onDismissRequest = { openMenuId = null },
-                                                ) {
-                                                    DropdownMenuItem(
-                                                        text = { Text("Delete", color = Color(0xFFC13D52)) },
-                                                        onClick = { deleteChat(chat.id) },
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
