@@ -27,13 +27,14 @@ object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 120_000
 
-    fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
+    fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
         val backendUrl = requireBackendUrl()
         val connection = openConnection("$backendUrl/api/chat")
         return try {
             val payload = JSONObject().apply {
                 put("message", message)
                 conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
+                fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
             }.toString()
             val body = executeJson(connection, payload)
             val json = JSONObject(body)
