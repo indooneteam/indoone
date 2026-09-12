@@ -28,7 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -99,34 +99,42 @@ fun MenuDrawer(
     var showDataPrivacy by remember { mutableStateOf(false) }
 
     if (showProfile) {
-        ProfileMenuScreen(onBack = {
-            showProfile = false
-            onDismiss()
-        })
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            ProfileMenuScreen(onBack = {
+                showProfile = false
+                onDismiss()
+            })
+        }
         return
     }
 
     if (showMemory) {
-        MemoryMenuScreen(onBack = {
-            showMemory = false
-            onDismiss()
-        })
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            MemoryMenuScreen(onBack = {
+                showMemory = false
+                onDismiss()
+            })
+        }
         return
     }
 
     if (showChatHistory) {
-        ChatHistoryMenuScreen(onBack = {
-            showChatHistory = false
-            onDismiss()
-        })
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            ChatHistoryMenuScreen(onBack = {
+                showChatHistory = false
+                onDismiss()
+            })
+        }
         return
     }
 
     if (showDataPrivacy) {
-        DataPrivacyMenuScreen(onBack = {
-            showDataPrivacy = false
-            onDismiss()
-        })
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            DataPrivacyMenuScreen(onBack = {
+                showDataPrivacy = false
+                onDismiss()
+            })
+        }
         return
     }
 
