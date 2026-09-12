@@ -74,7 +74,7 @@ fun HomeScreen(
     var messages by remember(userKey) { mutableStateOf(latestSavedChat?.messages?.map { ChatMessage(it.text, it.fromUser) } ?: emptyList()) }
     var isSending by remember { mutableStateOf(false) }
     var conversationId by rememberSaveable(userKey) { mutableStateOf(latestSavedChat?.id) }
-    var pendingFileContext by remember { mutableStateOf<String?>(null) }
+    var pendingFileId by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -86,22 +86,15 @@ fun HomeScreen(
         val typed = input.trim()
         if (typed.isEmpty() || isSending) return
 
-        val fileContext = pendingFileContext
-        val fileName = pendingFileName
-        val requestText = if (!fileContext.isNullOrBlank()) {
-            "Attached file: ${fileName ?: "document"}\n\nFile content:\n$fileContext\n\nUser question:\n$typed"
-        } else {
-            typed
-        }
-
+        val fileId = pendingFileId
         messages = messages + ChatMessage(typed, true)
         input = ""
-        pendingFileContext = null
+        pendingFileId = null
         pendingFileName = null
         isSending = true
 
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { ChatApi.sendMessage(requestText, conversationId) } }
+            runCatching { withContext(Dispatchers.IO) { ChatApi.sendMessage(typed, conversationId, fileId) } }
                 .onSuccess { response ->
                     conversationId = response.conversationId
                     val updated = messages + ChatMessage(response.reply, false)
@@ -136,10 +129,10 @@ fun HomeScreen(
                         ?: error("Could not open the selected file.")
                 }
                 val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
-                name to upload.textPreview
-            }.onSuccess { (name, preview) ->
+                name to upload.fileId
+            }.onSuccess { (name, fileId) ->
                 pendingFileName = name
-                pendingFileContext = preview
+                pendingFileId = fileId
                 messages = messages + ChatMessage("Attached $name. Ask me about this file.", true)
             }.onFailure { error ->
                 messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
