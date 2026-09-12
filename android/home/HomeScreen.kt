@@ -74,6 +74,8 @@ fun HomeScreen(
     var messages by remember(userKey) { mutableStateOf(latestSavedChat?.messages?.map { ChatMessage(it.text, it.fromUser) } ?: emptyList()) }
     var isSending by remember { mutableStateOf(false) }
     var conversationId by rememberSaveable(userKey) { mutableStateOf(latestSavedChat?.id) }
+    var pendingFileContext by remember { mutableStateOf<String?>(null) }
+    var pendingFileName by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     fun saveCurrentChat(id: String, snapshot: List<ChatMessage> = messages) {
@@ -81,20 +83,32 @@ fun HomeScreen(
     }
 
     fun sendMessage() {
-        val text = input.trim()
-        if (text.isEmpty() || isSending) return
-        messages = messages + ChatMessage(text, true)
+        val typed = input.trim()
+        if (typed.isEmpty() || isSending) return
+
+        val fileContext = pendingFileContext
+        val fileName = pendingFileName
+        val requestText = if (!fileContext.isNullOrBlank()) {
+            "Attached file: ${fileName ?: "document"}\n\nFile content:\n$fileContext\n\nUser question:\n$typed"
+        } else {
+            typed
+        }
+
+        messages = messages + ChatMessage(typed, true)
         input = ""
+        pendingFileContext = null
+        pendingFileName = null
         isSending = true
+
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { ChatApi.sendMessage(text, conversationId) } }
+            runCatching { withContext(Dispatchers.IO) { ChatApi.sendMessage(requestText, conversationId) } }
                 .onSuccess { response ->
                     conversationId = response.conversationId
                     val updated = messages + ChatMessage(response.reply, false)
                     messages = updated
                     saveCurrentChat(response.conversationId, updated)
                     runCatching {
-                        cloudChatRepository.appendExchange(response.conversationId, text, response.reply)
+                        cloudChatRepository.appendExchange(response.conversationId, typed, response.reply)
                     }
                     if (updated.size >= 50) {
                         isSending = false
@@ -106,6 +120,30 @@ fun HomeScreen(
                     messages = messages + ChatMessage(error.message ?: "Indoone AI could not complete the request.", false)
                 }
             isSending = false
+        }
+    }
+
+    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            runCatching {
+                val name = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+                } ?: "document"
+                val bytes = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        ?: error("Could not open the selected file.")
+                }
+                val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
+                name to upload.textPreview
+            }.onSuccess { (name, preview) ->
+                pendingFileName = name
+                pendingFileContext = preview
+                messages = messages + ChatMessage("Attached $name. Ask me about this file.", true)
+            }.onFailure { error ->
+                messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
+            }
         }
     }
 
@@ -152,10 +190,14 @@ fun HomeScreen(
                 }
             }
 
+            pendingFileName?.let {
+                Text("Attached: $it", color = Color(0xFF5E2DD2), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
+            }
+
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.padding(end = 10.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable {
-                        // Attachment actions use ChatApi.uploadTextFile in the next UI pass.
+                    modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending) {
+                        fileLauncher.launch(arrayOf("text/plain", "text/markdown", "application/json", "text/csv"))
                     },
                     contentAlignment = Alignment.Center,
                 ) { Text("+", color = Color(0xFF703BE2), fontSize = 25.sp, fontWeight = FontWeight.Medium) }
