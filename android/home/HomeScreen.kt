@@ -44,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import com.indoone.menu.data.CloudChatRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,6 +76,7 @@ fun HomeScreen(
         ChatHistoryStore.load(context, userKey)
     }
     val latestSavedChat = loadedHistory.firstOrNull()
+    val cloudChatRepository = remember { CloudChatRepository() }
 
     var input by remember { mutableStateOf("") }
     var history by remember(userKey) { mutableStateOf(loadedHistory) }
@@ -93,8 +95,8 @@ fun HomeScreen(
     var openMenuId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    fun saveCurrentChat(id: String) {
-        val storedMessages = messages.map {
+    fun saveCurrentChat(id: String, snapshot: List<ChatMessage> = messages) {
+        val storedMessages = snapshot.map {
             ChatHistoryStore.StoredMessage(
                 text = it.text,
                 fromUser = it.fromUser,
@@ -120,8 +122,23 @@ fun HomeScreen(
             }
             result.onSuccess { response ->
                 conversationId = response.conversationId
-                messages = messages + ChatMessage(response.reply, fromUser = false)
-                saveCurrentChat(response.conversationId)
+                val updatedMessages = messages + ChatMessage(response.reply, fromUser = false)
+                messages = updatedMessages
+                saveCurrentChat(response.conversationId, updatedMessages)
+                runCatching {
+                    cloudChatRepository.appendExchange(
+                        conversationId = response.conversationId,
+                        userMessage = text,
+                        assistantReply = response.reply,
+                    )
+                }
+
+                if (updatedMessages.count { it.text != "How can I help you?" } >= 50) {
+                    input = ""
+                    isSending = false
+                    conversationId = null
+                    messages = initialChatMessages
+                }
             }.onFailure { error ->
                 messages = messages + ChatMessage(
                     error.message ?: "Indoone AI could not complete the request. Please try again.",
