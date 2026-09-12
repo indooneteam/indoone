@@ -31,8 +31,6 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
     var profession by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var mobile by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
@@ -41,8 +39,6 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                 name = profile["name"]?.toString().orEmpty()
                 nickname = profile["nickname"]?.toString().orEmpty()
                 profession = profile["profession"]?.toString().orEmpty()
-                email = profile["email"]?.toString().orEmpty()
-                mobile = profile["mobile"]?.toString().orEmpty()
             }
             .onFailure { status = it.message ?: "Could not load profile." }
     }
@@ -53,20 +49,46 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
     ) {
         Button(onClick = onBack) { Text("Back") }
         Text("Profile", color = Color(0xFF5E2DD2), fontSize = 24.sp)
-        Text("You control these personal details. AI memory does not silently replace your name or account identity.", color = Color(0xFF77707F), fontSize = 12.sp)
-        OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(nickname, { nickname = it }, label = { Text("Nickname") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(profession, { profession = it }, label = { Text("Profession") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(email, {}, label = { Text("Email") }, readOnly = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(mobile, {}, label = { Text("Mobile") }, readOnly = true, modifier = Modifier.fillMaxWidth())
-        Button(onClick = {
-            scope.launch {
-                status = "Saving…"
-                runCatching { repository.updateProfileFields(name, nickname, profession) }
-                    .onSuccess { status = "Profile saved." }
-                    .onFailure { status = it.message ?: "Could not save profile." }
-            }
-        }, modifier = Modifier.fillMaxWidth()) { Text("Save profile") }
-        status?.let { Text(it, color = if (it == "Profile saved.") Color(0xFF6330DB) else Color(0xFFD93025), fontSize = 12.sp) }
+        Text(
+            "These are your personal profile details. AI memory can use them as context, but it must not silently change your identity fields.",
+            color = Color(0xFF77707F),
+            fontSize = 12.sp,
+        )
+        OutlinedTextField(
+            name,
+            { name = it },
+            label = { Text("Name") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            nickname,
+            { nickname = it },
+            label = { Text("Nickname") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            profession,
+            { profession = it },
+            label = { Text("Profession") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = {
+                scope.launch {
+                    status = "Saving…"
+                    runCatching { repository.updateProfileFields(name, nickname, profession) }
+                        .onSuccess { status = "Profile saved." }
+                        .onFailure { status = it.message ?: "Could not save profile." }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Save profile") }
+        status?.let {
+            Text(
+                it,
+                color = if (it == "Profile saved.") Color(0xFF6330DB) else Color(0xFFD93025),
+                fontSize = 12.sp,
+            )
+        }
     }
 }
