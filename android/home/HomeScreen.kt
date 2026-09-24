@@ -137,7 +137,10 @@ fun HomeScreen(
                         cloudChatRepository.appendExchange(response.conversationId, typed, response.reply)
                     }
                     if (cloudSave.isFailure) {
-                        messages = updated + ChatMessage("Chat could not be saved to Firestore.", false)
+                        val reason = cloudSave.exceptionOrNull()?.message
+                            ?.takeIf { it.isNotBlank() }
+                            ?: "Unknown Firebase error."
+                        messages = updated + ChatMessage("Chat could not be saved to Firestore: $reason", false)
                     }
                     if (updated.size >= 50) {
                         isSending = false
