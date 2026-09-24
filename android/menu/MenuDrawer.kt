@@ -106,7 +106,17 @@ fun MenuDrawer(
     }
     if (showChatHistory) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            ChatHistoryMenuScreen(onBack = { showChatHistory = false; onDismiss() })
+            ChatHistoryMenuScreen(
+                onBack = { showChatHistory = false; onDismiss() },
+                onOpenChat = { conversationId ->
+                    context.startActivity(
+                        Intent(context, MainActivity::class.java).apply {
+                            putExtra("open_conversation_id", conversationId)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        },
+                    )
+                },
+            )
         }
         return
     }
