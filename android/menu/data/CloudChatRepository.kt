@@ -103,6 +103,61 @@ class CloudChatRepository(
         )
     }
 
+    suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
+        val userId = uid
+        val documents = Tasks.await(
+            firestore.collection("conversations")
+                .whereEqualTo("userId", userId)
+                .limit(limit.coerceIn(1, 100).toLong())
+                .get(),
+        ).documents.sortedByDescending {
+            it.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
+        }
+
+        documents.map { document ->
+            CloudChatConversation(
+                id = document.id,
+                title = document.getString("title").orEmpty().ifBlank { "New chat" },
+                messages = emptyList(),
+                messageCount = document.getLong("messageCount")?.toInt() ?: 0,
+                closed = document.getBoolean("closed") ?: false,
+                updatedAtMillis = document.getTimestamp("updatedAt")?.toDate()?.time ?: 0L,
+            )
+        }
+    }
+
+    suspend fun loadConversation(conversationId: String): CloudChatConversation? = withContext(Dispatchers.IO) {
+        require(conversationId.isNotBlank()) { "conversationId cannot be empty" }
+        val userId = uid
+        val document = Tasks.await(
+            firestore.collection("conversations").document(conversationId).get(),
+        )
+        if (!document.exists()) return@withContext null
+        if (document.getString("userId") != userId) {
+            throw SecurityException("Conversation does not belong to this account.")
+        }
+
+        val messages = Tasks.await(
+            document.reference.collection("messages")
+                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .limit(50L)
+                .get(),
+        ).documents.mapNotNull { message ->
+            val role = message.getString("role") ?: return@mapNotNull null
+            val content = message.getString("content") ?: return@mapNotNull null
+            CloudChatMessage(role, content)
+        }
+
+        CloudChatConversation(
+            id = document.id,
+            title = document.getString("title").orEmpty().ifBlank { "New chat" },
+            messages = messages,
+            messageCount = document.getLong("messageCount")?.toInt() ?: messages.size,
+            closed = document.getBoolean("closed") ?: false,
+            updatedAtMillis = document.getTimestamp("updatedAt")?.toDate()?.time ?: 0L,
+        )
+    }
+
     suspend fun loadLatestChat(limit: Int = 50): CloudChatConversation? = withContext(Dispatchers.IO) {
         val userId = uid
         val conversations = Tasks.await(
