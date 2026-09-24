@@ -165,6 +165,7 @@ class MainActivity : ComponentActivity() {
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         startNewChat = intent.getBooleanExtra("start_new_chat", false),
+                        openConversationId = intent.getStringExtra("open_conversation_id"),
                     )
 
                     AppRoute.ACCOUNTS -> {
