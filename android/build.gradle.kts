@@ -24,6 +24,36 @@ android {
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
     }
 
+    signingConfigs {
+        val developKeystorePath = System.getenv("INDOONE_KEYSTORE_PATH")
+        val developKeystorePassword = System.getenv("INDOONE_KEYSTORE_PASSWORD")
+        val developKeyAlias = System.getenv("INDOONE_KEY_ALIAS")
+        val developKeyPassword = System.getenv("INDOONE_KEY_PASSWORD")
+
+        if (
+            System.getenv("GITHUB_REF_NAME") == "develop" &&
+            !developKeystorePath.isNullOrBlank() &&
+            !developKeystorePassword.isNullOrBlank() &&
+            !developKeyAlias.isNullOrBlank() &&
+            !developKeyPassword.isNullOrBlank()
+        ) {
+            create("develop") {
+                storeFile = file(developKeystorePath)
+                storePassword = developKeystorePassword
+                keyAlias = developKeyAlias
+                keyPassword = developKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("debug") {
+            if (System.getenv("GITHUB_REF_NAME") == "develop" && signingConfigs.findByName("develop") != null) {
+                signingConfig = signingConfigs.getByName("develop")
+            }
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
