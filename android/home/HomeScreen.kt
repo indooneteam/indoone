@@ -98,6 +98,7 @@ fun HomeScreen(
         }
         isLoadingHistory = true
         runCatching {
+            cloudChatRepository.cleanupExpiredConversations()
             if (!openConversationId.isNullOrBlank()) {
                 cloudChatRepository.loadConversation(openConversationId)
             } else {
