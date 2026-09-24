@@ -24,7 +24,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -215,7 +218,14 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier.padding(start = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending, onClick = ::startVoiceInput),
                     contentAlignment = Alignment.Center,
-                ) { Text("🎙", fontSize = 18.sp) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = "Voice input",
+                        tint = Color(0xFF4A4650),
+                        modifier = Modifier.size(21.dp),
+                    )
+                }
 
                 val canSend = !isSending && input.isNotBlank()
                 Box(
