@@ -11,13 +11,23 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.indoone.home.ChatCleanupWorker
 import com.indoone.settings.autolock.AutoLockController
+import java.util.concurrent.TimeUnit
 
 class IndooneApplication : Application() {
     private val controllers = mutableMapOf<Activity, AutoLockController>()
 
     override fun onCreate() {
         super.onCreate()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "indoone-chat-expiry-cleanup",
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<ChatCleanupWorker>(1, TimeUnit.DAYS).build(),
+        )
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 configureSystemBars(activity)
