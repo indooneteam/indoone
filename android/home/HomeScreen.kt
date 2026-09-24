@@ -4,7 +4,10 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
+import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -31,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,6 +83,8 @@ fun HomeScreen(
     var conversationId by rememberSaveable(userKey) { mutableStateOf(latestSavedChat?.id) }
     var pendingFileId by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
+    var isListening by remember { mutableStateOf(false) }
+    var voiceError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     fun saveCurrentChat(id: String, snapshot: List<ChatMessage> = messages) {
@@ -143,27 +149,95 @@ fun HomeScreen(
         }
     }
 
-    val voiceLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val spoken = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-        if (!spoken.isNullOrBlank()) input = spoken
+    val speechRecognizer = remember(context) {
+        if (SpeechRecognizer.isRecognitionAvailable(context)) SpeechRecognizer.createSpeechRecognizer(context) else null
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) {
-            voiceLauncher.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to Indoone")
-            })
-        }
+
+    fun stopVoiceInput() {
+        speechRecognizer?.stopListening()
+        speechRecognizer?.cancel()
+        isListening = false
     }
 
     fun startVoiceInput() {
+        if (isSending) return
+        if (speechRecognizer == null) {
+            voiceError = "Speech recognition is not available on this device."
+            return
+        }
+
+        voiceError = null
+        isListening = true
+        speechRecognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        })
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startVoiceInput() else voiceError = "Microphone permission is required."
+    }
+
+    DisposableEffect(speechRecognizer) {
+        if (speechRecognizer == null) {
+            onDispose { }
+        } else {
+            speechRecognizer.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    isListening = true
+                }
+
+                override fun onBeginningOfSpeech() {
+                    isListening = true
+                }
+
+                override fun onRmsChanged(rmsdB: Float) = Unit
+
+                override fun onBufferReceived(buffer: ByteArray?) = Unit
+
+                override fun onEndOfSpeech() {
+                    isListening = false
+                }
+
+                override fun onError(error: Int) {
+                    isListening = false
+                    voiceError = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH -> "I could not hear that clearly. Try again."
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected. Try again."
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission is required."
+                        else -> "Voice input failed. Please try again."
+                    }
+                }
+
+                override fun onResults(results: Bundle?) {
+                    isListening = false
+                    val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!spoken.isNullOrBlank()) input = spoken
+                }
+
+                override fun onPartialResults(partialResults: Bundle?) {
+                    val spoken = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!spoken.isNullOrBlank()) input = spoken
+                }
+
+                override fun onEvent(eventType: Int, params: Bundle?) = Unit
+            })
+            onDispose {
+                speechRecognizer.cancel()
+                speechRecognizer.destroy()
+            }
+        }
+    }
+
+    fun onVoiceButtonClick() {
         val activity = context as? Activity ?: return
+        if (isListening) {
+            stopVoiceInput()
+            return
+        }
         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         if (granted) {
-            voiceLauncher.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to Indoone")
-            })
+            startVoiceInput()
         } else if (!activity.isFinishing) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -216,13 +290,13 @@ fun HomeScreen(
                 }
 
                 Box(
-                    modifier = Modifier.padding(start = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending, onClick = ::startVoiceInput),
+                    modifier = Modifier.padding(start = 8.dp).size(42.dp).clip(CircleShape).background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB)).clickable(enabled = !isSending, onClick = ::onVoiceButtonClick),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Voice input",
-                        tint = Color(0xFF4A4650),
+                        contentDescription = if (isListening) "Stop voice input" else "Voice input",
+                        tint = if (isListening) Color.White else Color(0xFF4A4650),
                         modifier = Modifier.size(21.dp),
                     )
                 }
@@ -234,6 +308,47 @@ fun HomeScreen(
                 ) {
                     if (isSending) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.2.dp)
                     else Text("➤", color = if (canSend) Color.White else Color(0xFF9992A3), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            voiceError?.let { error ->
+                Text(
+                    error,
+                    color = Color(0xFFB42318),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 2.dp),
+                )
+            }
+
+            if (isListening) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFF5F2FB),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF703BE2)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Mic,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        Text(
+                            "Listening… tap mic to stop",
+                            modifier = Modifier.padding(start = 10.dp),
+                            color = Color(0xFF4A4650),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 }
             }
 
