@@ -51,7 +51,6 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.AddComment
-import com.google.firebase.auth.FirebaseAuth
 import com.indoone.MainActivity
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.about.MenuAboutScreen
@@ -83,7 +82,6 @@ fun MenuDrawer(
 ) {
     val context = LocalContext.current
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
-    val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "local" }
     var showTerms by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
