@@ -1,6 +1,8 @@
 package com.indoone.home
 
 import android.util.Base64
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -29,7 +31,7 @@ object ChatApi {
 
     fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
         val backendUrl = requireBackendUrl()
-        val connection = openConnection("$backendUrl/api/chat")
+        val connection = openConnection("$backendUrl/api/chat", requireAuthToken())
         return try {
             val payload = JSONObject().apply {
                 put("message", message)
@@ -50,7 +52,7 @@ object ChatApi {
 
     fun uploadTextFile(filename: String, bytes: ByteArray): FileUploadResponse {
         val backendUrl = requireBackendUrl()
-        val connection = openConnection("$backendUrl/api/files")
+        val connection = openConnection("$backendUrl/api/files", requireAuthToken())
         return try {
             val payload = JSONObject().apply {
                 put("filename", filename)
@@ -75,7 +77,15 @@ object ChatApi {
         return backendUrl
     }
 
-    private fun openConnection(url: String): HttpURLConnection =
+    private fun requireAuthToken(): String {
+        val user = FirebaseAuth.getInstance().currentUser
+            ?: throw ChatApiException("Please sign in to use Indoone AI.")
+        return Tasks.await(user.getIdToken(false)).token
+            ?.takeIf { it.isNotBlank() }
+            ?: throw ChatApiException("Could not get the Indoone authentication token.")
+    }
+
+    private fun openConnection(url: String, authToken: String): HttpURLConnection =
         (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = CONNECT_TIMEOUT_MS
@@ -86,6 +96,7 @@ object ChatApi {
             instanceFollowRedirects = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("Authorization", "Bearer $authToken")
         }
 
     private fun executeJson(connection: HttpURLConnection, payload: String): String {
