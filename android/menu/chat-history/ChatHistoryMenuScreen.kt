@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,6 +40,7 @@ fun ChatHistoryMenuScreen(
     var conversations by remember { mutableStateOf<List<CloudChatConversation>>(emptyList()) }
     var status by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         loading = true
@@ -60,7 +62,7 @@ fun ChatHistoryMenuScreen(
     DisposableEffect(repository) {
         val listener = repository.addConversationIdListener(
             onChanged = {
-                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                scope.launch {
                     runCatching { repository.loadConversations() }
                         .onSuccess {
                             conversations = it
@@ -168,7 +170,7 @@ fun ChatHistoryMenuScreen(
                                         color = Color(0xFFD93025),
                                         fontSize = 12.sp,
                                         modifier = Modifier.clickable {
-                                            kotlinx.coroutines.MainScope().launch {
+                                            scope.launch {
                                                 runCatching { repository.deleteConversation(chat.id) }
                                                     .onSuccess {
                                                         conversations = conversations.filterNot { it.id == chat.id }
