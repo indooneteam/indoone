@@ -70,25 +70,40 @@ fun HomeScreen(
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    startNewChat: Boolean = false,
 ) {
     val context = LocalContext.current
-    val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "local" }
-    val loadedHistory = remember(userKey) { ChatHistoryStore.load(context, userKey) }
-    val latestSavedChat = loadedHistory.firstOrNull()
+    val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
     val cloudChatRepository = remember { CloudChatRepository() }
 
     var input by remember { mutableStateOf("") }
-    var messages by remember(userKey) { mutableStateOf(latestSavedChat?.messages?.map { ChatMessage(it.text, it.fromUser) } ?: emptyList()) }
+    var messages by remember(userKey, startNewChat) { mutableStateOf(emptyList<ChatMessage>()) }
     var isSending by remember { mutableStateOf(false) }
-    var conversationId by rememberSaveable(userKey) { mutableStateOf(latestSavedChat?.id) }
+    var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
     var pendingFileId by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
     var isListening by remember { mutableStateOf(false) }
     var voiceError by remember { mutableStateOf<String?>(null) }
+    var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     val scope = rememberCoroutineScope()
 
-    fun saveCurrentChat(id: String, snapshot: List<ChatMessage> = messages) {
-        ChatHistoryStore.save(context, userKey, id, snapshot.map { ChatHistoryStore.StoredMessage(it.text, it.fromUser) })
+    LaunchedEffect(userKey, startNewChat) {
+        if (startNewChat || userKey.isBlank()) {
+            isLoadingHistory = false
+            return@LaunchedEffect
+        }
+        isLoadingHistory = true
+        runCatching { cloudChatRepository.loadLatestChat() }
+            .onSuccess { chat ->
+                conversationId = chat?.id
+                messages = chat?.messages?.map {
+                    ChatMessage(it.content, it.role == "user")
+                }.orEmpty()
+            }
+            .onFailure {
+                messages = emptyList()
+            }
+        isLoadingHistory = false
     }
 
     fun sendMessage() {
@@ -108,9 +123,11 @@ fun HomeScreen(
                     conversationId = response.conversationId
                     val updated = messages + ChatMessage(response.reply, false)
                     messages = updated
-                    saveCurrentChat(response.conversationId, updated)
-                    runCatching {
+                    val cloudSave = runCatching {
                         cloudChatRepository.appendExchange(response.conversationId, typed, response.reply)
+                    }
+                    if (cloudSave.isFailure) {
+                        messages = updated + ChatMessage("Chat could not be saved to Firestore.", false)
                     }
                     if (updated.size >= 50) {
                         isSending = false
@@ -246,7 +263,19 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(onMenuClick = onMenuClick)
-            LazyColumn(
+            if (isLoadingHistory) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF703BE2),
+                        strokeWidth = 2.2.dp,
+                    )
+                }
+            } else LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
