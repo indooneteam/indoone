@@ -108,7 +108,7 @@ class CloudChatRepository(
         val conversations = Tasks.await(
             firestore.collection("conversations")
                 .whereEqualTo("userId", userId)
-                .limit(limit.coerceIn(1, 100))
+                .limit(limit.coerceIn(1, 100).toLong())
                 .get(),
         ).documents.sortedByDescending {
             it.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
@@ -118,7 +118,7 @@ class CloudChatRepository(
         val messages = Tasks.await(
             document.reference.collection("messages")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
-                .limit(50)
+                .limit(50L)
                 .get(),
         ).documents.mapNotNull { message ->
             val role = message.getString("role") ?: return@mapNotNull null
