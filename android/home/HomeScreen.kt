@@ -72,6 +72,7 @@ fun HomeScreen(
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
     startNewChat: Boolean = false,
+    openConversationId: String? = null,
 ) {
     val context = LocalContext.current
     val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
@@ -88,22 +89,29 @@ fun HomeScreen(
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(userKey, startNewChat) {
-        if (startNewChat || userKey.isBlank()) {
+    LaunchedEffect(userKey, startNewChat, openConversationId) {
+        if (userKey.isBlank() || startNewChat) {
+            conversationId = null
+            messages = emptyList()
             isLoadingHistory = false
             return@LaunchedEffect
         }
         isLoadingHistory = true
-        runCatching { cloudChatRepository.loadLatestChat() }
-            .onSuccess { chat ->
-                conversationId = chat?.id
-                messages = chat?.messages?.map {
-                    ChatMessage(it.content, it.role == "user")
-                }.orEmpty()
+        runCatching {
+            if (!openConversationId.isNullOrBlank()) {
+                cloudChatRepository.loadConversation(openConversationId)
+            } else {
+                cloudChatRepository.loadLatestChat()
             }
-            .onFailure {
-                messages = emptyList()
-            }
+        }.onSuccess { chat ->
+            conversationId = chat?.id
+            messages = chat?.messages?.map {
+                ChatMessage(it.content, it.role == "user")
+            }.orEmpty()
+        }.onFailure {
+            conversationId = null
+            messages = emptyList()
+        }
         isLoadingHistory = false
     }
 
