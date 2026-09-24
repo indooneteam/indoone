@@ -2,6 +2,9 @@ package com.indoone.menu.data
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
@@ -26,9 +29,34 @@ data class CloudChatConversation(
 class CloudChatRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val realtimeDatabase: FirebaseDatabase = FirebaseDatabase.getInstance(),
 ) {
     private val uid: String
         get() = auth.currentUser?.uid ?: throw IllegalStateException("Please sign in again.")
+
+    private fun chatIndex(userId: String = uid): DatabaseReference =
+        realtimeDatabase.reference.child("users").child(userId).child("chats")
+
+    fun addConversationIdListener(
+        onChanged: (Set<String>) -> Unit,
+        onError: (String) -> Unit,
+    ): ValueEventListener {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+                onChanged(snapshot.children.mapNotNull { it.key }.toSet())
+            }
+
+            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
+                onError(error.message.ifBlank { "Chat sync could not be loaded right now." })
+            }
+        }
+        chatIndex().addValueEventListener(listener)
+        return listener
+    }
+
+    fun removeConversationIdListener(listener: ValueEventListener) {
+        chatIndex().removeEventListener(listener)
+    }
 
     suspend fun appendExchange(
         conversationId: String,
@@ -43,7 +71,7 @@ class CloudChatRepository(
         val userId = uid
         val conversation = firestore.collection("conversations").document(conversationId)
 
-        Tasks.await(
+        val saved = Tasks.await(
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(conversation)
                 val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
@@ -54,7 +82,7 @@ class CloudChatRepository(
                         throw SecurityException("Conversation does not belong to this account.")
                     }
                     if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
-                        return@runTransaction
+                        return@runTransaction false
                     }
                 } else {
                     transaction.set(
@@ -99,8 +127,13 @@ class CloudChatRepository(
                         "closedAt" to if (newCount >= messageLimit) now else null,
                     ),
                 )
+                true
             },
         )
+
+        if (saved) {
+            Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+        }
     }
 
     suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
@@ -112,6 +145,18 @@ class CloudChatRepository(
                 .get(),
         ).documents.sortedByDescending {
             it.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
+        }
+
+        val indexedIds = documents.map { it.id }.toSet()
+        val indexedValues = indexedIds.associateWith { true }
+        val currentIndex = Tasks.await(chatIndex(userId).get()).children.mapNotNull { it.key }.toSet()
+        if (indexedValues.isNotEmpty() || currentIndex.isNotEmpty()) {
+            val updates = mutableMapOf<String, Any?>()
+            indexedIds.forEach { id -> updates[id] = true }
+            (currentIndex - indexedIds).forEach { id -> updates[id] = null }
+            if (updates.isNotEmpty()) {
+                Tasks.await(chatIndex(userId).updateChildren(updates))
+            }
         }
 
         documents.map { document ->
@@ -193,17 +238,42 @@ class CloudChatRepository(
 
     suspend fun deleteConversation(conversationId: String) = withContext(Dispatchers.IO) {
         require(conversationId.isNotBlank()) { "conversationId cannot be empty" }
+        val userId = uid
         val conversation = firestore.collection("conversations").document(conversationId)
         val snapshot = Tasks.await(conversation.get())
-        if (!snapshot.exists()) return@withContext
-        if (snapshot.getString("userId") != uid) {
-            throw SecurityException("Conversation does not belong to this account.")
-        }
+        if (snapshot.exists()) {
+            if (snapshot.getString("userId") != userId) {
+                throw SecurityException("Conversation does not belong to this account.")
+            }
 
-        val messages = Tasks.await(conversation.collection("messages").limit(50).get()).documents
-        val batch = firestore.batch()
-        messages.forEach { batch.delete(it.reference) }
-        batch.delete(conversation)
-        Tasks.await(batch.commit())
+            val messages = Tasks.await(conversation.collection("messages").limit(50L).get()).documents
+            val batch = firestore.batch()
+            messages.forEach { batch.delete(it.reference) }
+            batch.delete(conversation)
+            Tasks.await(batch.commit())
+        }
+        Tasks.await(chatIndex(userId).child(conversationId).removeValue())
     }
+
+    suspend fun cleanupExpiredConversations(maxAgeDays: Long = 7L) = withContext(Dispatchers.IO) {
+        require(maxAgeDays > 0) { "maxAgeDays must be greater than zero" }
+        val cutoff = System.currentTimeMillis() - maxAgeDays * 24L * 60L * 60L * 1000L
+        val userId = uid
+        val documents = Tasks.await(
+            firestore.collection("conversations")
+                .whereEqualTo("userId", userId)
+                .limit(100L)
+                .get(),
+        ).documents
+
+        documents
+            .filter { document ->
+                document.getBoolean("closed") == true &&
+                    (document.getTimestamp("closedAt")?.toDate()?.time ?: Long.MAX_VALUE) <= cutoff
+            }
+            .forEach { document ->
+                deleteConversation(document.id)
+            }
+    }
+
 }
