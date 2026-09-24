@@ -3,6 +3,8 @@ package com.indoone.home
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.google.firebase.auth.FirebaseAuth
+import com.indoone.menu.data.CloudChatRepository
 
 class ChatCleanupWorker(
     appContext: Context,
@@ -10,17 +12,11 @@ class ChatCleanupWorker(
 ) : CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result =
         runCatching {
-            if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) {
-                CloudCleanup.run()
+            if (FirebaseAuth.getInstance().currentUser != null) {
+                CloudChatRepository().cleanupExpiredConversations()
             }
             Result.success()
         }.getOrElse {
             Result.retry()
         }
-
-    private object CloudCleanup {
-        suspend fun run() {
-            CloudChatRepository().cleanupExpiredConversations()
-        }
-    }
 }
