@@ -7,6 +7,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -84,18 +85,6 @@ class CloudChatRepository(
                     if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
                         return@runTransaction false
                     }
-                } else {
-                    transaction.set(
-                        conversation,
-                        mapOf(
-                            "userId" to userId,
-                            "title" to userMessage.trim().take(60),
-                            "createdAt" to FieldValue.serverTimestamp(),
-                            "updatedAt" to FieldValue.serverTimestamp(),
-                            "messageCount" to 0,
-                            "closed" to false,
-                        ),
-                    )
                 }
 
                 val remaining = (messageLimit - existingCount).coerceAtLeast(0)
@@ -118,15 +107,18 @@ class CloudChatRepository(
                 }
 
                 val newCount = existingCount + values.size
-                transaction.update(
-                    conversation,
-                    mapOf(
-                        "updatedAt" to now,
-                        "messageCount" to newCount,
-                        "closed" to (newCount >= messageLimit),
-                        "closedAt" to if (newCount >= messageLimit) now else null,
-                    ),
+                val conversationValues = mutableMapOf<String, Any?>(
+                    "userId" to userId,
+                    "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
+                    "updatedAt" to now,
+                    "messageCount" to newCount,
+                    "closed" to (newCount >= messageLimit),
+                    "closedAt" to if (newCount >= messageLimit) now else null,
                 )
+                if (!snapshot.exists()) {
+                    conversationValues["createdAt"] = now
+                }
+                transaction.set(conversation, conversationValues, SetOptions.merge())
                 true
             },
         )
