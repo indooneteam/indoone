@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.menu.data.CloudChatConversation
 import com.indoone.menu.data.CloudChatRepository
+import com.google.firebase.database.ValueEventListener
 import java.text.DateFormat
 import java.util.Date
 
@@ -40,7 +42,10 @@ fun ChatHistoryMenuScreen(
 
     LaunchedEffect(Unit) {
         loading = true
-        runCatching { repository.loadConversations() }
+        runCatching {
+            repository.cleanupExpiredConversations()
+            repository.loadConversations()
+        }
             .onSuccess {
                 conversations = it
                 status = null
@@ -50,6 +55,25 @@ fun ChatHistoryMenuScreen(
                 status = it.message ?: "Chat history could not be loaded right now."
             }
         loading = false
+    }
+
+    DisposableEffect(repository) {
+        val listener = repository.addConversationIdListener(
+            onChanged = {
+                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                    runCatching { repository.loadConversations() }
+                        .onSuccess {
+                            conversations = it
+                            status = null
+                        }
+                        .onFailure {
+                            status = it.message ?: "Chat history could not be loaded right now."
+                        }
+                }
+            },
+            onError = { error -> status = error },
+        )
+        onDispose { repository.removeConversationIdListener(listener) }
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(22.dp)) {
@@ -130,11 +154,33 @@ fun ChatHistoryMenuScreen(
                                         modifier = Modifier.padding(top = 2.dp),
                                     )
                                 }
-                                Text(
-                                    "Open",
-                                    color = Color(0xFF5E2DD2),
-                                    fontSize = 12.sp,
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        "Open",
+                                        color = Color(0xFF5E2DD2),
+                                        fontSize = 12.sp,
+                                    )
+                                    Text(
+                                        "Delete",
+                                        color = Color(0xFFD93025),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.clickable {
+                                            kotlinx.coroutines.MainScope().launch {
+                                                runCatching { repository.deleteConversation(chat.id) }
+                                                    .onSuccess {
+                                                        conversations = conversations.filterNot { it.id == chat.id }
+                                                        status = null
+                                                    }
+                                                    .onFailure {
+                                                        status = it.message ?: "Chat could not be deleted."
+                                                    }
+                                            }
+                                        },
+                                    )
+                                }
                             }
                         }
                         HorizontalDivider(color = Color(0xFFEEE8F4))
