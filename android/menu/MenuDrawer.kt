@@ -54,7 +54,6 @@ import androidx.compose.material.icons.outlined.AddComment
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.MainActivity
 import com.indoone.accounts.storage.AccountRepositoryProvider
-import com.indoone.home.ChatHistoryStore
 import com.indoone.menu.about.MenuAboutScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
@@ -154,8 +153,12 @@ fun MenuDrawer(
                 Spacer(Modifier.height(17.dp))
 
                 DrawerItem(Icons.Outlined.AddComment, "New Chat", null) {
-                    ChatHistoryStore.requestNewChat(context, userKey)
-                    context.startActivity(Intent(context, MainActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK) })
+                    context.startActivity(
+                        Intent(context, MainActivity::class.java).apply {
+                            putExtra("start_new_chat", true)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        },
+                    )
                 }
                 DrawerItem(Icons.Outlined.PersonOutline, "Profile", null) { showProfile = true }
                 DrawerItem(Icons.Outlined.Memory, "Memory", null) { showMemory = true }
