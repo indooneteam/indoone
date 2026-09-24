@@ -1,6 +1,7 @@
 package com.indoone.menu.data
 
 import com.google.android.gms.tasks.Tasks
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
@@ -124,7 +125,15 @@ class CloudChatRepository(
         )
 
         if (saved) {
-            Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+            runCatching {
+                Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+            }.onFailure { error ->
+                Log.w(
+                    "CloudChatRepository",
+                    "Chat index sync failed after Firestore save; keeping chat saved.",
+                    error,
+                )
+            }
         }
     }
 
