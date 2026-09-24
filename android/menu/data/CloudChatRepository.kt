@@ -148,15 +148,14 @@ class CloudChatRepository(
         }
 
         val indexedIds = documents.map { it.id }.toSet()
-        val indexedValues = indexedIds.associateWith { true }
         val currentIndex = Tasks.await(chatIndex(userId).get()).children.mapNotNull { it.key }.toSet()
-        if (indexedValues.isNotEmpty() || currentIndex.isNotEmpty()) {
-            val updates = mutableMapOf<String, Any?>()
-            indexedIds.forEach { id -> updates[id] = true }
-            (currentIndex - indexedIds).forEach { id -> updates[id] = null }
-            if (updates.isNotEmpty()) {
-                Tasks.await(chatIndex(userId).updateChildren(updates))
-            }
+        val missingIds = indexedIds - currentIndex
+        if (missingIds.isNotEmpty()) {
+            Tasks.await(
+                chatIndex(userId).updateChildren(
+                    missingIds.associateWith { true },
+                ),
+            )
         }
 
         documents.map { document ->
