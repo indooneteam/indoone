@@ -1,5 +1,6 @@
 package com.indoone.home
 
+import android.util.Base64
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
@@ -17,25 +18,81 @@ data class ChatResponse(
     val reply: String,
 )
 
+data class FileUploadResponse(
+    val fileId: String,
+    val filename: String,
+    val bytes: Int,
+    val textPreview: String,
+)
+
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 120_000
 
-    fun sendMessage(message: String, conversationId: String? = null): ChatResponse {
-        val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
-        if (backendUrl.isBlank()) {
-            throw ChatApiException("Indoone backend URL is not configured")
+    fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
+        val backendUrl = requireBackendUrl()
+        val connection = openConnection("$backendUrl/api/chat", requireAuthToken())
+        return try {
+            val payload = JSONObject().apply {
+                put("message", message)
+                conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
+                fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
+            }.toString()
+            val body = executeJson(connection, payload)
+            val json = JSONObject(body)
+            val reply = json.optString("reply")
+            val returnedConversationId = json.optString("conversation_id")
+            if (returnedConversationId.isBlank()) throw ChatApiException("Indoone backend returned no conversation id")
+            if (reply.isBlank()) throw ChatApiException("Indoone backend returned an empty reply")
+            ChatResponse(returnedConversationId, reply)
+        } finally {
+            connection.disconnect()
         }
+    }
 
+    fun uploadTextFile(filename: String, bytes: ByteArray): FileUploadResponse {
+        val backendUrl = requireBackendUrl()
+        val connection = openConnection("$backendUrl/api/files", requireAuthToken())
+        return try {
+            val payload = JSONObject().apply {
+                put("filename", filename)
+                put("content_base64", Base64.encodeToString(bytes, Base64.NO_WRAP))
+            }.toString()
+            val body = executeJson(connection, payload)
+            val json = JSONObject(body)
+            FileUploadResponse(
+                fileId = json.optString("file_id"),
+                filename = json.optString("filename"),
+                bytes = json.optInt("bytes"),
+                textPreview = json.optString("text_preview"),
+            )
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun requireBackendUrl(): String {
+        val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
+        if (backendUrl.isBlank()) throw ChatApiException("Indoone backend URL is not configured")
+        return backendUrl
+    }
+
+    private fun requireAuthToken(): String {
         val user = FirebaseAuth.getInstance().currentUser
-            ?: throw ChatApiException("Your Indoone login session has expired. Please login again.")
-        val idToken = try {
-            Tasks.await(user.getIdToken(false)).token?.takeIf { it.isNotBlank() }
+            ?: throw ChatApiException("Please sign in to use Indoone AI.")
+        return try {
+            Tasks.await(user.getIdToken(false)).token
+                ?.takeIf { it.isNotBlank() }
+                ?: throw ChatApiException("Could not get the Indoone authentication token.")
+        } catch (error: ChatApiException) {
+            throw error
         } catch (error: Exception) {
             throw ChatApiException("Could not refresh your Indoone authentication session. Please login again.", error)
-        } ?: throw ChatApiException("Could not get your Indoone authentication token. Please login again.")
+        }
+    }
 
-        val connection = (URL("$backendUrl/api/chat").openConnection() as HttpURLConnection).apply {
+    private fun openConnection(url: String, authToken: String): HttpURLConnection =
+        (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
@@ -45,32 +102,17 @@ object ChatApi {
             instanceFollowRedirects = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("Authorization", "Bearer $idToken")
+            setRequestProperty("Authorization", "Bearer $authToken")
         }
 
-        return try {
-            val payload = JSONObject().apply {
-                put("message", message)
-                conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
-            }.toString()
-
-            connection.outputStream.use { output ->
-                output.write(payload.toByteArray(Charsets.UTF_8))
-            }
-
+    private fun executeJson(connection: HttpURLConnection, payload: String): String {
+        try {
+            connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
             val responseCode = connection.responseCode
-            val stream = if (responseCode in 200..299) {
-                connection.inputStream
-            } else {
-                connection.errorStream
-            }
-
+            val stream = if (responseCode in 200..299) connection.inputStream else connection.errorStream
             val body = stream?.use { input ->
-                BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
-                    reader.readText()
-                }
+                BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { it.readText() }
             }.orEmpty()
-
             if (responseCode !in 200..299) {
                 val errorMessage = runCatching {
                     val errorJson = JSONObject(body)
@@ -82,27 +124,11 @@ object ChatApi {
                     errorMessage.ifBlank { "Indoone backend returned HTTP $responseCode" }
                 )
             }
-
-            val json = runCatching { JSONObject(body) }
-                .getOrElse { throw ChatApiException("Indoone backend returned invalid JSON") }
-            val reply = json.optString("reply")
-            val returnedConversationId = json.optString("conversation_id")
-            if (returnedConversationId.isBlank()) {
-                throw ChatApiException("Indoone backend returned no conversation id")
-            }
-            if (reply.isBlank()) {
-                throw ChatApiException("Indoone backend returned an empty reply")
-            }
-            ChatResponse(
-                conversationId = returnedConversationId,
-                reply = reply,
-            )
+            return body
         } catch (error: SocketTimeoutException) {
             throw ChatApiException("Indoone AI is taking too long to respond. Please try again.", error)
         } catch (error: UnknownHostException) {
             throw ChatApiException("Indoone AI backend could not be reached. Check your internet connection.", error)
-        } finally {
-            connection.disconnect()
         }
     }
 }
