@@ -1,5 +1,7 @@
 package com.indoone.home
 
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -25,6 +27,14 @@ object ChatApi {
             throw ChatApiException("Indoone backend URL is not configured")
         }
 
+        val user = FirebaseAuth.getInstance().currentUser
+            ?: throw ChatApiException("Your Indoone login session has expired. Please login again.")
+        val idToken = try {
+            Tasks.await(user.getIdToken(false)).token?.takeIf { it.isNotBlank() }
+        } catch (error: Exception) {
+            throw ChatApiException("Could not refresh your Indoone authentication session. Please login again.", error)
+        } ?: throw ChatApiException("Could not get your Indoone authentication token. Please login again.")
+
         val connection = (URL("$backendUrl/api/chat").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = CONNECT_TIMEOUT_MS
@@ -35,6 +45,7 @@ object ChatApi {
             instanceFollowRedirects = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("Authorization", "Bearer $idToken")
         }
 
         return try {
@@ -61,9 +72,14 @@ object ChatApi {
             }.orEmpty()
 
             if (responseCode !in 200..299) {
-                val detail = runCatching { JSONObject(body).optString("detail") }.getOrDefault("")
+                val errorMessage = runCatching {
+                    val errorJson = JSONObject(body)
+                    errorJson.optString("message").ifBlank {
+                        errorJson.optString("detail")
+                    }
+                }.getOrDefault("")
                 throw ChatApiException(
-                    detail.ifBlank { "Indoone backend returned HTTP $responseCode" }
+                    errorMessage.ifBlank { "Indoone backend returned HTTP $responseCode" }
                 )
             }
 
