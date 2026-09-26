@@ -80,9 +80,15 @@ object ChatApi {
     private fun requireAuthToken(): String {
         val user = FirebaseAuth.getInstance().currentUser
             ?: throw ChatApiException("Please sign in to use Indoone AI.")
-        return Tasks.await(user.getIdToken(false)).token
-            ?.takeIf { it.isNotBlank() }
-            ?: throw ChatApiException("Could not get the Indoone authentication token.")
+        return try {
+            Tasks.await(user.getIdToken(false)).token
+                ?.takeIf { it.isNotBlank() }
+                ?: throw ChatApiException("Could not get the Indoone authentication token.")
+        } catch (error: ChatApiException) {
+            throw error
+        } catch (error: Exception) {
+            throw ChatApiException("Could not refresh your Indoone authentication session. Please login again.", error)
+        }
     }
 
     private fun openConnection(url: String, authToken: String): HttpURLConnection =
@@ -108,8 +114,15 @@ object ChatApi {
                 BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { it.readText() }
             }.orEmpty()
             if (responseCode !in 200..299) {
-                val detail = runCatching { JSONObject(body).optString("detail") }.getOrDefault("")
-                throw ChatApiException(detail.ifBlank { "Indoone backend returned HTTP $responseCode" })
+                val errorMessage = runCatching {
+                    val errorJson = JSONObject(body)
+                    errorJson.optString("message").ifBlank {
+                        errorJson.optString("detail")
+                    }
+                }.getOrDefault("")
+                throw ChatApiException(
+                    errorMessage.ifBlank { "Indoone backend returned HTTP $responseCode" }
+                )
             }
             return body
         } catch (error: SocketTimeoutException) {
