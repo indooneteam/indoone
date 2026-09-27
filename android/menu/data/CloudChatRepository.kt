@@ -145,11 +145,10 @@ class CloudChatRepository(
         val documents = Tasks.await(
             firestore.collection("conversations")
                 .whereEqualTo("userId", userId)
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
                 .limit(limit.coerceIn(1, 100).toLong())
                 .get(),
-        ).documents.sortedByDescending {
-            it.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
-        }
+        ).documents
 
         val indexedIds = documents.map { it.id }.toSet()
         val currentIndex = Tasks.await(chatIndex(userId).get()).children.mapNotNull { it.key }.toSet()
@@ -208,16 +207,13 @@ class CloudChatRepository(
 
     suspend fun loadLatestChat(limit: Int = 50): CloudChatConversation? = withContext(Dispatchers.IO) {
         val userId = uid
-        val conversations = Tasks.await(
+        val document = Tasks.await(
             firestore.collection("conversations")
                 .whereEqualTo("userId", userId)
-                .limit(limit.coerceIn(1, 100).toLong())
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
+                .limit(1)
                 .get(),
-        ).documents.sortedByDescending {
-            it.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
-        }
-
-        val document = conversations.firstOrNull() ?: return@withContext null
+        ).documents.firstOrNull() ?: return@withContext null
         val messages = Tasks.await(
             document.reference.collection("messages")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
