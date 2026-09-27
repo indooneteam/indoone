@@ -28,6 +28,7 @@ data class FileUploadResponse(
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 120_000
+    private const val MAX_UPLOAD_BYTES = 2_000_000
 
     fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
         val backendUrl = requireBackendUrl()
@@ -51,21 +52,27 @@ object ChatApi {
     }
 
     fun uploadTextFile(filename: String, bytes: ByteArray): FileUploadResponse {
+        val safeFilename = filename.trim()
+        if (safeFilename.isBlank()) throw ChatApiException("Please choose a file with a valid name.")
+        if (bytes.isEmpty()) throw ChatApiException("The selected file is empty.")
+        if (bytes.size > MAX_UPLOAD_BYTES) throw ChatApiException("File is too large. Maximum size is 2 MB.")
         val backendUrl = requireBackendUrl()
         val connection = openConnection("$backendUrl/api/files", requireAuthToken())
         return try {
             val payload = JSONObject().apply {
-                put("filename", filename)
+                put("filename", safeFilename)
                 put("content_base64", Base64.encodeToString(bytes, Base64.NO_WRAP))
             }.toString()
             val body = executeJson(connection, payload)
             val json = JSONObject(body)
-            FileUploadResponse(
+            val response = FileUploadResponse(
                 fileId = json.optString("file_id"),
                 filename = json.optString("filename"),
                 bytes = json.optInt("bytes"),
                 textPreview = json.optString("text_preview"),
             )
+            if (response.fileId.isBlank()) throw ChatApiException("Indoone backend returned no file id")
+            response
         } finally {
             connection.disconnect()
         }
