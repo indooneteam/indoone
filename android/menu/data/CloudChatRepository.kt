@@ -71,11 +71,9 @@ class CloudChatRepository(
         require(assistantReply.isNotBlank()) { "assistantReply cannot be empty" }
 
         val userId = uid
-        // The Realtime Database chat index is intentionally written first so the
-        // conversation ID is immediately visible under users/{uid}/chats.
-        // Firestore remains the source of the actual message history.
-        Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
-
+        // Firestore is the source of the actual message history. Write it first so
+        // the realtime index listener can never observe an index entry before its
+        // corresponding conversation exists.
         val conversation = firestore.collection("conversations").document(conversationId)
 
         val saved = Tasks.await(
@@ -134,7 +132,12 @@ class CloudChatRepository(
                 "CloudChatRepository",
                 "Conversation was not written because it is already closed or reached the message limit.",
             )
+            return@withContext
         }
+
+        // Keep the lightweight realtime index in sync after the Firestore write.
+        // If this write fails, loadConversations() can repair the missing index entry.
+        Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
     }
 
     suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
