@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -59,6 +60,25 @@ import com.indoone.menu.data.CloudChatRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+
+private const val MAX_UPLOAD_BYTES = 2_000_000
+
+private fun readLimitedBytes(context: android.content.Context, uri: Uri): ByteArray {
+    val output = ByteArrayOutputStream()
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        val buffer = ByteArray(16 * 1024)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) break
+            if (output.size() + count > MAX_UPLOAD_BYTES) {
+                throw IllegalArgumentException("File is too large. Maximum size is 2 MB.")
+            }
+            output.write(buffer, 0, count)
+        }
+    } ?: throw IllegalArgumentException("Could not open the selected file.")
+    return output.toByteArray()
+}
 
 private data class ChatMessage(
     val text: String,
@@ -164,8 +184,7 @@ fun HomeScreen(
                     if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
                 } ?: "document"
                 val bytes = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                        ?: error("Could not open the selected file.")
+                    readLimitedBytes(context, uri)
                 }
                 val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
                 name to upload.fileId
