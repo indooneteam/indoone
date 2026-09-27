@@ -8,6 +8,7 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
+import java.io.IOException
 import java.net.URL
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -126,9 +127,14 @@ object ChatApi {
                     errorJson.optString("message").ifBlank {
                         errorJson.optString("detail")
                     }
-                }.getOrDefault("")
+                }.getOrDefault("").trim()
+
+                val safeServerMessage = errorMessage
+                    .takeIf { it.isNotBlank() && !it.contains("%02") && !it.contains("%0d") && !it.contains("%0D") }
+
                 throw ChatApiException(
-                    errorMessage.ifBlank { "Indoone backend returned HTTP $responseCode" }
+                    safeServerMessage?.let { "Indoone backend returned HTTP $responseCode: $it" }
+                        ?: "Indoone backend returned HTTP $responseCode"
                 )
             }
             return body
@@ -136,6 +142,11 @@ object ChatApi {
             throw ChatApiException("Indoone AI is taking too long to respond. Please try again.", error)
         } catch (error: UnknownHostException) {
             throw ChatApiException("Indoone AI backend could not be reached. Check your internet connection.", error)
+        } catch (error: IOException) {
+            throw ChatApiException(
+                "Indoone AI network error (${error.javaClass.simpleName}). Please check your internet connection and try again.",
+                error,
+            )
         }
     }
 }
