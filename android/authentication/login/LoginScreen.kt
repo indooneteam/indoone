@@ -10,7 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -159,7 +158,7 @@ fun LoginScreen(
 @Composable
 private fun BookPageTurn(
     page: LoginPage,
-    pageContent: @Composable BoxScope.(LoginPage) -> Unit,
+    pageContent: @Composable androidx.compose.foundation.layout.ColumnScope.(LoginPage) -> Unit,
 ) {
     var renderedPage by rememberSaveable { mutableStateOf(page) }
     var turningFromPage by rememberSaveable { mutableStateOf(page) }
@@ -225,7 +224,7 @@ private fun BookPageTurn(
                 }
                 .padding(horizontal = 1.dp, vertical = 1.dp),
         ) {
-            Box(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
                 content = { pageContent(activePage) },
             )
