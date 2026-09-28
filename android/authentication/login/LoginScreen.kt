@@ -74,20 +74,30 @@ fun LoginScreen(
         AuthBrand()
         Spacer(Modifier.height(44.dp))
 
+        val welcomeTexts = listOf(
+            "Welcome to your Indoone account",
+            "Continue with your Indoone account",
+        )
+        var welcomeTextIndex by rememberSaveable { mutableStateOf(0) }
         var welcomeVisibleChars by rememberSaveable { mutableStateOf(0) }
-        val welcomeText = "Welcome back"
 
         LaunchedEffect(Unit) {
-            welcomeVisibleChars = 0
-            val delayPerCharacter = 3000L / welcomeText.length.coerceAtLeast(1)
-            for (index in 1..welcomeText.length) {
-                kotlinx.coroutines.delay(delayPerCharacter)
-                welcomeVisibleChars = index
+            while (true) {
+                val currentText = welcomeTexts[welcomeTextIndex]
+                welcomeVisibleChars = 0
+                val typewriterDuration = 2000L
+                val delayPerCharacter = typewriterDuration / currentText.length.coerceAtLeast(1)
+                for (index in 1..currentText.length) {
+                    kotlinx.coroutines.delay(delayPerCharacter)
+                    welcomeVisibleChars = index
+                }
+                kotlinx.coroutines.delay(2000L)
+                welcomeTextIndex = (welcomeTextIndex + 1) % welcomeTexts.size
             }
         }
 
         Text(
-            text = welcomeText.take(welcomeVisibleChars),
+            text = welcomeTexts[welcomeTextIndex].take(welcomeVisibleChars),
             color = Color(0xFF17151D),
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
@@ -143,7 +153,7 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     AuthPrimaryButton(
-                        text = if (busyAction == AuthBusyAction.SEND_OTP) "Sending…" else "Send OTP",
+                        text = if (busyAction == AuthBusyAction.SEND_OTP) "Sending…" else "Continue with OTP",
                         enabled = actionEnabled,
                         onClick = { onSendOtp(identifier) },
                         modifier = Modifier.weight(1f),
