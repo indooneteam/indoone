@@ -65,11 +65,31 @@ fun SignUpScreen(
     AuthPage {
         AuthBrand()
         Spacer(Modifier.height(44.dp))
-        AuthHeading(
-            eyebrow = "GET STARTED",
-            title = "Create your account",
-            description = "Securely create an Indoone account for your authenticator vault.",
-        )
+        androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                "Get started with",
+                color = androidx.compose.ui.graphics.Color(0xFF7650D8),
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-1).sp,
+                lineHeight = 40.sp,
+            )
+            Text(
+                "Creating your account",
+                color = androidx.compose.ui.graphics.Color(0xFF17151D),
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-1).sp,
+                lineHeight = 40.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Securely create an Indoone account for your authenticator vault.",
+                color = androidx.compose.ui.graphics.Color(0xFF77717F),
+                fontSize = 14.sp,
+                lineHeight = 22.sp,
+            )
+        }
         Spacer(Modifier.height(20.dp))
 
         AuthFieldLabel("EMAIL ID")
