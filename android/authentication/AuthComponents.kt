@@ -104,13 +104,7 @@ fun AuthBrand() {
                 fontWeight = FontWeight.Bold,
                 lineHeight = 19.sp,
             )
-            Text(
-                text = "Authenticator",
-                color = Color(0xFF6F6B77),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 12.sp,
-            )
+
         }
     }
 }
