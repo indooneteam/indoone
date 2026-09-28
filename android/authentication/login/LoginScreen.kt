@@ -96,17 +96,18 @@ fun LoginScreen(
                 Text(
                 text = buildAnnotatedString {
                     withStyle(
-                        SpanStyle(
-                            brush = if (index == 1) {
-                                Brush.horizontalGradient(
+                        if (index == 1) {
+                            SpanStyle(
+                                brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color(0xFF6330DB),
                                         Color(0xFF9147ED),
                                     ),
                                 )
-                            } else null,
-                            color = Color(0xFF17151D),
-                        )
+                            )
+                        } else {
+                            SpanStyle(color = Color(0xFF17151D))
+                        }
                     ) {
                         append(welcomeTexts[index])
                     }
