@@ -105,6 +105,12 @@ class AuthActivity : ComponentActivity() {
                                 busyAction = null
                             }
                         },
+                        onBackToLogin = {
+                            otpVisible = false
+                            otpEmail = ""
+                            status = ""
+                            error = ""
+                        },
                         onVerifyOtp = { otp ->
                             busyAction = AuthBusyAction.VERIFY_OTP
                             error = ""
