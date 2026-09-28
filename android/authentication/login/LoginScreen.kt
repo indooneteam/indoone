@@ -163,36 +163,50 @@ private fun BookPageTurn(
     page: LoginPage,
     pageContent: @Composable androidx.compose.foundation.layout.ColumnScope.(LoginPage) -> Unit,
 ) {
-    var renderedPage by rememberSaveable { mutableStateOf(page) }
+    var displayedPage by rememberSaveable { mutableStateOf(page) }
+    var turningFromPage by remember { mutableStateOf<LoginPage?>(null) }
     val turnProgress = remember { Animatable(1f) }
 
     LaunchedEffect(page) {
-        if (page == renderedPage) return@LaunchedEffect
+        if (page == displayedPage) {
+            turningFromPage = null
+            turnProgress.snapTo(1f)
+            return@LaunchedEffect
+        }
 
+        val fromPage = displayedPage
+        turningFromPage = fromPage
         turnProgress.snapTo(0f)
-        turnProgress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = 1100,
-                easing = FastOutSlowInEasing,
-            ),
-        )
-        renderedPage = page
+
+        try {
+            turnProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = 1100,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            displayedPage = page
+            turningFromPage = null
+            turnProgress.snapTo(1f)
+        } catch (_: kotlinx.coroutines.CancellationException) {
+            // A rapid Back/Continue change cancels the old turn.
+            // The next LaunchedEffect starts a fresh turn from the stable displayed page.
+            if (page == displayedPage) {
+                turningFromPage = null
+                turnProgress.snapTo(1f)
+            }
+        }
     }
 
-    val isTurningForward = page.ordinal > renderedPage.ordinal
-    val oldPageRotation = if (isTurningForward) {
-        -90f * turnProgress.value
-    } else {
-        90f * turnProgress.value
-    }
+    val fromPage = turningFromPage
 
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        // The destination page stays underneath from the first frame.
-        // Only the current page turns away, so there is no second page-open animation.
+        // The destination page is always rendered underneath.
+        // This prevents a second "page opening" pass on every Back/Continue cycle.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -224,7 +238,9 @@ private fun BookPageTurn(
             )
         }
 
-        if (page != renderedPage) {
+        if (fromPage != null && fromPage != page) {
+            val isTurningForward = page.ordinal > fromPage.ordinal
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -249,25 +265,27 @@ private fun BookPageTurn(
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                     )
                     .graphicsLayer {
-                        rotationY = oldPageRotation
+                        rotationY = if (isTurningForward) {
+                            -90f * turnProgress.value
+                        } else {
+                            90f * turnProgress.value
+                        }
                         cameraDistance = 18f * density
                         transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
                             pivotFractionX = if (isTurningForward) 0f else 1f,
                             pivotFractionY = 0.5f,
                         )
-                        alpha = 1f - (turnProgress.value * turnProgress.value)
                     }
                     .padding(horizontal = 22.dp, vertical = 24.dp),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    content = { pageContent(renderedPage) },
+                    content = { pageContent(fromPage) },
                 )
             }
         }
     }
 }
-
 @Composable
 private fun LoginEntryPage(
     identifier: String,
