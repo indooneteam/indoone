@@ -193,12 +193,14 @@ private fun BookPageTurn(
     }
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(420.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .shadow(
                     elevation = 14.dp,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
