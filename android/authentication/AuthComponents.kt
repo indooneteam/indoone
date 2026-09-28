@@ -192,6 +192,7 @@ fun AuthPrimaryButton(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    fontSize: androidx.compose.ui.unit.TextUnit = 14.sp,
 ) {
     Button(
         onClick = onClick,
@@ -214,7 +215,7 @@ fun AuthPrimaryButton(
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 1,
             softWrap = false,
