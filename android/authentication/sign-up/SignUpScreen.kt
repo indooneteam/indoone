@@ -69,6 +69,7 @@ fun SignUpScreen(
         Spacer(Modifier.height(44.dp))
         androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxWidth()) {
             var showCreatingAccount by rememberSaveable { mutableStateOf(false) }
+            var descriptionVisibleChars by rememberSaveable { mutableStateOf(0) }
 
             LaunchedEffect(Unit) {
                 while (isActive) {
@@ -77,10 +78,19 @@ fun SignUpScreen(
                 }
             }
 
+            LaunchedEffect(Unit) {
+                val description = "Securely create an Indoone account for your authenticator vault."
+                val delayPerCharacter = 2000L / description.length.coerceAtLeast(1)
+                for (index in 1..description.length) {
+                    kotlinx.coroutines.delay(delayPerCharacter)
+                    descriptionVisibleChars = index
+                }
+            }
+
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp),
+                    .height(40.dp),
                 contentAlignment = androidx.compose.ui.Alignment.TopStart,
             ) {
                 androidx.compose.animation.Crossfade(
@@ -102,8 +112,9 @@ fun SignUpScreen(
                     )
                 }
             }
+            val description = "Securely create an Indoone account for your authenticator vault."
             Text(
-                "Securely create an Indoone account for your authenticator vault.",
+                description.take(descriptionVisibleChars),
                 color = androidx.compose.ui.graphics.Color(0xFF77717F),
                 fontSize = 14.sp,
                 lineHeight = 22.sp,
