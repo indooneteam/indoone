@@ -42,7 +42,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.animateContentSize
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthBusyAction
 import com.indoone.authentication.AuthFieldLabel
@@ -188,11 +187,7 @@ private fun BookPageTurn(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(
-                animationSpec = tween(220),
-            ),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Box(
             modifier = Modifier
