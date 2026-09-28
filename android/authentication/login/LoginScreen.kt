@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.border
@@ -196,7 +197,7 @@ private fun BookPageTurn(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(580.dp),
+            .heightIn(min = 500.dp, max = 540.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
