@@ -193,12 +193,13 @@ fun AuthPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     fontSize: androidx.compose.ui.unit.TextUnit = 14.sp,
+    fillMaxWidth: Boolean = true,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
-            .fillMaxWidth()
+            .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier)
             .height(48.dp)
             .clip(RoundedCornerShape(13.dp))
             .background(
