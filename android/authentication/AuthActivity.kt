@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 
 enum class AuthBusyAction {
     SEND_OTP,
+    CREATE_ACCOUNT,
     VERIFY_OTP,
     RESEND_OTP,
 }
@@ -87,6 +88,19 @@ class AuthActivity : ComponentActivity() {
                                         status = ""
                                     }
                                     .onFailure { error = it.message ?: "Could not start signup." }
+                                busyAction = null
+                            }
+                        },
+                        onCreateWithPassword = { email, mobile, password ->
+                            busyAction = AuthBusyAction.CREATE_ACCOUNT
+                            error = ""
+                            scope.launch {
+                                runCatching { service.createSignupWithPassword(email, mobile, password) }
+                                    .onSuccess { uid ->
+                                        session.setVerified(uid)
+                                        openMain()
+                                    }
+                                    .onFailure { error = it.message ?: "Could not create account." }
                                 busyAction = null
                             }
                         },
