@@ -196,7 +196,7 @@ private fun BookPageTurn(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(420.dp),
+            .height(580.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
