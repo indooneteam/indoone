@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.R
@@ -211,7 +212,14 @@ fun AuthPrimaryButton(
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
-        Text(text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Clip,
+        )
     }
 }
 
