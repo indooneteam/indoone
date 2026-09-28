@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -57,13 +58,17 @@ fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.White, Color(0xFFFBFAFF)),
+                    colors = listOf(
+                        Color(0xFFECE7DE),
+                        Color(0xFFE2DCD2),
+                        Color(0xFFD9D1C6),
+                    ),
                 )
             ),
     ) {
         val wideLayout = maxWidth >= 700.dp
-        val horizontalPadding = if (wideLayout) 34.dp else 22.dp
-        val verticalPadding = if (wideLayout) 64.dp else 48.dp
+        val horizontalPadding = if (wideLayout) 34.dp else 18.dp
+        val verticalPadding = if (wideLayout) 28.dp else 24.dp
 
         Column(
             modifier = Modifier
@@ -73,12 +78,36 @@ fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 460.dp),
-                content = content,
-            )
+                    .widthIn(max = 460.dp)
+                    .shadow(
+                        elevation = 14.dp,
+                        shape = RoundedCornerShape(18.dp),
+                        clip = false,
+                    )
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFFDF7),
+                                Color(0xFFF7F0E3),
+                            ),
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFFD8CBB8),
+                        shape = RoundedCornerShape(18.dp),
+                    )
+                    .padding(horizontal = 22.dp, vertical = 24.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content,
+                )
+            }
         }
     }
 }
