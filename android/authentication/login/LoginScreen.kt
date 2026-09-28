@@ -210,6 +210,7 @@ private fun LoginEntryPage(
             onClick = onSendOtp,
             modifier = Modifier.weight(1f),
             fontSize = 12.sp,
+            fillMaxWidth = false,
         )
         AuthPrimaryButton(
             text = "Continue with Password",
@@ -217,6 +218,7 @@ private fun LoginEntryPage(
             onClick = onContinueWithPassword,
             modifier = Modifier.weight(1f),
             fontSize = 12.sp,
+            fillMaxWidth = false,
         )
     }
 
