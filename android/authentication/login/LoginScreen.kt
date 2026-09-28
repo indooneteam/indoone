@@ -1,13 +1,11 @@
 package com.indoone.authentication.login
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.animateContentSize
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthBusyAction
 import com.indoone.authentication.AuthFieldLabel
@@ -93,26 +93,11 @@ fun LoginScreen(
         AuthBrand()
         Spacer(Modifier.height(24.dp))
 
-        AnimatedContent(
-            targetState = page,
-            transitionSpec = {
-                (
-                    slideInHorizontally(
-                        animationSpec = tween(400),
-                        initialOffsetX = { width -> width },
-                    ) + fadeIn(animationSpec = tween(250))
-                ).togetherWith(
-                    slideOutHorizontally(
-                        animationSpec = tween(400),
-                        targetOffsetX = { width -> -width / 3 },
-                    ) + fadeOut(animationSpec = tween(250))
-                )
-            },
-            label = "login_book_page",
-        ) { currentPage ->
-            when (currentPage) {
-                LoginPage.LOGIN -> {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+        BookPageTurn(
+            page = page,
+            pageContent = { currentPage ->
+                when (currentPage) {
+                    LoginPage.LOGIN -> {
                         LoginEntryPage(
                             identifier = identifier,
                             busy = busy,
@@ -123,10 +108,8 @@ fun LoginScreen(
                             onCreateAccount = onCreateAccount,
                         )
                     }
-                }
 
-                LoginPage.OTP -> {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    LoginPage.OTP -> {
                         LoginOtpPage(
                             busy = busy,
                             busyAction = busyAction,
@@ -141,10 +124,8 @@ fun LoginScreen(
                             onBack = onBackToLogin,
                         )
                     }
-                }
 
-                LoginPage.PASSWORD -> {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    LoginPage.PASSWORD -> {
                         LoginPasswordPage(
                             identifier = identifier,
                             password = password,
@@ -159,13 +140,94 @@ fun LoginScreen(
                         )
                     }
                 }
-            }
-        }
+            },
+        )
 
         Spacer(Modifier.height(18.dp))
         LoginPageIndicator(currentPage = page)
 
         AuthStatus(error, error = true)
+    }
+}
+
+@Composable
+private fun BookPageTurn(
+    page: LoginPage,
+    pageContent: @Composable BoxScope.(LoginPage) -> Unit,
+) {
+    var renderedPage by rememberSaveable { mutableStateOf(page) }
+    var turningFromPage by rememberSaveable { mutableStateOf(page) }
+    val turnProgress = remember { Animatable(1f) }
+
+    LaunchedEffect(page) {
+        if (page == renderedPage) return@LaunchedEffect
+
+        turningFromPage = renderedPage
+        turnProgress.snapTo(0f)
+        turnProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 720,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+        renderedPage = page
+    }
+
+    val progress = turnProgress.value
+    val isTurningForward = page.ordinal > turningFromPage.ordinal
+    val activePage = if (progress < 0.5f) turningFromPage else page
+
+    val rotationY = if (progress < 0.5f) {
+        val phase = progress / 0.5f
+        if (isTurningForward) -90f * phase else 90f * phase
+    } else {
+        val phase = (progress - 0.5f) / 0.5f
+        if (isTurningForward) 90f * (1f - phase) else -90f * (1f - phase)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = tween(220),
+            ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 12.dp,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    clip = false,
+                )
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFFEF9),
+                            Color(0xFFF8F0E2),
+                        ),
+                    ),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                )
+                .graphicsLayer {
+                    this.rotationY = rotationY
+                    cameraDistance = 16f * density
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
+                        pivotFractionX = if (isTurningForward) 0f else 1f,
+                        pivotFractionY = 0.5f,
+                    )
+                    val fold = (kotlin.math.abs(rotationY) / 90f).coerceIn(0f, 1f)
+                    scaleX = 1f - (0.035f * fold)
+                    scaleY = 1f - (0.012f * fold)
+                }
+                .padding(horizontal = 1.dp, vertical = 1.dp),
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                content = { pageContent(activePage) },
+            )
+        }
     }
 }
 
