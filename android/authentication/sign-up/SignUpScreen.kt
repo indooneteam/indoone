@@ -67,22 +67,40 @@ fun SignUpScreen(
         AuthBrand()
         Spacer(Modifier.height(44.dp))
         androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                "Get started with",
-                color = androidx.compose.ui.graphics.Color(0xFF7650D8),
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-1).sp,
-                lineHeight = 40.sp,
-            )
-            Text(
-                "Creating your account",
-                color = androidx.compose.ui.graphics.Color(0xFF17151D),
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-1).sp,
-                lineHeight = 40.sp,
-            )
+            var showCreatingAccount by rememberSaveable { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                while (kotlinx.coroutines.isActive) {
+                    kotlinx.coroutines.delay(2000)
+                    showCreatingAccount = !showCreatingAccount
+                }
+            }
+
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                contentAlignment = androidx.compose.ui.Alignment.TopStart,
+            ) {
+                androidx.compose.animation.Crossfade(
+                    targetState = showCreatingAccount,
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 500),
+                    label = "create_account_title",
+                ) { creating ->
+                    Text(
+                        text = if (creating) "Creating your account" else "Get started with",
+                        color = if (creating) {
+                            androidx.compose.ui.graphics.Color(0xFF17151D)
+                        } else {
+                            androidx.compose.ui.graphics.Color(0xFF7650D8)
+                        },
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-1).sp,
+                        lineHeight = 40.sp,
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 "Securely create an Indoone account for your authenticator vault.",
