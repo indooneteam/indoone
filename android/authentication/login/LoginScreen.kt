@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -94,11 +95,21 @@ fun LoginScreen(
         ) { index ->
                 Text(
                 text = welcomeTexts[index],
-                color = Color(0xFF17151D),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-1).sp,
-                lineHeight = 40.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                    color = Color(0xFF17151D),
+                    brush = if (index == 1) {
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF6330DB),
+                                Color(0xFF9147ED),
+                            ),
+                        )
+                    } else null,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1).sp,
+                    lineHeight = 40.sp,
+                ),
                 maxLines = 1,
                 softWrap = false,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
