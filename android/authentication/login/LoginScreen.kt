@@ -173,7 +173,7 @@ private fun BookPageTurn(
         turnProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(
-                durationMillis = 720,
+                durationMillis = 1100,
                 easing = FastOutSlowInEasing,
             ),
         )
