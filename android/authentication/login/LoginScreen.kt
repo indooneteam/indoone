@@ -68,6 +68,7 @@ fun LoginScreen(
     onPasswordLogin: (identifier: String, password: String) -> Unit,
     onVerifyOtp: (otp: String) -> Unit,
     onResendOtp: () -> Unit,
+    onBackToLogin: () -> Unit,
     onCreateAccount: () -> Unit,
 ) {
     var identifier by rememberSaveable { mutableStateOf("") }
@@ -133,7 +134,7 @@ fun LoginScreen(
                         onOtpChanged = { otp = it.filter(Char::isDigit).take(6) },
                         onVerifyOtp = { onVerifyOtp(otp) },
                         onResendOtp = onResendOtp,
-                        onBack = { page = LoginPage.LOGIN },
+                        onBack = onBackToLogin,
                     )
                 }
 
@@ -144,6 +145,7 @@ fun LoginScreen(
                         busy = busy,
                         busyAction = busyAction,
                         passwordVisible = passwordVisible,
+                        onIdentifierChanged = { identifier = it },
                         onPasswordChanged = { password = it },
                         onPasswordVisibilityChanged = { passwordVisible = !passwordVisible },
                         onCompleteLogin = { onPasswordLogin(identifier, password) },
@@ -181,6 +183,8 @@ private fun LoginEntryPage(
 
     Spacer(Modifier.height(20.dp))
     AuthFieldLabel("EMAIL OR MOBILE NUMBER")
+    val mobileOnly = identifier.isNotBlank() && identifier.none(Char::isLetter) && identifier.none { it == '@' }
+
     AuthTextField(
         value = identifier,
         onValueChange = onIdentifierChanged,
@@ -190,6 +194,9 @@ private fun LoginEntryPage(
             keyboardType = KeyboardType.Text,
             imeAction = ImeAction.Next,
         ),
+        leadingContent = if (mobileOnly) {
+            { Text("+91", fontSize = 13.sp) }
+        } else null,
     )
 
     Spacer(Modifier.height(18.dp))
@@ -298,6 +305,7 @@ private fun LoginPasswordPage(
     busy: Boolean,
     busyAction: AuthBusyAction?,
     passwordVisible: Boolean,
+    onIdentifierChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onPasswordVisibilityChanged: () -> Unit,
     onCompleteLogin: () -> Unit,
@@ -339,9 +347,9 @@ private fun LoginPasswordPage(
     AuthFieldLabel("EMAIL OR MOBILE NUMBER")
     AuthTextField(
         value = identifier,
-        onValueChange = {},
+        onValueChange = onIdentifierChanged,
         placeholder = "you@example.com or 98765 43210",
-        enabled = false,
+        enabled = !busy,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
     )
 
