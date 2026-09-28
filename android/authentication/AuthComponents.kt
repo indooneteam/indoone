@@ -215,7 +215,12 @@ fun AuthPrimaryButton(
 }
 
 @Composable
-fun AuthSecondaryButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+fun AuthSecondaryButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    textColor: Color = Color(0xFF5F5966),
+) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -226,9 +231,9 @@ fun AuthSecondaryButton(text: String, enabled: Boolean, onClick: () -> Unit) {
         border = BorderStroke(1.dp, IndooneBorder),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.White,
-            contentColor = Color(0xFF5F5966),
+            contentColor = textColor,
             disabledContainerColor = Color.White,
-            disabledContentColor = Color(0xFF8A8490),
+            disabledContentColor = textColor,
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
