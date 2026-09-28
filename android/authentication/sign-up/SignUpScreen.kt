@@ -118,7 +118,7 @@ fun SignUpScreen(
                 onClick = { onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
             )
             Spacer(Modifier.height(8.dp))
-            AuthSecondaryButton(
+            AuthPrimaryButton(
                 text = if (busyAction == AuthBusyAction.CREATE_ACCOUNT) "Creating account…" else "Continue with Password",
                 enabled = actionEnabled,
                 onClick = { onCreateWithPassword(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
