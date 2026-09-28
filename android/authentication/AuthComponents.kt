@@ -53,7 +53,10 @@ private val IndooneField = Color(0xFFFBFAFC)
 private val IndooneEyebrow = Color(0xFF7650D8)
 
 @Composable
-fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
+fun AuthPage(
+    showCard: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -79,33 +82,42 @@ fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 460.dp)
-                    .shadow(
-                        elevation = 14.dp,
-                        shape = RoundedCornerShape(18.dp),
-                        clip = false,
-                    )
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFFFFDF7),
-                                Color(0xFFF7F0E3),
-                            ),
+            if (showCard) {
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 460.dp)
+                        .shadow(
+                            elevation = 14.dp,
+                            shape = RoundedCornerShape(18.dp),
+                            clip = false,
                         )
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFFFDF7),
+                                    Color(0xFFF7F0E3),
+                                ),
+                            )
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFFD8CBB8),
+                            shape = RoundedCornerShape(18.dp),
+                        )
+                        .padding(horizontal = 22.dp, vertical = 24.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = content,
                     )
-                    .border(
-                        width = 1.dp,
-                        color = Color(0xFFD8CBB8),
-                        shape = RoundedCornerShape(18.dp),
-                    )
-                    .padding(horizontal = 22.dp, vertical = 24.dp),
-            ) {
+                }
+            } else {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 460.dp),
                     content = content,
                 )
             }
