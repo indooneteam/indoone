@@ -203,23 +203,31 @@ private fun LoginEntryPage(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        AuthPrimaryButton(
-            text = if (busy && actionEnabled) "Sending…" else "Continue with OTP",
-            enabled = actionEnabled,
-            onClick = onSendOtp,
+        androidx.compose.foundation.layout.Box(
             modifier = Modifier.weight(1f),
-            fontSize = 12.sp,
-            fillMaxWidth = false,
-        )
-        AuthPrimaryButton(
-            text = "Continue with Password",
-            enabled = actionEnabled,
-            onClick = onContinueWithPassword,
+        ) {
+            AuthPrimaryButton(
+                text = if (busy && actionEnabled) "Sending…" else "Continue with OTP",
+                enabled = actionEnabled,
+                onClick = onSendOtp,
+                fontSize = 12.sp,
+                fillMaxWidth = true,
+            )
+        }
+
+        androidx.compose.foundation.layout.Box(
             modifier = Modifier.weight(1f),
-            fontSize = 12.sp,
-            fillMaxWidth = false,
-        )
+        ) {
+            AuthPrimaryButton(
+                text = "Continue with Password",
+                enabled = actionEnabled,
+                onClick = onContinueWithPassword,
+                fontSize = 12.sp,
+                fillMaxWidth = true,
+            )
+        }
     }
 
     Spacer(Modifier.height(18.dp))
