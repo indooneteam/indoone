@@ -121,6 +121,29 @@ class IndooneAuthService(
         return email
     }
 
+    suspend fun createSignupWithPassword(emailValue: String, mobileValue: String, password: String): String {
+        val email = emailValue.trim().lowercase()
+        val mobile = normalizeMobile(mobileValue)
+        if (!email.contains('@')) throw AuthException("Enter a valid email address.")
+        if (!mobile.matches(Regex("\\+91\\d{10}"))) throw AuthException("Enter a valid 10-digit Indian mobile number.")
+        if (password.length < 6) throw AuthException("Password should be at least 6 characters.")
+
+        return withContext(Dispatchers.IO) {
+            try {
+                if (identityExists(email, mobile)) {
+                    throw AuthException("An account already exists with this email or mobile number.")
+                }
+                val user = await(auth.createUserWithEmailAndPassword(email, password)).user
+                    ?: throw AuthException("Could not create the Indoone account.")
+                syncProfile(user.uid, email, mobile)
+                user.uid
+            } catch (error: Throwable) {
+                auth.signOut()
+                throw normalizeError(error)
+            }
+        }
+    }
+
     suspend fun resendSignupOtp(): String {
         val pending = signupPending ?: throw AuthException("Signup session expired. Enter your details again.")
         withContext(Dispatchers.IO) {
