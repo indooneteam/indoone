@@ -21,39 +21,43 @@ class IndooneAuthService(
     private var loginPending: LoginPending? = null
     private var signupPending: SignupPending? = null
 
-    suspend fun login(identifier: String, password: String): String {
+    suspend fun loginWithPassword(identifier: String, password: String): String {
         val raw = identifier.trim()
-        if (raw.isBlank() || password.isBlank()) throw AuthException("Enter your email/mobile number and password.")
+        if (raw.isBlank() || password.isBlank()) {
+            throw AuthException("Enter your email/mobile number and password.")
+        }
 
         return withContext(Dispatchers.IO) {
             try {
-                val email = if (raw.contains('@')) raw.lowercase() else resolveMobile(raw).email
-                await(auth.signInWithEmailAndPassword(email, password))
-                val user = auth.currentUser ?: throw AuthException("Login session expired. Please login again.")
-                val profileSnapshot = await(database.reference.child("users").child(user.uid).child("profile").get())
-                val profile = profileSnapshot.value as? Map<*, *>
-                val savedEmail = profile?.get("email")?.toString()?.trim()?.lowercase().orEmpty()
-                if (raw.contains('@') && savedEmail.isNotBlank() && savedEmail != email) {
-                    throw AuthException("The account profile does not match this email address.")
-                }
-                if (!raw.contains('@')) {
-                    val expectedMobile = normalizeMobile(raw)
-                    val savedMobile = normalizeMobile(profile?.get("mobile")?.toString().orEmpty())
-                    if (savedMobile.isNotBlank() && savedMobile != expectedMobile) {
-                        throw AuthException("This mobile number is not linked to this Indoone account.")
-                    }
-                }
+                val email = resolveLoginEmail(raw)
+                val user = await(auth.signInWithEmailAndPassword(email, password)).user
+                    ?: throw AuthException("Login session expired. Please login again.")
+                validateLoginProfile(user.uid, email, raw)
+                syncProfile(user.uid, email, null)
+                user.uid
+            } catch (error: Throwable) {
+                auth.signOut()
+                throw normalizeError(error)
+            }
+        }
+    }
 
+    suspend fun startLoginOtp(identifier: String): String {
+        val raw = identifier.trim()
+        if (raw.isBlank()) throw AuthException("Enter your email/mobile number.")
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val email = resolveLoginEmail(raw)
                 val result = post("/api/auth/login/request-otp", JSONObject().apply {
                     put("email", email)
                     put("name", "Indoone user")
                 })
                 val challengeId = result.optString("challengeId")
                 if (challengeId.isBlank()) throw AuthException("OTP service did not return a challenge ID.")
-                loginPending = LoginPending(email, challengeId, user.uid)
+                loginPending = LoginPending(email, challengeId)
                 email
             } catch (error: Throwable) {
-                auth.signOut()
                 throw normalizeError(error)
             }
         }
@@ -75,14 +79,59 @@ class IndooneAuthService(
                 if (!result.optBoolean("verified", false)) {
                     throw AuthException(result.optString("error").ifBlank { "OTP verification failed." })
                 }
-                val user = auth.currentUser ?: throw AuthException("Login session expired. Please login again.")
-                if (user.uid != pending.uid) throw AuthException("Login session changed. Please try again.")
+
+                val customToken = sequenceOf(
+                    result.optString("customToken"),
+                    result.optString("firebaseCustomToken"),
+                    result.optString("firebaseToken"),
+                    result.optString("token"),
+                ).firstOrNull { it.isNotBlank() }
+
+                val user = if (!customToken.isNullOrBlank()) {
+                    await(auth.signInWithCustomToken(customToken)).user
+                        ?: throw AuthException("OTP verified, but login session could not be created.")
+                } else {
+                    auth.currentUser
+                        ?: throw AuthException(
+                            "OTP was verified, but the verification service did not return a login session."
+                        )
+                }
+
+                validateLoginProfile(user.uid, pending.email, pending.email)
                 syncProfile(user.uid, pending.email, null)
                 loginPending = null
             } catch (error: Throwable) {
                 auth.signOut()
                 loginPending = null
                 throw normalizeError(error)
+            }
+        }
+    }
+
+    private suspend fun resolveLoginEmail(raw: String): String {
+        if (raw.contains('@')) {
+            val email = raw.lowercase()
+            val methods = await(auth.fetchSignInMethodsForEmail(email))
+            if (methods.signInMethods.isNullOrEmpty()) {
+                throw AuthException("No Indoone account was found.")
+            }
+            return email
+        }
+        return resolveMobile(raw).email
+    }
+
+    private suspend fun validateLoginProfile(uid: String, email: String, rawIdentifier: String) {
+        val profileSnapshot = await(database.reference.child("users").child(uid).child("profile").get())
+        val profile = profileSnapshot.value as? Map<*, *>
+        val savedEmail = profile?.get("email")?.toString()?.trim()?.lowercase().orEmpty()
+        if (savedEmail.isNotBlank() && savedEmail != email) {
+            throw AuthException("The account profile does not match this email address.")
+        }
+        if (!rawIdentifier.contains('@')) {
+            val expectedMobile = normalizeMobile(rawIdentifier)
+            val savedMobile = normalizeMobile(profile?.get("mobile")?.toString().orEmpty())
+            if (savedMobile.isNotBlank() && savedMobile != expectedMobile) {
+                throw AuthException("This mobile number is not linked to this Indoone account.")
             }
         }
     }
@@ -297,7 +346,7 @@ class IndooneAuthService(
     private suspend fun <T> await(task: Task<T>): T = withContext(Dispatchers.IO) { Tasks.await(task) }
 
     data class AuthException(override val message: String) : Exception(message)
-    private data class LoginPending(val email: String, val challengeId: String, val uid: String)
+    private data class LoginPending(val email: String, val challengeId: String)
     private data class SignupPending(val email: String, val mobile: String, val password: String, val challengeId: String)
     private data class MobileIdentity(val email: String, val uid: String)
 }
