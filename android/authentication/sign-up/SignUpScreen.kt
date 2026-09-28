@@ -211,7 +211,12 @@ fun SignUpScreen(
 
         AuthStatus(error, error = true)
         Spacer(Modifier.height(10.dp))
-        AuthSecondaryButton("Already have an account? Login", !busy, onLogin)
+        AuthSecondaryButton(
+            text = "Already have an account? Login",
+            enabled = !busy,
+            onClick = onLogin,
+            textColor = androidx.compose.ui.graphics.Color(0xFF2E7D32),
+        )
         Spacer(Modifier.height(10.dp))
         Text(
             "Continue with OTP verifies your email. Continue with Password creates the account directly using your password.",
