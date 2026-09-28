@@ -19,7 +19,7 @@ android {
         versionName = "0.1.0"
 
         val channel = if (System.getenv("GITHUB_REF_NAME") == "develop") "develop" else "main"
-        val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: "https://indoverification-production.up.railway.app"
+        val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: "https://indoone-backend.onrender.com"
         buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
     }
