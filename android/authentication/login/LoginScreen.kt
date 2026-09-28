@@ -164,18 +164,14 @@ private fun BookPageTurn(
     pageContent: @Composable androidx.compose.foundation.layout.ColumnScope.(LoginPage) -> Unit,
 ) {
     var displayedPage by rememberSaveable { mutableStateOf(page) }
-    var turningFromPage by remember { mutableStateOf<LoginPage?>(null) }
     val turnProgress = remember { Animatable(1f) }
 
     LaunchedEffect(page) {
         if (page == displayedPage) {
-            turningFromPage = null
             turnProgress.snapTo(1f)
             return@LaunchedEffect
         }
 
-        val fromPage = displayedPage
-        turningFromPage = fromPage
         turnProgress.snapTo(0f)
 
         try {
@@ -187,26 +183,47 @@ private fun BookPageTurn(
                 ),
             )
             displayedPage = page
-            turningFromPage = null
             turnProgress.snapTo(1f)
         } catch (_: kotlinx.coroutines.CancellationException) {
-            // A rapid Back/Continue change cancels the old turn.
-            // The next LaunchedEffect starts a fresh turn from the stable displayed page.
-            if (page == displayedPage) {
-                turningFromPage = null
-                turnProgress.snapTo(1f)
-            }
+            // A quick Back/Continue change cancels the current turn.
+            // The next effect starts from the current stable page.
         }
     }
 
-    val fromPage = turningFromPage
+    val isTurning = page != displayedPage
+    val isTurningForward = page.ordinal > displayedPage.ordinal
+    val progress = turnProgress.value
+
+    // One physical page only:
+    // first half folds away, content swaps while edge-on, second half opens the new page.
+    val rotationY = if (!isTurning) {
+        0f
+    } else if (isTurningForward) {
+        if (progress <= 0.5f) {
+            -180f * progress
+        } else {
+            180f * progress - 180f
+        }
+    } else {
+        if (progress <= 0.5f) {
+            180f * progress
+        } else {
+            180f - 180f * progress
+        }
+    }
+
+    val visiblePage = if (!isTurning || progress < 0.5f) {
+        displayedPage
+    } else {
+        page
+    }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        // The destination page is always rendered underneath.
-        // This prevents a second "page opening" pass on every Back/Continue cycle.
+        // Only one page/card is rendered. The content changes at the edge-on
+        // midpoint, so there is never a second full page underneath it.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -230,59 +247,20 @@ private fun BookPageTurn(
                     color = Color(0xFFD8CBB8),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                 )
+                .graphicsLayer {
+                    rotationY = rotationY
+                    cameraDistance = 18f * density
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
+                        pivotFractionX = if (isTurningForward) 0f else 1f,
+                        pivotFractionY = 0.5f,
+                    )
+                }
                 .padding(horizontal = 22.dp, vertical = 24.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                content = { pageContent(page) },
+                content = { pageContent(visiblePage) },
             )
-        }
-
-        if (fromPage != null && fromPage != page) {
-            val isTurningForward = page.ordinal > fromPage.ordinal
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 14.dp,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-                        clip = false,
-                    )
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFFFFDF7),
-                                Color(0xFFF7F0E3),
-                            ),
-                        ),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = Color(0xFFD8CBB8),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-                    )
-                    .graphicsLayer {
-                        rotationY = if (isTurningForward) {
-                            -90f * turnProgress.value
-                        } else {
-                            90f * turnProgress.value
-                        }
-                        cameraDistance = 18f * density
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
-                            pivotFractionX = if (isTurningForward) 0f else 1f,
-                            pivotFractionY = 0.5f,
-                        )
-                    }
-                    .padding(horizontal = 22.dp, vertical = 24.dp),
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    content = { pageContent(fromPage) },
-                )
-            }
         }
     }
 }
