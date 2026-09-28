@@ -92,10 +92,10 @@ fun LoginScreen(
             animationSpec = androidx.compose.animation.core.tween(durationMillis = 350),
             label = "login_title",
         ) { index ->
-            Text(
+                Text(
                 text = welcomeTexts[index],
                 color = Color(0xFF17151D),
-                fontSize = 34.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-1).sp,
                 lineHeight = 40.sp,
@@ -157,12 +157,14 @@ fun LoginScreen(
                         enabled = actionEnabled,
                         onClick = { onSendOtp(identifier) },
                         modifier = Modifier.weight(1f),
+                        fontSize = 12.sp,
                     )
                     AuthPrimaryButton(
                         text = "Continue with Password",
                         enabled = actionEnabled,
                         onClick = { passwordMode = true },
                         modifier = Modifier.weight(1f),
+                        fontSize = 12.sp,
                     )
                 }
             }
