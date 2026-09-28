@@ -102,7 +102,6 @@ fun SignUpScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
             Text(
                 "Securely create an Indoone account for your authenticator vault.",
                 color = androidx.compose.ui.graphics.Color(0xFF77717F),
