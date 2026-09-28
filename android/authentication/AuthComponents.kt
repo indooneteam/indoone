@@ -142,7 +142,7 @@ fun AuthHeading(eyebrow: String, title: String, description: String) {
 fun AuthFieldLabel(text: String) {
     Text(
         text,
-        color = Color(0xFF625D68),
+        color = Color(0xFF7650D8),
         fontSize = 10.sp,
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 0.4.sp,
