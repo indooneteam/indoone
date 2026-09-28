@@ -111,46 +111,52 @@ fun LoginScreen(
         ) { currentPage ->
             when (currentPage) {
                 LoginPage.LOGIN -> {
-                    LoginEntryPage(
-                        identifier = identifier,
-                        busy = busy,
-                        actionEnabled = !busy && identifier.isNotBlank(),
-                        onIdentifierChanged = { identifier = it },
-                        onSendOtp = { onSendOtp(identifier) },
-                        onContinueWithPassword = { page = LoginPage.PASSWORD },
-                        onCreateAccount = onCreateAccount,
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        LoginEntryPage(
+                            identifier = identifier,
+                            busy = busy,
+                            actionEnabled = !busy && identifier.isNotBlank(),
+                            onIdentifierChanged = { identifier = it },
+                            onSendOtp = { onSendOtp(identifier) },
+                            onContinueWithPassword = { page = LoginPage.PASSWORD },
+                            onCreateAccount = onCreateAccount,
+                        )
+                    }
                 }
 
                 LoginPage.OTP -> {
-                    LoginOtpPage(
-                        busy = busy,
-                        busyAction = busyAction,
-                        otpEmail = otpEmail,
-                        otp = otp,
-                        status = status,
-                        error = error,
-                        otpFocusRequester = otpFocusRequester,
-                        onOtpChanged = { otp = it.filter(Char::isDigit).take(6) },
-                        onVerifyOtp = { onVerifyOtp(otp) },
-                        onResendOtp = onResendOtp,
-                        onBack = onBackToLogin,
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        LoginOtpPage(
+                            busy = busy,
+                            busyAction = busyAction,
+                            otpEmail = otpEmail,
+                            otp = otp,
+                            status = status,
+                            error = error,
+                            otpFocusRequester = otpFocusRequester,
+                            onOtpChanged = { otp = it.filter(Char::isDigit).take(6) },
+                            onVerifyOtp = { onVerifyOtp(otp) },
+                            onResendOtp = onResendOtp,
+                            onBack = onBackToLogin,
+                        )
+                    }
                 }
 
                 LoginPage.PASSWORD -> {
-                    LoginPasswordPage(
-                        identifier = identifier,
-                        password = password,
-                        busy = busy,
-                        busyAction = busyAction,
-                        passwordVisible = passwordVisible,
-                        onIdentifierChanged = { identifier = it },
-                        onPasswordChanged = { password = it },
-                        onPasswordVisibilityChanged = { passwordVisible = !passwordVisible },
-                        onCompleteLogin = { onPasswordLogin(identifier, password) },
-                        onBack = { page = LoginPage.LOGIN },
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        LoginPasswordPage(
+                            identifier = identifier,
+                            password = password,
+                            busy = busy,
+                            busyAction = busyAction,
+                            passwordVisible = passwordVisible,
+                            onIdentifierChanged = { identifier = it },
+                            onPasswordChanged = { password = it },
+                            onPasswordVisibilityChanged = { passwordVisible = !passwordVisible },
+                            onCompleteLogin = { onPasswordLogin(identifier, password) },
+                            onBack = { page = LoginPage.LOGIN },
+                        )
+                    }
                 }
             }
         }
