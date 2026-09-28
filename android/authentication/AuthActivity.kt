@@ -105,12 +105,6 @@ class AuthActivity : ComponentActivity() {
                                 busyAction = null
                             }
                         },
-                        onBackToLogin = {
-                            otpVisible = false
-                            otpEmail = ""
-                            status = ""
-                            error = ""
-                        },
                         onVerifyOtp = { otp ->
                             busyAction = AuthBusyAction.VERIFY_OTP
                             error = ""
@@ -161,6 +155,12 @@ class AuthActivity : ComponentActivity() {
                                     .onFailure { error = it.message ?: "Could not send OTP." }
                                 busyAction = null
                             }
+                        },
+                        onBackToLogin = {
+                            otpVisible = false
+                            otpEmail = ""
+                            status = ""
+                            error = ""
                         },
                         onPasswordLogin = { identifier, password ->
                             busyAction = AuthBusyAction.PASSWORD_LOGIN
