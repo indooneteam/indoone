@@ -164,13 +164,11 @@ private fun BookPageTurn(
     pageContent: @Composable androidx.compose.foundation.layout.ColumnScope.(LoginPage) -> Unit,
 ) {
     var renderedPage by rememberSaveable { mutableStateOf(page) }
-    var turningFromPage by rememberSaveable { mutableStateOf(page) }
     val turnProgress = remember { Animatable(1f) }
 
     LaunchedEffect(page) {
         if (page == renderedPage) return@LaunchedEffect
 
-        turningFromPage = renderedPage
         turnProgress.snapTo(0f)
         turnProgress.animateTo(
             targetValue = 1f,
@@ -182,27 +180,22 @@ private fun BookPageTurn(
         renderedPage = page
     }
 
-    val progress = turnProgress.value
-    val isTurningForward = page.ordinal > turningFromPage.ordinal
-    val activePage = if (progress < 0.5f) turningFromPage else page
-
-    val rotationY = if (progress < 0.5f) {
-        val phase = progress / 0.5f
-        if (isTurningForward) -90f * phase else 90f * phase
+    val isTurningForward = page.ordinal > renderedPage.ordinal
+    val oldPageRotation = if (isTurningForward) {
+        -90f * turnProgress.value
     } else {
-        val phase = (progress - 0.5f) / 0.5f
-        if (isTurningForward) 90f * (1f - phase) else -90f * (1f - phase)
+        90f * turnProgress.value
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 500.dp, max = 540.dp),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
+        // The destination page stays underneath from the first frame.
+        // Only the current page turns away, so there is no second page-open animation.
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .shadow(
                     elevation = 14.dp,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
@@ -218,30 +211,59 @@ private fun BookPageTurn(
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                 )
-                .then(
-                    Modifier.border(
-                        width = 1.dp,
-                        color = Color(0xFFD8CBB8),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
-                    )
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFFD8CBB8),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                 )
-                .graphicsLayer {
-                    this.rotationY = rotationY
-                    cameraDistance = 18f * density
-                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
-                        pivotFractionX = if (isTurningForward) 0f else 1f,
-                        pivotFractionY = 0.5f,
-                    )
-                    val fold = (kotlin.math.abs(rotationY) / 90f).coerceIn(0f, 1f)
-                    scaleX = 1f - (0.025f * fold)
-                    scaleY = 1f - (0.008f * fold)
-                }
                 .padding(horizontal = 22.dp, vertical = 24.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                content = { pageContent(activePage) },
+                content = { pageContent(page) },
             )
+        }
+
+        if (page != renderedPage) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 14.dp,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                        clip = false,
+                    )
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFFDF7),
+                                Color(0xFFF7F0E3),
+                            ),
+                        ),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFFD8CBB8),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    )
+                    .graphicsLayer {
+                        rotationY = oldPageRotation
+                        cameraDistance = 18f * density
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
+                            pivotFractionX = if (isTurningForward) 0f else 1f,
+                            pivotFractionY = 0.5f,
+                        )
+                        alpha = 1f - (turnProgress.value * turnProgress.value)
+                    }
+                    .padding(horizontal = 22.dp, vertical = 24.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = { pageContent(renderedPage) },
+                )
+            }
         }
     }
 }
