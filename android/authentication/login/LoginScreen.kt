@@ -196,7 +196,7 @@ private fun BookPageTurn(
 
     // One physical page only:
     // first half folds away, content swaps while edge-on, second half opens the new page.
-    val rotationY = if (!isTurning) {
+    val pageRotationY = if (!isTurning) {
         0f
     } else if (isTurningForward) {
         if (progress <= 0.5f) {
@@ -248,7 +248,7 @@ private fun BookPageTurn(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                 )
                 .graphicsLayer {
-                    rotationY = rotationY
+                    rotationY = pageRotationY
                     cameraDistance = 18f * density
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
                         pivotFractionX = if (isTurningForward) 0f else 1f,
