@@ -43,6 +43,7 @@ fun SignUpScreen(
     otpVisible: Boolean,
     otpEmail: String,
     onSendOtp: (email: String, mobile: String, password: String) -> Unit,
+    onCreateWithPassword: (email: String, mobile: String, password: String) -> Unit,
     onVerifyOtp: (otp: String) -> Unit,
     onResendOtp: () -> Unit,
     onLogin: () -> Unit,
@@ -110,16 +111,25 @@ fun SignUpScreen(
         )
 
         Spacer(Modifier.height(20.dp))
-        AuthPrimaryButton(
-            text = when {
-                !otpVisible && busyAction == AuthBusyAction.SEND_OTP -> "Sending OTP…"
-                otpVisible && busyAction == AuthBusyAction.RESEND_OTP -> "Sending…"
-                otpVisible -> "Resend OTP"
-                else -> "Send OTP"
-            },
-            enabled = actionEnabled,
-            onClick = { if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
-        )
+        if (!otpVisible) {
+            AuthPrimaryButton(
+                text = if (busyAction == AuthBusyAction.SEND_OTP) "Sending OTP…" else "Continue with OTP",
+                enabled = actionEnabled,
+                onClick = { onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
+            )
+            Spacer(Modifier.height(8.dp))
+            AuthSecondaryButton(
+                text = if (busyAction == AuthBusyAction.CREATE_ACCOUNT) "Creating account…" else "Continue with Password",
+                enabled = actionEnabled,
+                onClick = { onCreateWithPassword(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
+            )
+        } else {
+            AuthPrimaryButton(
+                text = if (busyAction == AuthBusyAction.RESEND_OTP) "Sending…" else "Resend OTP",
+                enabled = actionEnabled,
+                onClick = { onResendOtp() },
+            )
+        }
 
         if (otpVisible) {
             Spacer(Modifier.height(6.dp))
@@ -154,7 +164,7 @@ fun SignUpScreen(
         AuthSecondaryButton("Already have an account? Login", !busy, onLogin)
         Spacer(Modifier.height(10.dp))
         Text(
-            "Your Indoone account is activated after successful email OTP verification.",
+            "Continue with OTP verifies your email. Continue with Password creates the account directly using your password.",
             color = androidx.compose.ui.graphics.Color(0xFF76717D),
             fontSize = 12.sp,
             lineHeight = 18.sp,
