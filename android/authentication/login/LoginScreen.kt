@@ -79,31 +79,31 @@ fun LoginScreen(
             "Continue with your Indoone account",
         )
         var welcomeTextIndex by rememberSaveable { mutableStateOf(0) }
-        var welcomeVisibleChars by rememberSaveable { mutableStateOf(0) }
 
         LaunchedEffect(Unit) {
             while (true) {
-                val currentText = welcomeTexts[welcomeTextIndex]
-                welcomeVisibleChars = 0
-                val typewriterDuration = 2000L
-                val delayPerCharacter = typewriterDuration / currentText.length.coerceAtLeast(1)
-                for (index in 1..currentText.length) {
-                    kotlinx.coroutines.delay(delayPerCharacter)
-                    welcomeVisibleChars = index
-                }
                 kotlinx.coroutines.delay(2000L)
                 welcomeTextIndex = (welcomeTextIndex + 1) % welcomeTexts.size
             }
         }
 
-        Text(
-            text = welcomeTexts[welcomeTextIndex].take(welcomeVisibleChars),
-            color = Color(0xFF17151D),
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = (-1).sp,
-            lineHeight = 40.sp,
-        )
+        androidx.compose.animation.Crossfade(
+            targetState = welcomeTextIndex,
+            animationSpec = androidx.compose.animation.core.tween(durationMillis = 350),
+            label = "login_title",
+        ) { index ->
+            Text(
+                text = welcomeTexts[index],
+                color = Color(0xFF17151D),
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-1).sp,
+                lineHeight = 40.sp,
+                maxLines = 1,
+                softWrap = false,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+            )
+        }
 
         Spacer(Modifier.height(20.dp))
 
