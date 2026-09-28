@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -27,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthBusyAction
 import com.indoone.authentication.AuthFieldLabel
-import com.indoone.authentication.AuthHeading
 import com.indoone.authentication.AuthPage
 import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
@@ -63,10 +63,25 @@ fun LoginScreen(
     AuthPage {
         AuthBrand()
         Spacer(Modifier.height(44.dp))
-        AuthHeading(
-            eyebrow = "SECURE & PRIVATE",
-            title = "Welcome back",
-            description = "Sign in to protect and sync your authenticator vault.",
+        var welcomeVisibleChars by rememberSaveable { mutableStateOf(0) }
+        val welcomeText = "Welcome back"
+
+        LaunchedEffect(Unit) {
+            welcomeVisibleChars = 0
+            val delayPerCharacter = 3000L / welcomeText.length.coerceAtLeast(1)
+            for (index in 1..welcomeText.length) {
+                kotlinx.coroutines.delay(delayPerCharacter)
+                welcomeVisibleChars = index
+            }
+        }
+
+        Text(
+            text = welcomeText.take(welcomeVisibleChars),
+            color = Color(0xFF17151D),
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-1).sp,
+            lineHeight = 40.sp,
         )
         Spacer(Modifier.height(20.dp))
 
@@ -140,13 +155,13 @@ fun LoginScreen(
 
         AuthStatus(error, error = true)
         Spacer(Modifier.height(10.dp))
-        AuthSecondaryButton("Create Account", !busy, onCreateAccount)
-        Spacer(Modifier.height(10.dp))
-        Text(
-            "Protect your Indoone account with password and email OTP verification.",
-            color = androidx.compose.ui.graphics.Color(0xFF76717D),
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
+        AuthSecondaryButton(
+            text = "Create Account",
+            enabled = !busy,
+            onClick = onCreateAccount,
+            textColor = Color(0xFF2E7D32),
         )
+        Spacer(Modifier.height(10.dp))
+
     }
 }
