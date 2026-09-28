@@ -179,14 +179,65 @@ private fun LoginEntryPage(
     onContinueWithPassword: () -> Unit,
     onCreateAccount: () -> Unit,
 ) {
-    Text(
-        text = "Welcome to your Indoone account",
-        color = Color(0xFF17151D),
-        fontSize = 30.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.7).sp,
-        lineHeight = 36.sp,
-    )
+    var welcomeTextIndex by rememberSaveable { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(2000)
+            welcomeTextIndex = if (welcomeTextIndex == 0) 1 else 0
+        }
+    }
+
+    androidx.compose.animation.AnimatedContent(
+        targetState = welcomeTextIndex,
+        transitionSpec = {
+            (
+                fadeIn(animationSpec = tween(350)) +
+                    slideInHorizontally(
+                        animationSpec = tween(350),
+                        initialOffsetX = { width -> width / 4 },
+                    )
+            ).togetherWith(
+                fadeOut(animationSpec = tween(250)) +
+                    slideOutHorizontally(
+                        animationSpec = tween(250),
+                        targetOffsetX = { width -> -width / 4 },
+                    )
+            )
+        },
+        label = "login_welcome_text",
+    ) { index ->
+        Text(
+            text = buildAnnotatedString {
+                withStyle(
+                    if (index == 1) {
+                        SpanStyle(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF6330DB),
+                                    Color(0xFF9147ED),
+                                ),
+                            ),
+                        )
+                    } else {
+                        SpanStyle(color = Color(0xFF17151D))
+                    }
+                ) {
+                    append(
+                        if (index == 0) {
+                            "Welcome to your Indoone account"
+                        } else {
+                            "Continue with your Indoone account"
+                        }
+                    )
+                }
+            },
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.7).sp,
+            lineHeight = 36.sp,
+        )
+    }
 
     Spacer(Modifier.height(20.dp))
     AuthFieldLabel("EMAIL OR MOBILE NUMBER")
