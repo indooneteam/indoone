@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -94,13 +95,13 @@ fun LoginScreen(
         }
     }
 
-    AuthPage {
-        AuthBrand()
-        Spacer(Modifier.height(24.dp))
-
+    AuthPage(showCard = false) {
         BookPageTurn(
             page = page,
             pageContent = { currentPage ->
+                AuthBrand()
+                Spacer(Modifier.height(24.dp))
+
                 when (currentPage) {
                     LoginPage.LOGIN -> {
                         LoginEntryPage(
@@ -145,11 +146,11 @@ fun LoginScreen(
                         )
                     }
                 }
+
+                Spacer(Modifier.height(18.dp))
+                LoginPageIndicator(currentPage = page)
             },
         )
-
-        Spacer(Modifier.height(18.dp))
-        LoginPageIndicator(currentPage = page)
 
         AuthStatus(error, error = true)
     }
@@ -193,36 +194,45 @@ private fun BookPageTurn(
 
     Box(
         modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = 12.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    elevation = 14.dp,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
                     clip = false,
                 )
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFFFFEF9),
-                            Color(0xFFF8F0E2),
+                            Color(0xFFFFFDF7),
+                            Color(0xFFF7F0E3),
                         ),
                     ),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                )
+                .then(
+                    Modifier.border(
+                        width = 1.dp,
+                        color = Color(0xFFD8CBB8),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    )
                 )
                 .graphicsLayer {
                     this.rotationY = rotationY
-                    cameraDistance = 16f * density
+                    cameraDistance = 18f * density
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
                         pivotFractionX = if (isTurningForward) 0f else 1f,
                         pivotFractionY = 0.5f,
                     )
                     val fold = (kotlin.math.abs(rotationY) / 90f).coerceIn(0f, 1f)
-                    scaleX = 1f - (0.035f * fold)
-                    scaleY = 1f - (0.012f * fold)
+                    scaleX = 1f - (0.025f * fold)
+                    scaleY = 1f - (0.008f * fold)
                 }
-                .padding(horizontal = 1.dp, vertical = 1.dp),
+                .padding(horizontal = 22.dp, vertical = 24.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
