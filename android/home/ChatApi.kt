@@ -29,11 +29,21 @@ data class FileUploadResponse(
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 120_000
+    private const val WARMUP_TIMEOUT_MS = 15_000
+    private const val WARMUP_RETRIES = 2
+    private const val WARMUP_RETRY_DELAY_MS = 1_500L
     private const val MAX_UPLOAD_BYTES = 2_000_000
 
     fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
         val backendUrl = requireBackendUrl()
-        val connection = openConnection("$backendUrl/api/chat", requireAuthToken())
+        val authToken = requireAuthToken()
+
+        // Render free instances can sleep between requests. Wake the backend
+        // through its lightweight health endpoint before opening the chat POST,
+        // so a cold-start gateway response does not become a user-visible 502.
+        warmUpBackend(backendUrl)
+
+        val connection = openConnection("$backendUrl/api/chat", authToken)
         return try {
             val payload = JSONObject().apply {
                 put("message", message)
@@ -96,6 +106,47 @@ object ChatApi {
             throw error
         } catch (error: Exception) {
             throw ChatApiException("Could not refresh your Indoone authentication session. Please login again.", error)
+        }
+    }
+
+    private fun warmUpBackend(backendUrl: String) {
+        repeat(WARMUP_RETRIES) { attempt ->
+            val connection = try {
+                (URL("$backendUrl/health").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = WARMUP_TIMEOUT_MS
+                    readTimeout = WARMUP_TIMEOUT_MS
+                    doInput = true
+                    useCaches = false
+                    instanceFollowRedirects = true
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Cache-Control", "no-store")
+                }
+            } catch (_: IOException) {
+                null
+            }
+
+            if (connection != null) {
+                try {
+                    if (connection.responseCode in 200..299) {
+                        return
+                    }
+                } catch (_: IOException) {
+                    // Keep the warm-up best-effort; the chat request below
+                    // still reports the real backend error to the user.
+                } finally {
+                    connection.disconnect()
+                }
+            }
+
+            if (attempt + 1 < WARMUP_RETRIES) {
+                try {
+                    Thread.sleep(WARMUP_RETRY_DELAY_MS)
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    return
+                }
+            }
         }
     }
 
