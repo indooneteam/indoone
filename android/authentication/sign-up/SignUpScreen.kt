@@ -34,6 +34,7 @@ import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
 import com.indoone.authentication.AuthTextField
+import kotlinx.coroutines.isActive
 
 @Composable
 fun SignUpScreen(
@@ -70,7 +71,7 @@ fun SignUpScreen(
             var showCreatingAccount by rememberSaveable { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
-                while (kotlinx.coroutines.isActive) {
+                while (isActive) {
                     kotlinx.coroutines.delay(2000)
                     showCreatingAccount = !showCreatingAccount
                 }
