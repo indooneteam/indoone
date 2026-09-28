@@ -32,6 +32,7 @@ import com.indoone.authentication.AuthBrand
 import com.indoone.authentication.AuthBusyAction
 import com.indoone.authentication.AuthFieldLabel
 import com.indoone.authentication.AuthPage
+import com.indoone.authentication.AuthTextField
 import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
@@ -97,15 +98,9 @@ fun LoginScreen(
         Spacer(Modifier.height(20.dp))
 
         AuthFieldLabel("EMAIL OR MOBILE NUMBER")
-        androidx.compose.runtime.LaunchedEffect(passwordMode) {
-            if (!passwordMode) password = ""
-        }
-        com.indoone.authentication.AuthTextField(
+        AuthTextField(
             value = identifier,
-            onValueChange = {
-                identifier = it
-                passwordMode = if (otpVisible) passwordMode else passwordMode
-            },
+            onValueChange = { identifier = it },
             placeholder = "you@example.com or 98765 43210",
             enabled = !busy && !otpVisible,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
@@ -118,7 +113,7 @@ fun LoginScreen(
             if (passwordMode) {
                 Spacer(Modifier.height(14.dp))
                 AuthFieldLabel("PASSWORD")
-                com.indoone.authentication.AuthTextField(
+                AuthTextField(
                     value = password,
                     onValueChange = { password = it },
                     placeholder = "Enter your password",
@@ -172,7 +167,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(12.dp))
             AuthFieldLabel("VERIFICATION OTP")
-            com.indoone.authentication.AuthTextField(
+            AuthTextField(
                 value = otp,
                 onValueChange = { otp = it.filter(Char::isDigit).take(6) },
                 placeholder = "Enter 6-digit OTP",
