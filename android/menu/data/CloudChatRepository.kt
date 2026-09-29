@@ -77,29 +77,17 @@ class CloudChatRepository(
         val conversation = firestore.collection("conversations").document(conversationId)
         val now = FieldValue.serverTimestamp()
 
-        // Create a new conversation without performing a pre-read. A pre-read of a
-        // missing document is rejected by the current Firestore read rule because
-        // resource.data does not exist yet. For an existing document, ALREADY_EXISTS
-        // is handled without replacing its metadata.
-        try {
-            Tasks.await(
-                conversation.create(
-                    mapOf(
-                        "userId" to userId,
-                        "title" to if (role == "user") content.trim().take(60) else "New chat",
-                        "updatedAt" to now,
-                        "messageCount" to 0,
-                        "closed" to false,
-                        "closedAt" to null,
-                        "createdAt" to now,
-                    ),
-                ),
-            )
-        } catch (error: com.google.firebase.firestore.FirebaseFirestoreException) {
-            if (error.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.ALREADY_EXISTS) {
-                throw error
-            }
+        // Establish ownership without reading a missing document first. The merge
+        // write creates the parent when needed and, for an existing document,
+        // changes only owner/title/timestamp metadata; it never resets messageCount.
+        val parentValues = mutableMapOf<String, Any?>(
+            "userId" to userId,
+            "updatedAt" to now,
+        )
+        if (role == "user") {
+            parentValues["title"] = content.trim().take(60)
         }
+        Tasks.await(conversation.set(parentValues, SetOptions.merge()))
 
         val snapshot = Tasks.await(conversation.get())
         if (!snapshot.exists()) {
