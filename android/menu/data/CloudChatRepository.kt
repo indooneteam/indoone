@@ -77,33 +77,29 @@ class CloudChatRepository(
         Tasks.await(user.getIdToken(true))
         val userId = user.uid
 
-        // Firestore rules validate message writes against the parent conversation.
-        // Create/verify that parent first, then write the messages in a batch.
+        // Do not read a brand-new conversation before creating it. The active
+        // Firestore rule checks resource.data.userId for reads, so a get() on a
+        // non-existent document can be denied before the allowed create occurs.
+        // A single merge write is classified by Firestore as create or update:
+        // create is checked against request.resource.data, while update is checked
+        // against the existing resource owner. This preserves per-user ownership.
         val conversation = firestore.collection("conversations").document(conversationId)
-        val existingSnapshot = Tasks.await(conversation.get())
+        val now = FieldValue.serverTimestamp()
 
-        if (!existingSnapshot.exists()) {
-            val createdAt = FieldValue.serverTimestamp()
-            Tasks.await(
-                conversation.set(
-                    mapOf(
-                        "userId" to userId,
-                        "title" to userMessage.trim().take(60),
-                        "updatedAt" to createdAt,
-                        "messageCount" to 0,
-                        "closed" to false,
-                        "closedAt" to null,
-                        "createdAt" to createdAt,
-                    ),
-                    SetOptions.merge(),
+        Tasks.await(
+            conversation.set(
+                mapOf(
+                    "userId" to userId,
+                    "title" to userMessage.trim().take(60),
+                    "updatedAt" to now,
+                    "messageCount" to 0,
+                    "closed" to false,
+                    "closedAt" to null,
+                    "createdAt" to now,
                 ),
-            )
-        } else {
-            val owner = existingSnapshot.getString("userId").orEmpty()
-            if (owner != userId) {
-                throw SecurityException("Conversation does not belong to this account.")
-            }
-        }
+                SetOptions.merge(),
+            ),
+        )
 
         val snapshot = Tasks.await(conversation.get())
         if (!snapshot.exists()) {
@@ -130,7 +126,6 @@ class CloudChatRepository(
             "assistant" to assistantReply.trim(),
         ).take(remaining)
 
-        val now = FieldValue.serverTimestamp()
         val batch = firestore.batch()
         values.forEach { (role, content) ->
             val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
