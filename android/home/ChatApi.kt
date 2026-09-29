@@ -32,6 +32,8 @@ object ChatApi {
     private const val WARMUP_TIMEOUT_MS = 15_000
     private const val WARMUP_RETRIES = 2
     private const val WARMUP_RETRY_DELAY_MS = 1_500L
+    private const val CHAT_TRANSIENT_RETRIES = 2
+    private const val CHAT_RETRY_DELAY_MS = 1_500L
     private const val MAX_UPLOAD_BYTES = 2_000_000
 
     fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
@@ -43,23 +45,48 @@ object ChatApi {
         // so a cold-start gateway response does not become a user-visible 502.
         warmUpBackend(backendUrl)
 
-        val connection = openConnection("$backendUrl/api/chat", authToken)
-        return try {
-            val payload = JSONObject().apply {
-                put("message", message)
-                conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
-                fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
-            }.toString()
-            val body = executeJson(connection, payload)
-            val json = JSONObject(body)
-            val reply = json.optString("reply")
-            val returnedConversationId = json.optString("conversation_id")
-            if (returnedConversationId.isBlank()) throw ChatApiException("Indoone backend returned no conversation id")
-            if (reply.isBlank()) throw ChatApiException("Indoone backend returned an empty reply")
-            ChatResponse(returnedConversationId, reply)
-        } finally {
-            connection.disconnect()
+        val payload = JSONObject().apply {
+            put("message", message)
+            conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
+            fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
+        }.toString()
+
+        var lastTransientError: ChatApiException? = null
+        repeat(CHAT_TRANSIENT_RETRIES + 1) { attempt ->
+            try {
+                val connection = openConnection("$backendUrl/api/chat", authToken)
+                return try {
+                    val body = executeJson(connection, payload)
+                    val json = JSONObject(body)
+                    val reply = json.optString("reply")
+                    val returnedConversationId = json.optString("conversation_id")
+                    if (returnedConversationId.isBlank()) {
+                        throw ChatApiException("Indoone backend returned no conversation id")
+                    }
+                    if (reply.isBlank()) {
+                        throw ChatApiException("Indoone backend returned an empty reply")
+                    }
+                    ChatResponse(returnedConversationId, reply)
+                } finally {
+                    connection.disconnect()
+                }
+            } catch (error: ChatApiException) {
+                val isTransient = error.statusCode == 429 || error.statusCode == 503
+                if (!isTransient || attempt >= CHAT_TRANSIENT_RETRIES) {
+                    throw error
+                }
+                lastTransientError = error
+                try {
+                    Thread.sleep(CHAT_RETRY_DELAY_MS * (attempt + 1L))
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw error
+                }
+                warmUpBackend(backendUrl)
+            }
         }
+
+        throw lastTransientError ?: ChatApiException("Indoone backend request failed")
     }
 
     fun uploadTextFile(filename: String, bytes: ByteArray): FileUploadResponse {
@@ -185,7 +212,8 @@ object ChatApi {
 
                 throw ChatApiException(
                     safeServerMessage?.let { "Indoone backend returned HTTP $responseCode: $it" }
-                        ?: "Indoone backend returned HTTP $responseCode"
+                        ?: "Indoone backend returned HTTP $responseCode",
+                    statusCode = responseCode,
                 )
             }
             return body
@@ -202,4 +230,8 @@ object ChatApi {
     }
 }
 
-class ChatApiException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class ChatApiException(
+    message: String,
+    cause: Throwable? = null,
+    val statusCode: Int? = null,
+) : Exception(message, cause)
