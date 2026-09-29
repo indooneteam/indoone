@@ -58,6 +58,7 @@ import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.menu.data.CloudChatRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -144,9 +145,9 @@ fun HomeScreen(
         val fileId = pendingFileId
         val requestConversationId = conversationId ?: UUID.randomUUID().toString()
 
-        // Persist the user's message before calling the remote AI. This keeps
-        // Firebase chat history durable even when the backend is temporarily
-        // unavailable or returns a transient gateway error.
+        // Keep the UI responsive and keep AI independent from Firebase persistence.
+        // Firebase save and backend request start together; a Firebase failure must
+        // never prevent an AI reply from reaching the screen.
         messages = messages + ChatMessage(typed, true)
         input = ""
         pendingFileId = null
@@ -155,8 +156,8 @@ fun HomeScreen(
         isSending = true
 
         scope.launch {
-            val userSave = runCatching {
-                withContext(Dispatchers.IO) {
+            val userSaveDeferred = async(Dispatchers.IO) {
+                runCatching {
                     cloudChatRepository.appendMessage(
                         conversationId = requestConversationId,
                         role = "user",
@@ -165,55 +166,86 @@ fun HomeScreen(
                 }
             }
 
-            if (userSave.isFailure) {
-                val reason = userSave.exceptionOrNull()?.message
-                    ?.takeIf { it.isNotBlank() }
-                    ?: "Unknown Firebase error."
-                messages = messages + ChatMessage("Chat could not be saved to Firestore: $reason", false)
-                isSending = false
-                return@launch
-            }
-
-            runCatching {
+            val backendResult = runCatching {
                 withContext(Dispatchers.IO) {
                     ChatApi.sendMessage(typed, requestConversationId, fileId)
                 }
             }
-                .onSuccess { response ->
-                    conversationId = response.conversationId
-                    val updated = messages + ChatMessage(response.reply, false)
-                    messages = updated
 
-                    val assistantSave = runCatching {
-                        withContext(Dispatchers.IO) {
+            backendResult.onSuccess { response ->
+                conversationId = response.conversationId
+                val updated = messages + ChatMessage(response.reply, false)
+                messages = updated
+
+                // The AI reply is already visible. Persist the user message and
+                // then the assistant message without making either write a
+                // prerequisite for displaying the reply.
+                scope.launch {
+                    var userSave = userSaveDeferred.await()
+
+                    if (userSave.isFailure) {
+                        userSave = runCatching {
                             cloudChatRepository.appendMessage(
-                                conversationId = response.conversationId,
-                                role = "assistant",
-                                content = response.reply,
+                                conversationId = requestConversationId,
+                                role = "user",
+                                content = typed,
                             )
                         }
                     }
-                    if (assistantSave.isFailure) {
-                        val reason = assistantSave.exceptionOrNull()?.message
+
+                    if (userSave.isFailure) {
+                        val reason = userSave.exceptionOrNull()?.message
                             ?.takeIf { it.isNotBlank() }
                             ?: "Unknown Firebase error."
-                        messages = updated + ChatMessage("Chat could not be saved to Firestore: $reason", false)
-                    }
+                        messages = messages + ChatMessage(
+                            "Chat reply received, but Firebase could not save this message: $reason",
+                            false,
+                        )
+                    } else {
+                        val assistantSave = runCatching {
+                            withContext(Dispatchers.IO) {
+                                cloudChatRepository.appendMessage(
+                                    conversationId = response.conversationId,
+                                    role = "assistant",
+                                    content = response.reply,
+                                )
+                            }
+                        }
 
-                    if (updated.size >= 50) {
-                        isSending = false
-                        conversationId = null
-                        messages = emptyList()
+                        if (assistantSave.isFailure) {
+                            val reason = assistantSave.exceptionOrNull()?.message
+                                ?.takeIf { it.isNotBlank() }
+                                ?: "Unknown Firebase error."
+                            messages = messages + ChatMessage(
+                                "Chat reply received, but Firebase could not save the AI reply: $reason",
+                                false,
+                            )
+                        }
                     }
                 }
-                .onFailure { error ->
-                    // The user's message has already been persisted, so a
-                    // transient backend failure cannot erase the chat history.
+
+                if (updated.size >= 50) {
+                    conversationId = null
+                    messages = emptyList()
+                }
+            }.onFailure { error ->
+                // Even when the backend fails, finish the Firebase save attempt
+                // so the user's message is not silently lost.
+                val userSave = userSaveDeferred.await()
+                if (userSave.isFailure) {
+                    val reason = userSave.exceptionOrNull()?.message
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Unknown Firebase error."
                     messages = messages + ChatMessage(
-                        error.message ?: "Indoone AI could not complete the request.",
+                        "Message could not be saved to Firebase: $reason",
                         false,
                     )
                 }
+                messages = messages + ChatMessage(
+                    error.message ?: "Indoone AI could not complete the request.",
+                    false,
+                )
+            }
 
             isSending = false
         }
