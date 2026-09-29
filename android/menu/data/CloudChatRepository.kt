@@ -77,29 +77,24 @@ class CloudChatRepository(
 
         val conversation = firestore.collection("conversations").document(conversationId)
 
-        // Create/verify the parent before reading it. This matches the active
-        // Firestore rules for new conversations and prevents a denied read of a
-        // document that does not exist yet.
-        val current = Tasks.await(conversation.get())
-        if (!current.exists()) {
-            val now = FieldValue.serverTimestamp()
-            Tasks.await(
-                conversation.set(
-                    mapOf(
-                        "userId" to userId,
-                        "title" to if (role == "user") content.trim().take(60) else "New chat",
-                        "updatedAt" to now,
-                        "messageCount" to 0,
-                        "closed" to false,
-                        "closedAt" to null,
-                        "createdAt" to now,
-                    ),
-                    SetOptions.merge(),
+        // Establish ownership before the read. A merge write is a create for a
+        // missing document and an update for an existing document; in both cases
+        // the authenticated user's UID is written as the owner.
+        val now = FieldValue.serverTimestamp()
+        Tasks.await(
+            conversation.set(
+                mapOf(
+                    "userId" to userId,
+                    "title" to if (role == "user") content.trim().take(60) else "New chat",
+                    "updatedAt" to now,
+                    "messageCount" to 0,
+                    "closed" to false,
+                    "closedAt" to null,
+                    "createdAt" to now,
                 ),
-            )
-        } else if (current.getString("userId").orEmpty() != userId) {
-            throw SecurityException("Conversation does not belong to this account.")
-        }
+                SetOptions.merge(),
+            ),
+        )
 
         val snapshot = Tasks.await(conversation.get())
         if (!snapshot.exists()) {
