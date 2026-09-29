@@ -159,14 +159,6 @@ class CloudChatRepository(
         )
         Tasks.await(batch.commit())
 
-        if (!saved) {
-            Log.w(
-                "CloudChatRepository",
-                "Conversation was not written because it is already closed or reached the message limit.",
-            )
-            return@withContext
-        }
-
         // Firestore is the source of the actual chat history. The realtime index is
         // only a lightweight accelerator and must never turn a successful Firestore
         // save into a user-visible "Firestore save failed" error.
