@@ -60,6 +60,102 @@ class CloudChatRepository(
         chatIndex().removeEventListener(listener)
     }
 
+    suspend fun appendMessage(
+        conversationId: String,
+        role: String,
+        content: String,
+        messageLimit: Int = 50,
+    ) = withContext(Dispatchers.IO) {
+        require(conversationId.isNotBlank()) { "conversationId cannot be empty" }
+        require(role == "user" || role == "assistant") { "message role must be user or assistant" }
+        require(content.isNotBlank()) { "message content cannot be empty" }
+        require(messageLimit > 0) { "messageLimit must be greater than zero" }
+
+        val user = auth.currentUser ?: throw IllegalStateException("Please sign in again.")
+        Tasks.await(user.getIdToken(true))
+        val userId = user.uid
+
+        val conversation = firestore.collection("conversations").document(conversationId)
+
+        // Create/verify the parent before reading it. This matches the active
+        // Firestore rules for new conversations and prevents a denied read of a
+        // document that does not exist yet.
+        val current = Tasks.await(conversation.get())
+        if (!current.exists()) {
+            val now = FieldValue.serverTimestamp()
+            Tasks.await(
+                conversation.set(
+                    mapOf(
+                        "userId" to userId,
+                        "title" to if (role == "user") content.trim().take(60) else "New chat",
+                        "updatedAt" to now,
+                        "messageCount" to 0,
+                        "closed" to false,
+                        "closedAt" to null,
+                        "createdAt" to now,
+                    ),
+                    SetOptions.merge(),
+                ),
+            )
+        } else if (current.getString("userId").orEmpty() != userId) {
+            throw SecurityException("Conversation does not belong to this account.")
+        }
+
+        val snapshot = Tasks.await(conversation.get())
+        if (!snapshot.exists()) {
+            throw IllegalStateException("Conversation could not be created in Firestore.")
+        }
+        if (snapshot.getString("userId").orEmpty() != userId) {
+            throw SecurityException("Conversation does not belong to this account.")
+        }
+
+        val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
+        if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
+            Log.w(
+                "CloudChatRepository",
+                "Conversation was not written because it is already closed or reached the message limit.",
+            )
+            return@withContext
+        }
+
+        val now = FieldValue.serverTimestamp()
+        val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
+        val batch = firestore.batch()
+        batch.set(
+            messageRef,
+            mapOf(
+                "role" to role,
+                "content" to content.trim(),
+                "createdAt" to now,
+            ),
+        )
+        batch.set(
+            conversation,
+            mapOf(
+                "userId" to userId,
+                "title" to snapshot.getString("title").orEmpty().ifBlank {
+                    if (role == "user") content.trim().take(60) else "New chat"
+                },
+                "updatedAt" to now,
+                "messageCount" to existingCount + 1,
+                "closed" to (existingCount + 1 >= messageLimit),
+                "closedAt" to if (existingCount + 1 >= messageLimit) now else null,
+            ),
+            SetOptions.merge(),
+        )
+        Tasks.await(batch.commit())
+
+        runCatching {
+            Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+        }.onFailure {
+            Log.w(
+                "CloudChatRepository",
+                "Realtime chat index update failed after Firestore save; it will be repaired later.",
+                it,
+            )
+        }
+    }
+
     suspend fun appendExchange(
         conversationId: String,
         userMessage: String,
