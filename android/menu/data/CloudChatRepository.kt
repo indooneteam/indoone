@@ -74,27 +74,32 @@ class CloudChatRepository(
         val user = auth.currentUser ?: throw IllegalStateException("Please sign in again.")
         Tasks.await(user.getIdToken(true))
         val userId = user.uid
-
         val conversation = firestore.collection("conversations").document(conversationId)
-
-        // Establish ownership before the read. A merge write is a create for a
-        // missing document and an update for an existing document; in both cases
-        // the authenticated user's UID is written as the owner.
         val now = FieldValue.serverTimestamp()
-        Tasks.await(
-            conversation.set(
-                mapOf(
-                    "userId" to userId,
-                    "title" to if (role == "user") content.trim().take(60) else "New chat",
-                    "updatedAt" to now,
-                    "messageCount" to 0,
-                    "closed" to false,
-                    "closedAt" to null,
-                    "createdAt" to now,
+
+        // Create a new conversation without performing a pre-read. A pre-read of a
+        // missing document is rejected by the current Firestore read rule because
+        // resource.data does not exist yet. For an existing document, ALREADY_EXISTS
+        // is handled without replacing its metadata.
+        try {
+            Tasks.await(
+                conversation.create(
+                    mapOf(
+                        "userId" to userId,
+                        "title" to if (role == "user") content.trim().take(60) else "New chat",
+                        "updatedAt" to now,
+                        "messageCount" to 0,
+                        "closed" to false,
+                        "closedAt" to null,
+                        "createdAt" to now,
+                    ),
                 ),
-                SetOptions.merge(),
-            ),
-        )
+            )
+        } catch (error: com.google.firebase.firestore.FirebaseFirestoreException) {
+            if (error.code != com.google.firebase.firestore.FirebaseFirestoreException.Code.ALREADY_EXISTS) {
+                throw error
+            }
+        }
 
         val snapshot = Tasks.await(conversation.get())
         if (!snapshot.exists()) {
@@ -113,7 +118,6 @@ class CloudChatRepository(
             return@withContext
         }
 
-        val now = FieldValue.serverTimestamp()
         val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
         val batch = firestore.batch()
         batch.set(
@@ -124,6 +128,8 @@ class CloudChatRepository(
                 "createdAt" to now,
             ),
         )
+
+        val newCount = existingCount + 1
         batch.set(
             conversation,
             mapOf(
@@ -132,14 +138,16 @@ class CloudChatRepository(
                     if (role == "user") content.trim().take(60) else "New chat"
                 },
                 "updatedAt" to now,
-                "messageCount" to existingCount + 1,
-                "closed" to (existingCount + 1 >= messageLimit),
-                "closedAt" to if (existingCount + 1 >= messageLimit) now else null,
+                "messageCount" to newCount,
+                "closed" to (newCount >= messageLimit),
+                "closedAt" to if (newCount >= messageLimit) now else null,
             ),
             SetOptions.merge(),
         )
         Tasks.await(batch.commit())
 
+        // Realtime Database is only a lightweight index. A transient index failure
+        // must not turn a successful Firestore save into a user-visible save error.
         runCatching {
             Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
         }.onFailure {
@@ -161,102 +169,10 @@ class CloudChatRepository(
         require(userMessage.isNotBlank()) { "userMessage cannot be empty" }
         require(assistantReply.isNotBlank()) { "assistantReply cannot be empty" }
 
-        val user = auth.currentUser ?: throw IllegalStateException("Please sign in again.")
-        // Refresh the Firebase session before Firestore evaluates its security
-        // rules. This does not change the authenticated account; it only makes
-        // the current user's ID token current before the write.
-        Tasks.await(user.getIdToken(true))
-        val userId = user.uid
-
-        // Do not read a brand-new conversation before creating it. The active
-        // Firestore rule checks resource.data.userId for reads, so a get() on a
-        // non-existent document can be denied before the allowed create occurs.
-        // A single merge write is classified by Firestore as create or update:
-        // create is checked against request.resource.data, while update is checked
-        // against the existing resource owner. This preserves per-user ownership.
-        val conversation = firestore.collection("conversations").document(conversationId)
-        val now = FieldValue.serverTimestamp()
-
-        Tasks.await(
-            conversation.set(
-                mapOf(
-                    "userId" to userId,
-                    "title" to userMessage.trim().take(60),
-                    "updatedAt" to now,
-                    "messageCount" to 0,
-                    "closed" to false,
-                    "closedAt" to null,
-                    "createdAt" to now,
-                ),
-                SetOptions.merge(),
-            ),
-        )
-
-        val snapshot = Tasks.await(conversation.get())
-        if (!snapshot.exists()) {
-            throw IllegalStateException("Conversation could not be created in Firestore.")
-        }
-
-        val owner = snapshot.getString("userId").orEmpty()
-        if (owner != userId) {
-            throw SecurityException("Conversation does not belong to this account.")
-        }
-
-        val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
-        if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
-            Log.w(
-                "CloudChatRepository",
-                "Conversation was not written because it is already closed or reached the message limit.",
-            )
-            return@withContext
-        }
-
-        val remaining = (messageLimit - existingCount).coerceAtLeast(0)
-        val values = listOf(
-            "user" to userMessage.trim(),
-            "assistant" to assistantReply.trim(),
-        ).take(remaining)
-
-        val batch = firestore.batch()
-        values.forEach { (role, content) ->
-            val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
-            batch.set(
-                messageRef,
-                mapOf(
-                    "role" to role,
-                    "content" to content,
-                    "createdAt" to now,
-                ),
-            )
-        }
-
-        val newCount = existingCount + values.size
-        batch.set(
-            conversation,
-            mapOf(
-                "userId" to userId,
-                "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
-                "updatedAt" to now,
-                "messageCount" to newCount,
-                "closed" to (newCount >= messageLimit),
-                "closedAt" to if (newCount >= messageLimit) now else null,
-            ),
-            SetOptions.merge(),
-        )
-        Tasks.await(batch.commit())
-
-        // Firestore is the source of the actual chat history. The realtime index is
-        // only a lightweight accelerator and must never turn a successful Firestore
-        // save into a user-visible "Firestore save failed" error.
-        runCatching {
-            Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
-        }.onFailure {
-            Log.w(
-                "CloudChatRepository",
-                "Realtime chat index update failed after Firestore save; it will be repaired later.",
-                it,
-            )
-        }
+        // Preserve the existing API while using the same individually secured
+        // message persistence path as the chat screen.
+        appendMessage(conversationId, "user", userMessage, messageLimit)
+        appendMessage(conversationId, "assistant", assistantReply, messageLimit)
     }
 
     suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
