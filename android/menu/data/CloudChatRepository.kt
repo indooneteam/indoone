@@ -71,24 +71,46 @@ class CloudChatRepository(
         require(assistantReply.isNotBlank()) { "assistantReply cannot be empty" }
 
         val userId = uid
-        // Firestore is the source of the actual message history. Write it first so
-        // the realtime index listener can never observe an index entry before its
-        // corresponding conversation exists.
+        // Keep the parent conversation document in place before writing its
+        // message subcollection. This matters for Firestore rules that validate
+        // message writes against the already-existing parent owner.
         val conversation = firestore.collection("conversations").document(conversationId)
+        val existingSnapshot = Tasks.await(conversation.get())
+
+        if (!existingSnapshot.exists()) {
+            val createdAt = FieldValue.serverTimestamp()
+            Tasks.await(
+                conversation.set(
+                    mapOf(
+                        "userId" to userId,
+                        "title" to userMessage.trim().take(60),
+                        "updatedAt" to createdAt,
+                        "messageCount" to 0,
+                        "closed" to false,
+                        "closedAt" to null,
+                        "createdAt" to createdAt,
+                    ),
+                    SetOptions.merge(),
+                ),
+            )
+        } else {
+            val owner = existingSnapshot.getString("userId").orEmpty()
+            if (owner != userId) {
+                throw SecurityException("Conversation does not belong to this account.")
+            }
+        }
 
         val saved = Tasks.await(
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(conversation)
-                val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
+                val owner = snapshot.getString("userId").orEmpty()
+                if (owner != userId) {
+                    throw SecurityException("Conversation does not belong to this account.")
+                }
 
-                if (snapshot.exists()) {
-                    val owner = snapshot.getString("userId").orEmpty()
-                    if (owner != userId) {
-                        throw SecurityException("Conversation does not belong to this account.")
-                    }
-                    if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
-                        return@runTransaction false
-                    }
+                val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
+                if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
+                    return@runTransaction false
                 }
 
                 val remaining = (messageLimit - existingCount).coerceAtLeast(0)
@@ -111,18 +133,18 @@ class CloudChatRepository(
                 }
 
                 val newCount = existingCount + values.size
-                val conversationValues = mutableMapOf<String, Any?>(
-                    "userId" to userId,
-                    "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
-                    "updatedAt" to now,
-                    "messageCount" to newCount,
-                    "closed" to (newCount >= messageLimit),
-                    "closedAt" to if (newCount >= messageLimit) now else null,
+                transaction.set(
+                    conversation,
+                    mapOf(
+                        "userId" to userId,
+                        "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
+                        "updatedAt" to now,
+                        "messageCount" to newCount,
+                        "closed" to (newCount >= messageLimit),
+                        "closedAt" to if (newCount >= messageLimit) now else null,
+                    ),
+                    SetOptions.merge(),
                 )
-                if (!snapshot.exists()) {
-                    conversationValues["createdAt"] = now
-                }
-                transaction.set(conversation, conversationValues, SetOptions.merge())
                 true
             },
         )
