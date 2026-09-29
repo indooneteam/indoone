@@ -74,7 +74,11 @@ object ChatApi {
                     connection.disconnect()
                 }
             } catch (error: ChatApiException) {
-                val isTransient = error.statusCode == 429 || error.statusCode == 503
+                val isTransient = error.statusCode == 404 ||
+                    error.statusCode == 429 ||
+                    error.statusCode == 502 ||
+                    error.statusCode == 503 ||
+                    error.statusCode == 504
                 if (!isTransient || attempt >= CHAT_TRANSIENT_RETRIES) {
                     throw error
                 }
