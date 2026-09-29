@@ -61,6 +61,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 private const val MAX_UPLOAD_BYTES = 2_000_000
 
@@ -141,27 +142,64 @@ fun HomeScreen(
         if (typed.isEmpty() || isSending) return
 
         val fileId = pendingFileId
+        val requestConversationId = conversationId ?: UUID.randomUUID().toString()
+
+        // Persist the user's message before calling the remote AI. This keeps
+        // Firebase chat history durable even when the backend is temporarily
+        // unavailable or returns a transient gateway error.
         messages = messages + ChatMessage(typed, true)
         input = ""
         pendingFileId = null
         pendingFileName = null
+        conversationId = requestConversationId
         isSending = true
 
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { ChatApi.sendMessage(typed, conversationId, fileId) } }
+            val userSave = runCatching {
+                withContext(Dispatchers.IO) {
+                    cloudChatRepository.appendMessage(
+                        conversationId = requestConversationId,
+                        role = "user",
+                        content = typed,
+                    )
+                }
+            }
+
+            if (userSave.isFailure) {
+                val reason = userSave.exceptionOrNull()?.message
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Unknown Firebase error."
+                messages = messages + ChatMessage("Chat could not be saved to Firestore: $reason", false)
+                isSending = false
+                return@launch
+            }
+
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    ChatApi.sendMessage(typed, requestConversationId, fileId)
+                }
+            }
                 .onSuccess { response ->
                     conversationId = response.conversationId
                     val updated = messages + ChatMessage(response.reply, false)
                     messages = updated
-                    val cloudSave = runCatching {
-                        cloudChatRepository.appendExchange(response.conversationId, typed, response.reply)
+
+                    val assistantSave = runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = response.conversationId,
+                                role = "assistant",
+                                content = response.reply,
+                            )
+                        }
                     }
-                    if (cloudSave.isFailure) {
-                        val reason = cloudSave.exceptionOrNull()?.message
+                    if (assistantSave.isFailure) {
+                        val reason = assistantSave.exceptionOrNull()?.message
                             ?.takeIf { it.isNotBlank() }
                             ?: "Unknown Firebase error."
                         messages = updated + ChatMessage("Chat could not be saved to Firestore: $reason", false)
                     }
+
                     if (updated.size >= 50) {
                         isSending = false
                         conversationId = null
@@ -169,8 +207,14 @@ fun HomeScreen(
                     }
                 }
                 .onFailure { error ->
-                    messages = messages + ChatMessage(error.message ?: "Indoone AI could not complete the request.", false)
+                    // The user's message has already been persisted, so a
+                    // transient backend failure cannot erase the chat history.
+                    messages = messages + ChatMessage(
+                        error.message ?: "Indoone AI could not complete the request.",
+                        false,
+                    )
                 }
+
             isSending = false
         }
     }
