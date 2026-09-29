@@ -177,14 +177,14 @@ fun HomeScreen(
                 val updated = messages + ChatMessage(response.reply, false)
                 messages = updated
 
-                // The AI reply is already visible. Persist the user message and
-                // then the assistant message without making either write a
-                // prerequisite for displaying the reply.
-                scope.launch {
-                    var userSave = userSaveDeferred.await()
+                // The reply is shown first. Persistence then continues in this
+                // same request coroutine so a second send cannot race the
+                // messageCount update for the same Firestore conversation.
+                var userSave = userSaveDeferred.await()
 
-                    if (userSave.isFailure) {
-                        userSave = runCatching {
+                if (userSave.isFailure) {
+                    userSave = runCatching {
+                        withContext(Dispatchers.IO) {
                             cloudChatRepository.appendMessage(
                                 conversationId = requestConversationId,
                                 role = "user",
@@ -192,35 +192,35 @@ fun HomeScreen(
                             )
                         }
                     }
+                }
 
-                    if (userSave.isFailure) {
-                        val reason = userSave.exceptionOrNull()?.message
+                if (userSave.isFailure) {
+                    val reason = userSave.exceptionOrNull()?.message
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Unknown Firebase error."
+                    messages = messages + ChatMessage(
+                        "Chat reply received, but Firebase could not save this message: $reason",
+                        false,
+                    )
+                } else {
+                    val assistantSave = runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = response.conversationId,
+                                role = "assistant",
+                                content = response.reply,
+                            )
+                        }
+                    }
+
+                    if (assistantSave.isFailure) {
+                        val reason = assistantSave.exceptionOrNull()?.message
                             ?.takeIf { it.isNotBlank() }
                             ?: "Unknown Firebase error."
                         messages = messages + ChatMessage(
-                            "Chat reply received, but Firebase could not save this message: $reason",
+                            "Chat reply received, but Firebase could not save the AI reply: $reason",
                             false,
                         )
-                    } else {
-                        val assistantSave = runCatching {
-                            withContext(Dispatchers.IO) {
-                                cloudChatRepository.appendMessage(
-                                    conversationId = response.conversationId,
-                                    role = "assistant",
-                                    content = response.reply,
-                                )
-                            }
-                        }
-
-                        if (assistantSave.isFailure) {
-                            val reason = assistantSave.exceptionOrNull()?.message
-                                ?.takeIf { it.isNotBlank() }
-                                ?: "Unknown Firebase error."
-                            messages = messages + ChatMessage(
-                                "Chat reply received, but Firebase could not save the AI reply: $reason",
-                                false,
-                            )
-                        }
                     }
                 }
 
