@@ -70,10 +70,15 @@ class CloudChatRepository(
         require(userMessage.isNotBlank()) { "userMessage cannot be empty" }
         require(assistantReply.isNotBlank()) { "assistantReply cannot be empty" }
 
-        val userId = uid
-        // Keep the parent conversation document in place before writing its
-        // message subcollection. This matters for Firestore rules that validate
-        // message writes against the already-existing parent owner.
+        val user = auth.currentUser ?: throw IllegalStateException("Please sign in again.")
+        // Refresh the Firebase session before Firestore evaluates its security
+        // rules. This does not change the authenticated account; it only makes
+        // the current user's ID token current before the write.
+        Tasks.await(user.getIdToken(true))
+        val userId = user.uid
+
+        // Firestore rules validate message writes against the parent conversation.
+        // Create/verify that parent first, then write the messages in a batch.
         val conversation = firestore.collection("conversations").document(conversationId)
         val existingSnapshot = Tasks.await(conversation.get())
 
@@ -100,54 +105,59 @@ class CloudChatRepository(
             }
         }
 
-        val saved = Tasks.await(
-            firestore.runTransaction { transaction ->
-                val snapshot = transaction.get(conversation)
-                val owner = snapshot.getString("userId").orEmpty()
-                if (owner != userId) {
-                    throw SecurityException("Conversation does not belong to this account.")
-                }
+        val snapshot = Tasks.await(conversation.get())
+        if (!snapshot.exists()) {
+            throw IllegalStateException("Conversation could not be created in Firestore.")
+        }
 
-                val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
-                if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
-                    return@runTransaction false
-                }
+        val owner = snapshot.getString("userId").orEmpty()
+        if (owner != userId) {
+            throw SecurityException("Conversation does not belong to this account.")
+        }
 
-                val remaining = (messageLimit - existingCount).coerceAtLeast(0)
-                val values = listOf(
-                    "user" to userMessage.trim(),
-                    "assistant" to assistantReply.trim(),
-                ).take(remaining)
+        val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
+        if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
+            Log.w(
+                "CloudChatRepository",
+                "Conversation was not written because it is already closed or reached the message limit.",
+            )
+            return@withContext
+        }
 
-                val now = FieldValue.serverTimestamp()
-                values.forEach { (role, content) ->
-                    val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
-                    transaction.set(
-                        messageRef,
-                        mapOf(
-                            "role" to role,
-                            "content" to content,
-                            "createdAt" to now,
-                        ),
-                    )
-                }
+        val remaining = (messageLimit - existingCount).coerceAtLeast(0)
+        val values = listOf(
+            "user" to userMessage.trim(),
+            "assistant" to assistantReply.trim(),
+        ).take(remaining)
 
-                val newCount = existingCount + values.size
-                transaction.set(
-                    conversation,
-                    mapOf(
-                        "userId" to userId,
-                        "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
-                        "updatedAt" to now,
-                        "messageCount" to newCount,
-                        "closed" to (newCount >= messageLimit),
-                        "closedAt" to if (newCount >= messageLimit) now else null,
-                    ),
-                    SetOptions.merge(),
-                )
-                true
-            },
+        val now = FieldValue.serverTimestamp()
+        val batch = firestore.batch()
+        values.forEach { (role, content) ->
+            val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
+            batch.set(
+                messageRef,
+                mapOf(
+                    "role" to role,
+                    "content" to content,
+                    "createdAt" to now,
+                ),
+            )
+        }
+
+        val newCount = existingCount + values.size
+        batch.set(
+            conversation,
+            mapOf(
+                "userId" to userId,
+                "title" to (snapshot.getString("title").orEmpty().ifBlank { userMessage.trim().take(60) }),
+                "updatedAt" to now,
+                "messageCount" to newCount,
+                "closed" to (newCount >= messageLimit),
+                "closedAt" to if (newCount >= messageLimit) now else null,
+            ),
+            SetOptions.merge(),
         )
+        Tasks.await(batch.commit())
 
         if (!saved) {
             Log.w(
@@ -157,9 +167,18 @@ class CloudChatRepository(
             return@withContext
         }
 
-        // Keep the lightweight realtime index in sync after the Firestore write.
-        // If this write fails, loadConversations() can repair the missing index entry.
-        Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+        // Firestore is the source of the actual chat history. The realtime index is
+        // only a lightweight accelerator and must never turn a successful Firestore
+        // save into a user-visible "Firestore save failed" error.
+        runCatching {
+            Tasks.await(chatIndex(userId).child(conversationId).setValue(true))
+        }.onFailure {
+            Log.w(
+                "CloudChatRepository",
+                "Realtime chat index update failed after Firestore save; it will be repaired later.",
+                it,
+            )
+        }
     }
 
     suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
