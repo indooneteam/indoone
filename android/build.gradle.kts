@@ -18,8 +18,13 @@ android {
         versionCode = 4
         versionName = "0.1.0"
 
-        val channel = if (System.getenv("GITHUB_REF_NAME") == "develop") "develop" else "main"
-        val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: "https://indoone-backend.onrender.com"
+        val channel = when (System.getenv("GITHUB_REF_NAME")) {
+            "develop" -> "develop"
+            "terminal" -> "terminal"
+            else -> "main"
+        }
+        val defaultBackendUrl = if (channel == "terminal") "http://127.0.0.1:8000" else "https://indoone-backend.onrender.com"
+        val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: defaultBackendUrl
         buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
     }
