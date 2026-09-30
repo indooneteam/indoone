@@ -1,7 +1,8 @@
 package com.indoone.menu.plugins.email.gmail
 
-import android.content.Intent
-import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.AuthorizationResult
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,30 +55,96 @@ fun GmailPluginMenuScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        checkStatus()
-    }
-
-    LaunchedEffect(connecting) {
-        if (!connecting) return@LaunchedEffect
-        repeat(90) {
-            delay(2000L)
-            val result = runCatching { GmailPluginApi.getConnectionStatus() }
-            result.onSuccess {
-                if (it.connected) {
-                    connected = true
-                    connecting = false
-                    checking = false
-                    message = "Gmail connected successfully."
-                    return@LaunchedEffect
-                }
-            }
-        }
-        if (connecting) {
+    fun finishAuthorization(result: AuthorizationResult) {
+        val accessToken = result.accessToken?.trim().orEmpty()
+        if (accessToken.isBlank()) {
             connecting = false
             checking = false
-            message = "Connection is still pending. Complete Google authorization and press Connect again."
+            message = "Google authorization did not return an access token."
+            return
         }
+        val grantedScope = result.grantedScopes.orEmpty().joinToString(" ")
+        scope.launch {
+            runCatching {
+                GmailPluginApi.storeNativeAccessToken(
+                    accessToken = accessToken,
+                    grantedScope = grantedScope,
+                )
+            }.onSuccess {
+                connected = it.connected
+                checking = false
+                connecting = false
+                message = if (it.connected) {
+                    "Gmail connected successfully."
+                } else {
+                    "Gmail authorization completed, but the connection was not saved."
+                }
+            }.onFailure {
+                checking = false
+                connecting = false
+                message = it.message ?: "Could not save Gmail authorization."
+            }
+        }
+    }
+
+    val authorizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { activityResult ->
+        if (activityResult.resultCode != android.app.Activity.RESULT_OK) {
+            connecting = false
+            checking = false
+            message = "Google authorization was cancelled."
+            return@rememberLauncherForActivityResult
+        }
+        try {
+            val authorizationResult = Identity
+                .getAuthorizationClient(context)
+                .getAuthorizationResultFromIntent(activityResult.data)
+            finishAuthorization(authorizationResult)
+        } catch (error: ApiException) {
+            connecting = false
+            checking = false
+            message = error.message ?: "Google authorization failed."
+        }
+    }
+
+    fun startAuthorization() {
+        if (connected || connecting) return
+        connecting = true
+        checking = true
+        message = "Opening Google authorization..."
+        val authorizationRequest = AuthorizationRequest.builder()
+            .setRequestedScopes(listOf(Scope(GmailPluginApi.GMAIL_SCOPE)))
+            .setPrompt(AuthorizationRequest.Prompt.CONSENT)
+            .build()
+
+        Identity.getAuthorizationClient(context)
+            .authorize(authorizationRequest)
+            .addOnSuccessListener { authorizationResult ->
+                if (authorizationResult.hasResolution()) {
+                    val pendingIntent = authorizationResult.pendingIntent
+                    if (pendingIntent == null) {
+                        connecting = false
+                        checking = false
+                        message = "Google authorization could not start."
+                    } else {
+                        authorizationLauncher.launch(
+                            IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                        )
+                    }
+                } else {
+                    finishAuthorization(authorizationResult)
+                }
+            }
+            .addOnFailureListener { error ->
+                connecting = false
+                checking = false
+                message = error.message ?: "Could not start Google authorization."
+            }
+    }
+
+    LaunchedEffect(Unit) {
+        checkStatus()
     }
 
     Column(
@@ -103,31 +174,7 @@ fun GmailPluginMenuScreen(
         )
 
         Button(
-            onClick = {
-                if (connected || connecting) return@Button
-                connecting = true
-                checking = true
-                message = "Opening Google authorization..."
-                scope.launch {
-                    runCatching { GmailPluginApi.startConnection() }
-                        .onSuccess { result ->
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse(result.authorizationUrl))
-                                )
-                            }.onFailure {
-                                connecting = false
-                                checking = false
-                                message = it.message ?: "Could not open Google authorization."
-                            }
-                        }
-                        .onFailure {
-                            connecting = false
-                            checking = false
-                            message = it.message ?: "Could not start Gmail connection."
-                        }
-                }
-            },
+            onClick = { startAuthorization() },
             modifier = Modifier.fillMaxWidth(),
             enabled = !connected && !connecting,
         ) {
@@ -150,7 +197,7 @@ fun GmailPluginMenuScreen(
         )
 
         Text(
-            text = "Google will ask you to approve the Gmail permissions. Your OAuth tokens are stored server-side in encrypted form.",
+            text = "Google will ask you to approve the Gmail permissions. Indoone sends the temporary access token to the backend over HTTPS, where it is stored in encrypted form.",
             color = Color(0xFF77707F),
             fontSize = 11.sp,
             lineHeight = 17.sp,
