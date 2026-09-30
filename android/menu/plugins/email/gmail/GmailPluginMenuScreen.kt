@@ -98,7 +98,7 @@ fun GmailPluginMenuScreen(
         } catch (error: ApiException) {
             connecting = false
             checking = false
-            message = "Google authorization failed (\" + error.statusCode + "): " +
+            message = "Google authorization failed (${" + "error.statusCode}): " +
                 (error.message ?: "unknown Google authorization error.")
         } catch (error: Exception) {
             connecting = false
