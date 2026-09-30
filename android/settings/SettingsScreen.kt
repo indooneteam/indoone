@@ -1,6 +1,7 @@
 package com.indoone.settings
 
 import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.authentication.AuthActivity
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -49,6 +51,8 @@ import com.indoone.settings.autolock.AutoLockScreen
 import com.indoone.settings.autolock.AutoLockStore
 import com.indoone.settings.biometric.BiometricAuthenticator
 import com.indoone.settings.biometric.BiometricUnlockStore
+import com.indoone.settings.dangerzone.DangerZoneScreen
+import com.indoone.settings.logout.LogoutScreen
 
 private fun settingsIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
     ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
@@ -109,15 +113,18 @@ fun SettingsScreen(
     onSettingsClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
     val appLockStore = remember { AppLockStore(context) }
     val biometricStore = remember { BiometricUnlockStore(context) }
     val autoLockStore = remember { AutoLockStore(context) }
-    val biometricAuthenticator = remember { (context as? Activity)?.let(::BiometricAuthenticator) }
+    val biometricAuthenticator = remember { activity?.let(::BiometricAuthenticator) }
     val flow = remember { AppLockViewModel() }
 
     var appLockPage by remember { mutableStateOf(false) }
     var autoLockPage by remember { mutableStateOf(false) }
     var aboutPage by remember { mutableStateOf(false) }
+    var dangerZonePage by remember { mutableStateOf(false) }
+    var logoutPage by remember { mutableStateOf(false) }
     var biometricOn by remember { mutableStateOf(biometricStore.isEnabled()) }
     var showAppLockRequired by remember { mutableStateOf(false) }
     var showBiometricUnavailable by remember { mutableStateOf(false) }
@@ -215,6 +222,9 @@ fun SettingsScreen(
                 ) { autoLockPage = true }
                 SettingsSectionLabel("App")
                 SettingsActionRow("About Indoone", "Version 0.1.0 · Updates", InfoIcon) { aboutPage = true }
+                SettingsSectionLabel("Account Actions")
+                SettingsActionRow("Danger Zone", "Delete local data or your Indoone account", InfoIcon) { dangerZonePage = true }
+                SettingsActionRow("Log out", "Sign out from this device", InfoIcon) { logoutPage = true }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
@@ -331,6 +341,31 @@ fun SettingsScreen(
             onLobbyClick = onLobbyClick,
             onConnectClick = onConnectClick,
             onSettingsClick = onSettingsClick,
+        )
+    }
+
+    if (dangerZonePage) {
+        DangerZoneScreen(
+            onBack = { dangerZonePage = false },
+            onAccountsClick = onAccountsClick,
+            onLobbyClick = onLobbyClick,
+            onConnectClick = onConnectClick,
+            onSettingsClick = onSettingsClick,
+        )
+    }
+
+    if (logoutPage) {
+        LogoutScreen(
+            onDismiss = { logoutPage = false },
+            onLoggedOut = {
+                logoutPage = false
+                context.startActivity(
+                    Intent(context, AuthActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    },
+                )
+                activity?.finish()
+            },
         )
     }
 }

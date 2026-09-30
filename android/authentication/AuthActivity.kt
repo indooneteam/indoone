@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 
 enum class AuthBusyAction {
     SEND_OTP,
+    PASSWORD_LOGIN,
+    CREATE_ACCOUNT,
     VERIFY_OTP,
     RESEND_OTP,
 }
@@ -90,6 +92,19 @@ class AuthActivity : ComponentActivity() {
                                 busyAction = null
                             }
                         },
+                        onCreateWithPassword = { email, mobile, password ->
+                            busyAction = AuthBusyAction.CREATE_ACCOUNT
+                            error = ""
+                            scope.launch {
+                                runCatching { service.createSignupWithPassword(email, mobile, password) }
+                                    .onSuccess { uid ->
+                                        session.setVerified(uid)
+                                        openMain()
+                                    }
+                                    .onFailure { error = it.message ?: "Could not create account." }
+                                busyAction = null
+                            }
+                        },
                         onVerifyOtp = { otp ->
                             busyAction = AuthBusyAction.VERIFY_OTP
                             error = ""
@@ -127,15 +142,34 @@ class AuthActivity : ComponentActivity() {
                         error = error,
                         otpVisible = otpVisible,
                         otpEmail = otpEmail,
-                        onSendOtp = { identifier, password ->
+                        onSendOtp = { identifier ->
                             busyAction = AuthBusyAction.SEND_OTP
                             error = ""
                             scope.launch {
-                                runCatching { service.login(identifier, password) }
+                                runCatching { service.startLoginOtp(identifier) }
                                     .onSuccess { destination ->
                                         otpEmail = destination
                                         otpVisible = true
                                         status = ""
+                                    }
+                                    .onFailure { error = it.message ?: "Could not send OTP." }
+                                busyAction = null
+                            }
+                        },
+                        onBackToLogin = {
+                            otpVisible = false
+                            otpEmail = ""
+                            status = ""
+                            error = ""
+                        },
+                        onPasswordLogin = { identifier, password ->
+                            busyAction = AuthBusyAction.PASSWORD_LOGIN
+                            error = ""
+                            scope.launch {
+                                runCatching { service.loginWithPassword(identifier, password) }
+                                    .onSuccess { uid ->
+                                        session.setVerified(uid)
+                                        openMain()
                                     }
                                     .onFailure { error = it.message ?: "Login failed." }
                                 busyAction = null

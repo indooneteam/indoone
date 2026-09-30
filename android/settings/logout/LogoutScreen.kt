@@ -1,4 +1,4 @@
-package com.indoone.menu.logout
+package com.indoone.settings.logout
 
 import android.content.Context
 import androidx.compose.foundation.Canvas

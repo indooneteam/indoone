@@ -1,4 +1,4 @@
-package com.indoone.menu.dangerzone
+package com.indoone.settings.dangerzone
 
 import android.content.Context
 import androidx.compose.foundation.background

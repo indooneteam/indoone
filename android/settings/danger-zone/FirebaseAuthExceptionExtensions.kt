@@ -1,4 +1,4 @@
-package com.indoone.menu.dangerzone
+package com.indoone.settings.dangerzone
 
 import com.google.firebase.auth.FirebaseAuthException
 

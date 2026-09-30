@@ -1,5 +1,16 @@
 package com.indoone.home
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,7 +21,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,13 +28,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,25 +51,40 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import com.indoone.menu.data.CloudChatRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.util.UUID
+
+private const val MAX_UPLOAD_BYTES = 2_000_000
+
+private fun readLimitedBytes(context: android.content.Context, uri: Uri): ByteArray {
+    val output = ByteArrayOutputStream()
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        val buffer = ByteArray(16 * 1024)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) break
+            if (output.size() + count > MAX_UPLOAD_BYTES) {
+                throw IllegalArgumentException("File is too large. Maximum size is 2 MB.")
+            }
+            output.write(buffer, 0, count)
+        }
+    } ?: throw IllegalArgumentException("Could not open the selected file.")
+    return output.toByteArray()
+}
 
 private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
-)
-
-private val initialChatMessages = listOf(
-    ChatMessage(
-        "How can I help you?",
-        fromUser = false,
-    ),
 )
 
 @Composable
@@ -66,183 +93,321 @@ fun HomeScreen(
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    startNewChat: Boolean = false,
+    openConversationId: String? = null,
 ) {
     val context = LocalContext.current
-    val userKey = remember {
-        FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "local"
-    }
-    val loadedHistory = remember(userKey) {
-        ChatHistoryStore.load(context, userKey)
-    }
-    val latestSavedChat = loadedHistory.firstOrNull()
+    val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
+    val cloudChatRepository = remember { CloudChatRepository() }
 
     var input by remember { mutableStateOf("") }
-    var history by remember(userKey) { mutableStateOf(loadedHistory) }
-    var messages by remember(userKey) {
-        mutableStateOf(
-            latestSavedChat?.messages?.map {
-                ChatMessage(it.text, it.fromUser)
-            } ?: initialChatMessages
-        )
-    }
+    var messages by remember(userKey, startNewChat) { mutableStateOf(emptyList<ChatMessage>()) }
     var isSending by remember { mutableStateOf(false) }
-    var conversationId by rememberSaveable(userKey) {
-        mutableStateOf(latestSavedChat?.id)
-    }
-    var showHistory by rememberSaveable { mutableStateOf(false) }
-    var openMenuId by rememberSaveable { mutableStateOf<String?>(null) }
+    var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
+    var pendingFileId by remember { mutableStateOf<String?>(null) }
+    var pendingFileName by remember { mutableStateOf<String?>(null) }
+    var isListening by remember { mutableStateOf(false) }
+    var voiceError by remember { mutableStateOf<String?>(null) }
+    var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     val scope = rememberCoroutineScope()
 
-    fun saveCurrentChat(id: String) {
-        val storedMessages = messages.map {
-            ChatHistoryStore.StoredMessage(
-                text = it.text,
-                fromUser = it.fromUser,
-            )
+    LaunchedEffect(userKey, startNewChat, openConversationId) {
+        if (userKey.isBlank() || startNewChat) {
+            conversationId = null
+            messages = emptyList()
+            isLoadingHistory = false
+            return@LaunchedEffect
         }
-        ChatHistoryStore.save(context, userKey, id, storedMessages)
-        history = ChatHistoryStore.load(context, userKey)
+        isLoadingHistory = true
+        runCatching {
+            cloudChatRepository.cleanupExpiredConversations()
+            if (!openConversationId.isNullOrBlank()) {
+                cloudChatRepository.loadConversation(openConversationId)
+            } else {
+                cloudChatRepository.loadLatestChat()
+            }
+        }.onSuccess { chat ->
+            conversationId = chat?.id
+            messages = chat?.messages?.map {
+                ChatMessage(it.content, it.role == "user")
+            }.orEmpty()
+        }.onFailure {
+            conversationId = null
+            messages = emptyList()
+        }
+        isLoadingHistory = false
     }
 
     fun sendMessage() {
-        val text = input.trim()
-        if (text.isEmpty() || isSending) return
+        val typed = input.trim()
+        if (typed.isEmpty() || isSending) return
 
-        messages = messages + ChatMessage(text, fromUser = true)
+        val fileId = pendingFileId
+        val requestConversationId = conversationId ?: UUID.randomUUID().toString()
+
+        // Keep the UI responsive and keep AI independent from Firebase persistence.
+        // Firebase save and backend request start together; a Firebase failure must
+        // never prevent an AI reply from reaching the screen.
+        messages = messages + ChatMessage(typed, true)
         input = ""
+        pendingFileId = null
+        pendingFileName = null
+        conversationId = requestConversationId
         isSending = true
 
         scope.launch {
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    ChatApi.sendMessage(text, conversationId)
+            val userSaveDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    cloudChatRepository.appendMessage(
+                        conversationId = requestConversationId,
+                        role = "user",
+                        content = typed,
+                    )
                 }
             }
-            result.onSuccess { response ->
+
+            val backendResult = runCatching {
+                withContext(Dispatchers.IO) {
+                    ChatApi.sendMessage(typed, requestConversationId, fileId)
+                }
+            }
+
+            backendResult.onSuccess { response ->
                 conversationId = response.conversationId
-                messages = messages + ChatMessage(response.reply, fromUser = false)
-                saveCurrentChat(response.conversationId)
+                val updated = messages + ChatMessage(response.reply, false)
+                messages = updated
+
+                // The reply is shown first. Persistence then continues in this
+                // same request coroutine so a second send cannot race the
+                // messageCount update for the same Firestore conversation.
+                var userSave = userSaveDeferred.await()
+
+                if (userSave.isFailure) {
+                    userSave = runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = requestConversationId,
+                                role = "user",
+                                content = typed,
+                            )
+                        }
+                    }
+                }
+
+                if (userSave.isFailure) {
+                    val reason = userSave.exceptionOrNull()?.message
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Unknown Firebase error."
+                    messages = messages + ChatMessage(
+                        "Chat reply received, but Firebase could not save this message: $reason",
+                        false,
+                    )
+                } else {
+                    val assistantSave = runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = response.conversationId,
+                                role = "assistant",
+                                content = response.reply,
+                            )
+                        }
+                    }
+
+                    if (assistantSave.isFailure) {
+                        val reason = assistantSave.exceptionOrNull()?.message
+                            ?.takeIf { it.isNotBlank() }
+                            ?: "Unknown Firebase error."
+                        messages = messages + ChatMessage(
+                            "Chat reply received, but Firebase could not save the AI reply: $reason",
+                            false,
+                        )
+                    }
+                }
+
+                if (updated.size >= 50) {
+                    conversationId = null
+                    messages = emptyList()
+                }
             }.onFailure { error ->
+                // Even when the backend fails, finish the Firebase save attempt
+                // so the user's message is not silently lost.
+                val userSave = userSaveDeferred.await()
+                if (userSave.isFailure) {
+                    val reason = userSave.exceptionOrNull()?.message
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Unknown Firebase error."
+                    messages = messages + ChatMessage(
+                        "Message could not be saved to Firebase: $reason",
+                        false,
+                    )
+                }
                 messages = messages + ChatMessage(
-                    error.message ?: "Indoone AI could not complete the request. Please try again.",
-                    fromUser = false,
+                    error.message ?: "Indoone AI could not complete the request.",
+                    false,
                 )
             }
+
             isSending = false
         }
     }
 
-    fun startNewChat() {
-        input = ""
-        isSending = false
-        conversationId = null
-        messages = initialChatMessages
-    }
-
-    fun openChat(chat: ChatHistoryStore.StoredChat) {
-        conversationId = chat.id
-        messages = chat.messages.map { ChatMessage(it.text, it.fromUser) }
-        input = ""
-        isSending = false
-        openMenuId = null
-        showHistory = false
-    }
-
-    fun deleteChat(chatId: String) {
-        ChatHistoryStore.delete(context, userKey, chatId)
-        history = ChatHistoryStore.load(context, userKey)
-        openMenuId = null
-        if (conversationId == chatId) {
-            startNewChat()
+    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            runCatching {
+                val name = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+                } ?: "document"
+                val bytes = withContext(Dispatchers.IO) {
+                    readLimitedBytes(context, uri)
+                }
+                val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
+                name to upload.fileId
+            }.onSuccess { (name, fileId) ->
+                pendingFileName = name
+                pendingFileId = fileId
+                messages = messages + ChatMessage("Attached $name. Ask me about this file.", true)
+            }.onFailure { error ->
+                messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
+            }
         }
     }
 
-    fun onHistoryClick() {
-        history = ChatHistoryStore.load(context, userKey)
-        openMenuId = null
-        showHistory = true
+    val speechRecognizer = remember(context) {
+        if (SpeechRecognizer.isRecognitionAvailable(context)) SpeechRecognizer.createSpeechRecognizer(context) else null
     }
 
-    fun onPlusClick() {
-        // Attachment/actions will be added here during the next Home AI development pass.
+    fun stopVoiceInput() {
+        speechRecognizer?.stopListening()
+        speechRecognizer?.cancel()
+        isListening = false
+    }
+
+    fun startVoiceInput() {
+        if (isSending) return
+        if (speechRecognizer == null) {
+            voiceError = "Speech recognition is not available on this device."
+            return
+        }
+
+        voiceError = null
+        isListening = true
+        speechRecognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        })
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startVoiceInput() else voiceError = "Microphone permission is required."
+    }
+
+    DisposableEffect(speechRecognizer) {
+        if (speechRecognizer == null) {
+            onDispose { }
+        } else {
+            speechRecognizer.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    isListening = true
+                }
+
+                override fun onBeginningOfSpeech() {
+                    isListening = true
+                }
+
+                override fun onRmsChanged(rmsdB: Float) = Unit
+
+                override fun onBufferReceived(buffer: ByteArray?) = Unit
+
+                override fun onEndOfSpeech() {
+                    isListening = false
+                }
+
+                override fun onError(error: Int) {
+                    isListening = false
+                    voiceError = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH -> "I could not hear that clearly. Try again."
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected. Try again."
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission is required."
+                        else -> "Voice input failed. Please try again."
+                    }
+                }
+
+                override fun onResults(results: Bundle?) {
+                    isListening = false
+                    val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!spoken.isNullOrBlank()) input = spoken
+                }
+
+                override fun onPartialResults(partialResults: Bundle?) {
+                    val spoken = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                    if (!spoken.isNullOrBlank()) input = spoken
+                }
+
+                override fun onEvent(eventType: Int, params: Bundle?) = Unit
+            })
+            onDispose {
+                speechRecognizer.cancel()
+                speechRecognizer.destroy()
+            }
+        }
+    }
+
+    fun onVoiceButtonClick() {
+        val activity = context as? Activity ?: return
+        if (isListening) {
+            stopVoiceInput()
+            return
+        }
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            startVoiceInput()
+        } else if (!activity.isFinishing) {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
-            AppTopBar(
-                onMenuClick = onMenuClick,
-                trailingIcon = "☷",
-                onTrailingClick = ::onHistoryClick,
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-            ) {
-                Text(
-                    "INDOONE AI",
-                    color = Color(0xFF7650D8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.3.sp,
-                )
-                Text(
-                    "How can I help?",
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = Color(0xFF17151D),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            LazyColumn(
+            AppTopBar(onMenuClick = onMenuClick)
+            if (isLoadingHistory) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF703BE2),
+                        strokeWidth = 2.2.dp,
+                    )
+                }
+            } else LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(messages) { message ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start,
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(18.dp),
-                            color = if (message.fromUser) Color(0xFF703BE2) else Color(0xFFF5F2FB),
-                        ) {
-                            Text(
-                                message.text,
-                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
-                                color = if (message.fromUser) Color.White else Color(0xFF292331),
-                                fontSize = 13.sp,
-                            )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start) {
+                        Surface(shape = RoundedCornerShape(18.dp), color = if (message.fromUser) Color(0xFF703BE2) else Color(0xFFF5F2FB)) {
+                            Text(message.text, Modifier.padding(horizontal = 15.dp, vertical = 12.dp), color = if (message.fromUser) Color.White else Color(0xFF292331), fontSize = 13.sp)
                         }
                     }
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            pendingFileName?.let {
+                Text("Attached: $it", color = Color(0xFF5E2DD2), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
+            }
+
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier
-                        .padding(end = 10.dp)
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFF5F2FB))
-                        .clickable(onClick = ::onPlusClick),
+                    modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending) {
+                        fileLauncher.launch(arrayOf("text/plain", "text/markdown", "application/json", "text/csv"))
+                    },
                     contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        "+",
-                        color = Color(0xFF703BE2),
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                ) { Text("+", color = Color(0xFF703BE2), fontSize = 25.sp, fontWeight = FontWeight.Medium) }
 
                 Surface(
                     modifier = Modifier.weight(1f),
@@ -253,172 +418,78 @@ fun HomeScreen(
                     BasicTextField(
                         value = input,
                         onValueChange = { input = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp, vertical = 13.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp),
                         enabled = !isSending,
                         singleLine = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            color = Color(0xFF17151D),
-                            fontSize = 14.sp,
-                        ),
-                        decorationBox = { innerTextField ->
-                            Box {
-                                if (input.isEmpty()) {
-                                    Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 14.sp)
-                                }
-                                innerTextField()
-                            }
-                        },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF17151D), fontSize = 14.sp),
+                        decorationBox = { innerTextField -> Box { if (input.isEmpty()) Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 14.sp); innerTextField() } },
+                    )
+                }
+
+                Box(
+                    modifier = Modifier.padding(start = 8.dp).size(42.dp).clip(CircleShape).background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB)).clickable(enabled = !isSending, onClick = ::onVoiceButtonClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = if (isListening) "Stop voice input" else "Voice input",
+                        tint = if (isListening) Color.White else Color(0xFF4A4650),
+                        modifier = Modifier.size(21.dp),
                     )
                 }
 
                 val canSend = !isSending && input.isNotBlank()
                 Box(
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE9E5F0))
-                        .clickable(enabled = canSend, onClick = ::sendMessage),
+                    modifier = Modifier.padding(start = 8.dp).size(48.dp).clip(CircleShape).background(if (canSend) Color(0xFF703BE2) else Color(0xFFE9E5F0)).clickable(enabled = canSend, onClick = ::sendMessage),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (isSending) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.2.dp,
-                        )
-                    } else {
-                        Text(
-                            "➤",
-                            color = if (canSend) Color.White else Color(0xFF9992A3),
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    if (isSending) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.2.dp)
+                    else Text("➤", color = if (canSend) Color.White else Color(0xFF9992A3), fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            AppBottomNav(
-                activeTab = AppTab.HOME,
-                onAccountsClick = {},
-                onLobbyClick = onLobbyClick,
-                onConnectClick = onConnectClick,
-                onSettingsClick = onSettingsClick,
-            )
-        }
+            voiceError?.let { error ->
+                Text(
+                    error,
+                    color = Color(0xFFB42318),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 2.dp),
+                )
+            }
 
-        if (showHistory) {
-            Dialog(onDismissRequest = {
-                openMenuId = null
-                showHistory = false
-            }) {
+            if (isListening) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = Color.White,
-                    shadowElevation = 12.dp,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFF5F2FB),
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF703BE2)),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Column {
-                                Text(
-                                    "Chat history",
-                                    color = Color(0xFF17151D),
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(
-                                    "Saved on this device",
-                                    modifier = Modifier.padding(top = 2.dp),
-                                    color = Color(0xFF8A8492),
-                                    fontSize = 12.sp,
-                                )
-                            }
-                            TextButton(onClick = {
-                                openMenuId = null
-                                startNewChat()
-                                showHistory = false
-                            }) {
-                                Text("New chat", color = Color(0xFF703BE2), fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        if (history.isEmpty()) {
-                            Text(
-                                "No saved chats yet.",
-                                modifier = Modifier.padding(top = 28.dp, bottom = 20.dp),
-                                color = Color(0xFF77717F),
-                                fontSize = 13.sp,
+                            Icon(
+                                imageVector = Icons.Outlined.Mic,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp),
                             )
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 520.dp)
-                                    .padding(top = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                items(history, key = { it.id }) { chat ->
-                                    Box(modifier = Modifier.fillMaxWidth()) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(14.dp))
-                                                .clickable(onClick = { openChat(chat) })
-                                                .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    chat.title,
-                                                    color = Color(0xFF292331),
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    maxLines = 1,
-                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                                )
-                                                Text(
-                                                    "${chat.messages.size} messages",
-                                                    modifier = Modifier.padding(top = 3.dp),
-                                                    color = Color(0xFF9992A3),
-                                                    fontSize = 11.sp,
-                                                )
-                                            }
-
-                                            Box {
-                                                TextButton(
-                                                    onClick = {
-                                                        openMenuId = if (openMenuId == chat.id) null else chat.id
-                                                    },
-                                                    modifier = Modifier.size(42.dp),
-                                                    contentPadding = PaddingValues(0.dp),
-                                                ) {
-                                                    Text("⋮", color = Color(0xFF6F6878), fontSize = 22.sp)
-                                                }
-                                                DropdownMenu(
-                                                    expanded = openMenuId == chat.id,
-                                                    onDismissRequest = { openMenuId = null },
-                                                ) {
-                                                    DropdownMenuItem(
-                                                        text = { Text("Delete", color = Color(0xFFC13D52)) },
-                                                        onClick = { deleteChat(chat.id) },
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
+                        Text(
+                            "Listening… tap mic to stop",
+                            modifier = Modifier.padding(start = 10.dp),
+                            color = Color(0xFF4A4650),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
                     }
                 }
             }
+
+            AppBottomNav(activeTab = AppTab.HOME, onAccountsClick = {}, onLobbyClick = onLobbyClick, onConnectClick = onConnectClick, onSettingsClick = onSettingsClick)
         }
     }
 }

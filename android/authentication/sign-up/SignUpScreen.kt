@@ -2,6 +2,7 @@ package com.indoone.authentication.signup
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +34,7 @@ import com.indoone.authentication.AuthPrimaryButton
 import com.indoone.authentication.AuthSecondaryButton
 import com.indoone.authentication.AuthStatus
 import com.indoone.authentication.AuthTextField
+import kotlinx.coroutines.isActive
 
 @Composable
 fun SignUpScreen(
@@ -43,6 +45,7 @@ fun SignUpScreen(
     otpVisible: Boolean,
     otpEmail: String,
     onSendOtp: (email: String, mobile: String, password: String) -> Unit,
+    onCreateWithPassword: (email: String, mobile: String, password: String) -> Unit,
     onVerifyOtp: (otp: String) -> Unit,
     onResendOtp: () -> Unit,
     onLogin: () -> Unit,
@@ -64,11 +67,59 @@ fun SignUpScreen(
     AuthPage {
         AuthBrand()
         Spacer(Modifier.height(44.dp))
-        AuthHeading(
-            eyebrow = "GET STARTED",
-            title = "Create your account",
-            description = "Securely create an Indoone account for your authenticator vault.",
-        )
+        androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxWidth()) {
+            var showCreatingAccount by rememberSaveable { mutableStateOf(false) }
+            var descriptionVisibleChars by rememberSaveable { mutableStateOf(0) }
+
+            LaunchedEffect(Unit) {
+                while (isActive) {
+                    kotlinx.coroutines.delay(2000)
+                    showCreatingAccount = !showCreatingAccount
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                val description = "Securely create an Indoone account for your authenticator vault."
+                val delayPerCharacter = 2000L / description.length.coerceAtLeast(1)
+                for (index in 1..description.length) {
+                    kotlinx.coroutines.delay(delayPerCharacter)
+                    descriptionVisibleChars = index
+                }
+            }
+
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                contentAlignment = androidx.compose.ui.Alignment.TopStart,
+            ) {
+                androidx.compose.animation.Crossfade(
+                    targetState = showCreatingAccount,
+                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 500),
+                    label = "create_account_title",
+                ) { creating ->
+                    Text(
+                        text = if (creating) "Creating your account" else "Get started with",
+                        color = if (creating) {
+                            androidx.compose.ui.graphics.Color(0xFF17151D)
+                        } else {
+                            androidx.compose.ui.graphics.Color(0xFF7650D8)
+                        },
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-1).sp,
+                        lineHeight = 40.sp,
+                    )
+                }
+            }
+            val description = "Securely create an Indoone account for your authenticator vault."
+            Text(
+                description.take(descriptionVisibleChars),
+                color = androidx.compose.ui.graphics.Color(0xFF77717F),
+                fontSize = 14.sp,
+                lineHeight = 22.sp,
+            )
+        }
         Spacer(Modifier.height(20.dp))
 
         AuthFieldLabel("EMAIL ID")
@@ -110,16 +161,25 @@ fun SignUpScreen(
         )
 
         Spacer(Modifier.height(20.dp))
-        AuthPrimaryButton(
-            text = when {
-                !otpVisible && busyAction == AuthBusyAction.SEND_OTP -> "Sending OTP…"
-                otpVisible && busyAction == AuthBusyAction.RESEND_OTP -> "Sending…"
-                otpVisible -> "Resend OTP"
-                else -> "Send OTP"
-            },
-            enabled = actionEnabled,
-            onClick = { if (otpVisible) onResendOtp() else onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
-        )
+        if (!otpVisible) {
+            AuthPrimaryButton(
+                text = if (busyAction == AuthBusyAction.SEND_OTP) "Sending OTP…" else "Continue with OTP",
+                enabled = actionEnabled,
+                onClick = { onSendOtp(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
+            )
+            Spacer(Modifier.height(8.dp))
+            AuthPrimaryButton(
+                text = if (busyAction == AuthBusyAction.CREATE_ACCOUNT) "Creating account…" else "Continue with Password",
+                enabled = actionEnabled,
+                onClick = { onCreateWithPassword(email, "+91${mobile.filter(Char::isDigit).take(10)}", password) },
+            )
+        } else {
+            AuthPrimaryButton(
+                text = if (busyAction == AuthBusyAction.RESEND_OTP) "Sending…" else "Resend OTP",
+                enabled = actionEnabled,
+                onClick = { onResendOtp() },
+            )
+        }
 
         if (otpVisible) {
             Spacer(Modifier.height(6.dp))
@@ -151,10 +211,15 @@ fun SignUpScreen(
 
         AuthStatus(error, error = true)
         Spacer(Modifier.height(10.dp))
-        AuthSecondaryButton("Already have an account? Login", !busy, onLogin)
+        AuthSecondaryButton(
+            text = "Already have an account? Login",
+            enabled = !busy,
+            onClick = onLogin,
+            textColor = androidx.compose.ui.graphics.Color(0xFF2E7D32),
+        )
         Spacer(Modifier.height(10.dp))
         Text(
-            "Your Indoone account is activated after successful email OTP verification.",
+            "Continue with OTP verifies your email. Continue with Password creates the account directly using your password.",
             color = androidx.compose.ui.graphics.Color(0xFF76717D),
             fontSize = 12.sp,
             lineHeight = 18.sp,

@@ -3,6 +3,7 @@ package com.indoone.authentication
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -31,11 +32,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.R
@@ -50,19 +53,26 @@ private val IndooneField = Color(0xFFFBFAFC)
 private val IndooneEyebrow = Color(0xFF7650D8)
 
 @Composable
-fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
+fun AuthPage(
+    showCard: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.White, Color(0xFFFBFAFF)),
+                    colors = listOf(
+                        Color(0xFFECE7DE),
+                        Color(0xFFE2DCD2),
+                        Color(0xFFD9D1C6),
+                    ),
                 )
             ),
     ) {
         val wideLayout = maxWidth >= 700.dp
-        val horizontalPadding = if (wideLayout) 34.dp else 22.dp
-        val verticalPadding = if (wideLayout) 64.dp else 48.dp
+        val horizontalPadding = if (wideLayout) 34.dp else 18.dp
+        val verticalPadding = if (wideLayout) 28.dp else 24.dp
 
         Column(
             modifier = Modifier
@@ -72,12 +82,45 @@ fun AuthPage(content: @Composable ColumnScope.() -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 460.dp),
-                content = content,
-            )
+            if (showCard) {
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 460.dp)
+                        .shadow(
+                            elevation = 14.dp,
+                            shape = RoundedCornerShape(18.dp),
+                            clip = false,
+                        )
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFFFDF7),
+                                    Color(0xFFF7F0E3),
+                                ),
+                            )
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFFD8CBB8),
+                            shape = RoundedCornerShape(18.dp),
+                        )
+                        .padding(horizontal = 22.dp, vertical = 24.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = content,
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 460.dp),
+                    content = content,
+                )
+            }
         }
     }
 }
@@ -104,13 +147,7 @@ fun AuthBrand() {
                 fontWeight = FontWeight.Bold,
                 lineHeight = 19.sp,
             )
-            Text(
-                text = "Authenticator",
-                color = Color(0xFF6F6B77),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 12.sp,
-            )
+
         }
     }
 }
@@ -148,7 +185,7 @@ fun AuthHeading(eyebrow: String, title: String, description: String) {
 fun AuthFieldLabel(text: String) {
     Text(
         text,
-        color = Color(0xFF625D68),
+        color = Color(0xFF7650D8),
         fontSize = 10.sp,
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 0.4.sp,
@@ -196,12 +233,15 @@ fun AuthPrimaryButton(
     text: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    fontSize: androidx.compose.ui.unit.TextUnit = 14.sp,
+    fillMaxWidth: Boolean = true,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier)
             .height(48.dp)
             .clip(RoundedCornerShape(13.dp))
             .background(
@@ -216,12 +256,24 @@ fun AuthPrimaryButton(
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
-        Text(text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            text = text,
+            fontSize = fontSize,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Clip,
+        )
     }
 }
 
 @Composable
-fun AuthSecondaryButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+fun AuthSecondaryButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    textColor: Color = Color(0xFF5F5966),
+) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -232,9 +284,9 @@ fun AuthSecondaryButton(text: String, enabled: Boolean, onClick: () -> Unit) {
         border = BorderStroke(1.dp, IndooneBorder),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.White,
-            contentColor = Color(0xFF5F5966),
+            contentColor = textColor,
             disabledContainerColor = Color.White,
-            disabledContentColor = Color(0xFF8A8490),
+            disabledContentColor = textColor,
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
     ) {
