@@ -53,7 +53,7 @@ android {
 
     buildTypes {
         getByName("debug") {
-            if (System.getenv("GITHUB_REF_NAME") == "develop" && signingConfigs.findByName("develop") != null) {
+            if ((System.getenv("GITHUB_REF_NAME") == "develop" || System.getenv("GITHUB_REF_NAME") == "terminal") && signingConfigs.findByName("develop") != null) {
                 signingConfig = signingConfigs.getByName("develop")
             }
         }
