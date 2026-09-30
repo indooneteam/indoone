@@ -22,7 +22,7 @@ jobs:
         with:
           gradle-version: '9.6.0'
       - name: Prepare stable develop signing key
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal'
         shell: bash
         env:
           INDOONE_KEYSTORE_BASE64: ${{ secrets.INDOONE_KEYSTORE_BASE64 }}
@@ -34,10 +34,10 @@ jobs:
       - name: Assemble debug APK
         shell: bash
         env:
-          INDOONE_KEYSTORE_PATH: ${{ github.ref == 'refs/heads/develop' && format('{0}/indoone-develop.keystore', runner.temp) || '' }}
-          INDOONE_KEYSTORE_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
-          INDOONE_KEY_ALIAS: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_ALIAS || '' }}
-          INDOONE_KEY_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_PASSWORD || '' }}
+          INDOONE_KEYSTORE_PATH: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && format('{0}/indoone-develop.keystore', runner.temp) || '' }}
+          INDOONE_KEYSTORE_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
+          INDOONE_KEY_ALIAS: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_ALIAS || '' }}
+          INDOONE_KEY_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_PASSWORD || '' }}
           INDOONE_BACKEND_URL: ${{ github.ref == 'refs/heads/terminal' && 'http://127.0.0.1:8000' || '' }}
         run: gradle assembleDebug --stacktrace
       - name: Verify APK output
