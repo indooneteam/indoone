@@ -60,6 +60,9 @@ import com.indoone.menu.termsofuse.TermsOfUseScreen
 import com.indoone.menu.trash.TrashScreen
 import com.indoone.menu.profile.ProfileMenuScreen
 import com.indoone.menu.memory.MemoryMenuScreen
+import com.indoone.menu.plugins.PluginsMenuScreen
+import com.indoone.menu.plugins.email.EmailPluginMenuScreen
+import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
 import com.indoone.menu.chathistory.ChatHistoryMenuScreen
 import com.indoone.menu.dataprivacy.DataPrivacyMenuScreen
 import com.indoone.settings.applock.AppLockStore
@@ -91,6 +94,50 @@ fun MenuDrawer(
     var showMemory by remember { mutableStateOf(false) }
     var showChatHistory by remember { mutableStateOf(false) }
     var showDataPrivacy by remember { mutableStateOf(false) }
+    var showPlugins by remember { mutableStateOf(false) }
+    var showEmailPlugin by remember { mutableStateOf(false) }
+    var showGmailPlugin by remember { mutableStateOf(false) }
+
+    if (showGmailPlugin) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            GmailPluginMenuScreen(
+                onBack = {
+                    showGmailPlugin = false
+                    showEmailPlugin = true
+                },
+            )
+        }
+        return
+    }
+    if (showEmailPlugin) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            EmailPluginMenuScreen(
+                onBack = {
+                    showEmailPlugin = false
+                    showPlugins = true
+                },
+                onGmailClick = {
+                    showEmailPlugin = false
+                    showGmailPlugin = true
+                },
+            )
+        }
+        return
+    }
+    if (showPlugins) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            PluginsMenuScreen(
+                onBack = {
+                    showPlugins = false
+                },
+                onEmailClick = {
+                    showPlugins = false
+                    showEmailPlugin = true
+                },
+            )
+        }
+        return
+    }
 
     if (showProfile) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
@@ -170,6 +217,7 @@ fun MenuDrawer(
                 }
                 DrawerItem(Icons.Outlined.PersonOutline, "Profile", null) { showProfile = true }
                 DrawerItem(Icons.Outlined.Memory, "Memory", null) { showMemory = true }
+                DrawerItem(Icons.Outlined.Extension, "Plugins", null) { showPlugins = true }
                 DrawerItem(Icons.Outlined.History, "Chat History", null) { showChatHistory = true }
                 DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
 
