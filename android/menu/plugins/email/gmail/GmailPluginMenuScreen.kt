@@ -90,18 +90,17 @@ fun GmailPluginMenuScreen(
     val authorizationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { activityResult ->
-        if (activityResult.resultCode != android.app.Activity.RESULT_OK) {
-            connecting = false
-            checking = false
-            message = "Google authorization was cancelled."
-            return@rememberLauncherForActivityResult
-        }
         try {
             val authorizationResult = Identity
                 .getAuthorizationClient(context)
                 .getAuthorizationResultFromIntent(activityResult.data)
             finishAuthorization(authorizationResult)
         } catch (error: ApiException) {
+            connecting = false
+            checking = false
+            message = "Google authorization failed (\" + error.statusCode + "): " +
+                (error.message ?: "unknown Google authorization error.")
+        } catch (error: Exception) {
             connecting = false
             checking = false
             message = error.message ?: "Google authorization failed."
