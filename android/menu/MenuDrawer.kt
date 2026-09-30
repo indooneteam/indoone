@@ -51,6 +51,7 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.AddComment
+import androidx.compose.material.icons.outlined.Apps
 import com.indoone.MainActivity
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.about.MenuAboutScreen
@@ -217,7 +218,7 @@ fun MenuDrawer(
                 }
                 DrawerItem(Icons.Outlined.PersonOutline, "Profile", null) { showProfile = true }
                 DrawerItem(Icons.Outlined.Memory, "Memory", null) { showMemory = true }
-                DrawerItem(Icons.Outlined.Extension, "Plugins", null) { showPlugins = true }
+                DrawerItem(Icons.Outlined.Apps, "Plugins", null) { showPlugins = true }
                 DrawerItem(Icons.Outlined.History, "Chat History", null) { showChatHistory = true }
                 DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
 
