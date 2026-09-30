@@ -11,10 +11,6 @@ import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class GmailConnectResult(
-    val authorizationUrl: String,
-)
-
 data class GmailConnectionStatus(
     val connected: Boolean,
 )
@@ -22,31 +18,34 @@ data class GmailConnectionStatus(
 object GmailPluginApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 20_000
-    private const val GMAIL_OAUTH_CALLBACK_PATH = "/api/integrations/gmail/callback"
+    const val GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify"
 
-    suspend fun startConnection(): GmailConnectResult = withContext(Dispatchers.IO) {
+    suspend fun storeNativeAccessToken(
+        accessToken: String,
+        grantedScope: String = GMAIL_SCOPE,
+    ): GmailConnectionStatus = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
         val userId = requireUserId()
-        val redirectUri = backendUrl + GMAIL_OAUTH_CALLBACK_PATH
         val authToken = requireAuthToken()
+        val token = accessToken.trim()
+        if (token.isBlank()) {
+            throw GmailPluginException("Google did not return an access token.")
+        }
         val payload = JSONObject().apply {
             put("user_id", userId)
-            put("redirect_uri", redirectUri)
+            put("access_token", token)
+            put("scope", grantedScope.ifBlank { GMAIL_SCOPE })
         }.toString()
 
         val connection = openConnection(
-            url = "${backendUrl}/api/integrations/gmail/connect",
+            url = "${backendUrl}/api/integrations/gmail/native-token",
             method = "POST",
             authToken = authToken,
         )
         try {
             val body = execute(connection, payload)
             val json = JSONObject(body)
-            val authorizationUrl = json.optString("authorization_url").trim()
-            if (authorizationUrl.isBlank()) {
-                throw GmailPluginException("Indoone backend returned no Gmail authorization URL.")
-            }
-            GmailConnectResult(authorizationUrl)
+            GmailConnectionStatus(connected = json.optBoolean("connected", false))
         } finally {
             connection.disconnect()
         }
