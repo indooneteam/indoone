@@ -32,11 +32,12 @@ class IndooneAuthService(
                 // Password login must depend only on Firebase Authentication.
                 // Do not read or write Realtime Database during credential sign-in;
                 // database rules must never turn a valid password into a login error.
-                val email = if (raw.contains('@')) {
-                    raw.lowercase()
-                } else {
-                    resolveMobile(raw).email
+                if (!raw.contains('@')) {
+                    throw AuthException(
+                        "Password login requires your email address. For mobile number login, use Continue with OTP."
+                    )
                 }
+                val email = raw.lowercase()
                 val user = await(auth.signInWithEmailAndPassword(email, password)).user
                     ?: throw AuthException("Login session expired. Please login again.")
 
