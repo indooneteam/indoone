@@ -29,18 +29,11 @@ class IndooneAuthService(
 
         return withContext(Dispatchers.IO) {
             try {
-                // Password login must depend only on Firebase Authentication.
-                // Do not read or write Realtime Database during credential sign-in;
-                // database rules must never turn a valid password into a login error.
-                if (!raw.contains('@')) {
-                    throw AuthException(
-                        "Password login requires your email address. For mobile number login, use Continue with OTP."
-                    )
-                }
-                val email = raw.lowercase()
+                val email = resolveLoginEmail(raw)
                 val user = await(auth.signInWithEmailAndPassword(email, password)).user
                     ?: throw AuthException("Login session expired. Please login again.")
-
+                validateLoginProfile(user.uid, email, raw)
+                syncProfile(user.uid, email, null)
                 user.uid
             } catch (error: Throwable) {
                 auth.signOut()
@@ -332,28 +325,6 @@ class IndooneAuthService(
         } finally {
             connection.disconnect()
         }
-    }
-
-    private fun isDatabasePermissionDenied(error: Throwable): Boolean {
-        var current: Throwable? = error
-        while (current != null) {
-            val message = current.message.orEmpty()
-            if (message.contains("Permission denied", ignoreCase = true) ||
-                message.contains("PERMISSION_DENIED", ignoreCase = true)
-            ) {
-                return true
-            }
-            current = current.cause
-        }
-        return false
-    }
-
-    private fun logDatabasePermissionWarning(operation: String, error: Throwable) {
-        android.util.Log.w(
-            "IndooneAuthService",
-            "Firebase Realtime Database $operation was denied; continuing authenticated login.",
-            error,
-        )
     }
 
     private fun normalizeError(error: Throwable): Throwable {
