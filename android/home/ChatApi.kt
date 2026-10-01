@@ -125,6 +125,9 @@ object ChatApi {
     private fun requireBackendUrl(): String {
         val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
         if (backendUrl.isBlank()) throw ChatApiException("Indoone backend URL is not configured")
+        if (BuildConfig.INDOONE_CHANNEL == "terminal" && backendUrl != "http://127.0.0.1:8000") {
+            throw ChatApiException("Terminal build is configured for a non-local backend")
+        }
         return backendUrl
     }
 
