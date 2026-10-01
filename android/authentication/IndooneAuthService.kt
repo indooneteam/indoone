@@ -29,28 +29,16 @@ class IndooneAuthService(
 
         return withContext(Dispatchers.IO) {
             try {
-                val email = resolveLoginEmail(raw)
+                // Password login must depend only on Firebase Authentication.
+                // Do not read or write Realtime Database during credential sign-in;
+                // database rules must never turn a valid password into a login error.
+                val email = if (raw.contains('@')) {
+                    raw.lowercase()
+                } else {
+                    resolveMobile(raw).email
+                }
                 val user = await(auth.signInWithEmailAndPassword(email, password)).user
                     ?: throw AuthException("Login session expired. Please login again.")
-
-                // Firebase Authentication is the source of truth for password login.
-                // Realtime Database profile reads/writes must not turn a successful
-                // authentication into a misleading "Permission denied" login error.
-                try {
-                    validateLoginProfile(user.uid, email, raw)
-                } catch (error: AuthException) {
-                    throw error
-                } catch (error: Throwable) {
-                    if (!isDatabasePermissionDenied(error)) throw error
-                    logDatabasePermissionWarning("profile read", error)
-                }
-
-                try {
-                    syncProfile(user.uid, email, null)
-                } catch (error: Throwable) {
-                    if (!isDatabasePermissionDenied(error)) throw error
-                    logDatabasePermissionWarning("profile write", error)
-                }
 
                 user.uid
             } catch (error: Throwable) {
