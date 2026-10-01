@@ -32,8 +32,26 @@ class IndooneAuthService(
                 val email = resolveLoginEmail(raw)
                 val user = await(auth.signInWithEmailAndPassword(email, password)).user
                     ?: throw AuthException("Login session expired. Please login again.")
-                validateLoginProfile(user.uid, email, raw)
-                syncProfile(user.uid, email, null)
+
+                // Firebase Authentication is the source of truth for password login.
+                // Realtime Database profile reads/writes must not turn a successful
+                // authentication into a misleading "Permission denied" login error.
+                try {
+                    validateLoginProfile(user.uid, email, raw)
+                } catch (error: AuthException) {
+                    throw error
+                } catch (error: Throwable) {
+                    if (!isDatabasePermissionDenied(error)) throw error
+                    logDatabasePermissionWarning("profile read", error)
+                }
+
+                try {
+                    syncProfile(user.uid, email, null)
+                } catch (error: Throwable) {
+                    if (!isDatabasePermissionDenied(error)) throw error
+                    logDatabasePermissionWarning("profile write", error)
+                }
+
                 user.uid
             } catch (error: Throwable) {
                 auth.signOut()
@@ -325,6 +343,28 @@ class IndooneAuthService(
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun isDatabasePermissionDenied(error: Throwable): Boolean {
+        var current: Throwable? = error
+        while (current != null) {
+            val message = current.message.orEmpty()
+            if (message.contains("Permission denied", ignoreCase = true) ||
+                message.contains("PERMISSION_DENIED", ignoreCase = true)
+            ) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
+
+    private fun logDatabasePermissionWarning(operation: String, error: Throwable) {
+        android.util.Log.w(
+            "IndooneAuthService",
+            "Firebase Realtime Database $operation was denied; continuing authenticated login.",
+            error,
+        )
     }
 
     private fun normalizeError(error: Throwable): Throwable {
