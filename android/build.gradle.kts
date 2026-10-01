@@ -36,7 +36,7 @@ android {
         val developKeyPassword = System.getenv("INDOONE_KEY_PASSWORD")
 
         if (
-            System.getenv("GITHUB_REF_NAME") == "develop" &&
+            (System.getenv("GITHUB_REF_NAME") == "develop" || System.getenv("GITHUB_REF_NAME") == "terminal") &&
             !developKeystorePath.isNullOrBlank() &&
             !developKeystorePassword.isNullOrBlank() &&
             !developKeyAlias.isNullOrBlank() &&
