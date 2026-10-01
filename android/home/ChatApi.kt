@@ -28,7 +28,11 @@ data class FileUploadResponse(
 
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
-    private const val READ_TIMEOUT_MS = 120_000
+    // Local Qwen CPU inference can legitimately take a couple of minutes,
+// especially while the model is first loaded into memory. Keep the client
+// timeout comfortably above observed inference time so valid replies are not
+// reported as timeouts.
+private const val READ_TIMEOUT_MS = 300_000
     private const val WARMUP_TIMEOUT_MS = 15_000
     private const val WARMUP_RETRIES = 1
     private const val WARMUP_COOLDOWN_MS = 60_000L
