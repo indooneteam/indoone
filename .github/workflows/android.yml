@@ -38,7 +38,7 @@ jobs:
           INDOONE_KEYSTORE_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
           INDOONE_KEY_ALIAS: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_ALIAS || '' }}
           INDOONE_KEY_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_PASSWORD || '' }}
-          INDOONE_BACKEND_URL: ${{ github.ref == 'refs/heads/terminal' && 'http://127.0.0.1:8000' || '' }}
+          INDOONE_BACKEND_URL: ${{ github.ref == 'refs/heads/terminal' && 'http://52.62.244.79:8000' || '' }}
         run: gradle assembleDebug --stacktrace
       - name: Verify APK output
         shell: bash
