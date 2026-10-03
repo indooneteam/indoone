@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MicOff
 import androidx.compose.material.icons.outlined.VolumeOff
@@ -138,41 +139,29 @@ fun VibeScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-                contentAlignment = Alignment.Center,
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    androidx.compose.ui.text.buildAnnotatedString {
-                        androidx.compose.ui.text.withStyle(
-                            androidx.compose.ui.text.SpanStyle(
-                                color = Color(0xFF9A82FF),
-                                fontSize = 25.sp,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            ),
-                        ) {
-                            append("I")
-                        }
-                        androidx.compose.ui.text.withStyle(
-                            androidx.compose.ui.text.SpanStyle(
-                                color = Color(0xFF9A82FF),
-                                fontSize = 17.sp,
-                            ),
-                        ) {
-                            append("ndoone")
-                        }
-                        append(" ")
-                        androidx.compose.ui.text.withStyle(
-                            androidx.compose.ui.text.SpanStyle(
-                                color = Color.White,
-                                fontSize = 24.sp,
-                            ),
-                        ) {
-                            append("Vibe")
-                        }
-                    },
+                    "I",
+                    color = Color(0xFF9A82FF),
+                    fontSize = 25.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                )
+                Text(
+                    "ndoone",
+                    color = Color(0xFF9A82FF),
+                    fontSize = 17.sp,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "Vibe",
+                    color = Color.White,
+                    fontSize = 24.sp,
                 )
             }
 
