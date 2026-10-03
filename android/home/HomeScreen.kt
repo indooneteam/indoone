@@ -429,25 +429,48 @@ fun HomeScreen(
                     )
                 }
 
-                Box(
-                    modifier = Modifier.padding(start = 8.dp).size(42.dp).clip(CircleShape).background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB)).clickable(enabled = !isSending, onClick = ::onVoiceButtonClick),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Mic,
-                        contentDescription = if (isListening) "Stop voice input" else "Voice input",
-                        tint = if (isListening) Color.White else Color(0xFF4A4650),
-                        modifier = Modifier.size(21.dp),
-                    )
-                }
-
                 val canSend = !isSending && input.isNotBlank()
+                val composerActionEnabled = !isSending && (input.isNotBlank() || !isListening)
                 Box(
-                    modifier = Modifier.padding(start = 8.dp).size(48.dp).clip(CircleShape).background(if (canSend) Color(0xFF703BE2) else Color(0xFFE9E5F0)).clickable(enabled = canSend, onClick = ::sendMessage),
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isSending -> Color(0xFF703BE2)
+                                canSend -> Color(0xFF703BE2)
+                                isListening -> Color(0xFF703BE2)
+                                else -> Color(0xFFF5F2FB)
+                            },
+                        )
+                        .clickable(
+                            enabled = composerActionEnabled,
+                            onClick = if (canSend) ::sendMessage else ::onVoiceButtonClick,
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (isSending) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.2.dp)
-                    else Text("➤", color = if (canSend) Color.White else Color(0xFF9992A3), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    when {
+                        isSending -> CircularProgressIndicator(
+                            Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.2.dp,
+                        )
+
+                        canSend -> Text(
+                            "➤",
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+
+                        else -> Icon(
+                            imageVector = Icons.Outlined.Mic,
+                            contentDescription = if (isListening) "Stop voice input" else "Voice mode",
+                            tint = Color.White.takeIf { isListening } ?: Color(0xFF4A4650),
+                            modifier = Modifier.size(21.dp),
+                        )
+                    }
                 }
             }
 
