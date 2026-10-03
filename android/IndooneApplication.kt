@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -13,16 +15,23 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import androidx.work.WorkManager
 import com.indoone.home.message.ChatCleanupWorker
 import com.google.firebase.messaging.FirebaseMessaging
 import com.indoone.notifications.IndooneNotificationChannels
+import com.indoone.notifications.NotificationApi
+import com.indoone.notifications.NotificationPreferences
 import com.indoone.notifications.NotificationPreferences
 import com.indoone.settings.autolock.AutoLockController
 import java.util.concurrent.TimeUnit
 
 class IndooneApplication : Application() {
     private val controllers = mutableMapOf<Activity, AutoLockController>()
+    private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -46,6 +55,7 @@ class IndooneApplication : Application() {
 
             override fun onActivityResumed(activity: Activity) {
                 configureSystemBars(activity)
+                syncNotificationToken()
                 controllers[activity]?.onResumed(activity as? ComponentActivity ?: return)
                 if (activity is ComponentActivity) installStatusBarInset(activity)
             }
@@ -62,6 +72,23 @@ class IndooneApplication : Application() {
             override fun onActivityStopped(activity: Activity) = Unit
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
+    }
+
+    private fun syncNotificationToken() {
+        FirebaseAuth.getInstance().currentUser ?: return
+        val preferences = NotificationPreferences(this)
+
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            if (token.isBlank()) return@addOnSuccessListener
+            preferences.saveFcmToken(token)
+            if (preferences.registeredFcmToken() == token) return@addOnSuccessListener
+
+            notificationScope.launch {
+                if (runCatching { NotificationApi.registerToken(token) }.getOrDefault(false)) {
+                    preferences.markFcmTokenRegistered(token)
+                }
+            }
+        }
     }
 
     private fun configureSystemBars(activity: Activity) {
