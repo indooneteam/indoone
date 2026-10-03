@@ -92,6 +92,33 @@ private data class ChatMessage(
 )
 
 @Composable
+private fun QuickPromptChip(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .weight(1f)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, Color(0xFFD9C9F2)),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                label,
+                color = Color(0xFF5E2DD2),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
 fun HomeScreen(
     onMenuClick: () -> Unit,
     onLobbyClick: () -> Unit,
@@ -285,8 +312,6 @@ fun HomeScreen(
 
     fun stopVoiceInput() {
         speechRecognizer?.stopListening()
-        speechRecognizer?.cancel()
-        isListening = false
     }
 
     fun startVoiceInput() {
@@ -394,6 +419,85 @@ fun HomeScreen(
                 contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                if (messages.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 26.dp, bottom = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF0E8FF)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
+                                    contentDescription = "Indoone AI",
+                                    modifier = Modifier.size(48.dp),
+                                )
+                            }
+                            Text(
+                                "Indoone AI",
+                                modifier = Modifier.padding(top = 12.dp),
+                                color = Color(0xFF352742),
+                                fontSize = 21.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                "Your Personal AI Assistant",
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = Color(0xFF81758D),
+                                fontSize = 12.sp,
+                            )
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 18.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color(0xFFFAF8FF),
+                                border = BorderStroke(1.dp, Color(0xFFE9E0F7)),
+                            ) {
+                                Column(Modifier.padding(horizontal = 18.dp, vertical = 15.dp)) {
+                                    Text(
+                                        "Hi! 👋",
+                                        color = Color(0xFF352742),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        "I’m Indoone AI. How can I help you today?",
+                                        modifier = Modifier.padding(top = 3.dp),
+                                        color = Color(0xFF6F6578),
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                QuickPromptChip("Explain this") { input = "Explain this" }
+                                QuickPromptChip("Create image") { input = "Create image" }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                QuickPromptChip("Help me plan") { input = "Help me plan" }
+                                QuickPromptChip("More…") { input = "Tell me more" }
+                            }
+                        }
+                    }
+                }
+
                 items(messages) { message ->
                     Row(
                         Modifier.fillMaxWidth(),
