@@ -579,16 +579,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun configureSystemBarsDirectly() {
-        val isSystemDark =
-            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
-
-        window.statusBarColor = if (isSystemDark) Color.BLACK else Color.WHITE
-        window.navigationBarColor = if (isSystemDark) Color.BLACK else Color.WHITE
+        // Match the normal device status-bar presentation: dark top bar with
+        // light system icons, including time, network and notifications.
+        window.statusBarColor = Color.BLACK
         WindowCompat.setDecorFitsSystemWindows(window, true)
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = !isSystemDark
-            isAppearanceLightNavigationBars = !isSystemDark
+            isAppearanceLightStatusBars = false
         }
     }
 }
