@@ -103,7 +103,7 @@ fun AppTopBar(
             Row(
                 modifier = Modifier.align(Alignment.Center),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 IndooneLogo(
                     modifier = Modifier.size(34.dp),

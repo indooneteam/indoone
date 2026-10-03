@@ -431,6 +431,7 @@ fun HomeScreen(
                             Box(
                                 modifier = Modifier
                                     .size(72.dp)
+                                    .align(Alignment.CenterHorizontally)
                                     .clip(CircleShape)
                                     .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
@@ -612,7 +613,10 @@ fun HomeScreen(
                     }
                 }
 
-                VibeButton(onClick = onVibeClick)
+                VibeButton(
+                    modifier = Modifier.padding(start = 8.dp),
+                    onClick = onVibeClick,
+                )
             }
 
             voiceError?.let { error ->
