@@ -181,8 +181,19 @@ fun HomeScreen(
     var isListening by remember { mutableStateOf(false) }
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
+    var welcomeMessageIndex by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
     val chatListState = rememberLazyListState()
+
+    LaunchedEffect(messages.isEmpty()) {
+        if (messages.isEmpty()) {
+            welcomeMessageIndex = 0
+            while (true) {
+                kotlinx.coroutines.delay(2000)
+                welcomeMessageIndex = 1 - welcomeMessageIndex
+            }
+        }
+    }
 
     LaunchedEffect(isLoadingHistory, conversationId, messages.size, startNewChat, openConversationId) {
         if (!isLoadingHistory && messages.isNotEmpty()) {
@@ -474,7 +485,12 @@ fun HomeScreen(
                                 .padding(top = 26.dp, bottom = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            IndooneHomeLogo(modifier = Modifier.size(60.dp))
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                IndooneHomeLogo(modifier = Modifier.size(60.dp))
+                            }
                             Text(
                                 "Indoone AI",
                                 modifier = Modifier.padding(top = 12.dp),
@@ -504,7 +520,11 @@ fun HomeScreen(
                                         fontWeight = FontWeight.SemiBold,
                                     )
                                     Text(
-                                        "I’m Indoone AI. How can I help you today?",
+                                        if (welcomeMessageIndex == 0) {
+                                            "I am Indoone AI. How can I help you today?"
+                                        } else {
+                                            "Ask me anything."
+                                        },
                                         modifier = Modifier.padding(top = 3.dp),
                                         color = Color(0xFF6F6578),
                                         fontSize = 13.sp,
