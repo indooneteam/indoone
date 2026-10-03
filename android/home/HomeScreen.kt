@@ -22,16 +22,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,9 +53,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -187,6 +182,13 @@ fun HomeScreen(
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     val scope = rememberCoroutineScope()
+    val chatListState = rememberLazyListState()
+
+    LaunchedEffect(isLoadingHistory, conversationId, messages.size, startNewChat, openConversationId) {
+        if (!isLoadingHistory && messages.isNotEmpty()) {
+            chatListState.scrollToItem(messages.lastIndex)
+        }
+    }
 
     LaunchedEffect(userKey, startNewChat, openConversationId) {
         if (userKey.isBlank() || startNewChat) {
@@ -462,7 +464,7 @@ fun HomeScreen(
             } else LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = if (messages.isEmpty()) Arrangement.Center else Arrangement.spacedBy(10.dp),
             ) {
                 if (messages.isEmpty()) {
                     item {
@@ -472,15 +474,7 @@ fun HomeScreen(
                                 .padding(top = 26.dp, bottom = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFF0E8FF)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                IndooneHomeLogo(modifier = Modifier.size(48.dp))
-                            }
+                            IndooneHomeLogo(modifier = Modifier.size(60.dp))
                             Text(
                                 "Indoone AI",
                                 modifier = Modifier.padding(top = 12.dp),
@@ -563,10 +557,18 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        Column(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.Start,
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.Bottom,
                         ) {
+                            IndooneHomeLogo(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(24.dp)
+                                    .align(Alignment.Bottom),
+                            )
+
                             Surface(
                                 shape = RoundedCornerShape(
                                     topStart = 18.dp,
@@ -577,27 +579,12 @@ fun HomeScreen(
                                 color = Color(0xFFF5F2FB),
                             ) {
                                 Text(
-                                    text = buildAnnotatedString {
-                                        append(message.text)
-                                        appendInlineContent("indoone_logo")
-                                    },
-                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                    message.text,
+                                    Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
                                     color = Color(0xFF292331),
                                     fontSize = 13.sp,
-                                    inlineContent = mapOf(
-                                        "indoone_logo" to InlineTextContent(
-                                            placeholder = Placeholder(
-                                                width = 16.sp,
-                                                height = 16.sp,
-                                                placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                                            ),
-                                        ) {
-                                            IndooneHomeLogo(modifier = Modifier.size(16.dp))
-                                        },
-                                    ),
                                 )
                             }
-
                         }
                     }
                 }
@@ -681,7 +668,9 @@ fun HomeScreen(
                     }
                 }
 
-                VibeButton(onClick = onVibeClick)
+                if (input.isBlank() && !isListening) {
+                    VibeButton(onClick = onVibeClick)
+                }
             }
 
             voiceError?.let { error ->
