@@ -579,12 +579,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun configureSystemBarsDirectly() {
-        window.statusBarColor = Color.WHITE
-        window.navigationBarColor = Color.WHITE
+        val isSystemDark =
+            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+
+        window.statusBarColor = if (isSystemDark) Color.BLACK else Color.WHITE
+        window.navigationBarColor = if (isSystemDark) Color.BLACK else Color.WHITE
         WindowCompat.setDecorFitsSystemWindows(window, true)
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = true
-            isAppearanceLightNavigationBars = true
+            isAppearanceLightStatusBars = !isSystemDark
+            isAppearanceLightNavigationBars = !isSystemDark
         }
     }
 }
