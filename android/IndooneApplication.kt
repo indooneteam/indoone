@@ -21,6 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import androidx.work.WorkManager
 import com.indoone.home.message.ChatCleanupWorker
+import com.indoone.notifications.IndooneAppState
 import com.indoone.notifications.IndooneNotificationChannels
 import com.indoone.notifications.NotificationApi
 import com.indoone.notifications.NotificationPreferences
@@ -66,8 +67,13 @@ class IndooneApplication : Application() {
                 controllers.remove(activity)?.onDestroyed()
             }
 
-            override fun onActivityStarted(activity: Activity) = Unit
-            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivityStarted(activity: Activity) {
+                IndooneAppState.onActivityStarted()
+            }
+
+            override fun onActivityStopped(activity: Activity) {
+                IndooneAppState.onActivityStopped()
+            }
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
     }
