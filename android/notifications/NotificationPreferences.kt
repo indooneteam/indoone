@@ -34,9 +34,16 @@ class NotificationPreferences(context: Context) {
 
     fun fcmToken(): String = preferences.getString(KEY_FCM_TOKEN, "").orEmpty()
 
+    fun registeredFcmToken(): String = preferences.getString(KEY_REGISTERED_FCM_TOKEN, "").orEmpty()
+
+    fun markFcmTokenRegistered(token: String) {
+        preferences.edit().putString(KEY_REGISTERED_FCM_TOKEN, token.trim()).apply()
+    }
+
     companion object {
         private const val KEY_MASTER = "master_enabled"
         private const val KEY_PERMISSION_REQUESTED = "permission_requested"
         private const val KEY_FCM_TOKEN = "fcm_token"
+        private const val KEY_REGISTERED_FCM_TOKEN = "registered_fcm_token"
     }
 }
