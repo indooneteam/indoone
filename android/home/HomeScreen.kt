@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -92,7 +93,7 @@ private data class ChatMessage(
 )
 
 @Composable
-private fun QuickPromptChip(
+private fun RowScope.QuickPromptChip(
     label: String,
     onClick: () -> Unit,
 ) {
