@@ -56,7 +56,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
-import com.indoone.menu.data.CloudChatRepository
+import com.indoone.home.message.ChatApi
+import com.indoone.home.message.CloudChatRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

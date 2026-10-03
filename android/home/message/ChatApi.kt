@@ -1,4 +1,4 @@
-package com.indoone.home
+package com.indoone.home.message
 
 import android.util.Base64
 import com.google.android.gms.tasks.Tasks

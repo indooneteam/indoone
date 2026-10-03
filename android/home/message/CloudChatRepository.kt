@@ -1,4 +1,4 @@
-package com.indoone.menu.data
+package com.indoone.home.message
 
 import com.google.android.gms.tasks.Tasks
 import android.util.Log
