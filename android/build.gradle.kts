@@ -80,7 +80,8 @@ android {
             "home",
             "lobby",
             "connect",
-            "settings"
+            "settings",
+            "notifications"
         )
     )
     sourceSets["main"].manifest.srcFile(file("AndroidManifest.xml"))
@@ -121,6 +122,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.5.0")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-messaging")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.biometric:biometric:1.1.0")

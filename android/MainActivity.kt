@@ -1,6 +1,9 @@
 package com.indoone
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,6 +19,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
@@ -48,6 +54,8 @@ import com.indoone.home.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
+import com.indoone.notifications.NotificationPreferences
+import com.indoone.notifications.NotificationSettingsScreen
 import com.indoone.menu.favorites.FavoritesScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
@@ -108,6 +116,28 @@ class MainActivity : ComponentActivity() {
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
+                var notificationsPage by remember { mutableStateOf(false) }
+                val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission(),
+                ) { granted ->
+                    if (granted) notificationPreferences.markPermissionRequested()
+                }
+
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (granted) {
+                            notificationPreferences.markPermissionRequested()
+                        } else if (!notificationPreferences.wasPermissionRequested()) {
+                            notificationPreferences.markPermissionRequested()
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
 
                 fun navigate(target: AppRoute) {
                     menuOpen = false
@@ -241,6 +271,7 @@ class MainActivity : ComponentActivity() {
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                        onNotificationsClick = { notificationsPage = true },
                     )
 
                     AppRoute.PROFILE -> {
@@ -563,6 +594,12 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
+                }
+
+                if (notificationsPage) {
+                    NotificationSettingsScreen(
+                        onBack = { notificationsPage = false },
+                    )
                 }
 
                 if (menuOpen) {

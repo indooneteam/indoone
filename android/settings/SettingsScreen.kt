@@ -99,6 +99,14 @@ private val InfoIcon = settingsIcon("SettingsInfo") {
     moveTo(12f, 7.5f); lineTo(12.01f, 7.5f)
 }
 
+private val NotificationsIcon = settingsIcon("SettingsNotifications") {
+    moveTo(6f, 10f); curveTo(6f, 6.686f, 8.686f, 4f, 12f, 4f); curveTo(15.314f, 4f, 18f, 6.686f, 18f, 10f)
+    moveTo(4.5f, 10f); lineTo(4.5f, 14f); curveTo(4.5f, 15.105f, 5.395f, 16f, 6.5f, 16f)
+    moveTo(19.5f, 10f); lineTo(19.5f, 14f); curveTo(19.5f, 15.105f, 18.605f, 16f, 17.5f, 16f)
+    moveTo(9f, 19f); curveTo(10.5f, 20.3f, 13.5f, 20.3f, 15f, 19f)
+    moveTo(7f, 16f); lineTo(17f, 16f)
+}
+
 private val ChevronIcon = settingsIcon("SettingsNext") {
     moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
 }
@@ -111,6 +119,7 @@ fun SettingsScreen(
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -221,6 +230,12 @@ fun SettingsScreen(
                     TimerIcon,
                 ) { autoLockPage = true }
                 SettingsSectionLabel("App")
+                SettingsActionRow(
+                    "Notifications",
+                    "Security, AI, Vibe and other alerts",
+                    NotificationsIcon,
+                    onNotificationsClick,
+                )
                 SettingsActionRow("About Indoone", "Version 0.1.0 · Updates", InfoIcon) { aboutPage = true }
                 SettingsSectionLabel("Account Actions")
                 SettingsActionRow("Danger Zone", "Delete local data or your Indoone account", InfoIcon) { dangerZonePage = true }
