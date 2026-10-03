@@ -419,7 +419,9 @@ fun HomeScreen(
                         value = input,
                         onValueChange = { input = it },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp),
-                        enabled = !isSending,
+                        // Keep the composer available while an AI reply is in progress.
+                        // The send action remains locked until the current reply finishes.
+                        enabled = true,
                         singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF17151D), fontSize = 14.sp),
                         decorationBox = { innerTextField -> Box { if (input.isEmpty()) Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 14.sp); innerTextField() } },
