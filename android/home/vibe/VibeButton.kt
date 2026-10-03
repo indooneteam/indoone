@@ -1,5 +1,7 @@
 package com.indoone.home.vibe
 
+import com.indoone.menu.IndooneLogo
+
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,7 +26,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -119,10 +119,8 @@ fun VibeButton(
             )
         }
 
-        Text(
-            text = "V",
-            color = Color.White.copy(alpha = 0.96f),
-            fontSize = 10.sp,
+        IndooneLogo(
+            modifier = Modifier.size(16.dp),
         )
     }
 }

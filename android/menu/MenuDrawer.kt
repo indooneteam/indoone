@@ -29,14 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.GridView
@@ -199,7 +196,7 @@ fun MenuDrawer(
         Surface(modifier = Modifier.width(310.dp).fillMaxHeight(), color = Color.White, shadowElevation = 16.dp) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 25.dp)) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IndooneMenuLogo(modifier = Modifier.size(36.dp))
+                    IndooneLogo(modifier = Modifier.size(36.dp))
                     Column(modifier = Modifier.padding(start = 9.dp)) {
                         Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
                         Text("Authenticator", color = Color(0xFF77717D), fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -244,25 +241,6 @@ fun MenuDrawer(
             }
         }
         Spacer(modifier = Modifier.weight(1f).fillMaxHeight().background(Color.Black.copy(alpha = 0.33f)).clickable(onClick = onDismiss))
-    }
-}
-
-@Composable
-private fun IndooneMenuLogo(modifier: Modifier = Modifier) {
-    androidx.compose.foundation.Canvas(modifier = modifier) {
-        val scaleFactor = size.minDimension / 48f
-        scale(scaleFactor) {
-            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
-                drawRoundRect(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)), start = androidx.compose.ui.geometry.Offset(11f, 11f), end = androidx.compose.ui.geometry.Offset(37f, 37f)),
-                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f), size = androidx.compose.ui.geometry.Size(26f, 26f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
-                )
-            }
-            val outer = Path().apply { moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f); lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close() }
-            drawPath(outer, color = Color(0xFF0A0A18))
-            val inner = Path().apply { moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f); lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close() }
-            drawPath(inner, color = Color(0xFF60A5FA))
-        }
     }
 }
 

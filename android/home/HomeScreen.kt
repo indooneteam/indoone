@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +60,7 @@ import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.menu.IndooneLogo
 import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -435,11 +435,7 @@ fun HomeScreen(
                                     .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Image(
-                                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
-                                    contentDescription = "Indoone AI",
-                                    modifier = Modifier.size(48.dp),
-                                )
+                                IndooneLogo(modifier = Modifier.size(48.dp))
                             }
                             Text(
                                 "Indoone AI",
@@ -514,11 +510,7 @@ fun HomeScreen(
                                     .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Image(
-                                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
-                                    contentDescription = "Indoone AI",
-                                    modifier = Modifier.size(22.dp),
-                                )
+                                IndooneLogo(modifier = Modifier.size(22.dp))
                             }
                         }
 
