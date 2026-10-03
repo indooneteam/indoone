@@ -248,8 +248,8 @@ fun MenuDrawer(
 private fun IndooneMenuLogo(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val scaleFactor = size.minDimension / 48f
-        androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
-            androidx.compose.ui.graphics.drawscope.rotate(
+        scale(scaleFactor) {
+            rotate(
                 45f,
                 pivot = androidx.compose.ui.geometry.Offset(24f, 24f),
             ) {

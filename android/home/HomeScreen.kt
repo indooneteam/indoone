@@ -49,6 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -122,8 +124,8 @@ private fun RowScope.QuickPromptChip(
 private fun IndooneHomeLogo(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val scaleFactor = size.minDimension / 48f
-        androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
-            androidx.compose.ui.graphics.drawscope.rotate(
+        scale(scaleFactor) {
+            rotate(
                 45f,
                 pivot = androidx.compose.ui.geometry.Offset(24f, 24f),
             ) {
