@@ -1,6 +1,3 @@
-@Composable
-private fun IndooneHomeLogo(modifier: Modifier = Modifier) $logoBody
-
 package com.indoone.home
 
 import android.Manifest
@@ -25,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,8 +49,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -118,6 +114,44 @@ private fun RowScope.QuickPromptChip(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
             )
+        }
+    }
+}
+
+@Composable
+private fun IndooneHomeLogo(modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val scaleFactor = size.minDimension / 48f
+        androidx.compose.ui.graphics.drawscope.scale(scaleFactor) {
+            androidx.compose.ui.graphics.drawscope.rotate(
+                45f,
+                pivot = androidx.compose.ui.geometry.Offset(24f, 24f),
+            ) {
+                drawRoundRect(
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            androidx.compose.ui.graphics.Color(0xFFC15CFF),
+                            androidx.compose.ui.graphics.Color(0xFF7C3AED),
+                            androidx.compose.ui.graphics.Color(0xFF22C7FF),
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(11f, 11f),
+                        end = androidx.compose.ui.geometry.Offset(37f, 37f),
+                    ),
+                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f),
+                    size = androidx.compose.ui.geometry.Size(26f, 26f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
+                )
+            }
+            val outer = androidx.compose.ui.graphics.Path().apply {
+                moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f)
+                lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close()
+            }
+            drawPath(outer, color = androidx.compose.ui.graphics.Color(0xFF0A0A18))
+            val inner = androidx.compose.ui.graphics.Path().apply {
+                moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f)
+                lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close()
+            }
+            drawPath(inner, color = androidx.compose.ui.graphics.Color(0xFF60A5FA))
         }
     }
 }
@@ -433,19 +467,12 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(80.dp),
+                                    .size(72.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(72.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFF0E8FF)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    IndooneHomeLogo(modifier = Modifier.size(48.dp))
-                                }
+                                IndooneHomeLogo(modifier = Modifier.size(48.dp))
                             }
                             Text(
                                 "Indoone AI",
@@ -622,10 +649,7 @@ fun HomeScreen(
                     }
                 }
 
-                VibeButton(
-                    modifier = Modifier.padding(start = 8.dp),
-                    onClick = onVibeClick,
-                )
+                VibeButton(onClick = onVibeClick)
             }
 
             voiceError?.let { error ->
