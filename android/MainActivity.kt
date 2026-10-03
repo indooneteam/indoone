@@ -578,6 +578,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun configureSystemBarsDirectly() {
+        // Keep the white app UI aligned with the normal light system status bar.
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+    }
 }
 
 @Composable
