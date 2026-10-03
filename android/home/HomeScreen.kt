@@ -12,6 +12,7 @@ import android.speech.SpeechRecognizer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,6 +60,7 @@ import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -96,6 +99,7 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
     startNewChat: Boolean = false,
     openConversationId: String? = null,
+    onVibeClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
@@ -322,7 +326,8 @@ fun HomeScreen(
                 override fun onBufferReceived(buffer: ByteArray?) = Unit
 
                 override fun onEndOfSpeech() {
-                    isListening = false
+                    // Keep the Voice button visible until final recognition results
+                    // arrive. This prevents Send from appearing over partial speech.
                 }
 
                 override fun onError(error: Int) {
@@ -390,9 +395,43 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(messages) { message ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start) {
-                        Surface(shape = RoundedCornerShape(18.dp), color = if (message.fromUser) Color(0xFF703BE2) else Color(0xFFF5F2FB)) {
-                            Text(message.text, Modifier.padding(horizontal = 15.dp, vertical = 12.dp), color = if (message.fromUser) Color.White else Color(0xFF292331), fontSize = 13.sp)
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start,
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        if (!message.fromUser) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF0E8FF)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(com.indoone.R.drawable.ic_indoone_logo),
+                                    contentDescription = "Indoone AI",
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(
+                                topStart = 18.dp,
+                                topEnd = 18.dp,
+                                bottomStart = if (message.fromUser) 18.dp else 5.dp,
+                                bottomEnd = if (message.fromUser) 5.dp else 18.dp,
+                            ),
+                            color = if (message.fromUser) Color(0xFF703BE2) else Color(0xFFF5F2FB),
+                        ) {
+                            Text(
+                                message.text,
+                                Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                color = if (message.fromUser) Color.White else Color(0xFF292331),
+                                fontSize = 13.sp,
+                            )
                         }
                     }
                 }
@@ -429,49 +468,54 @@ fun HomeScreen(
                     )
                 }
 
-                val canSend = !isSending && input.isNotBlank()
-                val composerActionEnabled = !isSending && (input.isNotBlank() || !isListening)
-                Box(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isSending -> Color(0xFF703BE2)
-                                canSend -> Color(0xFF703BE2)
-                                isListening -> Color(0xFF703BE2)
-                                else -> Color(0xFFF5F2FB)
-                            },
-                        )
-                        .clickable(
-                            enabled = composerActionEnabled,
-                            onClick = if (canSend) ::sendMessage else ::onVoiceButtonClick,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    when {
-                        isSending -> CircularProgressIndicator(
-                            Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.2.dp,
-                        )
+                val showSendButton = input.isNotBlank() && !isListening
+                val canSend = showSendButton && !isSending
 
-                        canSend -> Text(
-                            "➤",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-
-                        else -> Icon(
+                if (showSendButton) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE7E3EC))
+                            .clickable(enabled = canSend, onClick = ::sendMessage),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.2.dp,
+                            )
+                        } else {
+                            Text(
+                                "➤",
+                                color = if (canSend) Color.White else Color(0xFF9B95A3),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
+                            .clickable(enabled = !isSending, onClick = ::onVoiceButtonClick),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
                             imageVector = Icons.Outlined.Mic,
-                            contentDescription = if (isListening) "Stop voice input" else "Voice mode",
-                            tint = Color.White.takeIf { isListening } ?: Color(0xFF4A4650),
+                            contentDescription = if (isListening) "Stop voice input" else "Voice input",
+                            tint = if (isListening) Color.White else Color(0xFF4A4650),
                             modifier = Modifier.size(21.dp),
                         )
                     }
                 }
+
+                VibeButton(onClick = onVibeClick)
             }
 
             voiceError?.let { error ->
