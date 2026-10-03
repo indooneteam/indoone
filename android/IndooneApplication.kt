@@ -15,7 +15,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.indoone.home.message.ChatCleanupWorker
+import com.google.firebase.messaging.FirebaseMessaging
 import com.indoone.notifications.IndooneNotificationChannels
+import com.indoone.notifications.NotificationPreferences
 import com.indoone.settings.autolock.AutoLockController
 import java.util.concurrent.TimeUnit
 
@@ -25,6 +27,9 @@ class IndooneApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         IndooneNotificationChannels.create(this)
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            NotificationPreferences(this).saveFcmToken(token)
+        }
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "indoone-chat-expiry-cleanup",
             ExistingPeriodicWorkPolicy.KEEP,
