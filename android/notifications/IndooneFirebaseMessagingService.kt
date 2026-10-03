@@ -9,6 +9,10 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        // When Indoone is already open, the user is actively waiting for the
+        // response in-app. Suppress the push notification in that state.
+        if (IndooneAppState.isForeground) return
+
         val data = message.data
 
         val category = data["category"]
