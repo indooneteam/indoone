@@ -196,7 +196,7 @@ fun MenuDrawer(
         Surface(modifier = Modifier.width(310.dp).fillMaxHeight(), color = Color.White, shadowElevation = 16.dp) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 25.dp)) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IndooneLogo(modifier = Modifier.size(36.dp))
+                    IndooneMenuLogo(modifier = Modifier.size(36.dp))
                     Column(modifier = Modifier.padding(start = 9.dp)) {
                         Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
                         Text("Authenticator", color = Color(0xFF77717D), fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -243,6 +243,9 @@ fun MenuDrawer(
         Spacer(modifier = Modifier.weight(1f).fillMaxHeight().background(Color.Black.copy(alpha = 0.33f)).clickable(onClick = onDismiss))
     }
 }
+
+@Composable
+private fun IndooneMenuLogo(modifier: Modifier = Modifier) $logoBody
 
 @Composable
 private fun DrawerItem(icon: ImageVector, title: String, trailing: String?, onClick: () -> Unit) {

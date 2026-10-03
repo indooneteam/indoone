@@ -1,3 +1,6 @@
+@Composable
+private fun IndooneHomeLogo(modifier: Modifier = Modifier) $logoBody
+
 package com.indoone.home
 
 import android.Manifest
@@ -12,7 +15,6 @@ import android.speech.SpeechRecognizer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +51,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,7 +64,6 @@ import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.CloudChatRepository
-import com.indoone.menu.IndooneLogo
 import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -430,13 +433,19 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(72.dp)
-                                    .align(Alignment.CenterHorizontally)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFF0E8FF)),
+                                    .fillMaxWidth()
+                                    .height(80.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                IndooneLogo(modifier = Modifier.size(48.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFF0E8FF)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    IndooneHomeLogo(modifier = Modifier.size(48.dp))
+                                }
                             }
                             Text(
                                 "Indoone AI",
@@ -500,7 +509,7 @@ fun HomeScreen(
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start,
-                        verticalAlignment = Alignment.Bottom,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (!message.fromUser) {
                             Box(
@@ -511,7 +520,7 @@ fun HomeScreen(
                                     .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                IndooneLogo(modifier = Modifier.size(22.dp))
+                                IndooneHomeLogo(modifier = Modifier.size(22.dp))
                             }
                         }
 
@@ -539,7 +548,7 @@ fun HomeScreen(
                 Text("Attached: $it", color = Color(0xFF5E2DD2), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
             }
 
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending) {
                         fileLauncher.launch(arrayOf("text/plain", "text/markdown", "application/json", "text/csv"))

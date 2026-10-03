@@ -1,6 +1,8 @@
+@Composable
+private fun IndooneVibeLogo(modifier: Modifier = Modifier) $logoBody
+
 package com.indoone.home.vibe
 
-import com.indoone.menu.IndooneLogo
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -23,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
@@ -119,8 +123,6 @@ fun VibeButton(
             )
         }
 
-        IndooneLogo(
-            modifier = Modifier.size(16.dp),
-        )
+        IndooneVibeLogo(modifier = Modifier.size(16.dp))
     }
 }

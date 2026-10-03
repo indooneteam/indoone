@@ -21,7 +21,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
@@ -74,6 +78,9 @@ private val MenuIcon = iconBuilder("Menu") {
 }
 
 @Composable
+private fun IndooneTopBarLogo(modifier: Modifier = Modifier) $logoBody
+
+@Composable
 fun AppTopBar(
     onMenuClick: () -> Unit,
     onSearchClick: () -> Unit = {},
@@ -103,11 +110,9 @@ fun AppTopBar(
             Row(
                 modifier = Modifier.align(Alignment.Center),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                IndooneLogo(
-                    modifier = Modifier.size(34.dp),
-                )
+                IndooneTopBarLogo(modifier = Modifier.size(34.dp))
                 Text(
                     "Indoone",
                     color = Color(0xFF5E2DD2),

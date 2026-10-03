@@ -1,3 +1,6 @@
+@Composable
+private fun IndooneAboutLogo(modifier: Modifier = Modifier) $logoBody
+
 package com.indoone.settings.about
 
 import androidx.compose.foundation.background
@@ -17,10 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import com.indoone.menu.IndooneLogo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -79,7 +80,7 @@ fun AboutScreen(
                         .align(Alignment.CenterHorizontally),
                     contentAlignment = Alignment.Center,
                 ) {
-                    IndooneLogo(modifier = Modifier.fillMaxSize())
+                    IndooneAboutLogo(modifier = Modifier.fillMaxSize())
                 }
 
                 Text(
