@@ -157,8 +157,11 @@ fun VibeButton(
             )
         }
 
-        IndooneVibeLogo(
+        Box(
             modifier = Modifier.size(16.dp),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            IndooneVibeLogo(modifier = Modifier.size(14.dp))
+        }
     }
 }

@@ -535,39 +535,65 @@ fun HomeScreen(
                 }
 
                 items(messages) { message ->
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (message.fromUser) Arrangement.End else Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (!message.fromUser) {
+                    if (message.fromUser) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(
+                                    topStart = 18.dp,
+                                    topEnd = 18.dp,
+                                    bottomStart = 18.dp,
+                                    bottomEnd = 5.dp,
+                                ),
+                                color = Color(0xFF703BE2),
+                            ) {
+                                Text(
+                                    message.text,
+                                    Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.Start,
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(
+                                    topStart = 18.dp,
+                                    topEnd = 18.dp,
+                                    bottomStart = 5.dp,
+                                    bottomEnd = 18.dp,
+                                ),
+                                color = Color(0xFFF5F2FB),
+                            ) {
+                                Text(
+                                    message.text,
+                                    Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                    color = Color(0xFF292331),
+                                    fontSize = 13.sp,
+                                )
+                            }
+
                             Box(
                                 modifier = Modifier
-                                    .padding(end = 8.dp)
+                                    .padding(top = 4.dp)
                                     .size(32.dp)
                                     .clip(CircleShape)
                                     .background(Color(0xFFF0E8FF)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                IndooneHomeLogo(modifier = Modifier.size(22.dp))
+                                Box(
+                                    modifier = Modifier.size(20.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    IndooneHomeLogo(modifier = Modifier.fillMaxSize())
+                                }
                             }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(
-                                topStart = 18.dp,
-                                topEnd = 18.dp,
-                                bottomStart = if (message.fromUser) 18.dp else 5.dp,
-                                bottomEnd = if (message.fromUser) 5.dp else 18.dp,
-                            ),
-                            color = if (message.fromUser) Color(0xFF703BE2) else Color(0xFFF5F2FB),
-                        ) {
-                            Text(
-                                message.text,
-                                Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
-                                color = if (message.fromUser) Color.White else Color(0xFF292331),
-                                fontSize = 13.sp,
-                            )
                         }
                     }
                 }
