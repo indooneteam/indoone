@@ -1,7 +1,10 @@
 package com.indoone.home.vibe
 
+import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
@@ -12,6 +15,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 class VibeAudioEngine(
+    private val context: Context,
     private val onCapturedPcm: (ByteArray) -> Unit,
     private val onPlaybackEnabled: () -> Boolean,
 ) {
@@ -26,16 +30,63 @@ class VibeAudioEngine(
 
     private val recording = AtomicBoolean(false)
     private val playbackExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private var previousAudioMode = AudioManager.MODE_NORMAL
+    private var previousSpeakerphoneOn = false
+    private var routeConfigured = false
     private var recorder: AudioRecord? = null
     private var recordThread: Thread? = null
     private var player: AudioTrack? = null
 
     fun isRecording(): Boolean = recording.get()
 
+    private fun routeAudioToLoudspeaker() {
+        if (routeConfigured) return
+
+        previousAudioMode = audioManager.mode
+        previousSpeakerphoneOn = audioManager.isSpeakerphoneOn
+
+        runCatching {
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val speaker = audioManager.availableCommunicationDevices.firstOrNull {
+                it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+            }
+            if (speaker != null) {
+                runCatching { audioManager.setCommunicationDevice(speaker) }
+            }
+        } else {
+            runCatching { audioManager.isSpeakerphoneOn = true }
+        }
+
+        // Keep the legacy routing path explicitly on loudspeaker as a fallback.
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S ||
+            audioManager.communicationDevice?.type != AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        ) {
+            runCatching { audioManager.isSpeakerphoneOn = true }
+        }
+
+        routeConfigured = true
+    }
+
+    private fun restoreAudioRoute() {
+        if (!routeConfigured) return
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            runCatching { audioManager.clearCommunicationDevice() }
+        }
+        runCatching { audioManager.isSpeakerphoneOn = previousSpeakerphoneOn }
+        runCatching { audioManager.mode = previousAudioMode }
+        routeConfigured = false
+    }
+
     fun startRecording() {
         if (!recording.compareAndSet(false, true)) return
 
         try {
+            routeAudioToLoudspeaker()
             val minBuffer = AudioRecord.getMinBufferSize(
                 INPUT_RATE_HZ,
                 CHANNEL_IN,
@@ -173,6 +224,7 @@ class VibeAudioEngine(
 
     fun stop() {
         stopRecording()
+        restoreAudioRoute()
         playbackExecutor.execute {
             player?.let {
                 runCatching { it.stop() }
