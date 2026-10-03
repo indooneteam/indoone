@@ -21,6 +21,7 @@ class VibeAudioEngine(
         private const val CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
+        private const val AUDIO_CHUNK_BYTES = 3_200
     }
 
     private val recording = AtomicBoolean(false)
@@ -45,13 +46,12 @@ class VibeAudioEngine(
                 return
             }
 
-            val bufferSize = minBuffer.coerceAtLeast(3_200) * 2
             val audioRecord = AudioRecord(
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 INPUT_RATE_HZ,
                 CHANNEL_IN,
                 ENCODING,
-                bufferSize,
+                minBuffer.coerceAtLeast(AUDIO_CHUNK_BYTES) * 2,
             )
             if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
                 audioRecord.release()
@@ -64,7 +64,7 @@ class VibeAudioEngine(
 
             recordThread = Thread {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
-                val buffer = ByteArray(3_200)
+                val buffer = ByteArray(AUDIO_CHUNK_BYTES)
                 try {
                     while (recording.get()) {
                         val count = audioRecord.read(
@@ -111,10 +111,8 @@ class VibeAudioEngine(
 
         playbackExecutor.execute {
             if (!onPlaybackEnabled()) return@execute
-
             try {
-                val track = ensurePlayer()
-                track.write(pcm, 0, pcm.size, AudioTrack.WRITE_BLOCKING)
+                ensurePlayer().write(pcm, 0, pcm.size, AudioTrack.WRITE_BLOCKING)
             } catch (_: IllegalStateException) {
                 flushPlaybackInternal()
             }
@@ -133,8 +131,6 @@ class VibeAudioEngine(
             CHANNEL_OUT,
             ENCODING,
         )
-        val bufferSize = minBuffer.coerceAtLeast(9_600) * 2
-
         val track = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -149,7 +145,7 @@ class VibeAudioEngine(
                     .setChannelMask(CHANNEL_OUT)
                     .build(),
             )
-            .setBufferSizeInBytes(bufferSize)
+            .setBufferSizeInBytes(minBuffer.coerceAtLeast(9_600) * 2)
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
 
@@ -178,7 +174,10 @@ class VibeAudioEngine(
     fun stop() {
         stopRecording()
         playbackExecutor.execute {
-            player?.let { runCatching { it.stop() }; runCatching { it.release() } }
+            player?.let {
+                runCatching { it.stop() }
+                runCatching { it.release() }
+            }
             player = null
         }
         playbackExecutor.shutdownNow()

@@ -2,7 +2,6 @@ package com.indoone.home.vibe
 
 import android.app.Activity
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -81,7 +80,7 @@ fun VibeScreen(
     var transcript by remember { mutableStateOf("Your live conversation will appear here.") }
 
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    val vibeClient = remember { VibeClient(context = context, scope = scope) }
+    val vibeClient = remember { VibeClient(scope = scope) }
     val audioEngine = remember {
         VibeAudioEngine(
             onCapturedPcm = { pcm -> vibeClient.sendAudio(pcm) },
@@ -92,55 +91,53 @@ fun VibeScreen(
     fun startVibe() {
         scope.launch {
             connectionState = "Connecting"
-            runCatching {
-                vibeClient.connect(
-                    onEvent = { event ->
-                        when (event.optString("type")) {
-                            "ready" -> {
-                                connectionState = "Connected"
+            vibeClient.connect(
+                onEvent = { event ->
+                    when (event.optString("type")) {
+                        "ready", "connected" -> {
+                            connectionState = "Connected"
+                            if (!audioEngine.isRecording()) {
+                                audioEngine.startRecording()
+                                isListening = audioEngine.isRecording()
                             }
-                            "connected" -> {
-                                connectionState = "Connected"
-                                if (!audioEngine.isRecording()) {
-                                    audioEngine.startRecording()
-                                    isListening = true
-                                }
-                            }
-                            "transcript" -> {
-                                val role = event.optString("role")
-                                val text = event.optString("text").trim()
-                                if (text.isNotBlank()) {
-                                    transcript = when (role) {
-                                        "user" -> "You: $text"
-                                        "assistant" -> "Indoone: $text"
-                                        else -> text
-                                    }
-                                }
-                            }
-                            "audio" -> {
-                                if (isSpeakerOn) {
-                                    event.optString("audio_base64").takeIf { it.isNotBlank() }?.let {
-                                        audioEngine.playResponse(it)
-                                    }
-                                }
-                            }
-                            "interrupted" -> audioEngine.flushPlayback()
-                            "error" -> {
-                                connectionState = "Connection error"
-                                isListening = false
-                                transcript = event.optString("detail").ifBlank {
-                                    "Vibe connection failed."
+                        }
+                        "transcript" -> {
+                            val text = event.optString("text").trim()
+                            if (text.isNotBlank()) {
+                                transcript = when (event.optString("role")) {
+                                    "user" -> "You: $text"
+                                    "assistant" -> "Indoone: $text"
+                                    else -> text
                                 }
                             }
                         }
-                    },
-                    onFailure = { message ->
-                        connectionState = "Connection error"
-                        isListening = false
-                        transcript = message
-                    },
-                )
-            }
+                        "audio" -> {
+                            if (isSpeakerOn) {
+                                event.optString("audio_base64")
+                                    .takeIf { it.isNotBlank() }
+                                    ?.let(audioEngine::playResponse)
+                            }
+                        }
+                        "interrupted" -> audioEngine.flushPlayback()
+                        "closed" -> {
+                            connectionState = "Disconnected"
+                            isListening = false
+                        }
+                        "error" -> {
+                            connectionState = "Connection error"
+                            isListening = false
+                            transcript = event.optString("detail").ifBlank {
+                                "Vibe connection failed."
+                            }
+                        }
+                    }
+                },
+                onFailure = { message ->
+                    connectionState = "Connection error"
+                    isListening = false
+                    transcript = message
+                },
+            )
         }
     }
 
@@ -161,7 +158,7 @@ fun VibeScreen(
         onClose()
     })
 
-    DisposableEffect(Unit) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.RECORD_AUDIO,
@@ -171,7 +168,9 @@ fun VibeScreen(
         } else {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
 
+    DisposableEffect(Unit) {
         onDispose {
             audioEngine.stop()
             vibeClient.close()
@@ -419,3 +418,117 @@ fun VibeScreen(
                         transcript,
                         modifier = Modifier.padding(top = 6.dp),
                         color = Color.White.copy(alpha = 0.62f),
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                VibeControlButton(
+                    icon = if (isListening) Icons.Outlined.Mic else Icons.Outlined.MicOff,
+                    label = if (isListening) "Mute" else "Unmute",
+                    active = isListening,
+                    onClick = {
+                        if (isListening) {
+                            audioEngine.stopRecording()
+                            isListening = false
+                        } else if (connectionState == "Connected") {
+                            audioEngine.startRecording()
+                            isListening = audioEngine.isRecording()
+                        }
+                    },
+                )
+
+                Spacer(Modifier.width(14.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    Color(0xFF9B5CFF),
+                                    Color(0xFF6D3BDB),
+                                    Color(0xFF3C216E),
+                                ),
+                            ),
+                        )
+                        .clickable(onClick = onClose),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "End Vibe",
+                        tint = Color.White,
+                        modifier = Modifier.size(27.dp),
+                    )
+                }
+
+                Spacer(Modifier.width(14.dp))
+
+                VibeControlButton(
+                    icon = if (isSpeakerOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
+                    label = if (isSpeakerOn) "Speaker" else "Muted",
+                    active = isSpeakerOn,
+                    onClick = {
+                        isSpeakerOn = !isSpeakerOn
+                        if (!isSpeakerOn) {
+                            audioEngine.flushPlayback()
+                        }
+                    },
+                )
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .height(16.dp)
+                    .padding(bottom = 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun VibeControlButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(78.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(
+                    if (active) Color.White.copy(alpha = 0.12f)
+                    else Color.White.copy(alpha = 0.055f),
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (active) Color.White else Color.White.copy(alpha = 0.52f),
+                modifier = Modifier.size(21.dp),
+            )
+        }
+        Text(
+            label,
+            modifier = Modifier.padding(top = 6.dp),
+            color = Color.White.copy(alpha = 0.52f),
+            fontSize = 10.sp,
+        )
+    }
+}

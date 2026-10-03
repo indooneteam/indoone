@@ -16,7 +16,6 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class VibeClient(
-    private val context: android.content.Context,
     private val scope: CoroutineScope,
 ) {
     private val client = OkHttpClient.Builder()
@@ -41,10 +40,8 @@ class VibeClient(
                     ?.takeIf { it.isNotBlank() }
                     ?: throw IllegalStateException("Could not get the Indoone authentication token.")
 
-                val url = buildWebSocketUrl()
-
                 val request = Request.Builder()
-                    .url(url)
+                    .url(buildWebSocketUrl())
                     .header("Authorization", "Bearer $token")
                     .header("X-Indoone-Vibe-Protocol", "indoone.vibe.v1")
                     .build()
@@ -70,10 +67,6 @@ class VibeClient(
                             }
                         }
 
-                        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                            webSocket.close(code, reason)
-                        }
-
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                             scope.launch(Dispatchers.Main) {
                                 onEvent(
@@ -92,8 +85,7 @@ class VibeClient(
                         ) {
                             scope.launch(Dispatchers.Main) {
                                 onFailure(
-                                    t.message
-                                        ?.takeIf { it.isNotBlank() }
+                                    t.message?.takeIf { it.isNotBlank() }
                                         ?: "Vibe backend connection failed.",
                                 )
                             }
@@ -110,11 +102,10 @@ class VibeClient(
 
     fun sendAudio(pcm: ByteArray) {
         if (pcm.isEmpty()) return
-        val encoded = Base64.encodeToString(pcm, Base64.NO_WRAP)
         socket?.send(
             JSONObject()
                 .put("type", "audio")
-                .put("audio_base64", encoded)
+                .put("audio_base64", Base64.encodeToString(pcm, Base64.NO_WRAP))
                 .put("mime_type", "audio/pcm;rate=16000")
                 .toString(),
         )
