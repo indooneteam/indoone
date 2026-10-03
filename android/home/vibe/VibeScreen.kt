@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MicOff
 import androidx.compose.material.icons.outlined.VolumeOff
@@ -139,41 +138,42 @@ fun VibeScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                contentAlignment = Alignment.Center,
             ) {
-                Column {
-                    Text(
-                        "INDOONE",
-                        color = Color(0xFF9A82FF),
-                        fontSize = 10.sp,
-                        letterSpacing = 2.sp,
-                    )
-                    Text(
-                        "Vibe",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f))
-                        .clickable(onClick = onClose),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Close,
-                        contentDescription = "Close Vibe",
-                        tint = Color.White,
-                        modifier = Modifier.size(21.dp),
-                    )
-                }
+                Text(
+                    androidx.compose.ui.text.buildAnnotatedString {
+                        androidx.compose.ui.text.withStyle(
+                            androidx.compose.ui.text.SpanStyle(
+                                color = Color(0xFF9A82FF),
+                                fontSize = 25.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            ),
+                        ) {
+                            append("I")
+                        }
+                        androidx.compose.ui.text.withStyle(
+                            androidx.compose.ui.text.SpanStyle(
+                                color = Color(0xFF9A82FF),
+                                fontSize = 17.sp,
+                            ),
+                        ) {
+                            append("ndoone")
+                        }
+                        append(" ")
+                        androidx.compose.ui.text.withStyle(
+                            androidx.compose.ui.text.SpanStyle(
+                                color = Color.White,
+                                fontSize = 24.sp,
+                            ),
+                        ) {
+                            append("Vibe")
+                        }
+                    },
+                )
             }
 
             Spacer(Modifier.weight(0.45f))
