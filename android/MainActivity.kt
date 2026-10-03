@@ -1,6 +1,5 @@
 package com.indoone
 
-import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -14,8 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
@@ -83,7 +80,6 @@ private enum class AppRoute {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        configureSystemBarsDirectly()
         setContent {
             MaterialTheme {
                 val repository = remember { AccountRepositoryProvider(applicationContext) }
@@ -578,15 +574,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun configureSystemBarsDirectly() {
-        // Match the normal device status-bar presentation: dark top bar with
-        // light system icons, including time, network and notifications.
-        window.statusBarColor = Color.BLACK
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = false
-        }
-    }
 }
 
 @Composable
