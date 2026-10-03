@@ -7,7 +7,6 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.messaging.FirebaseMessaging
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -21,10 +20,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import androidx.work.WorkManager
 import com.indoone.home.message.ChatCleanupWorker
-import com.google.firebase.messaging.FirebaseMessaging
 import com.indoone.notifications.IndooneNotificationChannels
 import com.indoone.notifications.NotificationApi
-import com.indoone.notifications.NotificationPreferences
 import com.indoone.notifications.NotificationPreferences
 import com.indoone.settings.autolock.AutoLockController
 import java.util.concurrent.TimeUnit
