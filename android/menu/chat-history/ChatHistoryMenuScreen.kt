@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.menu.data.CloudChatConversation
+import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
 import com.google.firebase.database.ValueEventListener
 import java.text.DateFormat
