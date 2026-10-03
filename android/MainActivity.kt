@@ -44,6 +44,7 @@ import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
 import com.indoone.home.HomeScreen
+import com.indoone.home.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
@@ -78,6 +79,7 @@ private enum class AppRoute {
     IMPORT_ACCOUNT_DETAILS,
     ACCOUNT_DETAILS,
     EDIT_ACCOUNT,
+    VIBE,
 }
 
 class MainActivity : ComponentActivity() {
@@ -166,6 +168,11 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         startNewChat = intent.getBooleanExtra("start_new_chat", false),
                         openConversationId = intent.getStringExtra("open_conversation_id"),
+                        onVibeClick = { navigate(AppRoute.VIBE) },
+                    )
+
+                    AppRoute.VIBE -> VibeScreen(
+                        onClose = { navigate(AppRoute.HOME) },
                     )
 
                     AppRoute.ACCOUNTS -> {
