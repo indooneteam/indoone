@@ -486,15 +486,17 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Box(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .align(Alignment.CenterHorizontally),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                IndooneHomeLogo(modifier = Modifier.size(60.dp))
+                                IndooneHomeLogo(modifier = Modifier.fillMaxSize())
                             }
                             Text(
                                 "Indoone AI",
                                 modifier = Modifier.padding(top = 12.dp),
-                                color = Color(0xFF352742),
+                                color = Color(0xFF703BE2),
                                 fontSize = 21.sp,
                                 fontWeight = FontWeight.Bold,
                             )
