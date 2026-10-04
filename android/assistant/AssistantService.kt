@@ -15,6 +15,7 @@ import android.speech.RecognitionListener
 import android.speech.SpeechRecognizer
 import android.speech.RecognizerIntent
 import android.service.voice.VoiceInteractionService
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.indoone.R
 import java.util.Locale
@@ -26,6 +27,7 @@ class AssistantService : VoiceInteractionService() {
         private const val NOTIFICATION_ID = 4101
         private const val WAKE_PHRASE = "hey indoone"
         private const val LANGUAGE_TAG = "en-IN"
+        private const val TAG = "IndooneAssistant"
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -34,26 +36,41 @@ class AssistantService : VoiceInteractionService() {
     private var sessionShowing = false
 
     private val recognitionListener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) = Unit
-        override fun onBeginningOfSpeech() = Unit
+        override fun onReadyForSpeech(params: Bundle?) {
+            Log.d(TAG, "Wake recognizer ready")
+        }
+
+        override fun onBeginningOfSpeech() {
+            Log.d(TAG, "Wake speech started")
+        }
+
         override fun onRmsChanged(rmsdB: Float) = Unit
         override fun onBufferReceived(buffer: ByteArray?) = Unit
-        override fun onEndOfSpeech() = scheduleWakeListen(350)
-        override fun onPartialResults(results: Bundle?) {
-            inspectResults(results)
-        }
-        override fun onResults(results: Bundle?) {
-            if (inspectResults(results)) return
+        override fun onEndOfSpeech() {
+            Log.d(TAG, "Wake speech ended")
             scheduleWakeListen(350)
         }
+
+        override fun onPartialResults(results: Bundle?) {
+            inspectResults(results, source = "partial")
+        }
+
+        override fun onResults(results: Bundle?) {
+            if (inspectResults(results, source = "final")) return
+            scheduleWakeListen(350)
+        }
+
         override fun onError(error: Int) {
+            Log.d(TAG, "Wake recognizer error=$error")
             scheduleWakeListen(500)
         }
+
         override fun onEvent(eventType: Int, params: Bundle?) = Unit
     }
 
     override fun onReady() {
         super.onReady()
+        Log.i(TAG, "VoiceInteractionService ready")
         ensureWakeNotificationChannel()
         startWakeForeground()
         if (ContextCompat.checkSelfPermission(
@@ -70,16 +87,11 @@ class AssistantService : VoiceInteractionService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_RESUME_WAKE) {
+            Log.i(TAG, "Resuming wake listener")
             sessionShowing = false
             startWakeListening()
         }
         return START_NOT_STICKY
-    }
-
-    override fun onShowSessionFailed(args: Bundle) {
-        super.onShowSessionFailed(args)
-        sessionShowing = false
-        startWakeListening()
     }
 
     override fun onShutdown() {
@@ -102,6 +114,7 @@ class AssistantService : VoiceInteractionService() {
                 Manifest.permission.RECORD_AUDIO,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            Log.w(TAG, "Microphone permission is not granted")
             return
         }
 
@@ -109,11 +122,13 @@ class AssistantService : VoiceInteractionService() {
             !SpeechRecognizer.isOnDeviceRecognitionAvailable(this)
         ) {
             updateNotification("On-device wake recognition unavailable")
+            Log.w(TAG, "On-device SpeechRecognizer unavailable")
             return
         }
 
         wakeEnabled = true
         updateNotification("Listening for “Hey Indoone”")
+        Log.i(TAG, "Wake listener started")
         scheduleWakeListen(150)
     }
 
@@ -143,19 +158,36 @@ class AssistantService : VoiceInteractionService() {
             }
 
             runCatching { startListening(intent) }
-                .onFailure { scheduleWakeListen(750) }
+                .onFailure {
+                    Log.w(TAG, "Wake recognizer start failed", it)
+                    scheduleWakeListen(750)
+                }
         }
     }
 
-    private fun inspectResults(results: Bundle?): Boolean {
+    private fun inspectResults(results: Bundle?, source: String): Boolean {
         if (results == null) return false
 
         val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             ?: return false
 
-        val detected = matches.any { normalize(it).contains(WAKE_PHRASE) }
+        Log.d(TAG, "Wake $source results=$matches")
+
+        val normalized = matches.map(::normalize)
+        val detected = normalized.any { text ->
+            text.contains(WAKE_PHRASE) ||
+                text.contains("hey indo one") ||
+                text.contains("hey indone") ||
+                text.contains("hey andoone") ||
+                text.contains("hey endoone") ||
+                text == "indoone" ||
+                text == "indo one" ||
+                text == "indone"
+        }
+
         if (!detected) return false
 
+        Log.i(TAG, "Wake phrase detected from $normalized")
         triggerWake()
         return true
     }
@@ -167,6 +199,7 @@ class AssistantService : VoiceInteractionService() {
         wakeEnabled = false
         stopWakeListening()
         updateNotification("Assistant active")
+        Log.i(TAG, "Calling showSession()")
 
         showSession(
             Bundle().apply {
