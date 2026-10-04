@@ -15,6 +15,7 @@ import org.vosk.Recognizer
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AssistantWakeDetector(
@@ -28,6 +29,8 @@ class AssistantWakeDetector(
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
         private const val BUFFER_BYTES = 3_200
+        private const val MAX_ALTERNATIVES = 5
+        private const val TRANSCRIPT_HISTORY_MS = 3_000L
         private const val MODEL_ASSET = "model-en-us"
         private const val MODEL_DIR = "indoone-wake-model"
         private const val MODEL_UUID = "indoone-vosk-small-en-us-0.15"
@@ -43,6 +46,15 @@ class AssistantWakeDetector(
     private var audioRecord: AudioRecord? = null
 
     private var worker: Thread? = null
+
+    private data class TranscriptSegment(
+        val timestampMs: Long,
+        val text: String,
+    )
+
+    private val recentFinalSegments = ConcurrentLinkedDeque<TranscriptSegment>()
+    @Volatile
+    private var latestPartialText = ""
 
     fun initialize(onReady: () -> Unit) {
         model?.let {
@@ -206,7 +218,7 @@ class AssistantWakeDetector(
 
             val recognizer = runCatching {
                 Recognizer(loadedModel, SAMPLE_RATE_HZ.toFloat()).apply {
-                    setMaxAlternatives(1)
+                    setMaxAlternatives(MAX_ALTERNATIVES)
                     setWords(false)
                     setPartialWords(false)
                 }
@@ -245,14 +257,51 @@ class AssistantWakeDetector(
                         recognizer.getPartialResult()
                     }
 
-                    if (containsWakePhrase(resultJson)) {
-                        Log.i(TAG, "Wake phrase detected")
-                        mainHandler.post {
-                            if (running.compareAndSet(true, false)) {
-                                onDetected()
+                    val recognizedTexts = extractRecognizedTexts(resultJson)
+
+                    if (accepted) {
+                        val now = System.currentTimeMillis()
+                        latestPartialText = ""
+                        recognizedTexts.firstOrNull()
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { text ->
+                                recentFinalSegments.addLast(
+                                    TranscriptSegment(now, text),
+                                )
                             }
+                        trimTranscriptHistory(now)
+
+                        if (
+                            recognizedTexts.any(::containsWakePhrase) ||
+                            containsWakePhraseInRecentTranscript()
+                        ) {
+                            Log.i(TAG, "Wake phrase detected")
+                            recentFinalSegments.clear()
+                            latestPartialText = ""
+                            mainHandler.post {
+                                if (running.compareAndSet(true, false)) {
+                                    onDetected()
+                                }
+                            }
+                            break
                         }
-                        break
+                    } else {
+                        latestPartialText = recognizedTexts.firstOrNull().orEmpty()
+
+                        if (
+                            recognizedTexts.any(::containsWakePhrase) ||
+                            containsWakePhraseInRecentTranscript()
+                        ) {
+                            Log.i(TAG, "Wake phrase detected")
+                            recentFinalSegments.clear()
+                            latestPartialText = ""
+                            mainHandler.post {
+                                if (running.compareAndSet(true, false)) {
+                                    onDetected()
+                                }
+                            }
+                            break
+                        }
                     }
                 }
             } catch (security: SecurityException) {
@@ -284,6 +333,8 @@ class AssistantWakeDetector(
         runCatching { audioRecord?.stop() }
         worker?.interrupt()
         worker = null
+        recentFinalSegments.clear()
+        latestPartialText = ""
     }
 
     fun release() {
@@ -294,29 +345,62 @@ class AssistantWakeDetector(
         model = null
     }
 
-    private fun containsWakePhrase(resultJson: String): Boolean {
-        val text = runCatching {
-            JSONObject(resultJson).optString("text").ifBlank {
-                JSONObject(resultJson).optString("partial")
+    private fun extractRecognizedTexts(resultJson: String): List<String> {
+        return runCatching {
+            val json = JSONObject(resultJson)
+            val alternatives = json.optJSONArray("alternatives")
+            if (alternatives != null) {
+                buildList {
+                    for (index in 0 until alternatives.length()) {
+                        val text = alternatives.optJSONObject(index)
+                            ?.optString("text")
+                            .orEmpty()
+                            .trim()
+                        if (text.isNotBlank()) add(text)
+                    }
+                }
+            } else {
+                listOf(
+                    json.optString("text")
+                        .ifBlank { json.optString("partial") }
+                        .trim(),
+                ).filter { it.isNotBlank() }
             }
-        }.getOrDefault("")
+        }.getOrDefault(emptyList())
+    }
 
+    private fun containsWakePhraseInRecentTranscript(): Boolean {
+        val now = System.currentTimeMillis()
+        trimTranscriptHistory(now)
+
+        val fragments = recentFinalSegments.map { it.text }.toMutableList()
+        latestPartialText
+            .takeIf { it.isNotBlank() }
+            ?.let(fragments::add)
+
+        if (fragments.isEmpty()) return false
+
+        return containsWakePhrase(fragments.takeLast(3).joinToString(" "))
+    }
+
+    private fun trimTranscriptHistory(now: Long) {
+        while (recentFinalSegments.isNotEmpty()) {
+            val age = now - recentFinalSegments.first.timestampMs
+            if (age <= TRANSCRIPT_HISTORY_MS) break
+            recentFinalSegments.removeFirst()
+        }
+    }
+
+    private fun containsWakePhrase(text: String): Boolean {
         val normalized = normalize(text)
         if (normalized.isBlank()) return false
 
         val tokens = normalized.split(' ').filter { it.isNotBlank() }
-        val heyIndex = tokens.indexOfFirst {
-            it == "hey" || editDistance(it, "hey") <= 1
-        }
+        val heyIndex = tokens.indexOfFirst(::isHeyToken)
         if (heyIndex < 0) return false
 
-        val afterHey = tokens.drop(heyIndex + 1).take(4)
-        val candidates = buildList {
-            addAll(afterHey)
-            if (afterHey.size >= 2) add(afterHey.take(2).joinToString(""))
-            if (afterHey.size >= 3) add(afterHey.take(3).joinToString(""))
-            if (afterHey.size >= 4) add(afterHey.take(4).joinToString(""))
-        }
+        val afterHey = tokens.drop(heyIndex + 1).take(6)
+        if (afterHey.isEmpty()) return false
 
         val exact = setOf(
             "indoone",
@@ -326,20 +410,41 @@ class AssistantWakeDetector(
             "intoone",
             "inone",
             "andone",
+            "indoor",
+            "endone",
         )
-        val matched = candidates.any { candidate ->
-            val compact = candidate.replace(" ", "")
-            compact in exact ||
-                (compact.length in 5..12 &&
-                    similarity(compact, "indoone") >= 0.64)
+
+        for (start in afterHey.indices) {
+            val endLimit = minOf(afterHey.size, start + 5)
+            for (endExclusive in (start + 1)..endLimit) {
+                val compact = afterHey
+                    .subList(start, endExclusive)
+                    .joinToString("")
+                    .replace(" ", "")
+
+                if (
+                    compact in exact ||
+                    (
+                        compact.length in 5..12 &&
+                            similarity(compact, "indoone") >= 0.56
+                        )
+                ) {
+                    Log.d(
+                        TAG,
+                        "Wake recognizer text: $normalized matched=true candidate=$compact",
+                    )
+                    return true
+                }
+            }
         }
 
-        if (tokens.contains("hey")) {
-            Log.d(TAG, "Wake recognizer text: $normalized matched=$matched")
-        }
-
-        return matched
+        return false
     }
+
+    private fun isHeyToken(token: String): Boolean =
+        token == "hey" ||
+            token.length in 2..4 &&
+            similarity(token, "hey") >= 0.60
 
     private fun similarity(left: String, right: String): Double {
         val maxLen = maxOf(left.length, right.length)
