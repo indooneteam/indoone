@@ -12,7 +12,8 @@ import org.vosk.LibVosk
 import org.vosk.LogLevel
 import org.vosk.Model
 import org.vosk.Recognizer
-import org.vosk.android.StorageService
+import java.io.File
+import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -29,6 +30,7 @@ class AssistantWakeDetector(
         private const val BUFFER_BYTES = 3_200
         private const val MODEL_ASSET = "model-en-us"
         private const val MODEL_DIR = "indoone-wake-model"
+        private const val MODEL_UUID = "indoone-vosk-en-0.3.75"
         private const val GRAMMAR =
             "[\"hey indoone\",\"hey indo one\",\"hey indone\",\"hey andoone\",\"hey endoone\",\"hey into one\",\"hey in to one\",\"[unk]\"]"
     }
@@ -52,20 +54,106 @@ class AssistantWakeDetector(
 
         LibVosk.setLogLevel(LogLevel.WARNINGS)
 
-        StorageService.unpack(
-            context.applicationContext,
-            MODEL_ASSET,
-            MODEL_DIR,
-            { loaded ->
+        Thread {
+            runCatching {
+                val targetRoot = prepareModelFiles()
+                Log.i(TAG, "Wake model files ready at \${targetRoot.absolutePath}")
+                Model(targetRoot.absolutePath)
+            }.onSuccess { loaded ->
                 model = loaded
                 mainHandler.post(onReady)
-            },
-            { error ->
-                val message = "Offline wake model failed to load: " + (error.message ?: "unknown error")
+            }.onFailure { error ->
+                val message =
+                    "Offline wake model failed: \${error.message ?: error::class.java.simpleName}"
                 Log.e(TAG, message, error)
                 mainHandler.post { onError(message) }
-            },
+            }
+        }.apply {
+            name = "Indoone-Wake-Model"
+            isDaemon = true
+            start()
+        }
+    }
+
+    private fun prepareModelFiles(): File {
+        val externalRoot = context.getExternalFilesDir(null)
+            ?: throw IOException("External app storage is unavailable")
+
+        val targetRoot = File(externalRoot, MODEL_DIR)
+        val targetModel = File(targetRoot, MODEL_ASSET)
+        val targetUuid = File(targetModel, "uuid")
+
+        if (
+            targetUuid.exists() &&
+            File(targetModel, "am/final.mdl").exists()
+        ) {
+            return targetRoot
+        }
+
+        if (targetRoot.exists()) {
+            targetRoot.deleteRecursively()
+        }
+        targetModel.mkdirs()
+
+        copyAssetTree(MODEL_ASSET, targetModel)
+
+        if (!targetUuid.exists()) {
+            targetUuid.writeText(MODEL_UUID)
+        }
+
+        verifyModelFiles(targetModel)
+        return targetRoot
+    }
+
+    private fun copyAssetTree(assetPath: String, targetDir: File) {
+        val children = context.assets.list(assetPath)
+            ?: throw IOException("Wake model asset is missing: \${assetPath}")
+
+        if (children.isEmpty()) {
+            targetDir.parentFile?.mkdirs()
+            context.assets.open(assetPath).use { input ->
+                targetDir.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return
+        }
+
+        targetDir.mkdirs()
+
+        for (child in children) {
+            val childAsset = "\$assetPath/\$child"
+            val target = File(targetDir, child)
+            val nested = context.assets.list(childAsset) ?: emptyArray()
+
+            if (nested.isEmpty()) {
+                context.assets.open(childAsset).use { input ->
+                    target.parentFile?.mkdirs()
+                    target.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } else {
+                copyAssetTree(childAsset, target)
+            }
+        }
+    }
+
+    private fun verifyModelFiles(targetModel: File) {
+        val required = listOf(
+            File(targetModel, "uuid"),
+            File(targetModel, "am/final.mdl"),
+            File(targetModel, "conf/model.conf"),
+            File(targetModel, "graph/Gr.fst"),
+            File(targetModel, "graph/HCLr.fst"),
         )
+
+        val missing = required.filterNot(File::exists)
+        if (missing.isNotEmpty()) {
+            throw IOException(
+                "Wake model is incomplete; missing \${missing.joinToString { it.relativeTo(targetModel).path }}",
+            )
+        }
     }
 
     fun start() {
@@ -132,6 +220,7 @@ class AssistantWakeDetector(
 
             try {
                 record.startRecording()
+                Log.i(TAG, "Silent offline wake detector is listening")
 
                 val buffer = ByteArray(BUFFER_BYTES)
                 while (running.get()) {
@@ -165,15 +254,13 @@ class AssistantWakeDetector(
                 }
             } catch (security: SecurityException) {
                 if (running.get()) {
-                    mainHandler.post {
-                        onError("Microphone permission was lost")
-                    }
+                    mainHandler.post { onError("Microphone permission was lost") }
                 }
             } catch (error: Exception) {
                 if (running.get()) {
                     Log.e(TAG, "Wake detection loop failed", error)
                     mainHandler.post {
-                        onError("Wake detection failed: " + (error.message ?: "unknown error"))
+                        onError("Wake detection failed: \${error.message ?: "unknown error"}")
                     }
                 }
             } finally {
@@ -218,10 +305,7 @@ class AssistantWakeDetector(
             normalized.contains("hey andoone") ||
             normalized.contains("hey endoone") ||
             normalized.contains("hey into one") ||
-            normalized.contains("hey in to one") ||
-            normalized == "indoone" ||
-            normalized == "indo one" ||
-            normalized == "indone"
+            normalized.contains("hey in to one")
     }
 
     private fun normalize(value: String): String =
