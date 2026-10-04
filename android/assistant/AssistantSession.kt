@@ -3,13 +3,14 @@ package com.indoone.assistant
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Bundle
 import android.service.voice.VoiceInteractionSession
 import android.util.Log
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import org.json.JSONObject
+import kotlinx.coroutines.cancel
 
 class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     companion object {
@@ -22,7 +23,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     private var audioEngine: AssistantAudioEngine? = null
     private var active = false
 
-    override fun onShow(args: android.os.Bundle?, showFlags: Int) {
+    override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
         active = true
         startSession()
@@ -35,7 +36,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
 
     override fun onDestroy() {
         stopSession()
-        scope.coroutineContext[SupervisorJob()]?.let { }
+        scope.cancel()
         super.onDestroy()
     }
 
