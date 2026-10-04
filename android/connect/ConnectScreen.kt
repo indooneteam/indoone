@@ -1,6 +1,7 @@
 package com.indoone.connect
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -432,7 +433,7 @@ private fun IntegrationCard(
             Text(
                 text = description,
                 fontSize = 10.sp,
-                lineHeight = 14.dp,
+                lineHeight = 14.sp,
                 color = Color(0xFF89838F),
             )
             Spacer(Modifier.height(9.dp))
