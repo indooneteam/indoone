@@ -410,7 +410,8 @@ private fun IntegrationCard(
                             fontWeight = FontWeight.ExtraBold,
                         )
                     }
-                )
+                }
+            }
 
                 Text(
                     "›",
