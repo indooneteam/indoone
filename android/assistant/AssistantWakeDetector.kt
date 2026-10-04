@@ -57,14 +57,14 @@ class AssistantWakeDetector(
         Thread {
             runCatching {
                 val targetRoot = prepareModelFiles()
-                Log.i(TAG, "Wake model files ready at \${targetRoot.absolutePath}")
+                Log.i(TAG, "Wake model files ready at ${targetRoot.absolutePath}")
                 Model(targetRoot.absolutePath)
             }.onSuccess { loaded ->
                 model = loaded
                 mainHandler.post(onReady)
             }.onFailure { error ->
                 val message =
-                    "Offline wake model failed: \${error.message ?: error::class.java.simpleName}"
+                    "Offline wake model failed: ${error.message ?: error::class.java.simpleName}"
                 Log.e(TAG, message, error)
                 mainHandler.post { onError(message) }
             }
@@ -107,7 +107,7 @@ class AssistantWakeDetector(
 
     private fun copyAssetTree(assetPath: String, targetDir: File) {
         val children = context.assets.list(assetPath)
-            ?: throw IOException("Wake model asset is missing: \${assetPath}")
+            ?: throw IOException("Wake model asset is missing: ${assetPath}")
 
         if (children.isEmpty()) {
             targetDir.parentFile?.mkdirs()
@@ -122,7 +122,7 @@ class AssistantWakeDetector(
         targetDir.mkdirs()
 
         for (child in children) {
-            val childAsset = "\$assetPath/\$child"
+            val childAsset = "$assetPath/$child"
             val target = File(targetDir, child)
             val nested = context.assets.list(childAsset) ?: emptyArray()
 
@@ -151,7 +151,7 @@ class AssistantWakeDetector(
         val missing = required.filterNot(File::exists)
         if (missing.isNotEmpty()) {
             throw IOException(
-                "Wake model is incomplete; missing \${missing.joinToString { it.relativeTo(targetModel).path }}",
+                "Wake model is incomplete; missing ${missing.joinToString { it.relativeTo(targetModel).path }}",
             )
         }
     }
