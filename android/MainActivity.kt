@@ -51,6 +51,8 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordina
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
+import com.indoone.connect.integrations.instagram.InstagramConnectScreen
+import com.indoone.connect.integrations.whatsapp.WhatsAppConnectScreen
 import com.indoone.home.HomeScreen
 import com.indoone.home.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
@@ -74,6 +76,8 @@ private enum class AppRoute {
     ACCOUNTS,
     LOBBY,
     CONNECT,
+    CONNECT_INSTAGRAM,
+    CONNECT_WHATSAPP,
     SETTINGS,
     PROFILE,
     CHANGE_MOBILE,
@@ -285,6 +289,16 @@ class MainActivity : ComponentActivity() {
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                        onWhatsAppClick = { navigate(AppRoute.CONNECT_WHATSAPP) },
+                        onInstagramClick = { navigate(AppRoute.CONNECT_INSTAGRAM) },
+                    )
+
+                    AppRoute.CONNECT_INSTAGRAM -> InstagramConnectScreen(
+                        onBack = { navigate(AppRoute.CONNECT) },
+                    )
+
+                    AppRoute.CONNECT_WHATSAPP -> WhatsAppConnectScreen(
+                        onBack = { navigate(AppRoute.CONNECT) },
                     )
 
                     AppRoute.SETTINGS -> SettingsScreen(
