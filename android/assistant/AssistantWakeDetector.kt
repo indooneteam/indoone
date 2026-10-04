@@ -102,7 +102,7 @@ class AssistantWakeDetector(
         }
 
         verifyModelFiles(targetModel)
-        return targetRoot
+        return targetModel
     }
 
     private fun copyAssetTree(assetPath: String, targetDir: File) {
