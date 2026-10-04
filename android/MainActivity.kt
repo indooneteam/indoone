@@ -1,6 +1,7 @@
 package com.indoone
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -23,6 +24,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.indoone.assistant.AssistantService
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
@@ -91,6 +93,30 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
+    private var assistantMicPrompted = false
+
+    override fun onResume() {
+        super.onResume()
+
+        if (
+            !assistantMicPrompted &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO,
+            ) != PackageManager.PERMISSION_GRANTED &&
+            android.service.voice.VoiceInteractionService.isActiveService(
+                this,
+                ComponentName(this, AssistantService::class.java),
+            )
+        ) {
+            assistantMicPrompted = true
+            requestPermissions(
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                4102,
+            )
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configureSystemBarsDirectly()
