@@ -4,7 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.ServiceInfo
+import android.content.pm.ServiceInfo
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -76,7 +76,7 @@ class AssistantService : VoiceInteractionService() {
         return START_NOT_STICKY
     }
 
-    override fun onShowSessionFailed(args: Bundle?) {
+    override fun onShowSessionFailed(args: Bundle) {
         super.onShowSessionFailed(args)
         sessionShowing = false
         startWakeListening()
@@ -252,6 +252,6 @@ class AssistantService : VoiceInteractionService() {
     private fun normalize(value: String): String =
         value.lowercase(Locale.US)
             .replace(Regex("[^a-z0-9 ]"), " ")
-            .replace(Regex("\s+"), " ")
+            .replace(Regex("\\s+"), " ")
             .trim()
 }
