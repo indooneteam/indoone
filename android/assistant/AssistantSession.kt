@@ -53,6 +53,13 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
 
     override fun onHide() {
         stopSession()
+        runCatching {
+            context.startService(
+                android.content.Intent(context, AssistantService::class.java).apply {
+                    action = AssistantService.ACTION_RESUME_WAKE
+                },
+            )
+        }
         super.onHide()
     }
 
