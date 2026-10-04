@@ -50,7 +50,7 @@ class AssistantWakeDetector(
             return
         }
 
-        LibVosk.setLogLevel(LogLevel.ERROR)
+        LibVosk.setLogLevel(LogLevel.WARNINGS)
 
         StorageService.unpack(
             context.applicationContext,
@@ -144,13 +144,13 @@ class AssistantWakeDetector(
                     if (count <= 0) continue
 
                     val accepted = runCatching {
-                        recognizer.acceptWaveform(buffer, count)
+                        recognizer.acceptWaveForm(buffer, count)
                     }.getOrDefault(false)
 
                     val resultJson = if (accepted) {
-                        recognizer.result()
+                        recognizer.getResult()
                     } else {
-                        recognizer.partialResult()
+                        recognizer.getPartialResult()
                     }
 
                     if (containsWakePhrase(resultJson)) {
