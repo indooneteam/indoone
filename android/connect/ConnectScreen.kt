@@ -41,6 +41,8 @@ fun ConnectScreen(
     onLobbyClick: () -> Unit = {},
     onConnectClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    onWhatsAppClick: () -> Unit = {},
+    onInstagramClick: () -> Unit = {},
 ) {
     var selectedIntegration by remember { mutableStateOf<String?>(null) }
 
@@ -144,14 +146,14 @@ fun ConnectScreen(
                             description = "Customer messages & automated replies",
                             icon = "WA",
                             modifier = Modifier.weight(1f),
-                            onClick = { selectedIntegration = "WhatsApp" },
+                            onClick = { onWhatsAppClick() },
                         )
                         IntegrationCard(
                             title = "Instagram",
                             description = "DM automation & support",
                             icon = "IG",
                             modifier = Modifier.weight(1f),
-                            onClick = { selectedIntegration = "Instagram" },
+                            onClick = { onInstagramClick() },
                         )
                     }
                 }
