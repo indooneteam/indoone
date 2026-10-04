@@ -21,11 +21,33 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     private val client = AssistantClient(scope)
 
     private var audioEngine: AssistantAudioEngine? = null
+    private var overlay: AssistantOverlayView? = null
     private var active = false
+
+    override fun onCreate() {
+        super.onCreate()
+
+        getWindow()?.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setDimAmount(0f)
+            window.setGravity(android.view.Gravity.BOTTOM)
+            window.setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.WRAP_CONTENT,
+            )
+        }
+    }
+
+    override fun onCreateContentView(): android.view.View {
+        return AssistantOverlayView(context) {
+            hide()
+        }.also { overlay = it }
+    }
 
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
         active = true
+        overlay?.setStatus("Connecting…")
         startSession()
     }
 
@@ -37,6 +59,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     override fun onDestroy() {
         stopSession()
         scope.cancel()
+        overlay = null
         super.onDestroy()
     }
 
@@ -49,6 +72,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
                 Manifest.permission.RECORD_AUDIO,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            overlay?.setStatus("Microphone permission required")
             Log.w(TAG, "Microphone permission is not granted")
             return
         }
@@ -65,8 +89,26 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
 
                 when (event.optString("type")) {
                     "connected" -> {
+                        overlay?.setStatus("Listening…")
                         audioEngine?.startRecording()
                         Log.i(TAG, "Home assistant audio session connected")
+                    }
+
+                    "status" -> {
+                        val status = event.optString("interaction_status")
+                        overlay?.setStatus(
+                            when (status.uppercase()) {
+                                "IN_PROGRESS" -> "Thinking…"
+                                "IDLE" -> "Listening…"
+                                else -> status.lowercase().replaceFirstChar { it.titlecase() }
+                            },
+                        )
+                    }
+
+                    "transcript" -> {
+                        if (event.optString("role") == "assistant") {
+                            overlay?.setTranscript(event.optString("text"))
+                        }
                     }
 
                     "audio" -> {
@@ -78,6 +120,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
                     "interrupted" -> audioEngine?.flushPlayback()
 
                     "error" -> {
+                        overlay?.setStatus("Connection error")
                         Log.w(
                             TAG,
                             event.optString("detail").ifBlank {
@@ -87,11 +130,15 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
                         audioEngine?.stopRecording()
                     }
 
-                    "closed", "stopped" -> audioEngine?.stopRecording()
+                    "closed", "stopped" -> {
+                        overlay?.setStatus("Disconnected")
+                        audioEngine?.stopRecording()
+                    }
                 }
             },
             onFailure = { message ->
                 if (!active) return@connect
+                overlay?.setStatus("Connection error")
                 Log.w(TAG, "Home assistant connection failed: $message")
                 audioEngine?.stopRecording()
             },
@@ -105,6 +152,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
         audioEngine?.stop()
         audioEngine = null
         client.close()
+        overlay = null
         Log.i(TAG, "Home assistant session stopped")
     }
 }
