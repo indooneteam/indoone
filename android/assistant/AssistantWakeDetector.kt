@@ -260,7 +260,7 @@ class AssistantWakeDetector(
                 if (running.get()) {
                     Log.e(TAG, "Wake detection loop failed", error)
                     mainHandler.post {
-                        onError("Wake detection failed: \${error.message ?: "unknown error"}")
+                        onError("Wake detection failed: " + (error.message ?: "unknown error"))
                     }
                 }
             } finally {
