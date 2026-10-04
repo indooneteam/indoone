@@ -161,7 +161,6 @@ class AssistantService : VoiceInteractionService() {
                 .setContentTitle("Indoone Assistant")
                 .setContentText(text)
                 .setOngoing(true)
-                .setSilent(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build()
         } else {
@@ -170,7 +169,6 @@ class AssistantService : VoiceInteractionService() {
                 .setContentTitle("Indoone Assistant")
                 .setContentText(text)
                 .setOngoing(true)
-                .setSilent(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build()
         }
