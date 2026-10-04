@@ -76,6 +76,7 @@ android {
             "MainActivity.kt",
             "authentication",
             "accounts",
+            "assistant",
             "menu",
             "home",
             "lobby",
