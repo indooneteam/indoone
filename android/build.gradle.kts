@@ -125,6 +125,9 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("net.java.dev.jna:jna:5.18.1@aar")
+    implementation("com.alphacephei:vosk-android:0.3.75@aar")
+    implementation("com.alphacephei:vosk-model-en:0.3.75@aar")
     implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.biometric:biometric:1.1.0")
 }
