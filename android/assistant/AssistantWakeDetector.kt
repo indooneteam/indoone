@@ -87,7 +87,7 @@ class AssistantWakeDetector(
             targetUuid.exists() &&
             File(targetModel, "am/final.mdl").exists()
         ) {
-            return targetRoot
+            return targetModel
         }
 
         if (targetRoot.exists()) {
