@@ -108,7 +108,7 @@ class AssistantService : VoiceInteractionService() {
 
     private fun onWakeError(message: String) {
         Log.w(TAG, message)
-        updateNotification("Wake listener unavailable")
+        updateNotification("Wake listener error: $message")
     }
 
     private fun ensureWakeNotificationChannel() {
@@ -160,6 +160,7 @@ class AssistantService : VoiceInteractionService() {
                 .setSmallIcon(R.drawable.ic_indoone_notification)
                 .setContentTitle("Indoone Assistant")
                 .setContentText(text)
+                .setStyle(Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build()
@@ -168,6 +169,7 @@ class AssistantService : VoiceInteractionService() {
                 .setSmallIcon(R.drawable.ic_indoone_notification)
                 .setContentTitle("Indoone Assistant")
                 .setContentText(text)
+                .setStyle(Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build()
