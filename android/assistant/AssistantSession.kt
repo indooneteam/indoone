@@ -42,7 +42,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
             window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
             window.setGravity(Gravity.TOP or Gravity.START)
 
-            val widthPx = resources.displayMetrics.widthPixels
+            val widthPx = context.resources.displayMetrics.widthPixels
             windowX = (widthPx - ORB_WINDOW_DP.dp() - EDGE_MARGIN_DP.dp()).coerceAtLeast(EDGE_MARGIN_DP.dp())
             windowY = INITIAL_TOP_DP.dp()
 
@@ -92,7 +92,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
 
     private fun moveOverlay(dx: Int, dy: Int) {
         val voiceWindow = getWindow()?.window ?: return
-        val display = resources.displayMetrics
+        val display = context.resources.displayMetrics
         val margin = EDGE_MARGIN_DP.dp()
         val size = ORB_WINDOW_DP.dp()
 
@@ -225,5 +225,5 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     }
 
     private fun Int.dp(): Int =
-        (this * resources.displayMetrics.density).toInt()
+        (this * context.resources.displayMetrics.density).toInt()
 }
