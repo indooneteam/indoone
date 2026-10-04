@@ -1,3 +1,50 @@
+
+import java.net.URI
+import java.util.zip.ZipFile
+
+val voskModelOutput = layout.buildDirectory.dir("generated/vosk-model-assets")
+
+val prepareVoskModel by tasks.registering {
+    outputs.dir(voskModelOutput)
+
+    doLast {
+        val outputDir = voskModelOutput.get().asFile
+        val archive = File(temporaryDir, "vosk-model-en-0.3.75.aar")
+        val url = URI(
+            "https://repo1.maven.org/maven2/com/alphacephei/vosk-model-en/0.3.75/" +
+                "vosk-model-en-0.3.75.aar"
+        ).toURL()
+
+        url.openStream().use { input ->
+            archive.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        ZipFile(archive).use { zip ->
+            val prefix = "assets/model-en-us/"
+            zip.entries().asSequence()
+                .filter { !it.isDirectory && it.name.startsWith(prefix) }
+                .forEach { entry ->
+                    val target = File(
+                        outputDir,
+                        entry.name.removePrefix("assets/"),
+                    )
+                    target.parentFile.mkdirs()
+                    zip.getInputStream(entry).use { input ->
+                        target.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+        }
+    }
+}
+
+sourceSets["main"].assets.srcDir(voskModelOutput)
+tasks.named("preBuild").configure {
+    dependsOn(prepareVoskModel)
+}
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -127,7 +174,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("net.java.dev.jna:jna:5.18.1@aar")
     implementation("com.alphacephei:vosk-android:0.3.75@aar")
-    implementation("com.alphacephei:vosk-model-en:0.3.75@aar")
-    implementation("androidx.work:work-runtime-ktx:2.10.1")
+        implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.biometric:biometric:1.1.0")
 }
