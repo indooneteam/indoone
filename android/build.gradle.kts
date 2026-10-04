@@ -2,13 +2,16 @@
 import java.net.URI
 import java.util.zip.ZipFile
 
-val voskModelOutput = layout.buildDirectory.dir("generated/vosk-model-assets")
-
-val prepareVoskModel by tasks.registering {
-    outputs.dir(voskModelOutput)
-
+val prepareVoskModel = tasks.register("prepareVoskModel") {
     doLast {
-        val outputDir = voskModelOutput.get().asFile
+        val assetRoot = file("src/main/assets")
+        val modelRoot = file("src/main/assets/model-en-us")
+        val uuidFile = file("src/main/assets/model-en-us/uuid")
+
+        if (uuidFile.exists() && File(modelRoot, "am/final.mdl").exists()) {
+            return@doLast
+        }
+
         val archive = File(temporaryDir, "vosk-model-en-0.3.75.aar")
         val url = URI(
             "https://repo1.maven.org/maven2/com/alphacephei/vosk-model-en/0.3.75/" +
@@ -21,13 +24,18 @@ val prepareVoskModel by tasks.registering {
             }
         }
 
+        if (modelRoot.exists()) {
+            modelRoot.deleteRecursively()
+        }
+        modelRoot.mkdirs()
+
         ZipFile(archive).use { zip ->
             val prefix = "assets/model-en-us/"
             zip.entries().asSequence()
                 .filter { !it.isDirectory && it.name.startsWith(prefix) }
                 .forEach { entry ->
                     val target = File(
-                        outputDir,
+                        assetRoot,
                         entry.name.removePrefix("assets/"),
                     )
                     target.parentFile.mkdirs()
@@ -38,13 +46,17 @@ val prepareVoskModel by tasks.registering {
                     }
                 }
         }
+
+        if (!uuidFile.exists()) {
+            uuidFile.writeText("indoone-vosk-en-0.3.75")
+        }
     }
 }
 
-sourceSets["main"].assets.srcDir(voskModelOutput)
 tasks.named("preBuild").configure {
     dependsOn(prepareVoskModel)
 }
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
