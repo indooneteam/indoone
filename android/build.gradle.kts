@@ -8,17 +8,30 @@ val prepareVoskModel = tasks.register("prepareVoskModel") {
         val modelRoot = file("src/main/assets/model-en-us")
         val uuidFile = file("src/main/assets/model-en-us/uuid")
 
-        if (uuidFile.exists() && File(modelRoot, "am/final.mdl").exists()) {
+        val requiredFiles = listOf(
+            File(modelRoot, "am/final.mdl"),
+            File(modelRoot, "conf/model.conf"),
+            File(modelRoot, "graph/Gr.fst"),
+            File(modelRoot, "graph/HCLr.fst"),
+        )
+
+        if (uuidFile.exists() && requiredFiles.all(File::exists)) {
+            println("Vosk wake model already prepared.")
             return@doLast
         }
 
-        val archive = File(temporaryDir, "vosk-model-en-0.3.75.aar")
+        val archive = File(temporaryDir, "vosk-model-small-en-us-0.15.zip")
         val url = URI(
-            "https://repo1.maven.org/maven2/com/alphacephei/vosk-model-en/0.3.75/" +
-                "vosk-model-en-0.3.75.aar"
+            "https://alphacephei.com/vosk/models/" +
+                "vosk-model-small-en-us-0.15.zip"
         ).toURL()
 
-        url.openStream().use { input ->
+        val connection = url.openConnection().apply {
+            connectTimeout = 30_000
+            readTimeout = 120_000
+        }
+
+        connection.getInputStream().use { input ->
             archive.outputStream().use { output ->
                 input.copyTo(output)
             }
@@ -30,15 +43,16 @@ val prepareVoskModel = tasks.register("prepareVoskModel") {
         modelRoot.mkdirs()
 
         ZipFile(archive).use { zip ->
-            val prefix = "assets/model-en-us/"
+            val prefix = "vosk-model-small-en-us-0.15/"
             zip.entries().asSequence()
                 .filter { !it.isDirectory && it.name.startsWith(prefix) }
                 .forEach { entry ->
-                    val target = File(
-                        assetRoot,
-                        entry.name.removePrefix("assets/"),
-                    )
+                    val relativePath = entry.name.removePrefix(prefix)
+                    if (relativePath.isBlank()) return@forEach
+
+                    val target = File(modelRoot, relativePath)
                     target.parentFile.mkdirs()
+
                     zip.getInputStream(entry).use { input ->
                         target.outputStream().use { output ->
                             input.copyTo(output)
@@ -48,14 +62,23 @@ val prepareVoskModel = tasks.register("prepareVoskModel") {
         }
 
         if (!uuidFile.exists()) {
-            uuidFile.writeText("indoone-vosk-en-0.3.75")
+            uuidFile.writeText("indoone-vosk-small-en-us-0.15")
         }
+
+        val missing = requiredFiles.filterNot(File::exists)
+        check(missing.isEmpty()) {
+            "Vosk wake model download is incomplete; missing: " +
+                missing.joinToString { it.relativeTo(modelRoot).path }
+        }
+
+        println("Vosk wake model prepared successfully at " + modelRoot.absolutePath)
     }
 }
 
 tasks.named("preBuild").configure {
     dependsOn(prepareVoskModel)
 }
+
 
 plugins {
     id("com.android.application")
