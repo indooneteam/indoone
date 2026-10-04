@@ -54,6 +54,13 @@ class AssistantService : VoiceInteractionService() {
         return START_STICKY
     }
 
+    override fun onShowSessionFailed(args: android.os.Bundle?) {
+        sessionShowing = false
+        Log.e(TAG, "Assistant session failed to show: $args")
+        updateNotification("Assistant session failed")
+        startWakeDetector()
+    }
+
     override fun onShutdown() {
         wakeDetector.release()
         stopWakeForeground()
