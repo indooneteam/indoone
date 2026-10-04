@@ -8,7 +8,9 @@ import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
+import android.os.Build
 import android.os.Process
+import android.util.Log
 import android.util.Base64
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -17,8 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 class AssistantAudioEngine(
     private val context: Context,
     private val onCapturedPcm: (ByteArray) -> Unit,
+    private val onError: (String) -> Unit = {},
 ) {
     companion object {
+        private const val TAG = "IndooneAudio"
         private const val INPUT_RATE_HZ = 16_000
         private const val OUTPUT_RATE_HZ = 24_000
         private const val CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO
@@ -95,7 +99,10 @@ class AssistantAudioEngine(
                 ENCODING,
             )
             if (minBuffer <= 0) {
+                val message = "Microphone buffer initialization failed"
                 recording.set(false)
+                Log.e(TAG, message)
+                onError(message)
                 return
             }
 
@@ -109,11 +116,15 @@ class AssistantAudioEngine(
             if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
                 audioRecord.release()
                 recording.set(false)
+                val message = "Assistant microphone could not be initialized"
+                Log.e(TAG, message)
+                onError(message)
                 return
             }
 
             recorder = audioRecord
             audioRecord.startRecording()
+            Log.i(TAG, "Assistant microphone recording started")
 
             recordThread = Thread {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
@@ -141,10 +152,16 @@ class AssistantAudioEngine(
                 name = "Indoone-Assistant-Recorder"
                 start()
             }
-        } catch (_: SecurityException) {
+        } catch (error: SecurityException) {
             recording.set(false)
-        } catch (_: IllegalStateException) {
+            val message = "Microphone permission was denied"
+            Log.e(TAG, message, error)
+            onError(message)
+        } catch (error: IllegalStateException) {
             recording.set(false)
+            val message = "Assistant microphone failed: ${error.message ?: "unknown error"}"
+            Log.e(TAG, message, error)
+            onError(message)
         }
     }
 
@@ -189,7 +206,13 @@ class AssistantAudioEngine(
         val track = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setUsage(
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            AudioAttributes.USAGE_ASSISTANT
+                        } else {
+                            AudioAttributes.USAGE_MEDIA
+                        },
+                    )
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build(),
             )
@@ -212,6 +235,7 @@ class AssistantAudioEngine(
         }
 
         track.play()
+        Log.i(TAG, "Assistant audio playback started at ${track.sampleRate}Hz")
         player = track
         return track
     }
@@ -229,6 +253,7 @@ class AssistantAudioEngine(
     }
 
     fun stop() {
+        Log.i(TAG, "Assistant audio engine stopping")
         stopRecording()
         restoreAudioRoute()
         playbackExecutor.execute {

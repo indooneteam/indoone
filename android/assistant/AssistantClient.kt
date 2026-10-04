@@ -1,8 +1,7 @@
 package com.indoone.assistant
 
 import android.util.Base64
-import com.google.android.gms.tasks.Tasks
-import com.google.firebase.auth.FirebaseAuth
+import android.util.Log
 import com.indoone.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +17,9 @@ import java.util.concurrent.TimeUnit
 class AssistantClient(
     private val scope: CoroutineScope,
 ) {
+    companion object {
+        private const val TAG = "IndooneAssistantClient"
+    }
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)
@@ -28,20 +30,18 @@ class AssistantClient(
     private var socket: WebSocket? = null
 
     fun connect(
+        authToken: String,
         onEvent: (JSONObject) -> Unit,
         onFailure: (String) -> Unit,
     ) {
         scope.launch(Dispatchers.IO) {
             try {
-                val user = FirebaseAuth.getInstance().currentUser
-                    ?: throw IllegalStateException("Please sign in to use Indoone Assistant.")
-
-                val token = Tasks.await(user.getIdToken(false)).token
-                    ?.takeIf { it.isNotBlank() }
+                val token = authToken.trim().takeIf { it.isNotBlank() }
                     ?: throw IllegalStateException(
-                        "Could not get the Indoone authentication token.",
+                        "Assistant authentication token is missing.",
                     )
 
+                Log.i(TAG, "Connecting to Indoone Assistant backend")
                 val request = Request.Builder()
                     .url(buildWebSocketUrl())
                     .header("Authorization", "Bearer $token")
@@ -53,6 +53,7 @@ class AssistantClient(
                     request,
                     object : WebSocketListener() {
                         override fun onOpen(webSocket: WebSocket, response: Response) {
+                            Log.i(TAG, "Assistant WebSocket opened")
                             scope.launch(Dispatchers.Main) {
                                 onEvent(JSONObject().put("type", "transport_open"))
                             }
@@ -64,6 +65,10 @@ class AssistantClient(
                                     .put("type", "error")
                                     .put("detail", "Assistant backend returned invalid JSON.")
                             }
+                            Log.i(
+                                TAG,
+                                "Assistant backend event: ${event.optString("type", "unknown")}",
+                            )
                             scope.launch(Dispatchers.Main) {
                                 onEvent(event)
                             }
@@ -85,6 +90,7 @@ class AssistantClient(
                             t: Throwable,
                             response: Response?,
                         ) {
+                            Log.e(TAG, "Assistant WebSocket failure", t)
                             scope.launch(Dispatchers.Main) {
                                 onFailure(
                                     t.message?.takeIf { it.isNotBlank() }
@@ -95,6 +101,7 @@ class AssistantClient(
                     },
                 )
             } catch (error: Exception) {
+                Log.e(TAG, "Assistant connection setup failed", error)
                 scope.launch(Dispatchers.Main) {
                     onFailure(error.message ?: "Assistant connection failed.")
                 }

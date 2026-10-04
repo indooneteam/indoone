@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
@@ -11,11 +12,14 @@ import android.os.Build
 import android.service.voice.VoiceInteractionService
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
 import com.indoone.R
 
 class AssistantService : VoiceInteractionService() {
     companion object {
         const val ACTION_RESUME_WAKE = "com.indoone.assistant.RESUME_WAKE"
+        const val EXTRA_AUTH_TOKEN = "com.indoone.assistant.AUTH_TOKEN"
         private const val CHANNEL_ID = "indoone_assistant_wake"
         private const val NOTIFICATION_ID = 4101
         private const val TAG = "IndooneAssistant"
@@ -36,7 +40,6 @@ class AssistantService : VoiceInteractionService() {
         Log.i(TAG, "VoiceInteractionService ready")
 
         ensureWakeNotificationChannel()
-        startWakeForeground()
 
         if (Build.VERSION.SDK_INT >= 36) {
             runCatching { setInvocationEffectEnabled(false) }
@@ -82,8 +85,21 @@ class AssistantService : VoiceInteractionService() {
                 Manifest.permission.RECORD_AUDIO,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            updateNotification("Microphone permission required")
+            updateNotification(
+                "Microphone permission required",
+                includePermissionAction = true,
+            )
             Log.w(TAG, "Microphone permission is not granted")
+            return
+        }
+
+        runCatching {
+            startWakeForeground()
+        }.onFailure { error ->
+            Log.e(TAG, "Could not start assistant microphone service", error)
+            updateNotification(
+                "Assistant microphone service failed: ${error.message ?: error::class.java.simpleName}",
+            )
             return
         }
 
@@ -102,15 +118,47 @@ class AssistantService : VoiceInteractionService() {
         sessionShowing = true
         wakeDetector.stop()
         updateNotification("Assistant active")
-        Log.i(TAG, "Hey Indoone detected; opening assistant session")
+        Log.i(TAG, "Hey Indoone detected; preparing assistant session")
 
-        showSession(
-            android.os.Bundle().apply {
-                putString("invocation_type", "wake_word")
-                putString("wake_phrase", "Hey Indoone")
-            },
-            0,
-        )
+        Thread {
+            runCatching {
+                val user = FirebaseAuth.getInstance().currentUser
+                    ?: throw IllegalStateException(
+                        "Please sign in to use Indoone Assistant.",
+                    )
+                Tasks.await(user.getIdToken(false)).token
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalStateException(
+                        "Could not get the Indoone authentication token.",
+                    )
+            }.onSuccess { token ->
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    if (!sessionShowing) return@post
+                    Log.i(TAG, "Assistant auth token prepared; opening session")
+                    showSession(
+                        android.os.Bundle().apply {
+                            putString("invocation_type", "wake_word")
+                            putString("wake_phrase", "Hey Indoone")
+                            putString(EXTRA_AUTH_TOKEN, token)
+                        },
+                        0,
+                    )
+                }
+            }.onFailure { error ->
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    sessionShowing = false
+                    Log.e(TAG, "Assistant authentication preparation failed", error)
+                    updateNotification(
+                        "Assistant authentication failed: ${error.message ?: error::class.java.simpleName}",
+                    )
+                    startWakeDetector()
+                }
+            }
+        }.apply {
+            name = "Indoone-Assistant-Auth"
+            isDaemon = true
+            start()
+        }
     }
 
     private fun onWakeError(message: String) {
@@ -156,12 +204,21 @@ class AssistantService : VoiceInteractionService() {
         }
     }
 
-    private fun updateNotification(text: String) {
+    private fun updateNotification(
+        text: String,
+        includePermissionAction: Boolean = false,
+    ) {
         getSystemService(NotificationManager::class.java)
-            .notify(NOTIFICATION_ID, buildNotification(text))
+            .notify(
+                NOTIFICATION_ID,
+                buildNotification(text, includePermissionAction),
+            )
     }
 
-    private fun buildNotification(text: String): Notification {
+    private fun buildNotification(
+        text: String,
+        includePermissionAction: Boolean = false,
+    ): Notification {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_indoone_notification)
@@ -170,6 +227,31 @@ class AssistantService : VoiceInteractionService() {
                 .setStyle(Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
+                .apply {
+                    if (includePermissionAction) {
+                        val intent = Intent(
+                            this@AssistantService,
+                            AssistantPermissionActivity::class.java,
+                        ).apply {
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                            )
+                        }
+                        val pendingIntent = PendingIntent.getActivity(
+                            this@AssistantService,
+                            NOTIFICATION_ID + 1,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        )
+                        addAction(
+                            R.drawable.ic_indoone_notification,
+                            "Allow microphone",
+                            pendingIntent,
+                        )
+                    }
+                }
                 .build()
         } else {
             Notification.Builder(this)
@@ -179,6 +261,31 @@ class AssistantService : VoiceInteractionService() {
                 .setStyle(Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
+                .apply {
+                    if (includePermissionAction) {
+                        val intent = Intent(
+                            this@AssistantService,
+                            AssistantPermissionActivity::class.java,
+                        ).apply {
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                            )
+                        }
+                        val pendingIntent = PendingIntent.getActivity(
+                            this@AssistantService,
+                            NOTIFICATION_ID + 1,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        )
+                        addAction(
+                            R.drawable.ic_indoone_notification,
+                            "Allow microphone",
+                            pendingIntent,
+                        )
+                    }
+                }
                 .build()
         }
     }

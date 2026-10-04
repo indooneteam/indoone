@@ -32,6 +32,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     private var active = false
     private var windowX = 0
     private var windowY = 0
+    private var authToken: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -67,7 +68,8 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
         active = true
-        overlay?.setStatus("Listening…")
+        authToken = args?.getString(AssistantService.EXTRA_AUTH_TOKEN)
+        overlay?.setStatus("Connecting…")
         startSession()
     }
 
@@ -144,9 +146,22 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
         audioEngine = AssistantAudioEngine(
             context = appContext,
             onCapturedPcm = client::sendAudio,
+            onError = { message ->
+                overlay?.setStatus("Audio error")
+                Log.e(TAG, "Home assistant audio error: $message")
+            },
         )
 
+        val token = authToken?.takeIf { it.isNotBlank() }
+        if (token == null) {
+            overlay?.setStatus("Authentication required")
+            Log.e(TAG, "Assistant session opened without an authentication token")
+            hide()
+            return
+        }
+
         client.connect(
+            authToken = token,
             onEvent = { event ->
                 if (!active) return@connect
 
@@ -221,6 +236,7 @@ class AssistantSession(context: Context) : VoiceInteractionSession(context) {
         audioEngine = null
         client.close()
         overlay = null
+        authToken = null
         Log.i(TAG, "Home assistant session stopped")
     }
 

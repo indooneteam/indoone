@@ -30,9 +30,7 @@ class AssistantWakeDetector(
         private const val BUFFER_BYTES = 3_200
         private const val MODEL_ASSET = "model-en-us"
         private const val MODEL_DIR = "indoone-wake-model"
-        private const val MODEL_UUID = "indoone-vosk-en-0.3.75"
-        private const val GRAMMAR =
-            "[\"hey indoone\",\"hey indo one\",\"hey indone\",\"hey andoone\",\"hey endoone\",\"hey into one\",\"hey in to one\",\"[unk]\"]"
+        private const val MODEL_UUID = "indoone-vosk-small-en-us-0.15"
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -85,9 +83,14 @@ class AssistantWakeDetector(
 
         if (
             targetUuid.exists() &&
-            File(targetModel, "am/final.mdl").exists()
+            targetUuid.readText().trim() == MODEL_UUID
         ) {
-            return targetModel
+            try {
+                verifyModelFiles(targetModel)
+                return targetModel
+            } catch (_: IOException) {
+                targetRoot.deleteRecursively()
+            }
         }
 
         if (targetRoot.exists()) {
@@ -202,7 +205,7 @@ class AssistantWakeDetector(
             }
 
             val recognizer = runCatching {
-                Recognizer(loadedModel, SAMPLE_RATE_HZ.toFloat(), GRAMMAR).apply {
+                Recognizer(loadedModel, SAMPLE_RATE_HZ.toFloat()).apply {
                     setMaxAlternatives(1)
                     setWords(false)
                     setPartialWords(false)
@@ -299,13 +302,73 @@ class AssistantWakeDetector(
         }.getOrDefault("")
 
         val normalized = normalize(text)
-        return normalized.contains("hey indoone") ||
-            normalized.contains("hey indo one") ||
-            normalized.contains("hey indone") ||
-            normalized.contains("hey andoone") ||
-            normalized.contains("hey endoone") ||
-            normalized.contains("hey into one") ||
-            normalized.contains("hey in to one")
+        if (normalized.isBlank()) return false
+
+        val tokens = normalized.split(' ').filter { it.isNotBlank() }
+        val heyIndex = tokens.indexOfFirst {
+            it == "hey" || editDistance(it, "hey") <= 1
+        }
+        if (heyIndex < 0) return false
+
+        val afterHey = tokens.drop(heyIndex + 1).take(4)
+        val candidates = buildList {
+            addAll(afterHey)
+            if (afterHey.size >= 2) add(afterHey.take(2).joinToString(""))
+            if (afterHey.size >= 3) add(afterHey.take(3).joinToString(""))
+            if (afterHey.size >= 4) add(afterHey.take(4).joinToString(""))
+        }
+
+        val exact = setOf(
+            "indoone",
+            "indone",
+            "andoone",
+            "endoone",
+            "intoone",
+            "inone",
+            "andone",
+        )
+        val matched = candidates.any { candidate ->
+            val compact = candidate.replace(" ", "")
+            compact in exact ||
+                (compact.length in 5..12 &&
+                    similarity(compact, "indoone") >= 0.64)
+        }
+
+        if (tokens.contains("hey")) {
+            Log.d(TAG, "Wake recognizer text: $normalized matched=$matched")
+        }
+
+        return matched
+    }
+
+    private fun similarity(left: String, right: String): Double {
+        val maxLen = maxOf(left.length, right.length)
+        if (maxLen == 0) return 1.0
+        return 1.0 - editDistance(left, right).toDouble() / maxLen
+    }
+
+    private fun editDistance(left: String, right: String): Int {
+        if (left == right) return 0
+        if (left.isEmpty()) return right.length
+        if (right.isEmpty()) return left.length
+
+        val previous = IntArray(right.length + 1) { it }
+        val current = IntArray(right.length + 1)
+
+        for (i in left.indices) {
+            current[0] = i + 1
+            for (j in right.indices) {
+                val cost = if (left[i] == right[j]) 0 else 1
+                current[j + 1] = minOf(
+                    current[j] + 1,
+                    previous[j + 1] + 1,
+                    previous[j] + cost,
+                )
+            }
+            java.lang.System.arraycopy(current, 0, previous, 0, current.size)
+        }
+
+        return previous[right.length]
     }
 
     private fun normalize(value: String): String =
