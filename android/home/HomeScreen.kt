@@ -554,49 +554,6 @@ fun HomeScreen(
                     }
                 }
 
-                item(key = "indoone-thinking") {
-                    if (isSending) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.Bottom,
-                        ) {
-                            IndooneHomeLogo(
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                                    .size(24.dp)
-                                    .align(Alignment.Bottom),
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(
-                                    topStart = 18.dp,
-                                    topEnd = 18.dp,
-                                    bottomStart = 5.dp,
-                                    bottomEnd = 18.dp,
-                                ),
-                                color = Color(0xFFF5F2FB),
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(14.dp),
-                                        color = Color(0xFF703BE2),
-                                        strokeWidth = 1.8.dp,
-                                    )
-                                    Text(
-                                        "Indoone AI is thinking…",
-                                        color = Color(0xFF6F6578),
-                                        fontSize = 13.sp,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
                 items(messages) { message ->
                     if (message.fromUser) {
                         Row(
@@ -652,6 +609,49 @@ fun HomeScreen(
                         }
                     }
                 }
+                item(key = "indoone-thinking") {
+                    if (isSending) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.Bottom,
+                        ) {
+                            IndooneHomeLogo(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(24.dp)
+                                    .align(Alignment.Bottom),
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(
+                                    topStart = 18.dp,
+                                    topEnd = 18.dp,
+                                    bottomStart = 5.dp,
+                                    bottomEnd = 18.dp,
+                                ),
+                                color = Color(0xFFF5F2FB),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        color = Color(0xFF703BE2),
+                                        strokeWidth = 1.8.dp,
+                                    )
+                                    Text(
+                                        "Indoone AI is thinking…",
+                                        color = Color(0xFF6F6578),
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
 
             pendingFileName?.let {
