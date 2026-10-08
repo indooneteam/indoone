@@ -8,6 +8,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,6 +41,7 @@ jobs:
           INDOONE_KEY_ALIAS: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_ALIAS || '' }}
           INDOONE_KEY_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_PASSWORD || '' }}
           INDOONE_BACKEND_URL: ${{ github.ref == 'refs/heads/terminal' && 'https://52.62.244.79' || '' }}
+          INDOONE_BUILD_VERSION_CODE: ${{ github.run_number }}
         run: gradle assembleDebug --stacktrace
       - name: Verify APK output
         shell: bash
@@ -58,6 +61,21 @@ jobs:
           name: indoone-debug-apk
           path: android/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+      - name: Publish terminal APK release
+        if: github.ref == 'refs/heads/terminal'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INDOONE_BUILD_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          apk="$(find android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          tag="terminal-build-${INDOONE_BUILD_VERSION_CODE}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk#indoone-terminal.apk" --clobber
+          else
+            gh release create "$tag" "$apk#indoone-terminal.apk"               --target terminal               --title "Indoone terminal build ${INDOONE_BUILD_VERSION_CODE}"               --notes "Automated terminal APK build for Indoone."
+          fi
 
   sync-main-to-develop:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
