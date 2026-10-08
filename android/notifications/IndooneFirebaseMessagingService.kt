@@ -3,6 +3,7 @@ package com.indoone.notifications
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -33,10 +34,8 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
 
         val route = data["route"]?.takeIf { it.isNotBlank() }
         val showSystemNotification = !IndooneAppState.isForeground
-        val pendingResult = goAsync()
-
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            try {
+        runCatching {
+            runBlocking(Dispatchers.IO) {
                 val repository = NotificationRepository.getInstance(applicationContext)
                 repository.add(
                     category = category,
@@ -44,18 +43,16 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
                     body = body,
                     route = route,
                 )
+            }
 
-                if (showSystemNotification) {
-                    IndooneNotificationManager.show(
-                        context = applicationContext,
-                        category = category,
-                        title = title,
-                        body = body,
-                        openRoute = route,
-                    )
-                }
-            } finally {
-                pendingResult.finish()
+            if (showSystemNotification) {
+                IndooneNotificationManager.show(
+                    context = applicationContext,
+                    category = category,
+                    title = title,
+                    body = body,
+                    openRoute = route,
+                )
             }
         }
     }
