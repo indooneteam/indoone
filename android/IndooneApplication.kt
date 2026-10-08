@@ -5,11 +5,13 @@ import android.app.Application
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -32,7 +34,10 @@ import kotlinx.coroutines.launch
 class IndooneApplication : Application() {
     private val controllers = mutableMapOf<Activity, AutoLockController>()
     private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var appBackgroundStartedAt: Long? = null
+    private var pendingBackgroundDurationMs: Long? = null
+    private val lifecyclePreferences by lazy {
+        getSharedPreferences(AUTO_LOCK_LIFECYCLE_PREFS, MODE_PRIVATE)
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -45,6 +50,24 @@ class IndooneApplication : Application() {
             ExistingPeriodicWorkPolicy.KEEP,
             PeriodicWorkRequestBuilder<ChatCleanupWorker>(1, TimeUnit.DAYS).build(),
         )
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                lifecyclePreferences.edit()
+                    .putLong(KEY_BACKGROUND_STARTED_AT, System.currentTimeMillis())
+                    .apply()
+            }
+
+            override fun onStart(owner: LifecycleOwner) {
+                val startedAt = lifecyclePreferences.getLong(KEY_BACKGROUND_STARTED_AT, 0L)
+                lifecyclePreferences.edit().remove(KEY_BACKGROUND_STARTED_AT).apply()
+                pendingBackgroundDurationMs = if (startedAt > 0L) {
+                    (System.currentTimeMillis() - startedAt).coerceAtLeast(0L)
+                } else {
+                    null
+                }
+            }
+        })
+
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 configureSystemBars(activity)
@@ -57,8 +80,12 @@ class IndooneApplication : Application() {
             override fun onActivityResumed(activity: Activity) {
                 configureSystemBars(activity)
                 syncNotificationToken()
-                controllers[activity]?.onResumed(activity as? ComponentActivity ?: return)
-                if (activity is ComponentActivity) installStatusBarInset(activity)
+                val componentActivity = activity as? ComponentActivity ?: return
+                val backgroundDuration = pendingBackgroundDurationMs.also {
+                    pendingBackgroundDurationMs = null
+                }
+                controllers[activity]?.onResumed(componentActivity, backgroundDuration)
+                installStatusBarInset(componentActivity)
             }
 
             override fun onActivityPaused(activity: Activity) {
@@ -70,26 +97,11 @@ class IndooneApplication : Application() {
             }
 
             override fun onActivityStarted(activity: Activity) {
-                val wasForeground = IndooneAppState.isForeground
                 IndooneAppState.onActivityStarted()
-
-                if (!wasForeground) {
-                    val backgroundStartedAt = appBackgroundStartedAt
-                    appBackgroundStartedAt = null
-                    if (backgroundStartedAt != null) {
-                        val duration = (SystemClock.elapsedRealtime() - backgroundStartedAt).coerceAtLeast(0L)
-                        controllers.values.forEach { controller ->
-                            controller.onAppForegrounded(duration)
-                        }
-                    }
-                }
             }
 
             override fun onActivityStopped(activity: Activity) {
                 IndooneAppState.onActivityStopped()
-                if (!IndooneAppState.isForeground && appBackgroundStartedAt == null) {
-                    appBackgroundStartedAt = SystemClock.elapsedRealtime()
-                }
             }
 
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
@@ -138,5 +150,9 @@ class IndooneApplication : Application() {
             insets
         }
         ViewCompat.requestApplyInsets(content)
+    }
+    companion object {
+        private const val AUTO_LOCK_LIFECYCLE_PREFS = "indoone_auto_lock_lifecycle"
+        private const val KEY_BACKGROUND_STARTED_AT = "background_started_at"
     }
 }

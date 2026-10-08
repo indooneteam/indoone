@@ -53,28 +53,83 @@ private fun iconBuilder(name: String, content: androidx.compose.ui.graphics.vect
         )
     }.build()
 
-private val AccountsNavIcon = iconBuilder("HomeNav") {
-    moveTo(4f, 10.5f); lineTo(12f, 4f); lineTo(20f, 10.5f)
-    moveTo(6f, 9f); lineTo(6f, 19f); lineTo(18f, 19f); lineTo(18f, 9f)
-    moveTo(9f, 19f); lineTo(9f, 14f); lineTo(15f, 14f); lineTo(15f, 19f)
-    moveTo(8f, 7.5f); lineTo(10f, 7.5f); moveTo(14f, 7.5f); lineTo(16f, 7.5f)
+private fun filledIconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
+    ImageVector.Builder(
+        name = name,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(
+            fill = SolidColor(Color.Black),
+            stroke = null,
+            pathBuilder = content,
+        )
+    }.build()
+
+private fun mixedIconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
+    ImageVector.Builder(
+        name = name,
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        path(
+            fill = SolidColor(Color.Black),
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 1.8f,
+            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+            pathBuilder = content,
+        )
+    }.build()
+
+private val AccountsNavIcon = filledIconBuilder("HomeNav") {
+    moveTo(3f, 10.5f); lineTo(12f, 3.5f); lineTo(21f, 10.5f)
+    lineTo(19f, 10.5f); lineTo(19f, 20f); lineTo(14f, 20f)
+    lineTo(14f, 14.5f); lineTo(10f, 14.5f); lineTo(10f, 20f)
+    lineTo(5f, 20f); lineTo(5f, 10.5f); close()
 }
-private val LobbyNavIcon = iconBuilder("LobbyNav") {
-    moveTo(12f, 4f); lineTo(15.8f, 8.2f); lineTo(15.2f, 14f); lineTo(12f, 19f); lineTo(8.8f, 14f); lineTo(8.2f, 8.2f); close()
-    moveTo(12f, 9f); curveTo(10.895f, 9f, 10f, 9.895f, 10f, 11f); curveTo(10f, 12.105f, 10.895f, 13f, 12f, 13f); curveTo(13.105f, 13f, 14f, 12.105f, 14f, 11f); curveTo(14f, 9.895f, 13.105f, 9f, 12f, 9f)
-    moveTo(12f, 13f); lineTo(12f, 15f)
+
+private val LobbyNavIcon = filledIconBuilder("LobbyNav") {
+    moveTo(12f, 2.8f); lineTo(14.5f, 9.5f); lineTo(21.2f, 12f)
+    lineTo(14.5f, 14.5f); lineTo(12f, 21.2f); lineTo(9.5f, 14.5f)
+    lineTo(2.8f, 12f); lineTo(9.5f, 9.5f); close()
 }
-private val ConnectNavIcon = iconBuilder("ConnectNav") {
-    moveTo(8.2f, 6.2f); lineTo(5f, 9.4f); curveTo(3.343f, 11.057f, 3.343f, 13.743f, 5f, 15.4f); lineTo(6.4f, 16.8f); curveTo(8.057f, 18.457f, 10.743f, 18.457f, 12.4f, 16.8f); lineTo(15.6f, 13.6f)
-    moveTo(15.8f, 17.8f); lineTo(19f, 14.6f); curveTo(20.657f, 12.943f, 20.657f, 10.257f, 19f, 8.6f); lineTo(17.6f, 7.2f); curveTo(15.943f, 5.543f, 13.257f, 5.543f, 11.6f, 7.2f); lineTo(8.4f, 10.4f)
-    moveTo(9.5f, 14.5f); lineTo(14.5f, 9.5f)
+
+private val ConnectNavIcon = mixedIconBuilder("ConnectNav") {
+    moveTo(7f, 7f); lineTo(17f, 17f)
+    moveTo(17f, 7f); lineTo(7f, 17f)
+    moveTo(7f, 7f); curveTo(8.657f, 7f, 10f, 8.343f, 10f, 10f)
+    curveTo(10f, 11.657f, 8.657f, 13f, 7f, 13f)
+    curveTo(5.343f, 13f, 4f, 11.657f, 4f, 10f)
+    curveTo(4f, 8.343f, 5.343f, 7f, 7f, 7f)
+    moveTo(17f, 11f); curveTo(18.657f, 11f, 20f, 12.343f, 20f, 14f)
+    curveTo(20f, 15.657f, 18.657f, 17f, 17f, 17f)
+    curveTo(15.343f, 17f, 14f, 15.657f, 14f, 14f)
+    curveTo(14f, 12.343f, 15.343f, 11f, 17f, 11f)
 }
-private val SettingsNavIcon = iconBuilder("SettingsNav") {
-    moveTo(5f, 5f); lineTo(10f, 5f); lineTo(10f, 10f); lineTo(5f, 10f); close()
-    moveTo(14f, 5f); lineTo(19f, 5f); lineTo(19f, 10f); lineTo(14f, 10f); close()
-    moveTo(5f, 14f); lineTo(10f, 14f); lineTo(10f, 19f); lineTo(5f, 19f); close()
-    moveTo(14f, 15.5f); lineTo(19f, 15.5f); moveTo(14f, 18.5f); lineTo(19f, 18.5f)
+
+private val SettingsNavIcon = mixedIconBuilder("SettingsNav") {
+    moveTo(5f, 6.5f); lineTo(19f, 6.5f)
+    moveTo(5f, 12f); lineTo(19f, 12f)
+    moveTo(5f, 17.5f); lineTo(19f, 17.5f)
+    moveTo(9f, 6.5f); curveTo(9f, 7.605f, 8.105f, 8.5f, 7f, 8.5f)
+    curveTo(5.895f, 8.5f, 5f, 7.605f, 5f, 6.5f)
+    curveTo(5f, 5.395f, 5.895f, 4.5f, 7f, 4.5f)
+    curveTo(8.105f, 4.5f, 9f, 5.395f, 9f, 6.5f)
+    moveTo(16f, 12f); curveTo(16f, 13.105f, 15.105f, 14f, 14f, 14f)
+    curveTo(12.895f, 14f, 12f, 13.105f, 12f, 12f)
+    curveTo(12f, 10.895f, 12.895f, 10f, 14f, 10f)
+    curveTo(15.105f, 10f, 16f, 10.895f, 16f, 12f)
+    moveTo(19f, 17.5f); curveTo(19f, 18.605f, 18.105f, 19.5f, 17f, 19.5f)
+    curveTo(15.895f, 19.5f, 15f, 18.605f, 15f, 17.5f)
+    curveTo(15f, 16.395f, 15.895f, 15.5f, 17f, 15.5f)
+    curveTo(18.105f, 15.5f, 19f, 16.395f, 19f, 17.5f)
 }
+
 val AppSearchIcon = iconBuilder("Search") {
     moveTo(11f, 17.5f); curveTo(7.41f, 17.5f, 4.5f, 14.59f, 4.5f, 11f); curveTo(4.5f, 7.41f, 7.41f, 4.5f, 11f, 4.5f); curveTo(14.59f, 4.5f, 17.5f, 7.41f, 17.5f, 11f); curveTo(17.5f, 14.59f, 14.59f, 17.5f, 11f, 17.5f)
     moveTo(16f, 16f); lineTo(20f, 20f)

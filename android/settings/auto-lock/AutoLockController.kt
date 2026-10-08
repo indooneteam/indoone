@@ -8,6 +8,7 @@ import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.Lifecycle
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.indoone.settings.applock.AppLockStore
@@ -24,11 +25,11 @@ class AutoLockController(private val context: Context) {
     private var dialog: Dialog? = null
     private var pendingBackgroundDurationMs: Long? = null
 
-    fun onResumed(activity: ComponentActivity) {
+    fun onResumed(activity: ComponentActivity, backgroundDurationMs: Long? = null) {
         this.activity = activity
         configureActivitySystemBars(activity)
 
-        val backgroundDuration = pendingBackgroundDurationMs
+        val backgroundDuration = backgroundDurationMs ?: pendingBackgroundDurationMs
         pendingBackgroundDurationMs = null
         if (
             backgroundDuration != null &&
@@ -36,7 +37,12 @@ class AutoLockController(private val context: Context) {
             backgroundDuration >= autoLockStore.minutes() * 60_000L
         ) {
             handler.post {
-                if (this.activity === activity) {
+                if (
+                    this.activity === activity &&
+                    !activity.isFinishing &&
+                    (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 || !activity.isDestroyed) &&
+                    activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                ) {
                     showLock()
                 }
             }
@@ -46,14 +52,6 @@ class AutoLockController(private val context: Context) {
     fun onPaused() {
         // Activity pauses during normal in-app navigation and when another
         // Indoone activity is displayed. Auto-Lock is based on app background time.
-    }
-
-    fun onAppBackgrounded() {
-        pendingBackgroundDurationMs = 0L
-    }
-
-    fun onAppForegrounded(backgroundDurationMs: Long) {
-        pendingBackgroundDurationMs = backgroundDurationMs.coerceAtLeast(0L)
     }
 
     fun onDestroyed() {
@@ -124,7 +122,12 @@ class AutoLockController(private val context: Context) {
         lockDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         lockDialog.setOnDismissListener { dialog = null }
         dialog = lockDialog
-        lockDialog.show()
+        runCatching { lockDialog.show() }
+            .onFailure {
+                dialog = null
+                lockDialog.dismiss()
+                return
+            }
         lockDialog.window?.let { dialogWindow ->
             dialogWindow.statusBarColor = Color.WHITE
             dialogWindow.navigationBarColor = Color.WHITE
