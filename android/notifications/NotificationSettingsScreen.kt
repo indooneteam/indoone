@@ -18,8 +18,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,10 +61,20 @@ fun NotificationSettingsScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        TextButton(
-            onClick = onBack,
-            modifier = Modifier.padding(start = 8.dp, top = 8.dp),
-        ) { Text("Back") }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF2C2733),
+                )
+            }
+        }
 
         Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
             Text("NOTIFICATIONS", color = Color(0xFF2877E8), fontSize = 9.sp)
@@ -154,7 +169,18 @@ private fun NotificationToggle(
                     lineHeight = 15.sp,
                 )
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF2877E8),
+                    checkedBorderColor = Color(0xFF2877E8),
+                    uncheckedThumbColor = Color.White,
+                    uncheckedTrackColor = Color(0xFFE9E6EC),
+                    uncheckedBorderColor = Color(0xFFB8B2BE),
+                ),
+            )
         }
         HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
     }
