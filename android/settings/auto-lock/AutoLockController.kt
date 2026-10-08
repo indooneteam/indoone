@@ -44,8 +44,8 @@ class AutoLockController(private val context: Context) {
     }
 
     fun onPaused() {
-        // Auto-Lock is based on the whole app leaving the foreground,
-        // not on a single Activity being paused during normal navigation.
+        // Activity pauses during normal in-app navigation and when another
+        // Indoone activity is displayed. Auto-Lock is based on app background time.
     }
 
     fun onAppBackgrounded() {
@@ -54,20 +54,6 @@ class AutoLockController(private val context: Context) {
 
     fun onAppForegrounded(backgroundDurationMs: Long) {
         pendingBackgroundDurationMs = backgroundDurationMs.coerceAtLeast(0L)
-        val currentActivity = activity ?: return
-        handler.post {
-            if (this.activity === currentActivity) {
-                val duration = pendingBackgroundDurationMs
-                if (
-                    duration != null &&
-                    shouldLock() &&
-                    duration >= autoLockStore.minutes() * 60_000L
-                ) {
-                    pendingBackgroundDurationMs = null
-                    showLock()
-                }
-            }
-        }
     }
 
     fun onDestroyed() {
@@ -136,7 +122,6 @@ class AutoLockController(private val context: Context) {
         root.addView(compose, android.widget.FrameLayout.LayoutParams(-1, -1))
         lockDialog.setContentView(root)
         lockDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        lockDialog.window?.setLayout(-1, -1)
         lockDialog.setOnDismissListener { dialog = null }
         dialog = lockDialog
         lockDialog.show()
