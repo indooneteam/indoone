@@ -200,10 +200,13 @@ fun MenuDrawer(
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 25.dp)) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     IndooneMenuLogo(modifier = Modifier.size(36.dp))
-                    Column(modifier = Modifier.padding(start = 9.dp)) {
-                        Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
-                        Text("Authenticator", color = Color(0xFF77717D), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    }
+                    Text(
+                        "Indoone",
+                        modifier = Modifier.padding(start = 9.dp),
+                        color = Color(0xFF5E2DD2),
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
 
                 Spacer(Modifier.height(17.dp))
