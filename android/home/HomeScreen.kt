@@ -66,6 +66,7 @@ import com.indoone.home.message.CloudChatRepository
 import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -93,6 +94,20 @@ private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
 )
+
+private enum class ChatActivityState {
+    IDLE,
+    RECEIVED,
+    THINKING,
+    PREPARING,
+}
+
+private fun ChatActivityState.label(): String = when (this) {
+    ChatActivityState.IDLE -> ""
+    ChatActivityState.RECEIVED -> "Received"
+    ChatActivityState.THINKING -> "Thinking…"
+    ChatActivityState.PREPARING -> "Preparing your answer…"
+}
 
 @Composable
 private fun RowScope.QuickPromptChip(
@@ -178,6 +193,7 @@ fun HomeScreen(
     var input by remember { mutableStateOf("") }
     var messages by remember(userKey, startNewChat) { mutableStateOf(emptyList<ChatMessage>()) }
     var isSending by remember { mutableStateOf(false) }
+    var chatActivityState by remember { mutableStateOf(ChatActivityState.IDLE) }
     var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
     var pendingFileId by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
@@ -198,12 +214,15 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(isLoadingHistory, messages.size, isSending, startNewChat, openConversationId) {
-        if (!isLoadingHistory && (messages.isNotEmpty() || isSending)) {
+    LaunchedEffect(isLoadingHistory, messages.size, chatActivityState, startNewChat, openConversationId) {
+        if (!isLoadingHistory && (messages.isNotEmpty() || chatActivityState != ChatActivityState.IDLE)) {
+            // Wait for Compose to measure the newest content, then scroll to the
+            // actual final list item so history and long replies always reach bottom.
             withFrameNanos { }
-            val targetIndex = if (isSending) messages.size else messages.lastIndex
-            if (targetIndex >= 0) {
-                chatListState.animateScrollToItem(targetIndex)
+            withFrameNanos { }
+            val lastItemIndex = chatListState.layoutInfo.totalItemsCount - 1
+            if (lastItemIndex >= 0) {
+                chatListState.scrollToItem(lastItemIndex)
             }
         }
     }
@@ -251,8 +270,15 @@ fun HomeScreen(
         pendingFileName = null
         conversationId = requestConversationId
         isSending = true
+        chatActivityState = ChatActivityState.RECEIVED
 
         scope.launch {
+            // Keep the status visible briefly so fast responses do not cause a
+            // distracting one-frame state flash.
+            val receivedStage = async {
+                delay(350L)
+            }
+
             val userSaveDeferred = async(Dispatchers.IO) {
                 runCatching {
                     cloudChatRepository.appendMessage(
@@ -263,6 +289,8 @@ fun HomeScreen(
                 }
             }
 
+            chatActivityState = ChatActivityState.THINKING
+
             val backendResult = runCatching {
                 withContext(Dispatchers.IO) {
                     ChatApi.sendMessage(typed, requestConversationId, fileId)
@@ -271,8 +299,14 @@ fun HomeScreen(
 
             backendResult.onSuccess { response ->
                 conversationId = response.conversationId
-                val updated = messages + ChatMessage(response.reply, false)
-                messages = updated
+                receivedStage.await()
+                chatActivityState = ChatActivityState.PREPARING
+                delay(600L)
+
+                // Insert the final reply first, then remove the temporary status so
+                // the scroll effect always targets the actual last AI message.
+                messages = messages + ChatMessage(response.reply, false)
+                chatActivityState = ChatActivityState.IDLE
 
                 // The reply is shown first. Persistence then continues in this
                 // same request coroutine so a second send cannot race the
@@ -322,6 +356,8 @@ fun HomeScreen(
                 }
 
             }.onFailure { error ->
+                receivedStage.await()
+                chatActivityState = ChatActivityState.IDLE
                 // Even when the backend fails, finish the Firebase save attempt
                 // so the user's message is not silently lost.
                 val userSave = userSaveDeferred.await()
@@ -341,6 +377,7 @@ fun HomeScreen(
             }
 
             isSending = false
+            chatActivityState = ChatActivityState.IDLE
         }
     }
 
@@ -609,8 +646,8 @@ fun HomeScreen(
                         }
                     }
                 }
-                item(key = "indoone-thinking") {
-                    if (isSending) {
+                if (chatActivityState != ChatActivityState.IDLE) {
+                    item(key = "indoone-chat-status") {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start,
@@ -642,7 +679,7 @@ fun HomeScreen(
                                         strokeWidth = 1.8.dp,
                                     )
                                     Text(
-                                        "Indoone AI is thinking…",
+                                        chatActivityState.label(),
                                         color = Color(0xFF6F6578),
                                         fontSize = 13.sp,
                                     )
