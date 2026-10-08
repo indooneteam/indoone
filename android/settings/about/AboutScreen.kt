@@ -112,25 +112,21 @@ fun AboutScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .align(Alignment.CenterHorizontally),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    IndooneAboutLogo(modifier = Modifier.fillMaxSize())
-                }
-
-                Text(
-                    text = "Indoone",
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    color = Color(0xFF201C25),
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+                        .padding(top = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IndooneAboutLogo(modifier = Modifier.size(48.dp))
+                    Text(
+                        text = "Indoone",
+                        modifier = Modifier.padding(start = 10.dp),
+                        color = Color(0xFF201C25),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
 
                 Text(
                     text = "Private authenticator with cloud sync and secure device pairing.\nUpdates are checked automatically when the app opens.",
