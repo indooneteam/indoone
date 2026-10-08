@@ -1,36 +1,46 @@
 package com.indoone.menu.chathistory
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ArrowForwardIos
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.database.ValueEventListener
 import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
-import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
-import kotlinx.coroutines.launch
 
 @Composable
 fun ChatHistoryMenuScreen(
@@ -43,134 +53,236 @@ fun ChatHistoryMenuScreen(
     var loading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
+    fun reload() {
+        scope.launch {
+            runCatching { repository.loadConversations() }
+                .onSuccess {
+                    conversations = it
+                    status = null
+                }
+                .onFailure {
+                    status = it.message ?: "Chat history could not be loaded right now."
+                }
+        }
+    }
+
     LaunchedEffect(Unit) {
         loading = true
         runCatching {
             repository.cleanupExpiredConversations()
             repository.loadConversations()
+        }.onSuccess {
+            conversations = it
+            status = null
+        }.onFailure {
+            conversations = emptyList()
+            status = it.message ?: "Chat history could not be loaded right now."
         }
-            .onSuccess {
-                conversations = it
-                status = null
-            }
-            .onFailure {
-                conversations = emptyList()
-                status = it.message ?: "Chat history could not be loaded right now."
-            }
         loading = false
     }
 
     DisposableEffect(repository) {
         val listener = repository.addConversationIdListener(
             onChanged = {
-                scope.launch {
-                    runCatching { repository.loadConversations() }
-                        .onSuccess {
-                            conversations = it
-                            status = null
-                        }
-                        .onFailure {
-                            status = it.message ?: "Chat history could not be loaded right now."
-                        }
-                }
+                reload()
             },
             onError = { error -> status = error },
         )
         onDispose { repository.removeConversationIdListener(listener) }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(22.dp)) {
-        Button(onClick = onBack) { Text("Back") }
-        Text(
-            "Chat History",
-            color = Color(0xFF5E2DD2),
-            fontSize = 24.sp,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-        Text(
-            "Your chats are stored in your Firestore account history.",
-            color = Color(0xFF6D6576),
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 5.dp),
-        )
+    Surface(Modifier.fillMaxSize(), color = Color.White) {
+        Column(Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                }
+                Text(
+                    "Chat History",
+                    color = Color(0xFF211B29),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
-        when {
-            loading -> {
-                Text(
-                    "Loading chats…",
-                    color = Color(0xFF6D6576),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
-            status != null -> {
-                Text(
-                    status.orEmpty(),
-                    color = Color(0xFFD93025),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
-            conversations.isEmpty() -> {
-                Text(
-                    "No saved chats yet.",
-                    color = Color(0xFF6D6576),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.padding(top = 16.dp),
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 7.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFFF5F9FF),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    items(conversations, key = { it.id }) { chat ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenChat(chat.id) }
-                                .padding(vertical = 6.dp),
+                    Surface(
+                        modifier = Modifier.size(45.dp),
+                        shape = RoundedCornerShape(13.dp),
+                        color = Color(0xFFE3EEFF),
+                    ) {
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Row(
+                            Icon(
+                                Icons.Outlined.History,
+                                contentDescription = null,
+                                tint = Color(0xFF2168D6),
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(
+                            "Your conversations",
+                            color = Color(0xFF201B28),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Open or remove saved chats from your account history.",
+                            modifier = Modifier.padding(top = 3.dp),
+                            color = Color(0xFF6E6777),
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                        )
+                    }
+                }
+            }
+
+            when {
+                loading -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(26.dp),
+                            color = Color(0xFF2168D6),
+                        )
+                        Text(
+                            "Loading chats…",
+                            modifier = Modifier.padding(top = 10.dp),
+                            color = Color(0xFF77717F),
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+
+                status != null -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f).padding(30.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(
+                            Icons.Outlined.ChatBubbleOutline,
+                            contentDescription = null,
+                            tint = Color(0xFFD93025),
+                        )
+                        Text(
+                            status.orEmpty(),
+                            modifier = Modifier.padding(top = 10.dp),
+                            color = Color(0xFFD93025),
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+
+                conversations.isEmpty() -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f).padding(30.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(
+                            Icons.Outlined.History,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = Color(0xFF9A91A6),
+                        )
+                        Text(
+                            "No saved chats yet.",
+                            modifier = Modifier.padding(top = 10.dp),
+                            color = Color(0xFF4F4857),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 18.dp),
+                        verticalArrangement = Arrangement.spacedBy(9.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 6.dp, bottom = 18.dp),
+                    ) {
+                        items(conversations, key = { it.id }) { chat ->
+                            Surface(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White,
+                                shadowElevation = 1.dp,
+                                onClick = { onOpenChat(chat.id) },
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        chat.title,
-                                        color = Color(0xFF27212E),
-                                        fontSize = 14.sp,
-                                    )
-                                    Text(
-                                        "${chat.messageCount}/50 messages${if (chat.closed) " · Closed" else ""}",
-                                        color = Color(0xFF6D6576),
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(top = 3.dp),
-                                    )
-                                    Text(
-                                        DateFormat.getDateTimeInstance(
-                                            DateFormat.MEDIUM,
-                                            DateFormat.SHORT,
-                                        ).format(Date(chat.updatedAtMillis)),
-                                        color = Color(0xFF8A8392),
-                                        fontSize = 11.sp,
-                                        modifier = Modifier.padding(top = 2.dp),
-                                    )
-                                }
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(13.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(
-                                        "Open",
-                                        color = Color(0xFF5E2DD2),
-                                        fontSize = 12.sp,
+                                    Surface(
+                                        modifier = Modifier.size(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (chat.closed) Color(0xFFF3F0F5) else Color(0xFFEAF4FF),
+                                    ) {
+                                        androidx.compose.foundation.layout.Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                Icons.Outlined.ChatBubbleOutline,
+                                                contentDescription = null,
+                                                tint = if (chat.closed) Color(0xFF8B8492) else Color(0xFF2168D6),
+                                            )
+                                        }
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.weight(1f).padding(start = 11.dp),
+                                    ) {
+                                        Text(
+                                            chat.title,
+                                            color = Color(0xFF27212E),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        Text(
+                                            chat.messageCount.toString() + "/50 messages" + if (chat.closed) " · Closed" else "",
+                                            color = Color(0xFF6D6576),
+                                            fontSize = 11.sp,
+                                            modifier = Modifier.padding(top = 4.dp),
+                                        )
+                                        Text(
+                                            DateFormat.getDateTimeInstance(
+                                                DateFormat.MEDIUM,
+                                                DateFormat.SHORT,
+                                            ).format(Date(chat.updatedAtMillis)),
+                                            color = Color(0xFF8A8392),
+                                            fontSize = 10.sp,
+                                            modifier = Modifier.padding(top = 2.dp),
+                                        )
+                                    }
+
+                                    Icon(
+                                        Icons.Outlined.ArrowForwardIos,
+                                        contentDescription = "Open chat",
+                                        modifier = Modifier.size(15.dp),
+                                        tint = Color(0xFFAAA3B0),
                                     )
-                                    Text(
-                                        "Delete",
-                                        color = Color(0xFFD93025),
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.clickable {
+
+                                    IconButton(
+                                        onClick = {
                                             scope.launch {
                                                 runCatching { repository.deleteConversation(chat.id) }
                                                     .onSuccess {
@@ -182,11 +294,16 @@ fun ChatHistoryMenuScreen(
                                                     }
                                             }
                                         },
-                                    )
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.DeleteOutline,
+                                            contentDescription = "Delete chat",
+                                            tint = Color(0xFFD93025),
+                                        )
+                                    }
                                 }
                             }
                         }
-                        HorizontalDivider(color = Color(0xFFEEE8F4))
                     }
                 }
             }
