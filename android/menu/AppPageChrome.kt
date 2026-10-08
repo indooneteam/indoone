@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -119,6 +123,8 @@ fun AppTopBar(
     onSearchClick: () -> Unit = {},
     trailingIcon: String? = null,
     onTrailingClick: () -> Unit = {},
+    hasUnreadNotifications: Boolean = false,
+    onNotificationsClick: (() -> Unit)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(
@@ -157,20 +163,38 @@ fun AppTopBar(
                 )
             }
 
-            TextButton(
-                onClick = if (trailingIcon != null) onTrailingClick else onSearchClick,
-                modifier = Modifier.align(Alignment.CenterEnd),
-                contentPadding = PaddingValues(8.dp),
-            ) {
-                if (trailingIcon == null) {
+            if (onNotificationsClick != null) {
+                IconButton(
+                    onClick = onNotificationsClick,
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                ) {
                     Icon(
-                        AppSearchIcon,
-                        contentDescription = "Search accounts",
-                        modifier = Modifier.size(21.dp),
+                        imageVector = if (hasUnreadNotifications) {
+                            Icons.Filled.Notifications
+                        } else {
+                            Icons.Outlined.NotificationsNone
+                        },
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(22.dp),
                         tint = Color(0xFF242129),
                     )
-                } else {
-                    Text(trailingIcon, color = Color(0xFF242129), fontSize = 24.sp)
+                }
+            } else {
+                TextButton(
+                    onClick = if (trailingIcon != null) onTrailingClick else onSearchClick,
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    contentPadding = PaddingValues(8.dp),
+                ) {
+                    if (trailingIcon == null) {
+                        Icon(
+                            AppSearchIcon,
+                            contentDescription = "Search accounts",
+                            modifier = Modifier.size(21.dp),
+                            tint = Color(0xFF242129),
+                        )
+                    } else {
+                        Text(trailingIcon, color = Color(0xFF242129), fontSize = 24.sp)
+                    }
                 }
             }
         }

@@ -59,6 +59,8 @@ import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
 import com.indoone.notifications.NotificationPreferences
+import com.indoone.notifications.NotificationCenterScreen
+import com.indoone.notifications.NotificationRepository
 import com.indoone.notifications.NotificationSettingsScreen
 import com.indoone.menu.favorites.FavoritesScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
@@ -95,6 +97,7 @@ private enum class AppRoute {
     EDIT_ACCOUNT,
     VIBE,
     NOTIFICATIONS,
+    NOTIFICATION_CENTER,
 }
 
 class MainActivity : ComponentActivity() {
@@ -148,6 +151,8 @@ class MainActivity : ComponentActivity() {
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
                 val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
+                val notificationRepository = remember { NotificationRepository(applicationContext) }
+                val unreadNotificationCount by notificationRepository.observeUnreadCount().collectAsState(initial = 0)
                 val notificationPermissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission(),
                 ) { granted ->
@@ -229,6 +234,8 @@ class MainActivity : ComponentActivity() {
                         startNewChat = intent.getBooleanExtra("start_new_chat", false),
                         openConversationId = intent.getStringExtra("open_conversation_id"),
                         onVibeClick = { navigate(AppRoute.VIBE) },
+                        hasUnreadNotifications = unreadNotificationCount > 0,
+                        onNotificationClick = { navigate(AppRoute.NOTIFICATION_CENTER) },
                     )
 
                     AppRoute.VIBE -> VibeScreen(
@@ -316,6 +323,11 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
                         onBack = { navigate(AppRoute.SETTINGS) },
+                    )
+
+                    AppRoute.NOTIFICATION_CENTER -> NotificationCenterScreen(
+                        repository = notificationRepository,
+                        onBack = { navigate(AppRoute.HOME) },
                     )
 
                     AppRoute.PROFILE -> {

@@ -167,6 +167,8 @@ fun HomeScreen(
     startNewChat: Boolean = false,
     openConversationId: String? = null,
     onVibeClick: () -> Unit = {},
+    hasUnreadNotifications: Boolean = false,
+    onNotificationClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
@@ -459,7 +461,11 @@ fun HomeScreen(
 
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
-            AppTopBar(onMenuClick = onMenuClick)
+            AppTopBar(
+                onMenuClick = onMenuClick,
+                hasUnreadNotifications = hasUnreadNotifications,
+                onNotificationsClick = onNotificationClick,
+            )
             if (isLoadingHistory) {
                 Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),

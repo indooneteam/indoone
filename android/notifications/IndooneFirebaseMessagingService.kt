@@ -2,6 +2,10 @@ package com.indoone.notifications
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class IndooneFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
@@ -9,10 +13,6 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        // When Indoone is already open, the user is actively waiting for the
-        // response in-app. Suppress the push notification in that state.
-        if (IndooneAppState.isForeground) return
-
         val data = message.data
 
         val category = data["category"]
@@ -31,12 +31,31 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
             ?: message.notification?.body
             ?: return
 
-        IndooneNotificationManager.show(
-            context = this,
-            category = category,
-            title = title,
-            body = body,
-            openRoute = data["route"],
-        )
+        val route = data["route"]?.takeIf { it.isNotBlank() }
+        val showSystemNotification = !IndooneAppState.isForeground
+        val pendingResult = goAsync()
+
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                NotificationRepository(applicationContext).add(
+                    category = category,
+                    title = title,
+                    body = body,
+                    route = route,
+                )
+
+                if (showSystemNotification) {
+                    IndooneNotificationManager.show(
+                        context = applicationContext,
+                        category = category,
+                        title = title,
+                        body = body,
+                        openRoute = route,
+                    )
+                }
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }
