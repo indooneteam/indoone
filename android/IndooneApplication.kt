@@ -5,9 +5,8 @@ import android.app.Application
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.messaging.FirebaseMessaging
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -15,11 +14,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import androidx.work.WorkManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
 import com.indoone.home.message.ChatCleanupWorker
 import com.indoone.notifications.IndooneAppState
 import com.indoone.notifications.IndooneNotificationChannels
@@ -27,10 +24,15 @@ import com.indoone.notifications.NotificationApi
 import com.indoone.notifications.NotificationPreferences
 import com.indoone.settings.autolock.AutoLockController
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class IndooneApplication : Application() {
     private val controllers = mutableMapOf<Activity, AutoLockController>()
     private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var appBackgroundStartedAt: Long? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -68,12 +70,28 @@ class IndooneApplication : Application() {
             }
 
             override fun onActivityStarted(activity: Activity) {
+                val wasForeground = IndooneAppState.isForeground
                 IndooneAppState.onActivityStarted()
+
+                if (!wasForeground) {
+                    val backgroundStartedAt = appBackgroundStartedAt
+                    appBackgroundStartedAt = null
+                    if (backgroundStartedAt != null) {
+                        val duration = (SystemClock.elapsedRealtime() - backgroundStartedAt).coerceAtLeast(0L)
+                        controllers.values.forEach { controller ->
+                            controller.onAppForegrounded(duration)
+                        }
+                    }
+                }
             }
 
             override fun onActivityStopped(activity: Activity) {
                 IndooneAppState.onActivityStopped()
+                if (!IndooneAppState.isForeground && appBackgroundStartedAt == null) {
+                    appBackgroundStartedAt = SystemClock.elapsedRealtime()
+                }
             }
+
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
     }
@@ -119,6 +137,6 @@ class IndooneApplication : Application() {
             view.setPadding(initialLeft, topInset, initialRight, initialBottom)
             insets
         }
-        ViewCompat.requestApplyInsets(content)
+        ViewCompat.requestApplyInsets(activity)
     }
 }
