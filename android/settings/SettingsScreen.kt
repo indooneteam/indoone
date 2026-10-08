@@ -82,6 +82,7 @@ fun SettingsScreen(
     onConnectClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onCheckForUpdates: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -313,6 +314,7 @@ fun SettingsScreen(
             onLobbyClick = onLobbyClick,
             onConnectClick = onConnectClick,
             onSettingsClick = onSettingsClick,
+            onCheckForUpdates = onCheckForUpdates,
         )
     }
 
