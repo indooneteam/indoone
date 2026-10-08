@@ -273,8 +273,8 @@ fun HomeScreen(
         chatActivityState = ChatActivityState.RECEIVED
 
         scope.launch {
-            // Keep the status visible briefly so fast responses do not cause a
-            // distracting one-frame state flash.
+            // Keep the backend request running while the short "Received" state
+            // remains visible, then move into the real processing state.
             val receivedStage = async {
                 delay(350L)
             }
@@ -289,13 +289,15 @@ fun HomeScreen(
                 }
             }
 
-            chatActivityState = ChatActivityState.THINKING
-
-            val backendResult = runCatching {
-                withContext(Dispatchers.IO) {
+            val backendDeferred = async(Dispatchers.IO) {
+                runCatching {
                     ChatApi.sendMessage(typed, requestConversationId, fileId)
                 }
             }
+
+            receivedStage.await()
+            chatActivityState = ChatActivityState.THINKING
+            val backendResult = backendDeferred.await()
 
             backendResult.onSuccess { response ->
                 conversationId = response.conversationId
