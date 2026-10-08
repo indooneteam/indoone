@@ -258,12 +258,6 @@ fun ChatHistoryMenuScreen(
                                             fontWeight = FontWeight.Bold,
                                         )
                                         Text(
-                                            chat.messageCount.toString() + "/50 messages" + if (chat.closed) " · Closed" else "",
-                                            color = Color(0xFF6D6576),
-                                            fontSize = 11.sp,
-                                            modifier = Modifier.padding(top = 4.dp),
-                                        )
-                                        Text(
                                             DateFormat.getDateTimeInstance(
                                                 DateFormat.MEDIUM,
                                                 DateFormat.SHORT,

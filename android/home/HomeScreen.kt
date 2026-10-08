@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -197,9 +198,13 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(isLoadingHistory, conversationId, messages.size, startNewChat, openConversationId) {
-        if (!isLoadingHistory && messages.isNotEmpty()) {
-            chatListState.scrollToItem(messages.lastIndex)
+    LaunchedEffect(isLoadingHistory, messages.size, isSending, startNewChat, openConversationId) {
+        if (!isLoadingHistory && (messages.isNotEmpty() || isSending)) {
+            withFrameNanos { }
+            val targetIndex = if (isSending) messages.size else messages.lastIndex
+            if (targetIndex >= 0) {
+                chatListState.animateScrollToItem(targetIndex)
+            }
         }
     }
 
@@ -316,10 +321,6 @@ fun HomeScreen(
                     }
                 }
 
-                if (updated.size >= 50) {
-                    conversationId = null
-                    messages = emptyList()
-                }
             }.onFailure { error ->
                 // Even when the backend fails, finish the Firebase save attempt
                 // so the user's message is not silently lost.
@@ -548,6 +549,49 @@ fun HomeScreen(
                             ) {
                                 QuickPromptChip("Help me plan") { input = "Help me plan" }
                                 QuickPromptChip("More…") { input = "Tell me more" }
+                            }
+                        }
+                    }
+                }
+
+                item(key = "indoone-thinking") {
+                    if (isSending) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.Bottom,
+                        ) {
+                            IndooneHomeLogo(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(24.dp)
+                                    .align(Alignment.Bottom),
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(
+                                    topStart = 18.dp,
+                                    topEnd = 18.dp,
+                                    bottomStart = 5.dp,
+                                    bottomEnd = 18.dp,
+                                ),
+                                color = Color(0xFFF5F2FB),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        color = Color(0xFF703BE2),
+                                        strokeWidth = 1.8.dp,
+                                    )
+                                    Text(
+                                        "Indoone AI is thinking…",
+                                        color = Color(0xFF6F6578),
+                                        fontSize = 13.sp,
+                                    )
+                                }
                             }
                         }
                     }

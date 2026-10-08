@@ -64,12 +64,10 @@ class CloudChatRepository(
         conversationId: String,
         role: String,
         content: String,
-        messageLimit: Int = 50,
     ) = withContext(Dispatchers.IO) {
         require(conversationId.isNotBlank()) { "conversationId cannot be empty" }
         require(role == "user" || role == "assistant") { "message role must be user or assistant" }
         require(content.isNotBlank()) { "message content cannot be empty" }
-        require(messageLimit > 0) { "messageLimit must be greater than zero" }
 
         val user = auth.currentUser ?: throw IllegalStateException("Please sign in again.")
         Tasks.await(user.getIdToken(true))
@@ -98,13 +96,6 @@ class CloudChatRepository(
         }
 
         val existingCount = snapshot.getLong("messageCount")?.toInt() ?: 0
-        if (snapshot.getBoolean("closed") == true || existingCount >= messageLimit) {
-            Log.w(
-                "CloudChatRepository",
-                "Conversation was not written because it is already closed or reached the message limit.",
-            )
-            return@withContext
-        }
 
         val messageRef = conversation.collection("messages").document(UUID.randomUUID().toString())
         val batch = firestore.batch()
@@ -127,8 +118,8 @@ class CloudChatRepository(
                 },
                 "updatedAt" to now,
                 "messageCount" to newCount,
-                "closed" to (newCount >= messageLimit),
-                "closedAt" to if (newCount >= messageLimit) now else null,
+                "closed" to false,
+                "closedAt" to null,
             ),
             SetOptions.merge(),
         )
@@ -151,7 +142,6 @@ class CloudChatRepository(
         conversationId: String,
         userMessage: String,
         assistantReply: String,
-        messageLimit: Int = 50,
     ) = withContext(Dispatchers.IO) {
         require(conversationId.isNotBlank()) { "conversationId cannot be empty" }
         require(userMessage.isNotBlank()) { "userMessage cannot be empty" }
@@ -159,8 +149,8 @@ class CloudChatRepository(
 
         // Preserve the existing API while using the same individually secured
         // message persistence path as the chat screen.
-        appendMessage(conversationId, "user", userMessage, messageLimit)
-        appendMessage(conversationId, "assistant", assistantReply, messageLimit)
+        appendMessage(conversationId, "user", userMessage)
+        appendMessage(conversationId, "assistant", assistantReply)
     }
 
     suspend fun loadConversations(limit: Int = 50): List<CloudChatConversation> = withContext(Dispatchers.IO) {
@@ -211,7 +201,6 @@ class CloudChatRepository(
         val messages = Tasks.await(
             document.reference.collection("messages")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
-                .limit(50L)
                 .get(),
         ).documents.mapNotNull { message ->
             val role = message.getString("role") ?: return@mapNotNull null
@@ -244,7 +233,6 @@ class CloudChatRepository(
         val messages = Tasks.await(
             document.reference.collection("messages")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
-                .limit(50L)
                 .get(),
         ).documents.mapNotNull { message ->
             val role = message.getString("role") ?: return@mapNotNull null
@@ -272,7 +260,7 @@ class CloudChatRepository(
                 throw SecurityException("Conversation does not belong to this account.")
             }
 
-            val messages = Tasks.await(conversation.collection("messages").limit(50L).get()).documents
+            val messages = Tasks.await(conversation.collection("messages").get()).documents
             val batch = firestore.batch()
             messages.forEach { batch.delete(it.reference) }
             batch.delete(conversation)
