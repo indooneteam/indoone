@@ -29,9 +29,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,62 +61,15 @@ import com.indoone.settings.biometric.BiometricUnlockStore
 import com.indoone.settings.dangerzone.DangerZoneScreen
 import com.indoone.settings.logout.LogoutScreen
 
-private fun settingsIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
-    ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
-        path(
-            fill = null,
-            stroke = SolidColor(Color.Black),
-            strokeLineWidth = 1.8f,
-            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-            pathBuilder = content,
-        )
-    }.build()
-
-private val ProfileIcon = settingsIcon("SettingsProfile") {
-    moveTo(12f, 4.9f); curveTo(10.287f, 4.9f, 8.9f, 6.287f, 8.9f, 8f); curveTo(8.9f, 9.713f, 10.287f, 11.1f, 12f, 11.1f); curveTo(13.713f, 11.1f, 15.1f, 9.713f, 15.1f, 8f); curveTo(15.1f, 6.287f, 13.713f, 4.9f, 12f, 4.9f)
-    moveTo(5.5f, 19.5f); curveTo(6.3f, 16.4f, 8.6f, 14.7f, 12f, 14.7f); curveTo(15.4f, 14.7f, 17.7f, 16.4f, 18.5f, 19.5f)
-}
-
-private val LockIcon = settingsIcon("SettingsLock") {
-    moveTo(5f, 10f); lineTo(19f, 10f); lineTo(19f, 20f); lineTo(5f, 20f); close()
-    moveTo(8f, 10f); lineTo(8f, 7f); curveTo(8f, 4.791f, 9.791f, 3f, 12f, 3f); curveTo(14.209f, 3f, 16f, 4.791f, 16f, 7f); lineTo(16f, 10f)
-}
-
-private val BiometricIcon = settingsIcon("SettingsBiometric") {
-    moveTo(8f, 7.5f); curveTo(8f, 5.015f, 10.015f, 3f, 12.5f, 3f); curveTo(14.985f, 3f, 17f, 5.015f, 17f, 7.5f)
-    moveTo(6f, 10f); curveTo(6f, 6.686f, 8.686f, 4f, 12f, 4f); curveTo(15.314f, 4f, 18f, 6.686f, 18f, 10f)
-    moveTo(8.5f, 12.5f); curveTo(8.5f, 10.567f, 10.067f, 9f, 12f, 9f); curveTo(13.933f, 9f, 15.5f, 10.567f, 15.5f, 12.5f)
-    moveTo(10.5f, 15f); lineTo(10.5f, 16.5f); curveTo(10.5f, 17.328f, 9.828f, 18f, 9f, 18f); curveTo(8.172f, 18f, 7.5f, 17.328f, 7.5f, 16.5f); lineTo(7.5f, 15.3f)
-    moveTo(13.5f, 15f); lineTo(13.5f, 18f); curveTo(13.5f, 19.105f, 12.605f, 20f, 11.5f, 20f); curveTo(10.395f, 20f, 9.5f, 19.105f, 9.5f, 18f); lineTo(9.5f, 16.5f)
-    moveTo(16f, 13f); lineTo(16f, 17f); curveTo(16f, 18.105f, 15.105f, 19f, 14f, 19f); curveTo(12.895f, 19f, 12f, 18.105f, 12f, 17f); lineTo(12f, 16f)
-}
-
-private val TimerIcon = settingsIcon("SettingsTimer") {
-    moveTo(12f, 6f); curveTo(8.134f, 6f, 5f, 9.134f, 5f, 13f); curveTo(5f, 16.866f, 8.134f, 20f, 12f, 20f); curveTo(15.866f, 20f, 19f, 16.866f, 19f, 13f); curveTo(19f, 9.134f, 15.866f, 6f, 12f, 6f)
-    moveTo(12f, 13f); lineTo(12f, 9f)
-    moveTo(9.5f, 3.5f); lineTo(14.5f, 3.5f)
-    moveTo(12f, 6f); lineTo(12f, 3.5f)
-    moveTo(18f, 7f); lineTo(19.5f, 5.5f)
-}
-
-private val InfoIcon = settingsIcon("SettingsInfo") {
-    moveTo(12f, 4f); curveTo(16.418f, 4f, 20f, 7.582f, 20f, 12f); curveTo(20f, 16.418f, 16.418f, 20f, 12f, 20f); curveTo(7.582f, 20f, 4f, 16.418f, 4f, 12f); curveTo(4f, 7.582f, 7.582f, 4f, 12f, 4f)
-    moveTo(12f, 10.5f); lineTo(12f, 15.5f)
-    moveTo(12f, 7.5f); lineTo(12.01f, 7.5f)
-}
-
-private val NotificationsIcon = settingsIcon("SettingsNotifications") {
-    moveTo(6f, 10f); curveTo(6f, 6.686f, 8.686f, 4f, 12f, 4f); curveTo(15.314f, 4f, 18f, 6.686f, 18f, 10f)
-    moveTo(4.5f, 10f); lineTo(4.5f, 14f); curveTo(4.5f, 15.105f, 5.395f, 16f, 6.5f, 16f)
-    moveTo(19.5f, 10f); lineTo(19.5f, 14f); curveTo(19.5f, 15.105f, 18.605f, 16f, 17.5f, 16f)
-    moveTo(9f, 19f); curveTo(10.5f, 20.3f, 13.5f, 20.3f, 15f, 19f)
-    moveTo(7f, 16f); lineTo(17f, 16f)
-}
-
-private val ChevronIcon = settingsIcon("SettingsNext") {
-    moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
-}
+private val ProfileIcon = Icons.Outlined.Person
+private val LockIcon = Icons.Outlined.Lock
+private val BiometricIcon = Icons.Outlined.Fingerprint
+private val TimerIcon = Icons.Outlined.Timer
+private val InfoIcon = Icons.Outlined.Info
+private val NotificationsIcon = Icons.Outlined.NotificationsNone
+private val DangerZoneIcon = Icons.Outlined.WarningAmber
+private val LogoutIcon = Icons.Outlined.Logout
+private val ChevronIcon = Icons.Outlined.ChevronRight
 
 @Composable
 fun SettingsScreen(
@@ -206,13 +166,10 @@ fun SettingsScreen(
                     .padding(horizontal = 18.dp, vertical = 18.dp),
             ) {
                 Column(Modifier.padding(top = 6.dp, bottom = 16.dp)) {
-                    Text("PREFERENCES & SECURITY", color = Color(0xFF2877E8), fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold)
-                    Text("Settings", Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+                        Text("Settings", Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
                     Text("Manage your account, security and app preferences.", Modifier.padding(top = 7.dp), color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 19.sp)
                 }
-                SettingsSectionLabel("Account", true)
                 SettingsActionRow("Profile", "Email & mobile number", ProfileIcon, onProfileClick)
-                SettingsSectionLabel("Security")
                 SettingsActionRow("App Lock", "PIN", LockIcon) {
                     flow.sync(appLockStore.isEnabled())
                     appLockPage = true
@@ -229,7 +186,6 @@ fun SettingsScreen(
                     if (autoLockStore.minutes() > 0) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Never",
                     TimerIcon,
                 ) { autoLockPage = true }
-                SettingsSectionLabel("App")
                 SettingsActionRow(
                     "Notifications",
                     "Security, AI, Vibe and other alerts",
@@ -237,9 +193,8 @@ fun SettingsScreen(
                     onNotificationsClick,
                 )
                 SettingsActionRow("About Indoone", "Version 0.1.0 · Updates", InfoIcon) { aboutPage = true }
-                SettingsSectionLabel("Account Actions")
-                SettingsActionRow("Danger Zone", "Delete local data or your Indoone account", InfoIcon) { dangerZonePage = true }
-                SettingsActionRow("Log out", "Sign out from this device", InfoIcon) { logoutPage = true }
+                SettingsActionRow("Danger Zone", "Delete local data or your Indoone account", DangerZoneIcon) { dangerZonePage = true }
+                SettingsActionRow("Log out", "Sign out from this device", LogoutIcon) { logoutPage = true }
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
@@ -383,18 +338,6 @@ fun SettingsScreen(
             },
         )
     }
-}
-
-@Composable
-private fun SettingsSectionLabel(label: String, first: Boolean = false) {
-    Text(
-        label,
-        Modifier.padding(top = if (first) 0.dp else 18.dp, bottom = 7.dp),
-        color = Color(0xFF8A8392),
-        fontSize = 11.sp,
-        lineHeight = 13.sp,
-        fontWeight = FontWeight.Bold,
-    )
 }
 
 @Composable
