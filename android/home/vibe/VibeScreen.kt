@@ -57,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -344,29 +343,6 @@ fun VibeScreen(
                         }
                     }
 
-                    if (isListening) {
-                        for (index in 0 until 5) {
-                            val amplitude = (0.55f + index * 0.12f) * pulse
-                            drawArc(
-                                color = Color(0xFFB996FF).copy(alpha = 0.34f - index * 0.045f),
-                                startAngle = 210f + index * 9f,
-                                sweepAngle = 120f,
-                                useCenter = false,
-                                topLeft = Offset(
-                                    center.x - base * (1.65f + index * 0.09f),
-                                    center.y - base * (1.65f + index * 0.09f),
-                                ),
-                                size = androidx.compose.ui.geometry.Size(
-                                    base * (3.3f + index * 0.18f) * amplitude,
-                                    base * (3.3f + index * 0.18f) * amplitude,
-                                ),
-                                style = Stroke(
-                                    width = (2.2f - index * 0.2f).dp.toPx(),
-                                    cap = StrokeCap.Round,
-                                ),
-                            )
-                        }
-                    }
                 }
 
                 Column(
