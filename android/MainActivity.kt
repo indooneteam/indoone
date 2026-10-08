@@ -94,6 +94,7 @@ private enum class AppRoute {
     ACCOUNT_DETAILS,
     EDIT_ACCOUNT,
     VIBE,
+    NOTIFICATIONS,
 }
 
 class MainActivity : ComponentActivity() {
@@ -146,7 +147,6 @@ class MainActivity : ComponentActivity() {
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
-                var notificationsPage by remember { mutableStateOf(false) }
                 val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
                 val notificationPermissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission(),
@@ -311,7 +311,11 @@ class MainActivity : ComponentActivity() {
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                        onNotificationsClick = { notificationsPage = true },
+                        onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
+                    )
+
+                    AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
+                        onBack = { navigate(AppRoute.SETTINGS) },
                     )
 
                     AppRoute.PROFILE -> {
@@ -634,12 +638,6 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
-                }
-
-                if (notificationsPage) {
-                    NotificationSettingsScreen(
-                        onBack = { notificationsPage = false },
-                    )
                 }
 
                 if (menuOpen) {
