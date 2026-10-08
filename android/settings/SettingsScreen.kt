@@ -22,6 +22,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -208,7 +209,7 @@ fun SettingsScreen(
                 .background(Color(0x5519141F)),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            val state = flow.state.value
+            val state by flow.state.collectAsState()
             when (state.step) {
                 AppLockViewModel.Step.CREATE -> SetAppLockScreen(state.pin, state.error, flow::appendDigit, flow::backspace, flow::clear, {
                     if (state.pin.length !in 4..12) flow.error("PIN must contain 4–12 digits.")
