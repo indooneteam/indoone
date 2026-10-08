@@ -83,7 +83,7 @@ tasks.named("preBuild").configure {
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.kotlin.kapt")
+    id("com.android.legacy-kapt")
 }
 
 if (file("google-services.json").exists()) {
