@@ -137,6 +137,6 @@ class IndooneApplication : Application() {
             view.setPadding(initialLeft, topInset, initialRight, initialBottom)
             insets
         }
-        ViewCompat.requestApplyInsets(activity)
+        ViewCompat.requestApplyInsets(content)
     }
 }
