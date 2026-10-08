@@ -37,7 +37,8 @@ class IndooneFirebaseMessagingService : FirebaseMessagingService() {
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                NotificationRepository(applicationContext).add(
+                val repository = NotificationRepository.getInstance(applicationContext)
+                repository.add(
                     category = category,
                     title = title,
                     body = body,
