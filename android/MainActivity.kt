@@ -9,7 +9,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,6 +69,7 @@ import com.indoone.menu.favorites.FavoritesScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
+import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
@@ -145,6 +149,9 @@ class MainActivity : ComponentActivity() {
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
+                var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
+                var isCheckingUpdate by remember { mutableStateOf(false) }
+                var isDownloadingUpdate by remember { mutableStateOf(false) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
                 var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
@@ -157,6 +164,38 @@ class MainActivity : ComponentActivity() {
                     ActivityResultContracts.RequestPermission(),
                 ) { granted ->
                     if (granted) notificationPreferences.markPermissionRequested()
+                }
+
+                fun checkForUpdates(showUpToDateMessage: Boolean) {
+                    if (isCheckingUpdate || isDownloadingUpdate) return
+                    isCheckingUpdate = true
+                    coroutineScope.launch {
+                        runCatching {
+                            AppUpdateManager.checkForUpdate(this@MainActivity)
+                        }.onSuccess { update ->
+                            availableUpdate = update
+                            if (update == null && showUpToDateMessage) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "You're up to date.",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }.onFailure { error ->
+                            if (showUpToDateMessage) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    error.message ?: "Could not check for updates.",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                        isCheckingUpdate = false
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    checkForUpdates(showUpToDateMessage = false)
                 }
 
                 LaunchedEffect(Unit) {
@@ -319,6 +358,7 @@ class MainActivity : ComponentActivity() {
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
+                        onCheckForUpdates = { checkForUpdates(showUpToDateMessage = true) },
                     )
 
                     AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
@@ -650,6 +690,66 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
+                }
+
+                if (availableUpdate != null || isDownloadingUpdate) {
+                    val update = availableUpdate
+                    AlertDialog(
+                        onDismissRequest = {
+                            if (!isDownloadingUpdate) {
+                                availableUpdate = null
+                            }
+                        },
+                        title = {
+                            Text(
+                                if (isDownloadingUpdate) "Downloading update"
+                                else "New update available",
+                            )
+                        },
+                        text = {
+                            Text(
+                                if (isDownloadingUpdate) {
+                                    "Downloading the latest Indoone APK. Please wait."
+                                } else {
+                                    "A newer Indoone update is available."
+                                },
+                            )
+                        },
+                        confirmButton = {
+                            if (!isDownloadingUpdate && update != null) {
+                                TextButton(
+                                    onClick = {
+                                        isDownloadingUpdate = true
+                                        availableUpdate = null
+                                        coroutineScope.launch {
+                                            runCatching {
+                                                AppUpdateManager.downloadAndInstall(
+                                                    this@MainActivity,
+                                                    update,
+                                                )
+                                            }.onFailure { error ->
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    error.message ?: "Could not install the update.",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                            }
+                                            isDownloadingUpdate = false
+                                        }
+                                    },
+                                ) {
+                                    Text("Update")
+                                }
+                            }
+                        },
+                        dismissButton = {
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { availableUpdate = null }) {
+                                    Text("Later")
+                                }
+                            }
+                        },
+                    )
                 }
 
                 if (menuOpen) {
