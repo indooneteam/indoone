@@ -70,11 +70,13 @@ jobs:
         run: |
           set -euo pipefail
           apk="$(find android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          release_apk="$RUNNER_TEMP/indoone-terminal.apk"
+          cp "$apk" "$release_apk"
           tag="terminal-build-${INDOONE_BUILD_VERSION_CODE}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apk#indoone-terminal.apk" --clobber
+            gh release upload "$tag" "$release_apk" --clobber
           else
-            gh release create "$tag" "$apk#indoone-terminal.apk"               --target terminal               --title "Indoone terminal build ${INDOONE_BUILD_VERSION_CODE}"               --notes "Automated terminal APK build for Indoone."
+            gh release create "$tag" "$release_apk" --target terminal --title "Indoone terminal build ${INDOONE_BUILD_VERSION_CODE}" --notes "Automated terminal APK build for Indoone."
           fi
 
   sync-main-to-develop:
