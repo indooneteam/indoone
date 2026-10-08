@@ -151,7 +151,7 @@ class MainActivity : ComponentActivity() {
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
                 val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
-                val notificationRepository = remember { NotificationRepository(applicationContext) }
+                val notificationRepository = remember { NotificationRepository.getInstance(applicationContext) }
                 val unreadNotificationCount by notificationRepository.observeUnreadCount().collectAsState(initial = 0)
                 val notificationPermissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission(),
