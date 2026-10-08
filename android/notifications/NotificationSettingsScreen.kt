@@ -24,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,11 +57,15 @@ fun NotificationSettingsScreen(
         if (granted) preferences.markPermissionRequested()
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color.White,
     ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -135,6 +140,7 @@ fun NotificationSettingsScreen(
             onClick = { openSystemNotificationSettings(context) },
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         ) { Text("Open Android notification settings") }
+        }
     }
 }
 
