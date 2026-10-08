@@ -216,13 +216,18 @@ fun HomeScreen(
 
     LaunchedEffect(isLoadingHistory, messages.size, chatActivityState, startNewChat, openConversationId) {
         if (!isLoadingHistory && (messages.isNotEmpty() || chatActivityState != ChatActivityState.IDLE)) {
-            // Wait for Compose to measure the newest content, then scroll to the
-            // actual final list item so history and long replies always reach bottom.
-            withFrameNanos { }
-            withFrameNanos { }
-            val lastItemIndex = chatListState.layoutInfo.totalItemsCount - 1
-            if (lastItemIndex >= 0) {
-                chatListState.scrollToItem(lastItemIndex)
+            // Wait for Compose to measure the newest content. Use a large positive
+            // scroll offset on the final item so the viewport is clamped to the
+            // actual list bottom, not merely the top of a long final message.
+            repeat(3) {
+                withFrameNanos { }
+                val lastItemIndex = chatListState.layoutInfo.totalItemsCount - 1
+                if (lastItemIndex >= 0) {
+                    chatListState.scrollToItem(
+                        lastItemIndex,
+                        scrollOffset = Int.MAX_VALUE / 4,
+                    )
+                }
             }
         }
     }
@@ -301,7 +306,6 @@ fun HomeScreen(
 
             backendResult.onSuccess { response ->
                 conversationId = response.conversationId
-                receivedStage.await()
                 chatActivityState = ChatActivityState.PREPARING
                 delay(600L)
 
