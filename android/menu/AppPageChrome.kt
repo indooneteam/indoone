@@ -53,23 +53,27 @@ private fun iconBuilder(name: String, content: androidx.compose.ui.graphics.vect
         )
     }.build()
 
-private val AccountsNavIcon = iconBuilder("AccountsNav") {
-    moveTo(9f, 5f); curveTo(7.343f, 5f, 6f, 6.343f, 6f, 8f); curveTo(6f, 9.657f, 7.343f, 11f, 9f, 11f); curveTo(10.657f, 11f, 12f, 9.657f, 12f, 8f); curveTo(12f, 6.343f, 10.657f, 5f, 9f, 5f)
-    moveTo(4.5f, 19f); curveTo(5.1f, 16f, 6.6f, 14.5f, 9f, 14.5f); curveTo(11.4f, 14.5f, 12.9f, 16f, 13.5f, 19f)
-    moveTo(16f, 6.5f); curveTo(14.619f, 6.5f, 13.5f, 7.619f, 13.5f, 9f); curveTo(13.5f, 10.381f, 14.619f, 11.5f, 16f, 11.5f); curveTo(17.381f, 11.5f, 18.5f, 10.381f, 18.5f, 9f); curveTo(18.5f, 7.619f, 17.381f, 6.5f, 16f, 6.5f)
-    moveTo(13.5f, 18.5f); curveTo(14f, 16.3f, 15.2f, 15.1f, 17f, 15.1f); curveTo(18.7f, 15.1f, 19.9f, 16.3f, 20.5f, 18.5f)
+private val AccountsNavIcon = iconBuilder("HomeNav") {
+    moveTo(4f, 10.5f); lineTo(12f, 4f); lineTo(20f, 10.5f)
+    moveTo(6f, 9f); lineTo(6f, 19f); lineTo(18f, 19f); lineTo(18f, 9f)
+    moveTo(9f, 19f); lineTo(9f, 14f); lineTo(15f, 14f); lineTo(15f, 19f)
+    moveTo(8f, 7.5f); lineTo(10f, 7.5f); moveTo(14f, 7.5f); lineTo(16f, 7.5f)
 }
 private val LobbyNavIcon = iconBuilder("LobbyNav") {
-    moveTo(12f, 3.5f); lineTo(20.5f, 12f); lineTo(12f, 20.5f); lineTo(3.5f, 12f); close()
-    moveTo(12f, 9.6f); curveTo(10.675f, 9.6f, 9.6f, 10.675f, 9.6f, 12f); curveTo(9.6f, 13.325f, 10.675f, 14.4f, 12f, 14.4f); curveTo(13.325f, 14.4f, 14.4f, 13.325f, 14.4f, 12f); curveTo(14.4f, 10.675f, 13.325f, 9.6f, 12f, 9.6f)
+    moveTo(12f, 4f); lineTo(15.8f, 8.2f); lineTo(15.2f, 14f); lineTo(12f, 19f); lineTo(8.8f, 14f); lineTo(8.2f, 8.2f); close()
+    moveTo(12f, 9f); curveTo(10.895f, 9f, 10f, 9.895f, 10f, 11f); curveTo(10f, 12.105f, 10.895f, 13f, 12f, 13f); curveTo(13.105f, 13f, 14f, 12.105f, 14f, 11f); curveTo(14f, 9.895f, 13.105f, 9f, 12f, 9f)
+    moveTo(12f, 13f); lineTo(12f, 15f)
 }
 private val ConnectNavIcon = iconBuilder("ConnectNav") {
-    moveTo(5f, 12f); lineTo(19f, 12f); moveTo(8f, 7f); lineTo(3f, 12f); lineTo(8f, 17f); moveTo(16f, 7f); lineTo(21f, 12f); lineTo(16f, 17f)
+    moveTo(8.2f, 6.2f); lineTo(5f, 9.4f); curveTo(3.343f, 11.057f, 3.343f, 13.743f, 5f, 15.4f); lineTo(6.4f, 16.8f); curveTo(8.057f, 18.457f, 10.743f, 18.457f, 12.4f, 16.8f); lineTo(15.6f, 13.6f)
+    moveTo(15.8f, 17.8f); lineTo(19f, 14.6f); curveTo(20.657f, 12.943f, 20.657f, 10.257f, 19f, 8.6f); lineTo(17.6f, 7.2f); curveTo(15.943f, 5.543f, 13.257f, 5.543f, 11.6f, 7.2f); lineTo(8.4f, 10.4f)
+    moveTo(9.5f, 14.5f); lineTo(14.5f, 9.5f)
 }
 private val SettingsNavIcon = iconBuilder("SettingsNav") {
-    moveTo(5f, 7f); lineTo(19f, 7f); moveTo(5f, 17f); lineTo(19f, 17f)
-    moveTo(10f, 7f); curveTo(10f, 8.105f, 9.105f, 9f, 8f, 9f); curveTo(6.895f, 9f, 6f, 8.105f, 6f, 7f); curveTo(6f, 5.895f, 6.895f, 5f, 8f, 5f); curveTo(9.105f, 5f, 10f, 5.895f, 10f, 7f)
-    moveTo(18f, 17f); curveTo(18f, 18.105f, 17.105f, 19f, 16f, 19f); curveTo(14.895f, 19f, 14f, 18.105f, 14f, 17f); curveTo(14f, 15.895f, 14.895f, 15f, 16f, 15f); curveTo(17.105f, 15f, 18f, 15.895f, 18f, 17f)
+    moveTo(5f, 5f); lineTo(10f, 5f); lineTo(10f, 10f); lineTo(5f, 10f); close()
+    moveTo(14f, 5f); lineTo(19f, 5f); lineTo(19f, 10f); lineTo(14f, 10f); close()
+    moveTo(5f, 14f); lineTo(10f, 14f); lineTo(10f, 19f); lineTo(5f, 19f); close()
+    moveTo(14f, 15.5f); lineTo(19f, 15.5f); moveTo(14f, 18.5f); lineTo(19f, 18.5f)
 }
 val AppSearchIcon = iconBuilder("Search") {
     moveTo(11f, 17.5f); curveTo(7.41f, 17.5f, 4.5f, 14.59f, 4.5f, 11f); curveTo(4.5f, 7.41f, 7.41f, 4.5f, 11f, 4.5f); curveTo(14.59f, 4.5f, 17.5f, 7.41f, 17.5f, 11f); curveTo(17.5f, 14.59f, 14.59f, 17.5f, 11f, 17.5f)
