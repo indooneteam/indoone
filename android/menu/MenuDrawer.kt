@@ -275,8 +275,8 @@ fun MenuDrawer(
                 DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
 
                 DrawerSectionLabel("ACCOUNTS")
-                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
-                DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onFavorites)
+                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onClick = onAccounts)
+                DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onClick = onFavorites)
                 DrawerItem(Icons.Outlined.DeleteOutline, "Trash", null) { showTrash = true }
 
                 DrawerSectionLabel("SECURITY & INFORMATION")
