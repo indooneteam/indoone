@@ -1,6 +1,16 @@
 package com.indoone.menu
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -270,19 +280,61 @@ fun AppBottomNav(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth().navigationBarsPadding(),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFEEEAF2)),
+    val shell = RoundedCornerShape(30.dp)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 7.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(67.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(elevation = 18.dp, shape = shell, clip = false)
+                .clip(shell)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFFF2F5FF),
+                            Color(0xFFFFFCFF),
+                            Color(0xFFEAF0FF),
+                        ),
+                    ),
+                )
+                .border(
+                    BorderStroke(1.dp, Color.White.copy(alpha = 0.95f)),
+                    shape = shell,
+                )
+                .padding(horizontal = 6.dp, vertical = 6.dp)
+                .height(70.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AppBottomNavItem(AccountsNavIcon, "Home", activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS, onAccountsClick)
-            AppBottomNavItem(LobbyNavIcon, "Lobby", activeTab == AppTab.LOBBY, onLobbyClick)
-            AppBottomNavItem(ConnectNavIcon, "Connect", activeTab == AppTab.CONNECT, onConnectClick)
-            AppBottomNavItem(SettingsNavIcon, "Settings", activeTab == AppTab.SETTINGS, onSettingsClick)
+            FloatingNavItem(
+                icon = Icons.Outlined.Groups,
+                label = "Lobby",
+                active = activeTab == AppTab.LOBBY,
+                onClick = onLobbyClick,
+            )
+            FloatingNavItem(
+                icon = Icons.Outlined.Link,
+                label = "Connect",
+                active = activeTab == AppTab.CONNECT,
+                onClick = onConnectClick,
+            )
+            FloatingNavItem(
+                icon = Icons.Filled.Home,
+                label = "Home",
+                active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
+                onClick = onAccountsClick,
+                isHome = true,
+            )
+            FloatingNavItem(
+                icon = Icons.Outlined.Settings,
+                label = "Settings",
+                active = activeTab == AppTab.SETTINGS,
+                onClick = onSettingsClick,
+            )
         }
     }
 }
@@ -290,15 +342,67 @@ fun AppBottomNav(
 enum class AppTab { HOME, ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
-private fun RowScope.AppBottomNavItem(
+private fun RowScope.FloatingNavItem(
     icon: ImageVector,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
+    isHome: Boolean = false,
 ) {
-    val contentColor = if (active) Color(0xFF6B34DF) else Color(0xFF99939F)
+    val tileShape = RoundedCornerShape(if (isHome) 22.dp else 18.dp)
+    val homeSelected = isHome && active
+    val tileBrush = when {
+        homeSelected -> Brush.linearGradient(
+            colors = listOf(Color(0xFF4388FF), Color(0xFF2455F5)),
+        )
+        isHome -> Brush.linearGradient(
+            colors = listOf(Color.White, Color(0xFFEAF0FF)),
+        )
+        active -> Brush.linearGradient(
+            colors = listOf(Color.White, Color(0xFFF9F7FF)),
+        )
+        else -> Brush.linearGradient(
+            colors = listOf(Color.Transparent, Color.Transparent),
+        )
+    }
+    val contentColor = when {
+        homeSelected -> Color.White
+        active -> Color(0xFF6537D8)
+        isHome -> Color(0xFF2E63ED)
+        else -> Color(0xFF777D91)
+    }
+
     Box(
-        modifier = Modifier.weight(1f).height(67.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .weight(1f)
+            .height(64.dp)
+            .padding(horizontal = 2.dp)
+            .shadow(
+                elevation = when {
+                    homeSelected -> 10.dp
+                    isHome -> 4.dp
+                    active -> 3.dp
+                    else -> 0.dp
+                },
+                shape = tileShape,
+                clip = false,
+            )
+            .clip(tileShape)
+            .background(tileBrush)
+            .then(
+                when {
+                    homeSelected -> Modifier.border(
+                        BorderStroke(1.dp, Color.White.copy(alpha = 0.38f)),
+                        tileShape,
+                    )
+                    active || isHome -> Modifier.border(
+                        BorderStroke(1.dp, Color(0xFFDCE4FF)),
+                        tileShape,
+                    )
+                    else -> Modifier
+                },
+            )
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -306,17 +410,18 @@ private fun RowScope.AppBottomNavItem(
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Icon(
-                icon,
+                imageVector = icon,
                 contentDescription = label,
-                modifier = Modifier.size(23.dp),
-                tint = contentColor.copy(alpha = if (active) 1f else 0.78f),
+                modifier = Modifier.size(if (isHome) 25.dp else 22.dp),
+                tint = contentColor,
             )
             Text(
                 text = label,
                 color = contentColor,
-                fontSize = 9.sp,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.SemiBold,
-                lineHeight = 10.sp,
+                fontSize = 10.sp,
+                fontWeight = if (active || isHome) FontWeight.Bold else FontWeight.SemiBold,
+                lineHeight = 12.sp,
+                maxLines = 1,
             )
         }
     }
