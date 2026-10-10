@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -280,56 +281,56 @@ fun AppBottomNav(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shell = RoundedCornerShape(30.dp)
+    val barShape = RoundedCornerShape(34.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .shadow(elevation = 12.dp, shape = barShape, clip = false)
+            .clip(barShape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFE9EAF7),
+                        Color(0xFFF6F5FB),
+                        Color(0xFFE6EAF6),
+                    ),
+                ),
+            )
+            .border(
+                BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                shape = barShape,
+            )
+            .padding(horizontal = 6.dp, vertical = 5.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(elevation = 18.dp, shape = shell, clip = false)
-                .clip(shell)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFF2F5FF),
-                            Color(0xFFFFFCFF),
-                            Color(0xFFEAF0FF),
-                        ),
-                    ),
-                )
-                .border(
-                    BorderStroke(1.dp, Color.White.copy(alpha = 0.95f)),
-                    shape = shell,
-                )
-                .padding(horizontal = 6.dp, vertical = 6.dp)
-                .height(70.dp),
+                .height(66.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FloatingNavItem(
-                icon = Icons.Outlined.Groups,
-                label = "Lobby",
-                active = activeTab == AppTab.LOBBY,
-                onClick = onLobbyClick,
-            )
-            FloatingNavItem(
-                icon = Icons.Outlined.Link,
-                label = "Connect",
-                active = activeTab == AppTab.CONNECT,
-                onClick = onConnectClick,
-            )
-            FloatingNavItem(
+            ElevatedCurveNavItem(
                 icon = Icons.Filled.Home,
                 label = "Home",
                 active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
                 onClick = onAccountsClick,
                 isHome = true,
             )
-            FloatingNavItem(
+            ElevatedCurveNavItem(
+                icon = Icons.Outlined.Groups,
+                label = "Lobby",
+                active = activeTab == AppTab.LOBBY,
+                onClick = onLobbyClick,
+            )
+            ElevatedCurveNavItem(
+                icon = Icons.Outlined.Link,
+                label = "Connect",
+                active = activeTab == AppTab.CONNECT,
+                onClick = onConnectClick,
+            )
+            ElevatedCurveNavItem(
                 icon = Icons.Outlined.Settings,
                 label = "Settings",
                 active = activeTab == AppTab.SETTINGS,
@@ -342,87 +343,113 @@ fun AppBottomNav(
 enum class AppTab { HOME, ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
-private fun RowScope.FloatingNavItem(
+private fun RowScope.ElevatedCurveNavItem(
     icon: ImageVector,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
     isHome: Boolean = false,
 ) {
-    val tileShape = RoundedCornerShape(if (isHome) 22.dp else 18.dp)
-    val homeSelected = isHome && active
-    val tileBrush = when {
-        homeSelected -> Brush.linearGradient(
-            colors = listOf(Color(0xFF4388FF), Color(0xFF2455F5)),
-        )
-        isHome -> Brush.linearGradient(
-            colors = listOf(Color.White, Color(0xFFEAF0FF)),
-        )
-        active -> Brush.linearGradient(
-            colors = listOf(Color.White, Color(0xFFF9F7FF)),
-        )
-        else -> Brush.linearGradient(
-            colors = listOf(Color.Transparent, Color.Transparent),
-        )
-    }
-    val contentColor = when {
-        homeSelected -> Color.White
-        active -> Color(0xFF6537D8)
-        isHome -> Color(0xFF2E63ED)
-        else -> Color(0xFF777D91)
-    }
+    val homeShape = CircleShape
+    val itemShape = RoundedCornerShape(22.dp)
+    val selectedColor = Color(0xFF2864E8)
+    val normalColor = Color(0xFF3F4657)
+    val contentColor = if (active || isHome) selectedColor else normalColor
 
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(64.dp)
-            .padding(horizontal = 2.dp)
-            .shadow(
-                elevation = when {
-                    homeSelected -> 10.dp
-                    isHome -> 4.dp
-                    active -> 3.dp
-                    else -> 0.dp
-                },
-                shape = tileShape,
-                clip = false,
-            )
-            .clip(tileShape)
-            .background(tileBrush)
-            .then(
-                when {
-                    homeSelected -> Modifier.border(
-                        BorderStroke(1.dp, Color.White.copy(alpha = 0.38f)),
-                        tileShape,
-                    )
-                    active || isHome -> Modifier.border(
-                        BorderStroke(1.dp, Color(0xFFDCE4FF)),
-                        tileShape,
-                    )
-                    else -> Modifier
-                },
-            )
-            .clickable(onClick = onClick),
+            .height(62.dp)
+            .padding(horizontal = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                modifier = Modifier.size(if (isHome) 25.dp else 22.dp),
-                tint = contentColor,
-            )
-            Text(
-                text = label,
-                color = contentColor,
-                fontSize = 10.sp,
-                fontWeight = if (active || isHome) FontWeight.Bold else FontWeight.SemiBold,
-                lineHeight = 12.sp,
-                maxLines = 1,
-            )
+        if (isHome) {
+            Column(
+                modifier = Modifier
+                    .shadow(
+                        elevation = if (active) 7.dp else 4.dp,
+                        shape = homeShape,
+                        clip = false,
+                    )
+                    .clip(homeShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFFFFFFF),
+                                Color(0xFFF4F5FD),
+                            ),
+                        ),
+                    )
+                    .border(
+                        BorderStroke(1.dp, Color.White),
+                        homeShape,
+                    )
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(20.dp),
+                    tint = contentColor,
+                )
+                Text(
+                    text = label,
+                    color = contentColor,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 11.sp,
+                    maxLines = 1,
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(itemShape)
+                    .clickable(onClick = onClick)
+                    .then(
+                        if (active) {
+                            Modifier
+                                .background(Color.White.copy(alpha = 0.52f))
+                                .border(
+                                    BorderStroke(1.dp, Color.White.copy(alpha = 0.9f)),
+                                    itemShape,
+                                )
+                        } else {
+                            Modifier
+                        },
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(20.dp),
+                    tint = contentColor,
+                )
+                Text(
+                    text = label,
+                    color = contentColor,
+                    fontSize = 9.sp,
+                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                    lineHeight = 11.sp,
+                    maxLines = 1,
+                )
+                if (active) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .size(width = 15.dp, height = 2.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(selectedColor),
+                    )
+                }
+            }
         }
     }
 }
