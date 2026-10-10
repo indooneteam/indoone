@@ -9,7 +9,6 @@ import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -281,56 +280,65 @@ fun AppBottomNav(
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val barShape = RoundedCornerShape(34.dp)
+    val barShape = RoundedCornerShape(30.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 7.dp)
-            .shadow(elevation = 12.dp, shape = barShape, clip = false)
-            .clip(barShape)
             .background(
-                Brush.linearGradient(
+                Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFE9EAF7),
-                        Color(0xFFF6F5FB),
-                        Color(0xFFE6EAF6),
+                        Color(0xFFF0F4FA),
+                        Color(0xFFE9EEF6),
+                        Color(0xFFF4F1ED),
                     ),
                 ),
             )
-            .border(
-                BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
-                shape = barShape,
-            )
-            .padding(horizontal = 6.dp, vertical = 5.dp),
+            .navigationBarsPadding()
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(66.dp),
+                .shadow(elevation = 13.dp, shape = barShape, clip = false)
+                .clip(barShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFF8FAFD),
+                            Color(0xFFF0F3F8),
+                            Color(0xFFE8EDF5),
+                        ),
+                    ),
+                )
+                .border(
+                    BorderStroke(1.dp, Color.White.copy(alpha = 0.98f)),
+                    shape = barShape,
+                )
+                .padding(horizontal = 5.dp, vertical = 5.dp)
+                .height(62.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ElevatedCurveNavItem(
+            NeumorphicNavItem(
                 icon = Icons.Filled.Home,
                 label = "Home",
                 active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
                 onClick = onAccountsClick,
-                isHome = true,
             )
-            ElevatedCurveNavItem(
+            NeumorphicNavItem(
                 icon = Icons.Outlined.Groups,
                 label = "Lobby",
                 active = activeTab == AppTab.LOBBY,
                 onClick = onLobbyClick,
             )
-            ElevatedCurveNavItem(
+            NeumorphicNavItem(
                 icon = Icons.Outlined.Link,
                 label = "Connect",
                 active = activeTab == AppTab.CONNECT,
                 onClick = onConnectClick,
             )
-            ElevatedCurveNavItem(
+            NeumorphicNavItem(
                 icon = Icons.Outlined.Settings,
                 label = "Settings",
                 active = activeTab == AppTab.SETTINGS,
@@ -343,113 +351,62 @@ fun AppBottomNav(
 enum class AppTab { HOME, ACCOUNTS, LOBBY, CONNECT, SETTINGS }
 
 @Composable
-private fun RowScope.ElevatedCurveNavItem(
+private fun RowScope.NeumorphicNavItem(
     icon: ImageVector,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
-    isHome: Boolean = false,
 ) {
-    val homeShape = CircleShape
-    val itemShape = RoundedCornerShape(22.dp)
-    val selectedColor = Color(0xFF2864E8)
-    val normalColor = Color(0xFF3F4657)
-    val contentColor = if (active || isHome) selectedColor else normalColor
+    val itemShape = RoundedCornerShape(15.dp)
+    val activeBrush = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFE7F1FF),
+            Color(0xFFD6E6FF),
+            Color(0xFFDDEAFF),
+        ),
+    )
+    val activeColor = Color(0xFF1764F5)
+    val normalColor = Color(0xFF344157)
+    val contentColor = if (active) activeColor else normalColor
 
-    Box(
+    Column(
         modifier = Modifier
             .weight(1f)
-            .height(62.dp)
-            .padding(horizontal = 2.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (isHome) {
-            Column(
-                modifier = Modifier
-                    .shadow(
-                        elevation = if (active) 7.dp else 4.dp,
-                        shape = homeShape,
-                        clip = false,
-                    )
-                    .clip(homeShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFFFFFFFF),
-                                Color(0xFFF4F5FD),
-                            ),
-                        ),
-                    )
-                    .border(
-                        BorderStroke(1.dp, Color.White),
-                        homeShape,
-                    )
-                    .clickable(onClick = onClick)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    modifier = Modifier.size(20.dp),
-                    tint = contentColor,
-                )
-                Text(
-                    text = label,
-                    color = contentColor,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 11.sp,
-                    maxLines = 1,
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(itemShape)
-                    .clickable(onClick = onClick)
-                    .then(
-                        if (active) {
-                            Modifier
-                                .background(Color.White.copy(alpha = 0.52f))
-                                .border(
-                                    BorderStroke(1.dp, Color.White.copy(alpha = 0.9f)),
-                                    itemShape,
-                                )
-                        } else {
-                            Modifier
-                        },
-                    ),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    modifier = Modifier.size(20.dp),
-                    tint = contentColor,
-                )
-                Text(
-                    text = label,
-                    color = contentColor,
-                    fontSize = 9.sp,
-                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                    lineHeight = 11.sp,
-                    maxLines = 1,
-                )
+            .height(56.dp)
+            .padding(horizontal = 2.dp)
+            .then(
                 if (active) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 2.dp)
-                            .size(width = 15.dp, height = 2.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(selectedColor),
-                    )
-                }
-            }
-        }
+                    Modifier
+                        .shadow(elevation = 7.dp, shape = itemShape, clip = false)
+                        .clip(itemShape)
+                        .background(activeBrush)
+                        .border(
+                            BorderStroke(1.dp, Color.White.copy(alpha = 0.98f)),
+                            itemShape,
+                        )
+                } else {
+                    Modifier
+                        .clip(itemShape)
+                },
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 2.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            modifier = Modifier.size(19.dp),
+            tint = contentColor,
+        )
+        Text(
+            text = label,
+            color = contentColor,
+            fontSize = 9.sp,
+            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+            lineHeight = 11.sp,
+            maxLines = 1,
+        )
     }
 }
