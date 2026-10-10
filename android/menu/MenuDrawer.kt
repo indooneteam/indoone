@@ -204,7 +204,7 @@ fun MenuDrawer(
     Row(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.width(320.dp).fillMaxHeight(),
-            color = Color(0xFFF3F6FC),
+            color = Color(0xFFF7F3FC),
             shadowElevation = 22.dp,
             shape = RoundedCornerShape(topEnd = 26.dp, bottomEnd = 26.dp),
         ) {
@@ -214,9 +214,9 @@ fun MenuDrawer(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFFF7F9FD),
-                                Color(0xFFF0F4FB),
-                                Color(0xFFF5F7FC),
+                                Color(0xFFFAF8FF),
+                                Color(0xFFF2ECFA),
+                                Color(0xFFF8F4FC),
                             ),
                         ),
                     )
@@ -250,7 +250,7 @@ fun MenuDrawer(
 
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 5.dp),
-                    color = Color(0xFFDDE5F1),
+                    color = Color(0xFFE8DDF4),
                     thickness = 1.dp,
                 )
 
@@ -370,12 +370,12 @@ private fun DrawerItem(
 ) {
     val shape = RoundedCornerShape(15.dp)
     val iconColor = if (highlighted) Color.White else Color(0xFF51627D)
-    val labelColor = if (highlighted) Color(0xFF165FE8) else Color(0xFF34445F)
-    val rowBackground = if (highlighted) Color(0xFFDCEAFF) else Color.Transparent
+    val labelColor = if (highlighted) Color(0xFF6E35C8) else Color(0xFF34445F)
+    val rowBackground = if (highlighted) Color(0xFFEDE3FA) else Color.Transparent
     val iconBackground = if (highlighted) {
-        Brush.linearGradient(listOf(Color(0xFF4A91FF), Color(0xFF2366ED)))
+        Brush.linearGradient(listOf(Color(0xFF9A68E8), Color(0xFF6F35C5)))
     } else {
-        Brush.linearGradient(listOf(Color.White, Color(0xFFF4F7FC)))
+        Brush.linearGradient(listOf(Color.White, Color(0xFFF8F4FC)))
     }
 
     Row(
@@ -421,12 +421,12 @@ private fun DrawerItem(
 
         if (trailing != null) {
             Surface(
-                color = Color(0xFFE4ECF9),
+                color = Color(0xFFECE2F7),
                 shape = RoundedCornerShape(8.dp),
             ) {
                 Text(
                     text = trailing,
-                    color = Color(0xFF315D9F),
+                    color = Color(0xFF6B3FA5),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),

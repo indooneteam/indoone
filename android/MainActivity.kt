@@ -773,9 +773,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun configureSystemBarsDirectly() {
-        // Keep the white app UI aligned with the normal light system status bar.
-        window.statusBarColor = Color.WHITE
-        window.navigationBarColor = Color.WHITE
+        // Keep the system bars aligned with the app's light lavender-purple palette.
+        window.statusBarColor = Color.rgb(248, 244, 255)
+        window.navigationBarColor = Color.rgb(248, 244, 255)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = true

@@ -288,9 +288,9 @@ fun AppBottomNav(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFF0F4FA),
-                        Color(0xFFE9EEF6),
-                        Color(0xFFF4F1ED),
+                        Color(0xFFF5F0FA),
+                        Color(0xFFECE6F5),
+                        Color(0xFFF8F4FC),
                     ),
                 ),
             )
@@ -306,9 +306,9 @@ fun AppBottomNav(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFF8FAFD),
-                            Color(0xFFF0F3F8),
-                            Color(0xFFE8EDF5),
+                            Color(0xFFFAF8FF),
+                            Color(0xFFF5F0FA),
+                            Color(0xFFEEE7F7),
                         ),
                     ),
                 )
@@ -360,12 +360,12 @@ private fun RowScope.NeumorphicNavItem(
     val itemShape = RoundedCornerShape(15.dp)
     val activeBrush = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFE7F1FF),
-            Color(0xFFD6E6FF),
-            Color(0xFFDDEAFF),
+            Color(0xFFF0E6FF),
+            Color(0xFFE0CEFF),
+            Color(0xFFE9DAFA),
         ),
     )
-    val activeColor = Color(0xFF1764F5)
+    val activeColor = Color(0xFF6D35D0)
     val normalColor = Color(0xFF344157)
     val contentColor = if (active) activeColor else normalColor
 
