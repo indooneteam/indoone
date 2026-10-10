@@ -101,6 +101,13 @@ fun VibeScreen(
                                 isListening = audioEngine.isRecording()
                             }
                         }
+                        "status" -> {
+                            connectionState = when (event.optString("interaction_status").uppercase()) {
+                                "IN_PROGRESS" -> "Thinking…"
+                                "IDLE" -> "Connected"
+                                else -> connectionState
+                            }
+                        }
                         "transcript" -> {
                             val text = event.optString("text").trim()
                             if (text.isNotBlank()) {
