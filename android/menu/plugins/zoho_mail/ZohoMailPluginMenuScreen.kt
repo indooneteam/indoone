@@ -61,6 +61,7 @@ fun ZohoMailPluginMenuScreen(
     var recipient by remember { mutableStateOf("") }
     var subject by remember { mutableStateOf("") }
     var body by remember { mutableStateOf("") }
+    var replyMessageId by remember { mutableStateOf<String?>(null) }
 
     suspend fun loadMailbox(account: ZohoMailAccount) {
         accounts = accounts.ifEmpty { listOf(account) }
@@ -234,18 +235,35 @@ fun ZohoMailPluginMenuScreen(
         scope.launch {
             loading = true
             try {
-                ZohoMailPluginApi.sendMessage(
-                    accountId = account.id,
-                    fromAddress = account.emailAddress,
-                    toAddress = recipient,
-                    subject = subject,
-                    content = body,
-                )
+                val originalMessageId = replyMessageId
+                if (!originalMessageId.isNullOrBlank()) {
+                    ZohoMailPluginApi.replyToMessage(
+                        accountId = account.id,
+                        messageId = originalMessageId,
+                        fromAddress = account.emailAddress,
+                        toAddress = recipient,
+                        subject = subject,
+                        content = body,
+                    )
+                } else {
+                    ZohoMailPluginApi.sendMessage(
+                        accountId = account.id,
+                        fromAddress = account.emailAddress,
+                        toAddress = recipient,
+                        subject = subject,
+                        content = body,
+                    )
+                }
                 recipient = ""
                 subject = ""
                 body = ""
+                replyMessageId = null
                 composeExpanded = false
-                statusMessage = "Email sent through Zoho Mail."
+                statusMessage = if (originalMessageId.isNullOrBlank()) {
+                    "Email sent through Zoho Mail."
+                } else {
+                    "Reply sent through Zoho Mail."
+                }
                 selectedFolder?.let { folder ->
                     messages = ZohoMailPluginApi.listMessages(account.id, folder.id, searchKey = "")
                     searchKey = ""
@@ -456,6 +474,7 @@ fun ZohoMailPluginMenuScreen(
                                 recipient = detail.fromAddress
                                 subject = if (detail.subject.startsWith("Re:", ignoreCase = true)) detail.subject else "Re: ${detail.subject}"
                                 body = ""
+                                replyMessageId = selectedMessage?.id
                                 composeExpanded = true
                             },
                             enabled = detail.fromAddress.contains("@"),
@@ -466,7 +485,13 @@ fun ZohoMailPluginMenuScreen(
                 }
             }
 
-            SectionTitle(if (composeExpanded) "Compose email" else "Send an email")
+            SectionTitle(
+                when {
+                    !replyMessageId.isNullOrBlank() -> "Reply to email"
+                    composeExpanded -> "Compose email"
+                    else -> "Send an email"
+                },
+            )
             if (composeExpanded) {
                 OutlinedTextField(
                     value = recipient,
@@ -493,7 +518,7 @@ fun ZohoMailPluginMenuScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !loading,
                 ) {
-                    Text("SEND EMAIL")
+                    Text(if (replyMessageId.isNullOrBlank()) "SEND EMAIL" else "SEND REPLY")
                 }
                 OutlinedButton(
                     onClick = { composeExpanded = false },
@@ -509,6 +534,7 @@ fun ZohoMailPluginMenuScreen(
                         recipient = ""
                         subject = ""
                         body = ""
+                        replyMessageId = null
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !loading,
