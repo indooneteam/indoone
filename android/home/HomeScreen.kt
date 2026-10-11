@@ -6,11 +6,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import androidx.core.content.FileProvider
+import java.io.File
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,6 +66,7 @@ import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.home.plus.PlusAttachmentSheet
 import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -197,6 +201,9 @@ fun HomeScreen(
     var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
     var pendingFileId by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
+    var pendingAttachmentUri by remember { mutableStateOf<Uri?>(null) }
+    var cameraCaptureUri by remember { mutableStateOf<Uri?>(null) }
+    var isPlusMenuOpen by remember { mutableStateOf(false) }
     var isListening by remember { mutableStateOf(false) }
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
@@ -262,6 +269,13 @@ fun HomeScreen(
     fun sendMessage() {
         val typed = input.trim()
         if (typed.isEmpty() || isSending) return
+        if (pendingAttachmentUri != null && pendingFileId == null) {
+            messages = messages + ChatMessage(
+                "${pendingFileName ?: "Attachment"} is selected. AI processing for this media type will be connected in the backend phase.",
+                false,
+            )
+            return
+        }
 
         val fileId = pendingFileId
         val requestConversationId = conversationId ?: UUID.randomUUID().toString()
@@ -273,6 +287,7 @@ fun HomeScreen(
         input = ""
         pendingFileId = null
         pendingFileName = null
+        pendingAttachmentUri = null
         conversationId = requestConversationId
         isSending = true
         chatActivityState = ChatActivityState.RECEIVED
@@ -387,26 +402,78 @@ fun HomeScreen(
         }
     }
 
-    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    fun displayNameForUri(uri: Uri, fallback: String): String =
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+        }?.takeIf { it.isNotBlank() } ?: fallback
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        val capturedUri = cameraCaptureUri
+        cameraCaptureUri = null
+        if (success && capturedUri != null) {
+            pendingAttachmentUri = capturedUri
+            pendingFileId = null
+            pendingFileName = "Camera photo"
+        } else {
+            capturedUri?.let { runCatching { context.contentResolver.delete(it, null, null) } }
+        }
+    }
+
+    val photosLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            pendingAttachmentUri = uri
+            pendingFileId = null
+            pendingFileName = displayNameForUri(uri, "Photo")
+        }
+    }
+
+    val filesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            runCatching {
-                val name = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
-                } ?: "document"
-                val bytes = withContext(Dispatchers.IO) {
-                    readLimitedBytes(context, uri)
+            pendingAttachmentUri = null
+            pendingFileId = null
+            pendingFileName = null
+            val name = displayNameForUri(uri, "file")
+            val extension = name.substringAfterLast('.', "").lowercase()
+            if (extension in setOf("txt", "md", "json", "csv", "log")) {
+                runCatching {
+                    val bytes = withContext(Dispatchers.IO) { readLimitedBytes(context, uri) }
+                    val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
+                    name to upload.fileId
+                }.onSuccess { (uploadedName, fileId) ->
+                    pendingAttachmentUri = null
+                    pendingFileName = uploadedName
+                    pendingFileId = fileId
+                    messages = messages + ChatMessage("Attached $uploadedName. Ask me about this file.", true)
+                }.onFailure { error ->
+                    pendingFileName = null
+                    pendingFileId = null
+                    messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
                 }
-                val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
-                name to upload.fileId
-            }.onSuccess { (name, fileId) ->
+            } else {
+                // Photo/PDF/office/video/audio files are selected in the UI now.
+                // Their authenticated upload + model processing is added in the backend phase.
+                pendingAttachmentUri = uri
                 pendingFileName = name
-                pendingFileId = fileId
-                messages = messages + ChatMessage("Attached $name. Ask me about this file.", true)
-            }.onFailure { error ->
-                messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
+                messages = messages + ChatMessage("Selected $name.", true)
             }
+        }
+    }
+
+    fun launchCameraCapture() {
+        runCatching {
+            val cameraDirectory = File(context.cacheDir, "camera").apply { mkdirs() }
+            val captureFile = File(cameraDirectory, "indoone-camera-${UUID.randomUUID()}.jpg")
+            val captureUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                captureFile,
+            )
+            cameraCaptureUri = captureUri
+            cameraLauncher.launch(captureUri)
+        }.onFailure { error ->
+            messages = messages + ChatMessage(error.message ?: "Could not open the camera.", false)
         }
     }
 
@@ -510,9 +577,10 @@ fun HomeScreen(
                 hasUnreadNotifications = hasUnreadNotifications,
                 onNotificationsClick = onNotificationClick,
             )
+            Box(Modifier.fillMaxWidth().weight(1f)) {
             if (isLoadingHistory) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -523,7 +591,7 @@ fun HomeScreen(
                     )
                 }
             } else LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = if (messages.isEmpty()) Arrangement.Center else Arrangement.spacedBy(10.dp),
             ) {
@@ -697,6 +765,25 @@ fun HomeScreen(
 
             }
 
+            if (isPlusMenuOpen) {
+                PlusAttachmentSheet(
+                    onDismiss = { isPlusMenuOpen = false },
+                    onCamera = {
+                        isPlusMenuOpen = false
+                        launchCameraCapture()
+                    },
+                    onPhotos = {
+                        isPlusMenuOpen = false
+                        photosLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    onFiles = {
+                        isPlusMenuOpen = false
+                        filesLauncher.launch(arrayOf("*/*"))
+                    },
+                )
+            }
+            }
+
             pendingFileName?.let {
                 Text("Attached: $it", color = Color(0xFF5E2DD2), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
             }
@@ -704,7 +791,7 @@ fun HomeScreen(
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending) {
-                        fileLauncher.launch(arrayOf("text/plain", "text/markdown", "application/json", "text/csv"))
+                        isPlusMenuOpen = true
                     },
                     contentAlignment = Alignment.Center,
                 ) { Text("+", color = Color(0xFF703BE2), fontSize = 25.sp, fontWeight = FontWeight.Medium) }
