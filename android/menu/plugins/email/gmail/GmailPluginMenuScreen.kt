@@ -196,7 +196,7 @@ fun GmailPluginMenuScreen(
             onClick = { startAuthorization() },
             modifier = Modifier.fillMaxWidth(),
             enabled = !checking && !connecting,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6C45D9)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5E2DD2)),
         ) {
             Text(if (connected) "REAUTHORIZE GMAIL" else "CONNECT GMAIL")
         }
