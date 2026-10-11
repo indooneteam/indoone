@@ -398,14 +398,14 @@ private fun MailProviderRow(
                 Surface(
                     modifier = Modifier.size(42.dp),
                     shape = CircleShape,
-                    color = if (connected == false && !busy) AppPurple else Color(0xFFEAE5F7),
-                    onClick = { if (connected == false && !busy) onAdd() },
+                    color = if (connected != true && !busy) AppPurple else Color(0xFFEAE5F7),
+                    onClick = { if (connected != true && !busy) onAdd() },
                 ) {
                     androidx.compose.foundation.layout.Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (connected == null || busy) {
+                        if (busy) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(17.dp),
                                 color = AppPurple,
