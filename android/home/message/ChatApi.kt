@@ -39,11 +39,19 @@ private const val READ_TIMEOUT_MS = 300_000
     private const val CHAT_TRANSIENT_RETRIES = 1
     private const val CHAT_RETRY_DELAY_MS = 5_000L
     private const val MAX_UPLOAD_BYTES = 2_000_000
+    private const val MAX_CHAT_ATTACHMENT_BYTES = 8_000_000
 
     @Volatile
     private var lastSuccessfulWarmupAt = 0L
 
-    fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
+    fun sendMessage(
+        message: String,
+        conversationId: String? = null,
+        fileId: String? = null,
+        attachmentFilename: String? = null,
+        attachmentMimeType: String? = null,
+        attachmentBytes: ByteArray? = null,
+    ): ChatResponse {
         val backendUrl = requireBackendUrl()
         val authToken = requireAuthToken()
 
@@ -56,6 +64,24 @@ private const val READ_TIMEOUT_MS = 300_000
             put("message", message)
             conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
             fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
+            if (attachmentBytes != null) {
+                if (fileId != null) {
+                    throw IllegalArgumentException("Send either a text file or a media attachment, not both.")
+                }
+                if (attachmentBytes.isEmpty()) {
+                    throw IllegalArgumentException("The selected attachment is empty.")
+                }
+                if (attachmentBytes.size > MAX_CHAT_ATTACHMENT_BYTES) {
+                    throw IllegalArgumentException("File is too large. Maximum size is 8 MB.")
+                }
+                val safeFilename = attachmentFilename?.trim()?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException("The selected attachment has no filename.")
+                val mimeType = attachmentMimeType?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException("The selected attachment type could not be detected.")
+                put("attachment_filename", safeFilename)
+                put("attachment_mime_type", mimeType)
+                put("attachment_base64", Base64.encodeToString(attachmentBytes, Base64.NO_WRAP))
+            }
         }.toString()
 
         var lastTransientError: ChatApiException? = null

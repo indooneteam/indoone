@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.content.FileProvider
@@ -15,6 +18,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -28,6 +32,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -46,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,12 +61,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -81,21 +90,165 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 private const val MAX_UPLOAD_BYTES = 2_000_000
+private const val MAX_CHAT_ATTACHMENT_BYTES = 8_000_000
 
-private fun readLimitedBytes(context: android.content.Context, uri: Uri): ByteArray {
+private fun readLimitedBytes(
+    context: Context,
+    uri: Uri,
+    maxBytes: Int = MAX_UPLOAD_BYTES,
+): ByteArray {
     val output = ByteArrayOutputStream()
     context.contentResolver.openInputStream(uri)?.use { input ->
         val buffer = ByteArray(16 * 1024)
         while (true) {
             val count = input.read(buffer)
             if (count < 0) break
-            if (output.size() + count > MAX_UPLOAD_BYTES) {
-                throw IllegalArgumentException("File is too large. Maximum size is 2 MB.")
+            if (output.size() + count > maxBytes) {
+                throw IllegalArgumentException(
+                    "File is too large. Maximum size is ${maxBytes / 1_000_000} MB."
+                )
             }
             output.write(buffer, 0, count)
         }
     } ?: throw IllegalArgumentException("Could not open the selected file.")
     return output.toByteArray()
+}
+
+private fun supportedAttachmentMimeType(context: Context, uri: Uri, filename: String): String {
+    val detected = context.contentResolver.getType(uri)?.trim()?.lowercase()
+    val supported = setOf(
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    if (detected != null && detected in supported) return detected
+
+    return when (filename.substringAfterLast('.', "").lowercase()) {
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        "pdf" -> "application/pdf"
+        "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        else -> throw IllegalArgumentException(
+            "This attachment type is not supported yet. Use JPEG, PNG, WebP, PDF, or DOCX."
+        )
+    }
+}
+
+private fun decodeAttachmentThumbnail(context: Context, uri: Uri): Bitmap? {
+    return try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, bounds)
+        }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+        var sampleSize = 1
+        while (bounds.outWidth / sampleSize > 180 || bounds.outHeight / sampleSize > 180) {
+            sampleSize *= 2
+        }
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize
+            inPreferredConfig = Bitmap.Config.RGB_565
+        }
+        context.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, options)
+        }
+    } catch (_: Exception) {
+        null
+    }
+}
+
+@Composable
+private fun PendingAttachmentPreview(
+    uri: Uri?,
+    fileName: String,
+    isPhoto: Boolean,
+    onRemove: () -> Unit,
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isPhoto && uri != null) {
+            val thumbnail by produceState<Bitmap?>(initialValue = null, key1 = uri) {
+                value = withContext(Dispatchers.IO) { decodeAttachmentThumbnail(context, uri) }
+            }
+            Box(Modifier.size(54.dp)) {
+                val bitmap = thumbnail
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Attached photo preview",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)),
+                    )
+                } else {
+                    Box(
+                        Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)).background(Color(0xFFEDE7F8)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("IMG", color = Color(0xFF5E2DD2), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Box(
+                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp)
+                        .size(22.dp).clip(CircleShape).background(Color(0xFF292431))
+                        .clickable(onClick = onRemove),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("×", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Text(
+                fileName,
+                color = Color(0xFF5E2DD2),
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(start = 9.dp),
+            )
+        } else {
+            Row(
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF6F3FB))
+                    .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val label = fileName.substringAfterLast('.', "").take(4).uppercase().ifBlank { "FILE" }
+                Box(
+                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFE8DDFB)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(label, color = Color(0xFF5E2DD2), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    fileName,
+                    color = Color(0xFF3F354F),
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                )
+                Box(
+                    modifier = Modifier.size(34.dp).clip(CircleShape).clickable(onClick = onRemove),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("×", color = Color(0xFF51495B), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    }
+}
+
+private fun appendVoiceTranscript(existingText: String, spokenText: String): String {
+    val base = existingText.trimEnd()
+    val spoken = spokenText.trim()
+    if (spoken.isEmpty()) return base
+    return if (base.isEmpty()) spoken else "$base $spoken"
 }
 
 private data class ChatMessage(
@@ -209,6 +362,7 @@ fun HomeScreen(
     var cameraCaptureUri by remember { mutableStateOf<Uri?>(null) }
     var isPlusMenuOpen by remember { mutableStateOf(false) }
     var isListening by remember { mutableStateOf(false) }
+    var voiceInputBase by remember { mutableStateOf("") }
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     var welcomeMessageIndex by remember { mutableStateOf(0) }
@@ -272,41 +426,27 @@ fun HomeScreen(
 
     fun sendMessage() {
         val typed = input.trim()
-        val hasPendingAttachment = pendingAttachmentUri != null || pendingFileId != null
+        val attachmentUri = pendingAttachmentUri
+        val attachmentName = pendingFileName
+        val fileId = pendingFileId
+        val hasPendingAttachment = attachmentUri != null || fileId != null
         if (isSending || (typed.isEmpty() && !hasPendingAttachment)) return
-        if (pendingAttachmentUri != null && pendingFileId == null) {
-            messages = messages + ChatMessage(
-                "${pendingFileName ?: "Attachment"} is selected. AI processing for this media type will be connected in the backend phase.",
-                false,
-            )
-            return
-        }
         if (typed.isEmpty()) {
             messages = messages + ChatMessage(
-                "Type a question about ${pendingFileName ?: "this file"} before sending.",
+                "Type a question about ${attachmentName ?: "this file"} before sending.",
                 false,
             )
             return
         }
 
-        val fileId = pendingFileId
         val requestConversationId = conversationId ?: UUID.randomUUID().toString()
-
-        // Keep the UI responsive and keep AI independent from Firebase persistence.
-        // Firebase save and backend request start together; a Firebase failure must
-        // never prevent an AI reply from reaching the screen.
         messages = messages + ChatMessage(typed, true)
         input = ""
-        pendingFileId = null
-        pendingFileName = null
-        pendingAttachmentUri = null
         conversationId = requestConversationId
         isSending = true
         chatActivityState = ChatActivityState.RECEIVED
 
         scope.launch {
-            // Keep the backend request running while the short "Received" state
-            // remains visible, then move into the real processing state.
             val receivedStage = async {
                 delay(350L)
             }
@@ -323,7 +463,21 @@ fun HomeScreen(
 
             val backendDeferred = async(Dispatchers.IO) {
                 runCatching {
-                    ChatApi.sendMessage(typed, requestConversationId, fileId)
+                    if (attachmentUri != null) {
+                        val filename = attachmentName?.takeIf { it.isNotBlank() } ?: "attachment"
+                        val mimeType = supportedAttachmentMimeType(context, attachmentUri, filename)
+                        val bytes = readLimitedBytes(context, attachmentUri, MAX_CHAT_ATTACHMENT_BYTES)
+                        ChatApi.sendMessage(
+                            message = typed,
+                            conversationId = requestConversationId,
+                            fileId = null,
+                            attachmentFilename = filename,
+                            attachmentMimeType = mimeType,
+                            attachmentBytes = bytes,
+                        )
+                    } else {
+                        ChatApi.sendMessage(typed, requestConversationId, fileId)
+                    }
                 }
             }
 
@@ -333,19 +487,18 @@ fun HomeScreen(
 
             backendResult.onSuccess { response ->
                 conversationId = response.conversationId
+                if (pendingAttachmentUri == attachmentUri && pendingFileId == fileId) {
+                    pendingAttachmentUri = null
+                    pendingFileId = null
+                    pendingFileName = null
+                }
                 chatActivityState = ChatActivityState.PREPARING
                 delay(600L)
 
-                // Insert the final reply first, then remove the temporary status so
-                // the scroll effect always targets the actual last AI message.
                 messages = messages + ChatMessage(response.reply, false)
                 chatActivityState = ChatActivityState.IDLE
 
-                // The reply is shown first. Persistence then continues in this
-                // same request coroutine so a second send cannot race the
-                // messageCount update for the same Firestore conversation.
                 var userSave = userSaveDeferred.await()
-
                 if (userSave.isFailure) {
                     userSave = runCatching {
                         withContext(Dispatchers.IO) {
@@ -387,12 +540,9 @@ fun HomeScreen(
                         )
                     }
                 }
-
             }.onFailure { error ->
                 receivedStage.await()
                 chatActivityState = ChatActivityState.IDLE
-                // Even when the backend fails, finish the Firebase save attempt
-                // so the user's message is not silently lost.
                 val userSave = userSaveDeferred.await()
                 if (userSave.isFailure) {
                     val reason = userSave.exceptionOrNull()?.message
@@ -403,6 +553,7 @@ fun HomeScreen(
                         false,
                     )
                 }
+                if (input.isBlank()) input = typed
                 messages = messages + ChatMessage(
                     error.message ?: "Indoone AI could not complete the request.",
                     false,
@@ -518,6 +669,7 @@ fun HomeScreen(
         }
 
         voiceError = null
+        voiceInputBase = input.trimEnd()
         isListening = true
         speechRecognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -564,12 +716,12 @@ fun HomeScreen(
                 override fun onResults(results: Bundle?) {
                     isListening = false
                     val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                    if (!spoken.isNullOrBlank()) input = spoken
+                    if (!spoken.isNullOrBlank()) input = appendVoiceTranscript(voiceInputBase, spoken)
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {
                     val spoken = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                    if (!spoken.isNullOrBlank()) input = spoken
+                    if (!spoken.isNullOrBlank()) input = appendVoiceTranscript(voiceInputBase, spoken)
                 }
 
                 override fun onEvent(eventType: Int, params: Bundle?) = Unit
@@ -817,8 +969,31 @@ fun HomeScreen(
             }
             }
 
-            pendingFileName?.let {
-                Text("Attached: $it", color = Color(0xFF5E2DD2), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
+            pendingFileName?.let { fileName ->
+                val attachmentUri = pendingAttachmentUri
+                val detectedMime = attachmentUri?.let { uri ->
+                    runCatching { context.contentResolver.getType(uri) }.getOrNull()
+                }
+                val extension = fileName.substringAfterLast('.', "").lowercase()
+                val isPhoto = attachmentUri != null && (
+                    detectedMime?.startsWith("image/") == true ||
+                        extension in setOf("jpg", "jpeg", "png", "webp", "gif", "heic", "heif")
+                    )
+                PendingAttachmentPreview(
+                    uri = attachmentUri,
+                    fileName = fileName,
+                    isPhoto = isPhoto,
+                    onRemove = {
+                        val cameraFileName = pendingAttachmentUri
+                            ?.takeIf { it.authority == "${context.packageName}.fileprovider" }
+                            ?.lastPathSegment
+                            ?.takeIf { it.startsWith("indoone-camera-") && it.endsWith(".jpg") }
+                        cameraFileName?.let { File(File(context.cacheDir, "camera"), it).delete() }
+                        pendingAttachmentUri = null
+                        pendingFileId = null
+                        pendingFileName = null
+                    },
+                )
             }
 
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -869,10 +1044,31 @@ fun HomeScreen(
                 }
 
                 val hasPendingAttachment = pendingAttachmentUri != null || pendingFileId != null
-                val showSendButton = (input.isNotBlank() || hasPendingAttachment) && !isListening
-                val canSend = showSendButton && !isSending
+                val showSendButton = (input.isNotBlank() || hasPendingAttachment) &&
+                    (!isListening || hasPendingAttachment)
+                val canSend = showSendButton && !isSending && !isListening && input.isNotBlank()
 
-                if (showSendButton) {
+                if (hasPendingAttachment) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
+                            .clickable(enabled = !isSending) {
+                                isPlusMenuOpen = false
+                                onVoiceButtonClick()
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Mic,
+                            contentDescription = if (isListening) "Stop voice input" else "Voice input",
+                            tint = if (isListening) Color.White else Color(0xFF4A4650),
+                            modifier = Modifier.size(21.dp),
+                        )
+                    }
+                } else if (showSendButton) {
                     Box(
                         modifier = Modifier
                             .padding(start = 8.dp)
@@ -919,7 +1115,32 @@ fun HomeScreen(
                     }
                 }
 
-                if (input.isBlank() && !isListening) {
+                if (hasPendingAttachment) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE7E3EC))
+                            .clickable(enabled = canSend, onClick = ::sendMessage),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.2.dp,
+                            )
+                        } else {
+                            Text(
+                                "➤",
+                                color = if (canSend) Color.White else Color(0xFF9B95A3),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                } else if (input.isBlank() && !isListening) {
                     VibeButton(
                         onClick = {
                             isPlusMenuOpen = false
