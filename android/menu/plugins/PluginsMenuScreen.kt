@@ -1,5 +1,6 @@
 package com.indoone.menu.plugins
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.indoone.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,12 +41,18 @@ private val pluginMenuEntries = listOf(
         title = "Email",
         subtitle = "Connect email providers and manage email capabilities.",
     ),
+    PluginMenuEntry(
+        id = "zoho-mail",
+        title = "Zoho Mail",
+        subtitle = "Connect your Zoho Mail account.",
+    ),
 )
 
 @Composable
 fun PluginsMenuScreen(
     onBack: () -> Unit,
     onEmailClick: () -> Unit,
+    onZohoMailClick: () -> Unit,
 ) {
     Surface(Modifier.fillMaxSize(), color = Color.White) {
         Column(
@@ -121,6 +130,7 @@ fun PluginsMenuScreen(
                         onClick = {
                             when (plugin.id) {
                                 "email" -> onEmailClick()
+                                "zoho-mail" -> onZohoMailClick()
                             }
                         },
                     )
@@ -164,14 +174,22 @@ private fun PluginRow(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = when (entry.id) {
-                            "email" -> Icons.Outlined.Email
-                            else -> Icons.Outlined.Apps
-                        },
-                        contentDescription = null,
-                        tint = Color(0xFF2168D6),
-                    )
+                    if (entry.id == "zoho-mail") {
+                        Image(
+                            painter = painterResource(R.drawable.zoho_mail_logo),
+                            contentDescription = "Zoho Mail logo",
+                            modifier = Modifier.size(32.dp),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = when (entry.id) {
+                                "email" -> Icons.Outlined.Email
+                                else -> Icons.Outlined.Apps
+                            },
+                            contentDescription = null,
+                            tint = Color(0xFF2168D6),
+                        )
+                    }
                 }
             }
 
