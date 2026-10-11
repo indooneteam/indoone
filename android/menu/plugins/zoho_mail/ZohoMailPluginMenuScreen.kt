@@ -2,6 +2,7 @@ package com.indoone.menu.plugins.zoho_mail
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,9 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.R
 import kotlinx.coroutines.launch
 
 private val ZohoAppPurple = Color(0xFF6C45D9)
@@ -156,11 +158,10 @@ fun ZohoMailPluginMenuScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Mail,
-                                contentDescription = "Mail connection",
-                                tint = ZohoAppPurple,
-                                modifier = Modifier.size(28.dp),
+                            Image(
+                                painter = painterResource(R.drawable.zoho_mail_logo),
+                                contentDescription = "Zoho Mail logo",
+                                modifier = Modifier.size(42.dp),
                             )
                         }
                     }
