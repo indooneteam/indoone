@@ -78,6 +78,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
@@ -146,7 +148,11 @@ private fun supportedAttachmentMimeType(context: Context, uri: Uri, filename: St
     }
 }
 
-private fun decodeAttachmentThumbnail(context: Context, uri: Uri): Bitmap? {
+private fun decodeAttachmentThumbnail(
+    context: Context,
+    uri: Uri,
+    maxDimension: Int = 180,
+): Bitmap? {
     return try {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(uri)?.use {
@@ -155,7 +161,7 @@ private fun decodeAttachmentThumbnail(context: Context, uri: Uri): Bitmap? {
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
         var sampleSize = 1
-        while (bounds.outWidth / sampleSize > 180 || bounds.outHeight / sampleSize > 180) {
+        while (bounds.outWidth / sampleSize > maxDimension || bounds.outHeight / sampleSize > maxDimension) {
             sampleSize *= 2
         }
         val options = BitmapFactory.Options().apply {
@@ -179,10 +185,21 @@ private fun isPhotoAttachment(context: Context, attachment: ChatAttachment): Boo
 }
 
 @Composable
-private fun AttachmentImage(uri: Uri, description: String, modifier: Modifier = Modifier) {
+private fun AttachmentImage(
+    uri: Uri,
+    description: String,
+    modifier: Modifier = Modifier,
+    thumbnailMaxDimension: Int = 180,
+) {
     val context = LocalContext.current
-    val thumbnail by produceState<Bitmap?>(initialValue = null, key1 = uri) {
-        value = withContext(Dispatchers.IO) { decodeAttachmentThumbnail(context, uri) }
+    val thumbnail by produceState<Bitmap?>(
+        initialValue = null,
+        key1 = uri,
+        key2 = thumbnailMaxDimension,
+    ) {
+        value = withContext(Dispatchers.IO) {
+            decodeAttachmentThumbnail(context, uri, thumbnailMaxDimension)
+        }
     }
     val bitmap = thumbnail
     if (bitmap != null) {
@@ -265,10 +282,13 @@ private fun SentPhotoStack(photos: List<ChatAttachment>) {
     val cardPeek = 22.dp
     val stackHeight = cardHeight + cardPeek * (photos.size - 1)
 
+    var showPhotoGallery by remember(photos.map { it.id }) { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .width(cardWidth)
-            .height(stackHeight),
+            .height(stackHeight)
+            .clickable { showPhotoGallery = true },
     ) {
         // Draw back cards first so the first selected photo remains in front.
         photos.indices.reversed().forEach { index ->
@@ -298,6 +318,64 @@ private fun SentPhotoStack(photos: List<ChatAttachment>) {
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
+            }
+        }
+    }
+
+    if (showPhotoGallery) {
+        Dialog(
+            onDismissRequest = { showPhotoGallery = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.9f)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFF17151D),
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            "${photos.size} photos",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .clickable { showPhotoGallery = false },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("×", color = Color.White, fontSize = 26.sp)
+                        }
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        contentPadding = PaddingValues(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(photos, key = { it.id }) { photo ->
+                            photo.uri?.let { uri ->
+                                AttachmentImage(
+                                    uri = uri,
+                                    description = "Photo: ${photo.displayName}",
+                                    modifier = Modifier.fillMaxWidth().height(280.dp),
+                                    thumbnailMaxDimension = 1000,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
