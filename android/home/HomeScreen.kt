@@ -280,8 +280,11 @@ private fun SentPhotoStack(photos: List<ChatAttachment>) {
     // peek out below the front card instead of stretching a purple bubble across chat.
     val cardWidth = 220.dp
     val cardHeight = 156.dp
-    val cardPeek = 22.dp
-    val stackHeight = cardHeight + cardPeek * (photos.size - 1)
+    // A half-card peek makes the stacked-photo treatment obvious without making
+    // long messages huge: render at most three cards; the badge and gallery cover the rest.
+    val cardPeek = 72.dp
+    val visiblePhotos = photos.take(3)
+    val stackHeight = cardHeight + cardPeek * (visiblePhotos.size - 1)
 
     var showPhotoGallery by remember(photos.map { it.id }) { mutableStateOf(false) }
 
@@ -292,8 +295,8 @@ private fun SentPhotoStack(photos: List<ChatAttachment>) {
             .clickable { showPhotoGallery = true },
     ) {
         // Draw back cards first so the first selected photo remains in front.
-        photos.indices.reversed().forEach { index ->
-            val photo = photos[index]
+        visiblePhotos.indices.reversed().forEach { index ->
+            val photo = visiblePhotos[index]
             val uri = photo.uri ?: return@forEach
             AttachmentImage(
                 uri = uri,
