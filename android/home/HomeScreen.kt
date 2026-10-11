@@ -874,7 +874,10 @@ fun HomeScreen(
                             .size(48.dp)
                             .clip(CircleShape)
                             .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
-                            .clickable(enabled = !isSending, onClick = ::onVoiceButtonClick),
+                            .clickable(enabled = !isSending) {
+                                isPlusMenuOpen = false
+                                onVoiceButtonClick()
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -887,7 +890,12 @@ fun HomeScreen(
                 }
 
                 if (input.isBlank() && !isListening) {
-                    VibeButton(onClick = onVibeClick)
+                    VibeButton(
+                        onClick = {
+                            isPlusMenuOpen = false
+                            onVibeClick()
+                        },
+                    )
                 }
             }
 

@@ -48,12 +48,11 @@ fun PlusAttachmentSheet(
     BoxWithConstraints(modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * 0.40f
 
-        // Apply the same dim level across the chat viewport, avoiding a vertical boundary.
-        // The popup is drawn after this scrim and remains white and interactive.
+        // Keep the chat viewport visually unchanged while the popup is open.
+        // This transparent hit area lets taps outside the popup dismiss it without dimming chat.
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.14f))
                 .clickable(onClick = onDismiss),
         )
 
