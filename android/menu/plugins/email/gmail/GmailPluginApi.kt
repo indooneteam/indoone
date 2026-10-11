@@ -30,6 +30,72 @@ object GmailPluginApi {
     private const val READ_TIMEOUT_MS = 20_000
     const val GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify"
 
+    suspend fun getGoogleServerClientId(): String = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val authToken = requireAuthToken()
+        val connection = openConnection(
+            url = "${backendUrl}/api/integrations/gmail/auth-config",
+            method = "GET",
+            authToken = authToken,
+        )
+        try {
+            val body = execute(connection, null)
+            JSONObject(body).optString("server_client_id").trim()
+                .takeIf { it.isNotBlank() }
+                ?: throw GmailPluginException("Google server OAuth client is not configured on Indoone backend.")
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    suspend fun storeServerAuthCode(
+        serverAuthCode: String,
+        grantedScope: String = GMAIL_SCOPE,
+    ): GmailConnectionStatus = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val userId = requireUserId()
+        val authToken = requireAuthToken()
+        val code = serverAuthCode.trim()
+        if (code.isBlank()) {
+            throw GmailPluginException("Google did not return a server authorization code.")
+        }
+        val payload = JSONObject().apply {
+            put("user_id", userId)
+            put("server_auth_code", code)
+            put("scope", grantedScope.ifBlank { GMAIL_SCOPE })
+        }.toString()
+
+        val connection = openConnection(
+            url = "${backendUrl}/api/integrations/gmail/server-auth-code",
+            method = "POST",
+            authToken = authToken,
+        )
+        try {
+            val body = execute(connection, payload)
+            val json = JSONObject(body)
+            val isConnected = json.optBoolean("connected", false)
+            val emailAddress = json.optJSONObject("summary")
+                ?.optString("email_address")
+                ?.trim()
+                .orEmpty()
+            if (isConnected) {
+                saveProfileConnection(
+                    emailAddress = emailAddress,
+                    scope = json.optString("scope").trim().ifBlank {
+                        grantedScope.ifBlank { GMAIL_SCOPE }
+                    },
+                )
+            }
+            GmailConnectionStatus(
+                connected = isConnected,
+                emailAddress = emailAddress.takeIf { it.isNotBlank() },
+                profileSaved = isConnected,
+            )
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun storeNativeAccessToken(
         accessToken: String,
         grantedScope: String = GMAIL_SCOPE,
