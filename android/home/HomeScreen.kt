@@ -83,6 +83,7 @@ import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
+import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatRepository
 import com.indoone.home.plus.PlusAttachmentSheet
 import com.indoone.home.vibe.VibeButton
