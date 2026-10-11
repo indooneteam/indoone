@@ -160,21 +160,6 @@ fun PluginsMenuScreen(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text = "Email connections",
-                    color = Ink,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "Connect an account to let Indoone AI work with your email.",
-                    color = Muted,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
-                )
-            }
-
             MailProviderRow(
                 title = "Email",
                 accountAddress = gmailAddress,
