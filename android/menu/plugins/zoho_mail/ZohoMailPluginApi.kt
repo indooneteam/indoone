@@ -3,6 +3,7 @@ package com.indoone.menu.plugins.zoho_mail
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -18,9 +19,37 @@ data class ZohoMailConnectionStatus(
     val updatedAt: String? = null,
 )
 
+data class ZohoMailAccount(
+    val id: String,
+    val emailAddress: String,
+    val displayName: String,
+)
+
+data class ZohoMailFolder(
+    val id: String,
+    val name: String,
+    val folderType: String,
+)
+
+data class ZohoMailMessage(
+    val id: String,
+    val folderId: String,
+    val subject: String,
+    val fromAddress: String,
+    val summary: String,
+    val receivedTime: String,
+)
+
+data class ZohoMailMessageContent(
+    val subject: String,
+    val fromAddress: String,
+    val toAddress: String,
+    val content: String,
+)
+
 object ZohoMailPluginApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
-    private const val READ_TIMEOUT_MS = 20_000
+    private const val READ_TIMEOUT_MS = 25_000
 
     suspend fun createAuthorizationUrl(): String = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
@@ -53,8 +82,7 @@ object ZohoMailPluginApi {
             authToken = authToken,
         )
         try {
-            val body = execute(connection, null)
-            val json = JSONObject(body)
+            val json = JSONObject(execute(connection, null))
             ZohoMailConnectionStatus(
                 connected = json.optBoolean("connected", false),
                 scope = json.optString("scope", ""),
@@ -63,6 +91,164 @@ object ZohoMailPluginApi {
         } finally {
             connection.disconnect()
         }
+    }
+
+    suspend fun listAccounts(): List<ZohoMailAccount> {
+        val json = postJson(
+            "/api/integrations/zoho-mail/accounts",
+            JSONObject().put("user_id", requireUserId()),
+        )
+        return jsonDataArray(json).mapNotNull { item ->
+            val accountId = item.optString("accountId").trim()
+            if (accountId.isBlank()) return@mapNotNull null
+            val primaryEmail = item.optString("primaryEmailAddress").trim()
+                .ifBlank { item.optString("mailboxAddress").trim() }
+                .ifBlank { item.optString("incomingUserName").trim() }
+                .ifBlank { firstEmailAddress(item.optJSONArray("emailAddress")) }
+            ZohoMailAccount(
+                id = accountId,
+                emailAddress = primaryEmail.ifBlank { "Zoho Mail account" },
+                displayName = item.optString("accountDisplayName").trim()
+                    .ifBlank { item.optString("displayName").trim() }
+                    .ifBlank { primaryEmail.ifBlank { "Zoho Mail account" } },
+            )
+        }
+    }
+
+    suspend fun listFolders(accountId: String): List<ZohoMailFolder> {
+        val json = postJson(
+            "/api/integrations/zoho-mail/folders",
+            JSONObject().put("user_id", requireUserId()).put("account_id", accountId),
+        )
+        return jsonDataArray(json).mapNotNull { item ->
+            val folderId = item.optString("folderId").trim()
+            if (folderId.isBlank()) return@mapNotNull null
+            ZohoMailFolder(
+                id = folderId,
+                name = item.optString("folderName").trim()
+                    .ifBlank { item.optString("path").trim().trim('/') }
+                    .ifBlank { "Folder" },
+                folderType = item.optString("folderType").trim(),
+            )
+        }
+    }
+
+    suspend fun listMessages(
+        accountId: String,
+        folderId: String,
+        searchKey: String = "",
+        start: Int = 1,
+        limit: Int = 30,
+    ): List<ZohoMailMessage> {
+        val payload = JSONObject()
+            .put("user_id", requireUserId())
+            .put("account_id", accountId)
+            .put("folder_id", folderId)
+            .put("search_key", searchKey.trim())
+            .put("start", start)
+            .put("limit", limit)
+        val json = postJson("/api/integrations/zoho-mail/messages", payload)
+        return jsonDataArray(json).mapNotNull { item ->
+            val messageId = item.optString("messageId").trim()
+            if (messageId.isBlank()) return@mapNotNull null
+            ZohoMailMessage(
+                id = messageId,
+                folderId = item.optString("folderId").trim().ifBlank { folderId },
+                subject = item.optString("subject").trim().ifBlank { "(No subject)" },
+                fromAddress = item.optString("fromAddress").trim()
+                    .ifBlank { item.optString("sender").trim() },
+                summary = item.optString("summary").trim(),
+                receivedTime = item.optString("receivedTime").trim(),
+            )
+        }
+    }
+
+    suspend fun readMessage(
+        accountId: String,
+        folderId: String,
+        messageId: String,
+    ): ZohoMailMessageContent {
+        val json = postJson(
+            "/api/integrations/zoho-mail/message",
+            JSONObject()
+                .put("user_id", requireUserId())
+                .put("account_id", accountId)
+                .put("folder_id", folderId)
+                .put("message_id", messageId),
+        )
+        val data = json.optJSONObject("data") ?: json
+        return ZohoMailMessageContent(
+            subject = data.optString("subject").trim(),
+            fromAddress = data.optString("fromAddress").trim(),
+            toAddress = data.optString("toAddress").trim(),
+            content = data.optString("content").trim()
+                .ifBlank { data.optString("htmlContent").trim() }
+                .ifBlank { data.optString("summary").trim() },
+        )
+    }
+
+    suspend fun sendMessage(
+        accountId: String,
+        fromAddress: String,
+        toAddress: String,
+        subject: String,
+        content: String,
+    ) {
+        postJson(
+            "/api/integrations/zoho-mail/send",
+            JSONObject()
+                .put("user_id", requireUserId())
+                .put("account_id", accountId)
+                .put("from_address", fromAddress.trim())
+                .put("to_address", toAddress.trim())
+                .put("subject", subject.trim())
+                .put("content", content),
+        )
+    }
+
+    private suspend fun postJson(path: String, payload: JSONObject): JSONObject = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val connection = openConnection(
+            url = "$backendUrl$path",
+            method = "POST",
+            authToken = requireAuthToken(),
+        )
+        try {
+            JSONObject(execute(connection, payload.toString()))
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun jsonDataArray(json: JSONObject): List<JSONObject> {
+        val array = json.optJSONArray("data")
+            ?: json.optJSONObject("data")?.let { data ->
+                data.optJSONArray("data")
+                    ?: data.optJSONArray("accounts")
+                    ?: data.optJSONArray("folders")
+                    ?: data.optJSONArray("messages")
+            }
+            ?: json.optJSONArray("accounts")
+            ?: json.optJSONArray("folders")
+            ?: json.optJSONArray("messages")
+            ?: JSONArray()
+        return buildList(array.length()) {
+            for (index in 0 until array.length()) {
+                array.optJSONObject(index)?.let(::add)
+            }
+        }
+    }
+
+    private fun firstEmailAddress(addresses: JSONArray?): String {
+        if (addresses == null) return ""
+        for (index in 0 until addresses.length()) {
+            val item = addresses.optJSONObject(index) ?: continue
+            val email = item.optString("mailId").trim()
+            if (email.isNotBlank() && (item.optBoolean("isPrimary", false) || index == 0)) {
+                return email
+            }
+        }
+        return ""
     }
 
     private fun requireBackendUrl(): String {
