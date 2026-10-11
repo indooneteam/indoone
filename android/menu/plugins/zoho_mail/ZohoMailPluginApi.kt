@@ -48,7 +48,7 @@ object ZohoMailPluginApi {
         val authToken = requireAuthToken()
         val encodedUserId = URLEncoder.encode(userId, "UTF-8")
         val connection = openConnection(
-            url = "${backendUrl}/api/integrations/zoho-mail/status?user_id=$encodedUserId",
+            url = "${backendUrl}/api/integrations/zoho-mail/connection?user_id=$encodedUserId",
             method = "GET",
             authToken = authToken,
         )
