@@ -227,6 +227,13 @@ object ZohoMailPluginApi {
         )
     }
 
+    suspend fun disconnect() {
+        postJson(
+            "/api/integrations/zoho-mail/disconnect",
+            JSONObject().put("user_id", requireUserId()),
+        )
+    }
+
     private suspend fun postJson(path: String, payload: JSONObject): JSONObject = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
         val connection = openConnection(
