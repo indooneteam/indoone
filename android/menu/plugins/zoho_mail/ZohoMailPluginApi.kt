@@ -16,6 +16,9 @@ import kotlinx.coroutines.withContext
 data class ZohoMailConnectionStatus(
     val connected: Boolean,
     val scope: String = "",
+    val permissionsComplete: Boolean = false,
+    val missingScopes: List<String> = emptyList(),
+    val reauthorizationRequired: Boolean = false,
     val updatedAt: String? = null,
 )
 
@@ -83,9 +86,20 @@ object ZohoMailPluginApi {
         )
         try {
             val json = JSONObject(execute(connection, null))
+            val missingScopesJson = json.optJSONArray("missing_scopes")
+            val missingScopes = if (missingScopesJson == null) {
+                emptyList()
+            } else {
+                (0 until missingScopesJson.length()).mapNotNull { index ->
+                    missingScopesJson.optString(index).trim().takeIf { it.isNotBlank() }
+                }
+            }
             ZohoMailConnectionStatus(
                 connected = json.optBoolean("connected", false),
                 scope = json.optString("scope", ""),
+                permissionsComplete = json.optBoolean("permissions_complete", false),
+                missingScopes = missingScopes,
+                reauthorizationRequired = json.optBoolean("reauthorization_required", false),
                 updatedAt = json.optString("updated_at").takeIf { it.isNotBlank() },
             )
         } finally {

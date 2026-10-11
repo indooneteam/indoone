@@ -45,6 +45,7 @@ private val ZohoAppPurple = Color(0xFF5E2DD2)
 private val ZohoInk = Color(0xFF272238)
 private val ZohoMuted = Color(0xFF777286)
 private val ZohoGreen = Color(0xFF218653)
+private val ZohoWarning = Color(0xFFB45309)
 
 @Composable
 fun ZohoMailPluginMenuScreen(
@@ -53,6 +54,9 @@ fun ZohoMailPluginMenuScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var connected by remember { mutableStateOf(false) }
+    var permissionsComplete by remember { mutableStateOf(false) }
+    var missingScopes by remember { mutableStateOf(emptyList<String>()) }
+    var reauthorizationRequired by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
     var connecting by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf("Checking Zoho Mail connection…") }
@@ -65,15 +69,23 @@ fun ZohoMailPluginMenuScreen(
             try {
                 val result = ZohoMailPluginApi.getConnectionStatus()
                 connected = result.connected
-                accountAddress = if (result.connected) {
+                permissionsComplete = result.permissionsComplete
+                missingScopes = result.missingScopes
+                reauthorizationRequired = result.reauthorizationRequired
+                accountAddress = if (
+                    result.connected && "ZohoMail.accounts.READ" !in result.missingScopes
+                ) {
                     ZohoMailPluginApi.listAccounts().firstOrNull()?.emailAddress.orEmpty()
                 } else {
                     ""
                 }
-                statusMessage = if (connected) {
-                    "Connected to Zoho Mail."
-                } else {
-                    "Zoho Mail is not connected yet."
+                statusMessage = when {
+                    !connected -> "Zoho Mail is not connected yet."
+                    result.reauthorizationRequired ->
+                        "Zoho Mail is connected, but some permissions are missing. Reauthorize to enable every mail action."
+                    !result.permissionsComplete ->
+                        "Zoho Mail permission status could not be fully verified. Reauthorize before using mail actions."
+                    else -> "Connected to Zoho Mail with all required permissions."
                 }
             } catch (error: Exception) {
                 statusMessage = error.message
@@ -207,10 +219,37 @@ fun ZohoMailPluginMenuScreen(
 
             Text(
                 text = statusMessage,
-                color = if (connected) ZohoGreen else ZohoMuted,
+                color = when {
+                    connected && permissionsComplete && !reauthorizationRequired -> ZohoGreen
+                    connected -> ZohoWarning
+                    else -> ZohoMuted
+                },
                 fontSize = 13.sp,
                 lineHeight = 19.sp,
             )
+
+            if (connected && missingScopes.isNotEmpty()) {
+                val permissionLabels = missingScopes.mapNotNull { missingScope ->
+                    when (missingScope) {
+                        "ZohoMail.accounts.READ" -> "mailbox access"
+                        "ZohoMail.folders.READ" -> "folder access"
+                        "ZohoMail.messages.READ" -> "read emails"
+                        "ZohoMail.messages.CREATE" -> "drafts and sending"
+                        "ZohoMail.messages.DELETE" -> "delete emails/drafts"
+                        else -> null
+                    }
+                }.distinct()
+                Text(
+                    text = if (permissionLabels.isNotEmpty()) {
+                        "Missing permissions: " + permissionLabels.joinToString(", ")
+                    } else {
+                        "Some required Zoho Mail permissions are missing."
+                    },
+                    color = ZohoWarning,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                )
+            }
 
             if (connected && accountAddress.isNotBlank()) {
                 Text(
@@ -227,7 +266,13 @@ fun ZohoMailPluginMenuScreen(
                 enabled = !loading && !connecting,
                 colors = ButtonDefaults.buttonColors(containerColor = ZohoAppPurple),
             ) {
-                Text(if (connected) "REAUTHORIZE ZOHO MAIL" else "CONNECT ZOHO MAIL")
+                Text(
+                    when {
+                        connected && reauthorizationRequired -> "REAUTHORIZE FOR FULL ACCESS"
+                        connected -> "REAUTHORIZE ZOHO MAIL"
+                        else -> "CONNECT ZOHO MAIL"
+                    }
+                )
             }
 
             OutlinedButton(
