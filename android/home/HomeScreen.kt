@@ -272,10 +272,18 @@ fun HomeScreen(
 
     fun sendMessage() {
         val typed = input.trim()
-        if (typed.isEmpty() || isSending) return
+        val hasPendingAttachment = pendingAttachmentUri != null || pendingFileId != null
+        if (isSending || (typed.isEmpty() && !hasPendingAttachment)) return
         if (pendingAttachmentUri != null && pendingFileId == null) {
             messages = messages + ChatMessage(
                 "${pendingFileName ?: "Attachment"} is selected. AI processing for this media type will be connected in the backend phase.",
+                false,
+            )
+            return
+        }
+        if (typed.isEmpty()) {
+            messages = messages + ChatMessage(
+                "Type a question about ${pendingFileName ?: "this file"} before sending.",
                 false,
             )
             return
@@ -478,6 +486,19 @@ fun HomeScreen(
             cameraLauncher.launch(captureUri)
         }.onFailure { error ->
             messages = messages + ChatMessage(error.message ?: "Could not open the camera.", false)
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            launchCameraCapture()
+        } else {
+            messages = messages + ChatMessage(
+                "Camera permission is required. Allow Camera in Android Settings > Apps > Indoone > Permissions.",
+                false,
+            )
         }
     }
 
@@ -774,7 +795,15 @@ fun HomeScreen(
                     onDismiss = { isPlusMenuOpen = false },
                     onCamera = {
                         isPlusMenuOpen = false
-                        launchCameraCapture()
+                        val cameraPermissionGranted = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (cameraPermissionGranted) {
+                            launchCameraCapture()
+                        } else {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
                     },
                     onPhotos = {
                         isPlusMenuOpen = false
@@ -839,7 +868,8 @@ fun HomeScreen(
                     )
                 }
 
-                val showSendButton = input.isNotBlank() && !isListening
+                val hasPendingAttachment = pendingAttachmentUri != null || pendingFileId != null
+                val showSendButton = (input.isNotBlank() || hasPendingAttachment) && !isListening
                 val canSend = showSendButton && !isSending
 
                 if (showSendButton) {
