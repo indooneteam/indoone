@@ -1138,7 +1138,7 @@ fun HomeScreen(
                                             message.text,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                             color = Color.White,
-                                            fontSize = 16.sp,
+                                            fontSize = 15.sp,
                                         )
                                     }
                                 }
@@ -1170,7 +1170,7 @@ fun HomeScreen(
                                     message.text,
                                     Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
                                     color = Color(0xFF292331),
-                                    fontSize = 16.sp,
+                                    fontSize = 15.sp,
                                 )
                             }
                         }
@@ -1326,8 +1326,8 @@ fun HomeScreen(
                         // The send action remains locked until the current reply finishes.
                         enabled = true,
                         singleLine = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF17151D), fontSize = 16.sp),
-                        decorationBox = { innerTextField -> Box { if (input.isEmpty()) Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 16.sp); innerTextField() } },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF17151D), fontSize = 15.sp),
+                        decorationBox = { innerTextField -> Box { if (input.isEmpty()) Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 15.sp); innerTextField() } },
                     )
                 }
 
