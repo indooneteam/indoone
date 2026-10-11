@@ -117,7 +117,7 @@ fun GmailPluginMenuScreen(
     }
 
     fun startAuthorization() {
-        if (connected || connecting) return
+        if (connecting) return
         connecting = true
         checking = true
         message = "Preparing secure Gmail authorization..."
@@ -194,9 +194,9 @@ fun GmailPluginMenuScreen(
         Button(
             onClick = { startAuthorization() },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !connected && !connecting,
+            enabled = !checking && !connecting,
         ) {
-            Text(if (connected) "CONNECTED" else "CONNECT GMAIL")
+            Text(if (connected) "REAUTHORIZE GMAIL" else "CONNECT GMAIL")
         }
 
         if (checking || connecting) {
