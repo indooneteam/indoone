@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,13 +48,11 @@ fun PlusAttachmentSheet(
     BoxWithConstraints(modifier.fillMaxSize()) {
         val sheetHeight = maxHeight * 0.40f
 
-        // This backdrop is confined to the remaining right-hand quarter of the chat area.
-        // The composer and bottom navigation are outside this Box, so they remain usable.
+        // Apply the same dim level across the chat viewport, avoiding a vertical boundary.
+        // The popup is drawn after this scrim and remains white and interactive.
         Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .fillMaxWidth(0.25f)
-                .fillMaxHeight()
+                .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.14f))
                 .clickable(onClick = onDismiss),
         )

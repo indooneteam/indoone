@@ -17,6 +17,8 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +57,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -797,7 +801,27 @@ fun HomeScreen(
                 ) { Text("+", color = Color(0xFF703BE2), fontSize = 25.sp, fontWeight = FontWeight.Medium) }
 
                 Surface(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).pointerInput(isPlusMenuOpen) {
+                        if (isPlusMenuOpen) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                while (true) {
+                                    // Watch the tap without consuming it, so the text field can
+                                    // still gain focus and open the keyboard normally.
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                                        break
+                                    }
+                                    if (change.previousPressed && !change.pressed) {
+                                        isPlusMenuOpen = false
+                                        break
+                                    }
+                                    if (!change.pressed) break
+                                }
+                            }
+                        }
+                    },
                     shape = RoundedCornerShape(18.dp),
                     color = Color(0xFFFAF9FC),
                     border = BorderStroke(1.dp, Color(0xFFE5E0ED)),
