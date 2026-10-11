@@ -193,6 +193,7 @@ object ZohoMailPluginApi {
         toAddress: String,
         subject: String,
         content: String,
+        approved: Boolean = false,
     ) {
         postJson(
             "/api/integrations/zoho-mail/send",
@@ -202,7 +203,8 @@ object ZohoMailPluginApi {
                 .put("from_address", fromAddress.trim())
                 .put("to_address", toAddress.trim())
                 .put("subject", subject.trim())
-                .put("content", content),
+                .put("content", content)
+                .put("approved", approved),
         )
     }
 
@@ -213,6 +215,7 @@ object ZohoMailPluginApi {
         toAddress: String,
         subject: String,
         content: String,
+        approved: Boolean = false,
     ) {
         postJson(
             "/api/integrations/zoho-mail/reply",
@@ -223,7 +226,8 @@ object ZohoMailPluginApi {
                 .put("from_address", fromAddress.trim())
                 .put("to_address", toAddress.trim())
                 .put("subject", subject.trim())
-                .put("content", content),
+                .put("content", content)
+                .put("approved", approved),
         )
     }
 
