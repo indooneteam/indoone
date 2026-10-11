@@ -47,7 +47,7 @@ import com.indoone.menu.plugins.email.gmail.GmailPluginApi
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginApi
 import kotlinx.coroutines.launch
 
-private val AppPurple = Color(0xFF6C45D9)
+private val AppPurple = Color(0xFF5E2DD2)
 private val Ink = Color(0xFF272238)
 private val Muted = Color(0xFF777286)
 private val PalePurple = Color(0xFFF4F0FF)
