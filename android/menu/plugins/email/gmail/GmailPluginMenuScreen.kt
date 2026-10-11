@@ -64,18 +64,18 @@ fun GmailPluginMenuScreen(
     }
 
     fun finishAuthorization(result: AuthorizationResult) {
-        val accessToken = result.accessToken?.trim().orEmpty()
-        if (accessToken.isBlank()) {
+        val serverAuthCode = result.serverAuthCode?.trim().orEmpty()
+        if (serverAuthCode.isBlank()) {
             connecting = false
             checking = false
-            message = "Google authorization did not return an access token."
+            message = "Google did not return a server authorization code. Reconnect Gmail and approve offline access."
             return
         }
         val grantedScope = result.grantedScopes.orEmpty().joinToString(" ")
         scope.launch {
             runCatching {
-                GmailPluginApi.storeNativeAccessToken(
-                    accessToken = accessToken,
+                GmailPluginApi.storeServerAuthCode(
+                    serverAuthCode = serverAuthCode,
                     grantedScope = grantedScope,
                 )
             }.onSuccess {
@@ -84,7 +84,7 @@ fun GmailPluginMenuScreen(
                 checking = false
                 connecting = false
                 message = if (it.connected && it.profileSaved) {
-                    "Gmail connected successfully. Its status is saved to your Indoone Profile and will sync across devices."
+                    "Gmail connected successfully. Indoone securely stored refreshable credentials and synced the connection to your Profile."
                 } else {
                     "Gmail authorization completed, but the connection was not saved everywhere."
                 }
@@ -120,35 +120,45 @@ fun GmailPluginMenuScreen(
         if (connected || connecting) return
         connecting = true
         checking = true
-        message = "Opening Google authorization..."
-        val authorizationRequest = AuthorizationRequest.builder()
-            .setRequestedScopes(listOf(Scope(GmailPluginApi.GMAIL_SCOPE)))
-            .setPrompt(AuthorizationRequest.Prompt.CONSENT)
-            .build()
+        message = "Preparing secure Gmail authorization..."
+        scope.launch {
+            try {
+                val serverClientId = GmailPluginApi.getGoogleServerClientId()
+                val authorizationRequest = AuthorizationRequest.builder()
+                    .setRequestedScopes(listOf(Scope(GmailPluginApi.GMAIL_SCOPE)))
+                    .requestOfflineAccess(serverClientId)
+                    .setPrompt(AuthorizationRequest.Prompt.CONSENT)
+                    .build()
 
-        Identity.getAuthorizationClient(context)
-            .authorize(authorizationRequest)
-            .addOnSuccessListener { authorizationResult ->
-                if (authorizationResult.hasResolution()) {
-                    val pendingIntent = authorizationResult.pendingIntent
-                    if (pendingIntent == null) {
+                Identity.getAuthorizationClient(context)
+                    .authorize(authorizationRequest)
+                    .addOnSuccessListener { authorizationResult ->
+                        if (authorizationResult.hasResolution()) {
+                            val pendingIntent = authorizationResult.pendingIntent
+                            if (pendingIntent == null) {
+                                connecting = false
+                                checking = false
+                                message = "Google authorization could not start."
+                            } else {
+                                authorizationLauncher.launch(
+                                    IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                                )
+                            }
+                        } else {
+                            finishAuthorization(authorizationResult)
+                        }
+                    }
+                    .addOnFailureListener { error ->
                         connecting = false
                         checking = false
-                        message = "Google authorization could not start."
-                    } else {
-                        authorizationLauncher.launch(
-                            IntentSenderRequest.Builder(pendingIntent.intentSender).build()
-                        )
+                        message = error.message ?: "Could not start Google authorization."
                     }
-                } else {
-                    finishAuthorization(authorizationResult)
-                }
-            }
-            .addOnFailureListener { error ->
+            } catch (error: Exception) {
                 connecting = false
                 checking = false
-                message = error.message ?: "Could not start Google authorization."
+                message = error.message ?: "Could not prepare secure Gmail authorization."
             }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -207,7 +217,7 @@ fun GmailPluginMenuScreen(
         )
 
         Text(
-            text = "Google will ask you to approve the Gmail permissions. Indoone sends the temporary access token to the backend over HTTPS, where it is stored in encrypted form.",
+            text = "Google will ask you to approve Gmail permissions. Indoone sends a one-time server authorization code over HTTPS; the backend exchanges it and stores the access and refresh tokens in encrypted form. Tokens are not stored in your Firebase profile or on the phone.",
             color = Color(0xFF77707F),
             fontSize = 11.sp,
             lineHeight = 17.sp,
