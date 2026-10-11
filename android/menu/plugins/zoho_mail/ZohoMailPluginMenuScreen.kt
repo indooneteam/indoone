@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.indoone.R
 import kotlinx.coroutines.launch
 
-private val ZohoAppPurple = Color(0xFF6C45D9)
+private val ZohoAppPurple = Color(0xFF5E2DD2)
 private val ZohoInk = Color(0xFF272238)
 private val ZohoMuted = Color(0xFF777286)
 private val ZohoGreen = Color(0xFF218653)
