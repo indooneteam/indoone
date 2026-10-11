@@ -2,6 +2,8 @@ package com.indoone.menu.plugins.email.gmail
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.indoone.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -13,6 +15,14 @@ import kotlinx.coroutines.withContext
 
 data class GmailConnectionStatus(
     val connected: Boolean,
+    val emailAddress: String? = null,
+    val profileSaved: Boolean = false,
+)
+
+data class GmailProfileConnection(
+    val connected: Boolean,
+    val emailAddress: String,
+    val scope: String,
 )
 
 object GmailPluginApi {
@@ -45,7 +55,22 @@ object GmailPluginApi {
         try {
             val body = execute(connection, payload)
             val json = JSONObject(body)
-            GmailConnectionStatus(connected = json.optBoolean("connected", false))
+            val isConnected = json.optBoolean("connected", false)
+            val emailAddress = json.optJSONObject("summary")
+                ?.optString("email_address")
+                ?.trim()
+                .orEmpty()
+            if (isConnected) {
+                saveProfileConnection(
+                    emailAddress = emailAddress,
+                    scope = grantedScope.ifBlank { GMAIL_SCOPE },
+                )
+            }
+            GmailConnectionStatus(
+                connected = isConnected,
+                emailAddress = emailAddress.takeIf { it.isNotBlank() },
+                profileSaved = isConnected,
+            )
         } finally {
             connection.disconnect()
         }
@@ -55,16 +80,71 @@ object GmailPluginApi {
         val backendUrl = requireBackendUrl()
         val userId = requireUserId()
         val authToken = requireAuthToken()
+        val savedConnection = readProfileConnection()
         val url = "${backendUrl}/api/integrations/gmail/status?user_id=${java.net.URLEncoder.encode(userId, "UTF-8")}"
         val connection = openConnection(url, "GET", authToken)
         try {
             val body = execute(connection, null)
             val json = JSONObject(body)
-            GmailConnectionStatus(connected = json.optBoolean("connected", false))
+            val isConnected = json.optBoolean("connected", false)
+            val backendScope = json.optJSONObject("metadata")
+                ?.optString("scope")
+                ?.trim()
+                .orEmpty()
+            val emailAddress = savedConnection?.emailAddress.orEmpty()
+            if (isConnected) {
+                saveProfileConnection(
+                    emailAddress = emailAddress,
+                    scope = backendScope.ifBlank { savedConnection?.scope.orEmpty().ifBlank { GMAIL_SCOPE } },
+                )
+            }
+            GmailConnectionStatus(
+                connected = isConnected,
+                emailAddress = emailAddress.takeIf { it.isNotBlank() },
+                profileSaved = isConnected || savedConnection?.connected == true,
+            )
         } finally {
             connection.disconnect()
         }
     }
+
+    suspend fun readProfileConnection(): GmailProfileConnection? = withContext(Dispatchers.IO) {
+        val reference = gmailConnectionReference(requireUserId())
+        val snapshot = Tasks.await(reference.get())
+        if (!snapshot.exists()) {
+            null
+        } else {
+            GmailProfileConnection(
+                connected = snapshot.child("connected").getValue(Boolean::class.javaObjectType) ?: false,
+                emailAddress = snapshot.child("emailAddress").getValue(String::class.java).orEmpty(),
+                scope = snapshot.child("scope").getValue(String::class.java).orEmpty(),
+            )
+        }
+    }
+
+    private suspend fun saveProfileConnection(emailAddress: String, scope: String) = withContext(Dispatchers.IO) {
+        val userId = requireUserId()
+        val metadata = mapOf(
+            "provider" to "gmail",
+            "providerName" to "Gmail",
+            "connected" to true,
+            "emailAddress" to emailAddress.trim(),
+            "scope" to scope.trim().ifBlank { GMAIL_SCOPE },
+            "updatedAt" to ServerValue.TIMESTAMP,
+            "lastVerifiedAt" to ServerValue.TIMESTAMP,
+        )
+        Tasks.await(gmailConnectionReference(userId).setValue(metadata))
+    }
+
+    private fun gmailConnectionReference(userId: String) =
+        FirebaseDatabase.getInstance().reference
+            .child("users")
+            .child(userId)
+            .child("profile")
+            .child("connections")
+            .child("plugins")
+            .child("email")
+            .child("gmail")
 
     private fun requireBackendUrl(): String {
         val value = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')

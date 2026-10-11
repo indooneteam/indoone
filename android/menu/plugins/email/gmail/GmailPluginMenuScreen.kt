@@ -3,6 +3,7 @@ package com.indoone.menu.plugins.email.gmail
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,16 +40,23 @@ fun GmailPluginMenuScreen(
     var connected by remember { mutableStateOf(false) }
     var checking by remember { mutableStateOf(true) }
     var connecting by remember { mutableStateOf(false) }
+    var connectedEmailAddress by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }
 
     fun checkStatus() {
         scope.launch {
             runCatching { GmailPluginApi.getConnectionStatus() }
-                .onSuccess {
-                    connected = it.connected
-                    message = if (it.connected) "Gmail is connected to Indoone." else ""
+                .onSuccess { result ->
+                    connected = result.connected
+                    connectedEmailAddress = result.emailAddress
+                    message = when {
+                        result.connected -> "Gmail is connected to Indoone and saved to your profile."
+                        result.profileSaved -> "Gmail is listed in your Profile, but the backend could not confirm its authorization. Reconnect Gmail to restore access."
+                        else -> ""
+                    }
                 }
                 .onFailure {
+                    connected = false
                     message = it.message ?: "Could not check Gmail connection."
                 }
             checking = false
@@ -72,12 +80,13 @@ fun GmailPluginMenuScreen(
                 )
             }.onSuccess {
                 connected = it.connected
+                connectedEmailAddress = it.emailAddress
                 checking = false
                 connecting = false
-                message = if (it.connected) {
-                    "Gmail connected successfully."
+                message = if (it.connected && it.profileSaved) {
+                    "Gmail connected successfully. Its status is saved to your Indoone Profile and will sync across devices."
                 } else {
-                    "Gmail authorization completed, but the connection was not saved."
+                    "Gmail authorization completed, but the connection was not saved everywhere."
                 }
             }.onFailure {
                 checking = false
@@ -156,7 +165,7 @@ fun GmailPluginMenuScreen(
             text = "Back",
             color = Color(0xFF5E2DD2),
             fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 2.dp),
+            modifier = Modifier.padding(bottom = 2.dp).clickable(onClick = onBack),
         )
 
         Text(
@@ -186,7 +195,9 @@ fun GmailPluginMenuScreen(
 
         Text(
             text = when {
-                connected -> "✓ Gmail is connected. Indoone can now use the permitted Gmail capabilities."
+                connected && !connectedEmailAddress.isNullOrBlank() ->
+                    "✓ Gmail is connected as ${connectedEmailAddress}. Indoone can use the permitted Gmail capabilities."
+                connected -> "✓ Gmail is connected. Connection status is saved to your Indoone Profile."
                 message.isNotBlank() -> message
                 else -> "No Gmail account is connected yet."
             },

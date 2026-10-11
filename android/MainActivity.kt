@@ -61,6 +61,9 @@ import com.indoone.home.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
+import com.indoone.menu.plugins.PluginsMenuScreen
+import com.indoone.menu.plugins.email.EmailPluginMenuScreen
+import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
 import com.indoone.notifications.NotificationPreferences
 import com.indoone.notifications.NotificationCenterScreen
 import com.indoone.notifications.NotificationRepository
@@ -86,6 +89,9 @@ private enum class AppRoute {
     CONNECT_WHATSAPP,
     SETTINGS,
     PROFILE,
+    PLUGINS,
+    EMAIL_PLUGIN,
+    GMAIL_PLUGIN,
     CHANGE_MOBILE,
     CHANGE_EMAIL,
     FAVORITES,
@@ -383,12 +389,27 @@ class MainActivity : ComponentActivity() {
                                 profileViewModel.clearFeedback()
                                 route = AppRoute.CHANGE_EMAIL
                             },
+                            onPluginsClick = { navigate(AppRoute.PLUGINS) },
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
+
+                    AppRoute.PLUGINS -> PluginsMenuScreen(
+                        onBack = { navigate(AppRoute.PROFILE) },
+                        onEmailClick = { navigate(AppRoute.EMAIL_PLUGIN) },
+                    )
+
+                    AppRoute.EMAIL_PLUGIN -> EmailPluginMenuScreen(
+                        onBack = { navigate(AppRoute.PLUGINS) },
+                        onGmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
+                    )
+
+                    AppRoute.GMAIL_PLUGIN -> GmailPluginMenuScreen(
+                        onBack = { navigate(AppRoute.EMAIL_PLUGIN) },
+                    )
 
                     AppRoute.CHANGE_MOBILE -> {
                         val state by profileViewModel.state.collectAsState()
