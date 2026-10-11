@@ -33,6 +33,23 @@ jobs:
           test -n "$INDOONE_KEYSTORE_BASE64"
           printf '%s' "$INDOONE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/indoone-develop.keystore"
           test -s "$RUNNER_TEMP/indoone-develop.keystore"
+      - name: Print Android OAuth signing fingerprint
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal'
+        shell: bash
+        env:
+          INDOONE_KEYSTORE_PATH: ${{ runner.temp }}/indoone-develop.keystore
+          INDOONE_KEYSTORE_PASSWORD: ${{ secrets.INDOONE_KEYSTORE_PASSWORD }}
+          INDOONE_KEY_ALIAS: ${{ secrets.INDOONE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$INDOONE_KEYSTORE_PASSWORD"
+          test -n "$INDOONE_KEY_ALIAS"
+          echo "Android package: com.indoone.authenticator"
+          keytool -list -v \
+            -keystore "$INDOONE_KEYSTORE_PATH" \
+            -storepass "$INDOONE_KEYSTORE_PASSWORD" \
+            -alias "$INDOONE_KEY_ALIAS" \
+            | awk '/SHA1:/{print "Android signing SHA-1: " $2; found=1} END {if (!found) exit 1}'
       - name: Assemble debug APK
         shell: bash
         env:
