@@ -46,8 +46,9 @@ private const val READ_TIMEOUT_MS = 300_000
     private const val CHAT_TRANSIENT_RETRIES = 1
     private const val CHAT_RETRY_DELAY_MS = 5_000L
     private const val MAX_UPLOAD_BYTES = 2_000_000
-    private const val MAX_CHAT_ATTACHMENT_BYTES = 8_000_000
-    private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 24_000_000
+    private const val MAX_CHAT_IMAGE_BYTES = 5_000_000
+    private const val MAX_CHAT_DOCUMENT_BYTES = 8_000_000
+    private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 20_000_000
     private const val MAX_CHAT_ATTACHMENTS = 10
 
     @Volatile
@@ -94,17 +95,23 @@ private const val READ_TIMEOUT_MS = 300_000
                     if (attachment.bytes.isEmpty()) {
                         throw IllegalArgumentException("The selected attachment is empty.")
                     }
-                    if (attachment.bytes.size > MAX_CHAT_ATTACHMENT_BYTES) {
-                        throw IllegalArgumentException("Each file must be 8 MB or smaller.")
-                    }
-                    totalBytes += attachment.bytes.size
-                    if (totalBytes > MAX_CHAT_TOTAL_ATTACHMENT_BYTES) {
-                        throw IllegalArgumentException("Attachments together exceed the 24 MB upload limit.")
-                    }
                     val safeFilename = attachment.filename.trim().takeIf { it.isNotBlank() }
                         ?: throw IllegalArgumentException("The selected attachment has no filename.")
                     val mimeType = attachment.mimeType.trim().lowercase().takeIf { it.isNotBlank() }
                         ?: throw IllegalArgumentException("The selected attachment type could not be detected.")
+                    val maxAttachmentBytes = if (mimeType.startsWith("image/")) {
+                        MAX_CHAT_IMAGE_BYTES
+                    } else {
+                        MAX_CHAT_DOCUMENT_BYTES
+                    }
+                    if (attachment.bytes.size > maxAttachmentBytes) {
+                        val limit = if (mimeType.startsWith("image/")) "5 MB" else "8 MB"
+                        throw IllegalArgumentException("This attachment exceeds the $limit limit.")
+                    }
+                    totalBytes += attachment.bytes.size
+                    if (totalBytes > MAX_CHAT_TOTAL_ATTACHMENT_BYTES) {
+                        throw IllegalArgumentException("Attachments together exceed the 20 MB upload limit.")
+                    }
                     attachmentArray.put(JSONObject().apply {
                         put("filename", safeFilename)
                         put("mime_type", mimeType)
@@ -120,13 +127,19 @@ private const val READ_TIMEOUT_MS = 300_000
                 if (attachmentBytes.isEmpty()) {
                     throw IllegalArgumentException("The selected attachment is empty.")
                 }
-                if (attachmentBytes.size > MAX_CHAT_ATTACHMENT_BYTES) {
-                    throw IllegalArgumentException("File is too large. Maximum size is 8 MB.")
-                }
                 val safeFilename = attachmentFilename?.trim()?.takeIf { it.isNotBlank() }
                     ?: throw IllegalArgumentException("The selected attachment has no filename.")
                 val mimeType = attachmentMimeType?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
                     ?: throw IllegalArgumentException("The selected attachment type could not be detected.")
+                val maxAttachmentBytes = if (mimeType.startsWith("image/")) {
+                    MAX_CHAT_IMAGE_BYTES
+                } else {
+                    MAX_CHAT_DOCUMENT_BYTES
+                }
+                if (attachmentBytes.size > maxAttachmentBytes) {
+                    val limit = if (mimeType.startsWith("image/")) "5 MB" else "8 MB"
+                    throw IllegalArgumentException("This attachment exceeds the $limit limit.")
+                }
                 put("attachment_filename", safeFilename)
                 put("attachment_mime_type", mimeType)
                 put("attachment_base64", Base64.encodeToString(attachmentBytes, Base64.NO_WRAP))

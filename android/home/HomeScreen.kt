@@ -100,8 +100,9 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 private const val MAX_UPLOAD_BYTES = 2_000_000
-private const val MAX_CHAT_ATTACHMENT_BYTES = 8_000_000
-private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 24_000_000
+private const val MAX_CHAT_IMAGE_BYTES = 5_000_000
+private const val MAX_CHAT_DOCUMENT_BYTES = 8_000_000
+private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 20_000_000
 private const val MAX_CHAT_ATTACHMENTS = 10
 
 private fun readLimitedBytes(
@@ -648,11 +649,16 @@ fun HomeScreen(
                     for (attachment in attachmentsToSend) {
                         val uri = attachment.uri ?: continue
                         val mimeType = supportedAttachmentMimeType(context, uri, attachment.displayName)
-                        val bytes = readLimitedBytes(context, uri, MAX_CHAT_ATTACHMENT_BYTES)
+                        val maxAttachmentBytes = if (mimeType.startsWith("image/")) {
+                            MAX_CHAT_IMAGE_BYTES
+                        } else {
+                            MAX_CHAT_DOCUMENT_BYTES
+                        }
+                        val bytes = readLimitedBytes(context, uri, maxAttachmentBytes)
                         totalBytes += bytes.size
                         if (totalBytes > MAX_CHAT_TOTAL_ATTACHMENT_BYTES) {
                             throw IllegalArgumentException(
-                                "Attachments together exceed the 24 MB upload limit. Remove or reduce some files and try again."
+                                "Attachments together exceed the 20 MB upload limit. Remove or reduce some files and try again."
                             )
                         }
                         mediaPayloads += ChatMediaAttachment(
