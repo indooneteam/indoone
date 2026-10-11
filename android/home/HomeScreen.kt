@@ -31,12 +31,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -91,6 +96,8 @@ import java.util.UUID
 
 private const val MAX_UPLOAD_BYTES = 2_000_000
 private const val MAX_CHAT_ATTACHMENT_BYTES = 8_000_000
+private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 24_000_000
+private const val MAX_CHAT_ATTACHMENTS = 10
 
 private fun readLimitedBytes(
     context: Context,
@@ -161,83 +168,120 @@ private fun decodeAttachmentThumbnail(context: Context, uri: Uri): Bitmap? {
     }
 }
 
+private fun isPhotoAttachment(context: Context, attachment: ChatAttachment): Boolean {
+    val uri = attachment.uri ?: return false
+    val mime = runCatching { context.contentResolver.getType(uri)?.lowercase() }.getOrNull()
+    val extension = attachment.displayName.substringAfterLast('.', "").lowercase()
+    return mime?.startsWith("image/") == true ||
+        extension in setOf("jpg", "jpeg", "png", "webp", "gif", "heic", "heif")
+}
+
+@Composable
+private fun AttachmentImage(uri: Uri, description: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val thumbnail by produceState<Bitmap?>(initialValue = null, key1 = uri) {
+        value = withContext(Dispatchers.IO) { decodeAttachmentThumbnail(context, uri) }
+    }
+    val bitmap = thumbnail
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = description,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(9.dp)),
+        )
+    } else {
+        Box(
+            modifier = modifier.clip(RoundedCornerShape(9.dp)).background(Color(0xFFEDE7F8)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("IMG", color = Color(0xFF5E2DD2), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
 @Composable
 private fun PendingAttachmentPreview(
-    uri: Uri?,
-    fileName: String,
-    isPhoto: Boolean,
+    attachment: ChatAttachment,
+    enabled: Boolean,
     onRemove: () -> Unit,
 ) {
     val context = LocalContext.current
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val isPhoto = isPhotoAttachment(context, attachment)
+    Column(
+        modifier = Modifier.width(82.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        if (isPhoto && uri != null) {
-            val thumbnail by produceState<Bitmap?>(initialValue = null, key1 = uri) {
-                value = withContext(Dispatchers.IO) { decodeAttachmentThumbnail(context, uri) }
-            }
-            Box(Modifier.size(54.dp)) {
-                val bitmap = thumbnail
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Attached photo preview",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)),
-                    )
-                } else {
-                    Box(
-                        Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)).background(Color(0xFFEDE7F8)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("IMG", color = Color(0xFF5E2DD2), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Box(Modifier.size(64.dp)) {
+            if (isPhoto && attachment.uri != null) {
+                AttachmentImage(attachment.uri, "Attached photo preview", Modifier.fillMaxSize())
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(9.dp),
+                    color = Color(0xFFF0E9FB),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            attachment.displayName.substringAfterLast('.', "").take(4)
+                                .uppercase().ifBlank { "FILE" },
+                            color = Color(0xFF5E2DD2),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
-                Box(
-                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp)
-                        .size(22.dp).clip(CircleShape).background(Color(0xFF292431))
-                        .clickable(onClick = onRemove),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("×", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                }
             }
-            Text(
-                fileName,
-                color = Color(0xFF5E2DD2),
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).padding(start = 9.dp),
-            )
-        } else {
-            Row(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF6F3FB))
-                    .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Box(
+                modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp)
+                    .size(22.dp).clip(CircleShape).background(Color(0xFF292431))
+                    .clickable(enabled = enabled, onClick = onRemove),
+                contentAlignment = Alignment.Center,
             ) {
-                val label = fileName.substringAfterLast('.', "").take(4).uppercase().ifBlank { "FILE" }
-                Box(
-                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFE8DDFB)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(label, color = Color(0xFF5E2DD2), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    fileName,
-                    color = Color(0xFF3F354F),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                Text("×", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Text(
+            attachment.displayName,
+            color = Color(0xFF5E2DD2),
+            fontSize = 10.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun SentAttachmentStrip(attachments: List<ChatAttachment>) {
+    val context = LocalContext.current
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        contentPadding = PaddingValues(horizontal = 2.dp),
+    ) {
+        items(attachments, key = { it.id }) { attachment ->
+            if (isPhotoAttachment(context, attachment) && attachment.uri != null) {
+                AttachmentImage(
+                    attachment.uri,
+                    "Sent photo: ${attachment.displayName}",
+                    Modifier.size(68.dp),
                 )
-                Box(
-                    modifier = Modifier.size(34.dp).clip(CircleShape).clickable(onClick = onRemove),
-                    contentAlignment = Alignment.Center,
+            } else {
+                Surface(
+                    modifier = Modifier.width(124.dp),
+                    shape = RoundedCornerShape(9.dp),
+                    color = Color(0xFF8055DC),
+                    border = BorderStroke(1.dp, Color(0xFFB69AEF)),
                 ) {
-                    Text("×", color = Color(0xFF51495B), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        attachment.displayName,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -251,9 +295,17 @@ private fun appendVoiceTranscript(existingText: String, spokenText: String): Str
     return if (base.isEmpty()) spoken else "$base $spoken"
 }
 
+private data class ChatAttachment(
+    val displayName: String,
+    val uri: Uri? = null,
+    val fileId: String? = null,
+    val id: String = UUID.randomUUID().toString(),
+)
+
 private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
+    val attachments: List<ChatAttachment> = emptyList(),
 )
 
 private enum class ChatActivityState {
@@ -356,11 +408,10 @@ fun HomeScreen(
     var isSending by remember { mutableStateOf(false) }
     var chatActivityState by remember { mutableStateOf(ChatActivityState.IDLE) }
     var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
-    var pendingFileId by remember { mutableStateOf<String?>(null) }
-    var pendingFileName by remember { mutableStateOf<String?>(null) }
-    var pendingAttachmentUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingAttachments by remember { mutableStateOf<List<ChatAttachment>>(emptyList()) }
     var cameraCaptureUri by remember { mutableStateOf<Uri?>(null) }
     var isPlusMenuOpen by remember { mutableStateOf(false) }
+    var isAddingAttachments by remember { mutableStateOf(false) }
     var isListening by remember { mutableStateOf(false) }
     var voiceInputBase by remember { mutableStateOf("") }
     var voiceError by remember { mutableStateOf<String?>(null) }
@@ -426,58 +477,66 @@ fun HomeScreen(
 
     fun sendMessage() {
         val typed = input.trim()
-        val attachmentUri = pendingAttachmentUri
-        val attachmentName = pendingFileName
-        val fileId = pendingFileId
-        val hasPendingAttachment = attachmentUri != null || fileId != null
-        if (isSending || (typed.isEmpty() && !hasPendingAttachment)) return
-        if (typed.isEmpty()) {
-            messages = messages + ChatMessage(
-                "Type a question about ${attachmentName ?: "this file"} before sending.",
-                false,
-            )
-            return
-        }
+        val attachmentsToSend = pendingAttachments.toList()
+        val hasPendingAttachment = attachmentsToSend.isNotEmpty()
+        if (isSending || isAddingAttachments || (typed.isEmpty() && !hasPendingAttachment)) return
 
+        val messageToBackend = typed.ifBlank {
+            "Please inspect the attached file(s) and describe their contents or visible details."
+        }
         val requestConversationId = conversationId ?: UUID.randomUUID().toString()
-        messages = messages + ChatMessage(typed, true)
+        messages = messages + ChatMessage(typed, true, attachmentsToSend)
         input = ""
         conversationId = requestConversationId
         isSending = true
         chatActivityState = ChatActivityState.RECEIVED
 
-        scope.launch {
-            val receivedStage = async {
-                delay(350L)
-            }
+        val attachmentSummary = attachmentsToSend
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(", ") { it.displayName }
+            ?.let { "[Attachments: $it]" }
+        val persistedUserContent = listOf(typed, attachmentSummary.orEmpty())
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
 
+        scope.launch {
+            val receivedStage = async { delay(350L) }
             val userSaveDeferred = async(Dispatchers.IO) {
                 runCatching {
                     cloudChatRepository.appendMessage(
                         conversationId = requestConversationId,
                         role = "user",
-                        content = typed,
+                        content = persistedUserContent,
                     )
                 }
             }
-
             val backendDeferred = async(Dispatchers.IO) {
                 runCatching {
-                    if (attachmentUri != null) {
-                        val filename = attachmentName?.takeIf { it.isNotBlank() } ?: "attachment"
-                        val mimeType = supportedAttachmentMimeType(context, attachmentUri, filename)
-                        val bytes = readLimitedBytes(context, attachmentUri, MAX_CHAT_ATTACHMENT_BYTES)
-                        ChatApi.sendMessage(
-                            message = typed,
-                            conversationId = requestConversationId,
-                            fileId = null,
-                            attachmentFilename = filename,
-                            attachmentMimeType = mimeType,
-                            attachmentBytes = bytes,
+                    val fileIds = attachmentsToSend.mapNotNull { it.fileId }
+                    val mediaPayloads = mutableListOf<ChatMediaAttachment>()
+                    var totalBytes = 0
+                    for (attachment in attachmentsToSend) {
+                        val uri = attachment.uri ?: continue
+                        val mimeType = supportedAttachmentMimeType(context, uri, attachment.displayName)
+                        val bytes = readLimitedBytes(context, uri, MAX_CHAT_ATTACHMENT_BYTES)
+                        totalBytes += bytes.size
+                        if (totalBytes > MAX_CHAT_TOTAL_ATTACHMENT_BYTES) {
+                            throw IllegalArgumentException(
+                                "Attachments together exceed the 24 MB upload limit. Remove or reduce some files and try again."
+                            )
+                        }
+                        mediaPayloads += ChatMediaAttachment(
+                            filename = attachment.displayName,
+                            mimeType = mimeType,
+                            bytes = bytes,
                         )
-                    } else {
-                        ChatApi.sendMessage(typed, requestConversationId, fileId)
                     }
+                    ChatApi.sendMessage(
+                        message = messageToBackend,
+                        conversationId = requestConversationId,
+                        fileIds = fileIds,
+                        mediaAttachments = mediaPayloads,
+                    )
                 }
             }
 
@@ -487,14 +546,11 @@ fun HomeScreen(
 
             backendResult.onSuccess { response ->
                 conversationId = response.conversationId
-                if (pendingAttachmentUri == attachmentUri && pendingFileId == fileId) {
-                    pendingAttachmentUri = null
-                    pendingFileId = null
-                    pendingFileName = null
+                if (pendingAttachments.map { it.id } == attachmentsToSend.map { it.id }) {
+                    pendingAttachments = emptyList()
                 }
                 chatActivityState = ChatActivityState.PREPARING
                 delay(600L)
-
                 messages = messages + ChatMessage(response.reply, false)
                 chatActivityState = ChatActivityState.IDLE
 
@@ -505,12 +561,11 @@ fun HomeScreen(
                             cloudChatRepository.appendMessage(
                                 conversationId = requestConversationId,
                                 role = "user",
-                                content = typed,
+                                content = persistedUserContent,
                             )
                         }
                     }
                 }
-
                 if (userSave.isFailure) {
                     val reason = userSave.exceptionOrNull()?.message
                         ?.takeIf { it.isNotBlank() }
@@ -529,7 +584,6 @@ fun HomeScreen(
                             )
                         }
                     }
-
                     if (assistantSave.isFailure) {
                         val reason = assistantSave.exceptionOrNull()?.message
                             ?.takeIf { it.isNotBlank() }
@@ -559,7 +613,6 @@ fun HomeScreen(
                     false,
                 )
             }
-
             isSending = false
             chatActivityState = ChatActivityState.IDLE
         }
@@ -575,56 +628,107 @@ fun HomeScreen(
         val capturedUri = cameraCaptureUri
         cameraCaptureUri = null
         if (success && capturedUri != null) {
-            pendingAttachmentUri = capturedUri
-            pendingFileId = null
-            pendingFileName = "Camera photo"
-        } else {
-            capturedUri?.let { runCatching { context.contentResolver.delete(it, null, null) } }
-        }
-    }
-
-    val photosLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            pendingAttachmentUri = uri
-            pendingFileId = null
-            pendingFileName = displayNameForUri(uri, "Photo")
-        }
-    }
-
-    val filesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            pendingAttachmentUri = null
-            pendingFileId = null
-            pendingFileName = null
-            val name = displayNameForUri(uri, "file")
-            val extension = name.substringAfterLast('.', "").lowercase()
-            if (extension in setOf("txt", "md", "json", "csv", "log")) {
-                runCatching {
-                    val bytes = withContext(Dispatchers.IO) { readLimitedBytes(context, uri) }
-                    val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
-                    name to upload.fileId
-                }.onSuccess { (uploadedName, fileId) ->
-                    pendingAttachmentUri = null
-                    pendingFileName = uploadedName
-                    pendingFileId = fileId
-                    messages = messages + ChatMessage("Attached $uploadedName. Ask me about this file.", true)
-                }.onFailure { error ->
-                    pendingFileName = null
-                    pendingFileId = null
-                    messages = messages + ChatMessage(error.message ?: "Could not attach that file.", false)
-                }
+            if (pendingAttachments.size >= MAX_CHAT_ATTACHMENTS) {
+                val fileName = capturedUri.lastPathSegment
+                    ?.takeIf { capturedUri.authority == "${context.packageName}.fileprovider" }
+                fileName?.let { File(File(context.cacheDir, "camera"), it).delete() }
+                messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
             } else {
-                // Photo/PDF/office/video/audio files are selected in the UI now.
-                // Their authenticated upload + model processing is added in the backend phase.
-                pendingAttachmentUri = uri
-                pendingFileName = name
-                messages = messages + ChatMessage("Selected $name.", true)
+                pendingAttachments = pendingAttachments + ChatAttachment(
+                    displayName = "Camera photo",
+                    uri = capturedUri,
+                )
+            }
+        } else {
+            val fileName = capturedUri?.lastPathSegment
+                ?.takeIf { capturedUri.authority == "${context.packageName}.fileprovider" }
+            fileName?.let { File(File(context.cacheDir, "camera"), it).delete() }
+        }
+    }
+
+    val photosLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(MAX_CHAT_ATTACHMENTS),
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        val remaining = MAX_CHAT_ATTACHMENTS - pendingAttachments.size
+        if (remaining <= 0) {
+            messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
+            return@rememberLauncherForActivityResult
+        }
+        val selected = uris.take(remaining)
+        if (selected.size < uris.size) {
+            messages = messages + ChatMessage(
+                "You can attach up to 10 files per message. Only the remaining $remaining item(s) were added.",
+                false,
+            )
+        }
+        pendingAttachments = pendingAttachments + selected.map { uri ->
+            ChatAttachment(displayName = displayNameForUri(uri, "Photo"), uri = uri)
+        }
+    }
+
+    val filesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        val remaining = MAX_CHAT_ATTACHMENTS - pendingAttachments.size
+        if (remaining <= 0) {
+            messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
+            return@rememberLauncherForActivityResult
+        }
+        val selected = uris.take(remaining)
+        if (selected.size < uris.size) {
+            messages = messages + ChatMessage(
+                "You can attach up to 10 files per message. Only the remaining $remaining item(s) were added.",
+                false,
+            )
+        }
+        scope.launch {
+            isAddingAttachments = true
+            try {
+                for (uri in selected) {
+                    val name = displayNameForUri(uri, "file")
+                    val extension = name.substringAfterLast('.', "").lowercase()
+                    if (extension in setOf("txt", "md", "json", "csv", "log")) {
+                        runCatching {
+                            val bytes = withContext(Dispatchers.IO) { readLimitedBytes(context, uri) }
+                            val upload = withContext(Dispatchers.IO) { ChatApi.uploadTextFile(name, bytes) }
+                            ChatAttachment(
+                                displayName = upload.filename.ifBlank { name },
+                                fileId = upload.fileId,
+                            )
+                        }.onSuccess { attachment ->
+                            pendingAttachments = (pendingAttachments + attachment).take(MAX_CHAT_ATTACHMENTS)
+                        }.onFailure { error ->
+                            messages = messages + ChatMessage(
+                                error.message ?: "Could not attach $name.",
+                                false,
+                            )
+                        }
+                    } else {
+                        val supported = runCatching { supportedAttachmentMimeType(context, uri, name) }
+                        if (supported.isSuccess) {
+                            pendingAttachments = (
+                                pendingAttachments + ChatAttachment(displayName = name, uri = uri)
+                            ).take(MAX_CHAT_ATTACHMENTS)
+                        } else {
+                            messages = messages + ChatMessage(
+                                supported.exceptionOrNull()?.message
+                                    ?: "This attachment type is not supported: $name",
+                                false,
+                            )
+                        }
+                    }
+                }
+            } finally {
+                isAddingAttachments = false
             }
         }
     }
 
     fun launchCameraCapture() {
+        if (pendingAttachments.size >= MAX_CHAT_ATTACHMENTS) {
+            messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
+            return
+        }
         runCatching {
             val cameraDirectory = File(context.cacheDir, "camera").apply { mkdirs() }
             val captureFile = File(cameraDirectory, "indoone-camera-${UUID.randomUUID()}.jpg")
@@ -857,12 +961,17 @@ fun HomeScreen(
                                 ),
                                 color = Color(0xFF703BE2),
                             ) {
-                                Text(
-                                    message.text,
-                                    Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                )
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(7.dp),
+                                ) {
+                                    if (message.attachments.isNotEmpty()) {
+                                        SentAttachmentStrip(message.attachments)
+                                    }
+                                    if (message.text.isNotBlank()) {
+                                        Text(message.text, color = Color.White, fontSize = 13.sp)
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -959,46 +1068,55 @@ fun HomeScreen(
                     },
                     onPhotos = {
                         isPlusMenuOpen = false
-                        photosLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        if (pendingAttachments.size >= MAX_CHAT_ATTACHMENTS) {
+                            messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
+                        } else {
+                            photosLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }
                     },
                     onFiles = {
                         isPlusMenuOpen = false
-                        filesLauncher.launch(arrayOf("*/*"))
+                        if (pendingAttachments.size >= MAX_CHAT_ATTACHMENTS) {
+                            messages = messages + ChatMessage("You can attach up to 10 files per message.", false)
+                        } else {
+                            filesLauncher.launch(arrayOf("*/*"))
+                        }
                     },
                 )
             }
             }
 
-            pendingFileName?.let { fileName ->
-                val attachmentUri = pendingAttachmentUri
-                val detectedMime = attachmentUri?.let { uri ->
-                    runCatching { context.contentResolver.getType(uri) }.getOrNull()
+            if (pendingAttachments.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    pendingAttachments.forEach { attachment ->
+                        PendingAttachmentPreview(
+                            attachment = attachment,
+                            enabled = !isSending,
+                            onRemove = {
+                                if (!isSending) {
+                                    val cameraFileName = attachment.uri
+                                        ?.takeIf { it.authority == "${context.packageName}.fileprovider" }
+                                        ?.lastPathSegment
+                                        ?.takeIf { it.startsWith("indoone-camera-") && it.endsWith(".jpg") }
+                                    cameraFileName?.let { File(File(context.cacheDir, "camera"), it).delete() }
+                                    pendingAttachments = pendingAttachments.filterNot { it.id == attachment.id }
+                                }
+                            },
+                        )
+                    }
                 }
-                val extension = fileName.substringAfterLast('.', "").lowercase()
-                val isPhoto = attachmentUri != null && (
-                    detectedMime?.startsWith("image/") == true ||
-                        extension in setOf("jpg", "jpeg", "png", "webp", "gif", "heic", "heif")
-                    )
-                PendingAttachmentPreview(
-                    uri = attachmentUri,
-                    fileName = fileName,
-                    isPhoto = isPhoto,
-                    onRemove = {
-                        val cameraFileName = pendingAttachmentUri
-                            ?.takeIf { it.authority == "${context.packageName}.fileprovider" }
-                            ?.lastPathSegment
-                            ?.takeIf { it.startsWith("indoone-camera-") && it.endsWith(".jpg") }
-                        cameraFileName?.let { File(File(context.cacheDir, "camera"), it).delete() }
-                        pendingAttachmentUri = null
-                        pendingFileId = null
-                        pendingFileName = null
-                    },
-                )
             }
+
 
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending) {
+                    modifier = Modifier.padding(end = 8.dp).size(42.dp).clip(CircleShape).background(Color(0xFFF5F2FB)).clickable(enabled = !isSending && !isAddingAttachments) {
                         isPlusMenuOpen = true
                     },
                     contentAlignment = Alignment.Center,
@@ -1043,10 +1161,11 @@ fun HomeScreen(
                     )
                 }
 
-                val hasPendingAttachment = pendingAttachmentUri != null || pendingFileId != null
+                val hasPendingAttachment = pendingAttachments.isNotEmpty()
                 val showSendButton = (input.isNotBlank() || hasPendingAttachment) &&
                     (!isListening || hasPendingAttachment)
-                val canSend = showSendButton && !isSending && !isListening && input.isNotBlank()
+                val canSend = showSendButton && !isSending && !isAddingAttachments &&
+                    !isListening && (input.isNotBlank() || hasPendingAttachment)
 
                 if (hasPendingAttachment) {
                     Box(
