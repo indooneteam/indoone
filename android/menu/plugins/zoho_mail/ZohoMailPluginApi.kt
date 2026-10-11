@@ -206,6 +206,27 @@ object ZohoMailPluginApi {
         )
     }
 
+    suspend fun replyToMessage(
+        accountId: String,
+        messageId: String,
+        fromAddress: String,
+        toAddress: String,
+        subject: String,
+        content: String,
+    ) {
+        postJson(
+            "/api/integrations/zoho-mail/reply",
+            JSONObject()
+                .put("user_id", requireUserId())
+                .put("account_id", accountId)
+                .put("message_id", messageId)
+                .put("from_address", fromAddress.trim())
+                .put("to_address", toAddress.trim())
+                .put("subject", subject.trim())
+                .put("content", content),
+        )
+    }
+
     private suspend fun postJson(path: String, payload: JSONObject): JSONObject = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
         val connection = openConnection(
