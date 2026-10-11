@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -195,6 +196,7 @@ fun GmailPluginMenuScreen(
             onClick = { startAuthorization() },
             modifier = Modifier.fillMaxWidth(),
             enabled = !checking && !connecting,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6C45D9)),
         ) {
             Text(if (connected) "REAUTHORIZE GMAIL" else "CONNECT GMAIL")
         }
