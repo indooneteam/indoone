@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import androidx.core.content.FileProvider
 import java.io.File
 import android.speech.RecognitionListener
@@ -33,11 +34,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -254,36 +255,82 @@ private fun PendingAttachmentPreview(
 }
 
 @Composable
-private fun SentAttachmentStrip(attachments: List<ChatAttachment>) {
-    val context = LocalContext.current
-    LazyRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-        contentPadding = PaddingValues(horizontal = 2.dp),
+private fun SentPhotoStack(photos: List<ChatAttachment>) {
+    if (photos.isEmpty()) return
+
+    // Keep the sent media compact and right-aligned. The image cards underneath
+    // peek out below the front card instead of stretching a purple bubble across chat.
+    val cardWidth = 220.dp
+    val cardHeight = 156.dp
+    val cardPeek = 22.dp
+    val stackHeight = cardHeight + cardPeek * (photos.size - 1)
+
+    Box(
+        modifier = Modifier
+            .width(cardWidth)
+            .height(stackHeight),
     ) {
-        items(attachments, key = { it.id }) { attachment ->
-            if (isPhotoAttachment(context, attachment) && attachment.uri != null) {
-                AttachmentImage(
-                    attachment.uri,
-                    "Sent photo: ${attachment.displayName}",
-                    Modifier.size(68.dp),
+        // Draw back cards first so the first selected photo remains in front.
+        photos.indices.reversed().forEach { index ->
+            val photo = photos[index]
+            val uri = photo.uri ?: return@forEach
+            AttachmentImage(
+                uri = uri,
+                description = if (photos.size == 1) "Sent photo" else "Photo ${index + 1} of ${photos.size}",
+                modifier = Modifier
+                    .offset(y = cardPeek * index)
+                    .width(cardWidth)
+                    .height(cardHeight),
+            )
+        }
+        if (photos.size > 1) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xB8000000),
+            ) {
+                Text(
+                    "${photos.size} photos",
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
-            } else {
-                Surface(
-                    modifier = Modifier.width(124.dp),
-                    shape = RoundedCornerShape(9.dp),
-                    color = Color(0xFF8055DC),
-                    border = BorderStroke(1.dp, Color(0xFFB69AEF)),
-                ) {
-                    Text(
-                        attachment.displayName,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SentAttachmentContent(attachments: List<ChatAttachment>) {
+    val context = LocalContext.current
+    val photos = attachments.filter { it.uri != null && isPhotoAttachment(context, it) }
+    val otherFiles = attachments.filterNot { it.uri != null && isPhotoAttachment(context, it) }
+
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (photos.isNotEmpty()) {
+            SentPhotoStack(photos)
+        }
+        otherFiles.forEach { attachment ->
+            Surface(
+                modifier = Modifier.widthIn(max = 220.dp),
+                shape = RoundedCornerShape(9.dp),
+                color = Color(0xFF8055DC),
+                border = BorderStroke(1.dp, Color(0xFFB69AEF)),
+            ) {
+                Text(
+                    attachment.displayName,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
@@ -779,6 +826,34 @@ fun HomeScreen(
         speechRecognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+
+            // Prefer well-formatted final text without forcing English as the language.
+            if (Build.VERSION.SDK_INT >= 33) {
+                putExtra(
+                    RecognizerIntent.EXTRA_ENABLE_FORMATTING,
+                    RecognizerIntent.FORMATTING_OPTIMIZE_QUALITY,
+                )
+            }
+
+            // Android 14+ supports automatic spoken-language detection and switching.
+            // Keep English, Kannada, and Telugu available as recognition choices.
+            if (Build.VERSION.SDK_INT >= 34) {
+                val supportedVoiceLanguages = arrayListOf("en-IN", "en-US", "kn-IN", "te-IN")
+                putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true)
+                putStringArrayListExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_DETECTION_ALLOWED_LANGUAGES,
+                    ArrayList(supportedVoiceLanguages),
+                )
+                putExtra(
+                    RecognizerIntent.EXTRA_ENABLE_LANGUAGE_SWITCH,
+                    RecognizerIntent.LANGUAGE_SWITCH_BALANCED,
+                )
+                putStringArrayListExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_SWITCH_ALLOWED_LANGUAGES,
+                    ArrayList(supportedVoiceLanguages),
+                )
+            }
         })
     }
 
@@ -953,24 +1028,30 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End,
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(
-                                    topStart = 18.dp,
-                                    topEnd = 18.dp,
-                                    bottomStart = 18.dp,
-                                    bottomEnd = 5.dp,
-                                ),
-                                color = Color(0xFF703BE2),
+                            Column(
+                                modifier = Modifier.widthIn(max = 260.dp),
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(7.dp),
-                                ) {
-                                    if (message.attachments.isNotEmpty()) {
-                                        SentAttachmentStrip(message.attachments)
-                                    }
-                                    if (message.text.isNotBlank()) {
-                                        Text(message.text, color = Color.White, fontSize = 13.sp)
+                                if (message.attachments.isNotEmpty()) {
+                                    SentAttachmentContent(message.attachments)
+                                }
+                                if (message.text.isNotBlank()) {
+                                    Surface(
+                                        shape = RoundedCornerShape(
+                                            topStart = 18.dp,
+                                            topEnd = 18.dp,
+                                            bottomStart = 18.dp,
+                                            bottomEnd = 5.dp,
+                                        ),
+                                        color = Color(0xFF703BE2),
+                                    ) {
+                                        Text(
+                                            message.text,
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                            color = Color.White,
+                                            fontSize = 13.sp,
+                                        )
                                     }
                                 }
                             }
@@ -1163,79 +1244,32 @@ fun HomeScreen(
                 }
 
                 val hasPendingAttachment = pendingAttachments.isNotEmpty()
-                val showSendButton = (input.isNotBlank() || hasPendingAttachment) &&
-                    (!isListening || hasPendingAttachment)
-                val canSend = showSendButton && !isSending && !isAddingAttachments &&
-                    !isListening && (input.isNotBlank() || hasPendingAttachment)
+                val showSendButton = input.isNotBlank() || hasPendingAttachment
+                val canSend = showSendButton && !isSending && !isAddingAttachments && !isListening
 
-                if (hasPendingAttachment) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
-                            .clickable(enabled = !isSending) {
-                                isPlusMenuOpen = false
-                                onVoiceButtonClick()
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Mic,
-                            contentDescription = if (isListening) "Stop voice input" else "Voice input",
-                            tint = if (isListening) Color.White else Color(0xFF4A4650),
-                            modifier = Modifier.size(21.dp),
-                        )
-                    }
-                } else if (showSendButton) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(if (canSend) Color(0xFF703BE2) else Color(0xFFE7E3EC))
-                            .clickable(enabled = canSend, onClick = ::sendMessage),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (isSending) {
-                            CircularProgressIndicator(
-                                Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.2.dp,
-                            )
-                        } else {
-                            Text(
-                                "➤",
-                                color = if (canSend) Color.White else Color(0xFF9B95A3),
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
-                            .clickable(enabled = !isSending) {
-                                isPlusMenuOpen = false
-                                onVoiceButtonClick()
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Mic,
-                            contentDescription = if (isListening) "Stop voice input" else "Voice input",
-                            tint = if (isListening) Color.White else Color(0xFF4A4650),
-                            modifier = Modifier.size(21.dp),
-                        )
-                    }
+                // Keep the microphone available even after text is typed. Voice input
+                // can append to the draft, while Send appears alongside the microphone.
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(if (isListening) Color(0xFF703BE2) else Color(0xFFF5F2FB))
+                        .clickable(enabled = !isSending) {
+                            isPlusMenuOpen = false
+                            onVoiceButtonClick()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = if (isListening) "Stop voice input" else "Voice input",
+                        tint = if (isListening) Color.White else Color(0xFF4A4650),
+                        modifier = Modifier.size(21.dp),
+                    )
                 }
 
-                if (hasPendingAttachment) {
+                if (showSendButton) {
                     Box(
                         modifier = Modifier
                             .padding(start = 8.dp)
@@ -1260,8 +1294,9 @@ fun HomeScreen(
                             )
                         }
                     }
-                } else if (input.isBlank() && !isListening) {
+                } else if (!isListening) {
                     VibeButton(
+                        modifier = Modifier.padding(start = 8.dp),
                         onClick = {
                             isPlusMenuOpen = false
                             onVibeClick()
