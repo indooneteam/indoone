@@ -54,6 +54,7 @@ fun ZohoMailPluginMenuScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var connected by remember { mutableStateOf(false) }
+    var connectionHealthy by remember { mutableStateOf(false) }
     var permissionsComplete by remember { mutableStateOf(false) }
     var missingScopes by remember { mutableStateOf(emptyList<String>()) }
     var reauthorizationRequired by remember { mutableStateOf(false) }
@@ -66,6 +67,7 @@ fun ZohoMailPluginMenuScreen(
         if (loading || connecting) return
         scope.launch {
             loading = true
+            connectionHealthy = false
             try {
                 val result = ZohoMailPluginApi.getConnectionStatus()
                 connected = result.connected
@@ -75,8 +77,11 @@ fun ZohoMailPluginMenuScreen(
                 accountAddress = if (
                     result.connected && "ZohoMail.accounts.READ" !in result.missingScopes
                 ) {
-                    ZohoMailPluginApi.listAccounts().firstOrNull()?.emailAddress.orEmpty()
+                    val accounts = ZohoMailPluginApi.listAccounts()
+                    connectionHealthy = accounts.isNotEmpty()
+                    accounts.firstOrNull()?.emailAddress.orEmpty()
                 } else {
+                    connectionHealthy = false
                     ""
                 }
                 statusMessage = when {
@@ -85,9 +90,12 @@ fun ZohoMailPluginMenuScreen(
                         "Zoho Mail is connected, but some permissions are missing. Reauthorize to enable every mail action."
                     !result.permissionsComplete ->
                         "Zoho Mail permission status could not be fully verified. Reauthorize before using mail actions."
+                    !connectionHealthy ->
+                        "Zoho authorization is saved, but mailbox access could not be verified. Refresh or reauthorize."
                     else -> "Connected to Zoho Mail with all required permissions."
                 }
             } catch (error: Exception) {
+                connectionHealthy = false
                 statusMessage = error.message
                     ?.takeIf { it.isNotBlank() }
                     ?: "Could not check Zoho Mail connection."
@@ -220,7 +228,7 @@ fun ZohoMailPluginMenuScreen(
             Text(
                 text = statusMessage,
                 color = when {
-                    connected && permissionsComplete && !reauthorizationRequired -> ZohoGreen
+                    connected && connectionHealthy && permissionsComplete && !reauthorizationRequired -> ZohoGreen
                     connected -> ZohoWarning
                     else -> ZohoMuted
                 },
