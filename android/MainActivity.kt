@@ -401,7 +401,7 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.PLUGINS -> PluginsMenuScreen(
                         onBack = { navigate(AppRoute.PROFILE) },
-                        onEmailClick = { navigate(AppRoute.EMAIL_PLUGIN) },
+                        onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
                         onZohoMailClick = { navigate(AppRoute.ZOHO_MAIL_PLUGIN) },
                     )
 
@@ -411,7 +411,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     AppRoute.GMAIL_PLUGIN -> GmailPluginMenuScreen(
-                        onBack = { navigate(AppRoute.EMAIL_PLUGIN) },
+                        onBack = { navigate(AppRoute.PLUGINS) },
                     )
 
                     AppRoute.ZOHO_MAIL_PLUGIN -> ZohoMailPluginMenuScreen(
