@@ -174,6 +174,23 @@ object GmailPluginApi {
         }
     }
 
+    suspend fun disconnect() = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val userId = requireUserId()
+        val authToken = requireAuthToken()
+        val connection = openConnection(
+            url = "$backendUrl/api/integrations/gmail/disconnect",
+            method = "POST",
+            authToken = authToken,
+        )
+        try {
+            execute(connection, JSONObject().put("user_id", userId).toString())
+            Tasks.await(gmailConnectionReference(userId).removeValue())
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun readProfileConnection(): GmailProfileConnection? = withContext(Dispatchers.IO) {
         val reference = gmailConnectionReference(requireUserId())
         val snapshot = Tasks.await(reference.get())
