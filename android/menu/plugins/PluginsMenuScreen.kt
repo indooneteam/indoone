@@ -58,6 +58,7 @@ fun PluginsMenuScreen(
     onBack: () -> Unit,
     onEmailClick: () -> Unit,
     onZohoMailClick: () -> Unit,
+    onGitHubClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var checking by remember { mutableStateOf(true) }
@@ -181,6 +182,52 @@ fun PluginsMenuScreen(
                 onReauthorize = onZohoMailClick,
                 onDisconnect = { pendingDisconnect = "zoho-mail" },
             )
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Color.White,
+                shadowElevation = 2.dp,
+                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Surface(
+                        modifier = Modifier.size(52.dp),
+                        shape = RoundedCornerShape(15.dp),
+                        color = PalePurple,
+                    ) {
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "GH",
+                                color = AppPurple,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f).padding(start = 12.dp, end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text("GitHub", color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Repositories, assigned issues and pull requests",
+                            color = Muted,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                        )
+                    }
+                    TextButton(onClick = onGitHubClick) {
+                        Text("Open", color = AppPurple, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
 
             if (checking) {
                 Row(

@@ -70,6 +70,7 @@ import com.indoone.menu.memory.MemoryMenuScreen
 import com.indoone.menu.plugins.PluginsMenuScreen
 import com.indoone.menu.plugins.email.EmailPluginMenuScreen
 import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
+import com.indoone.menu.plugins.github.GitHubPluginMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.menu.chathistory.ChatHistoryMenuScreen
 import com.indoone.menu.dataprivacy.DataPrivacyMenuScreen
@@ -106,6 +107,19 @@ fun MenuDrawer(
     var showEmailPlugin by remember { mutableStateOf(false) }
     var showGmailPlugin by remember { mutableStateOf(false) }
     var showZohoMailPlugin by remember { mutableStateOf(false) }
+    var showGitHubPlugin by remember { mutableStateOf(false) }
+
+    if (showGitHubPlugin) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            GitHubPluginMenuScreen(
+                onBack = {
+                    showGitHubPlugin = false
+                    showPlugins = true
+                },
+            )
+        }
+        return
+    }
 
     if (showZohoMailPlugin) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
@@ -158,6 +172,10 @@ fun MenuDrawer(
                 onZohoMailClick = {
                     showPlugins = false
                     showZohoMailPlugin = true
+                },
+                onGitHubClick = {
+                    showPlugins = false
+                    showGitHubPlugin = true
                 },
             )
         }
