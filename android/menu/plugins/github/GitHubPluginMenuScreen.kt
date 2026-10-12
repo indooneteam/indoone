@@ -3,6 +3,7 @@ package com.indoone.menu.plugins.github
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,10 +19,14 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,6 +62,13 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     var connecting by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("Checking GitHub connection…") }
     val repositories = remember { mutableStateListOf<GitHubRepository>() }
+    val issues = remember { mutableStateListOf<GitHubIssue>() }
+    val pullRequests = remember { mutableStateListOf<GitHubPullRequest>() }
+    var activeTab by remember { mutableStateOf(0) }
+    var browseLoading by remember { mutableStateOf(false) }
+    var browseMessage by remember { mutableStateOf("") }
+    var selectedRepository by remember { mutableStateOf("") }
+    var repositoryMenuExpanded by remember { mutableStateOf(false) }
 
     fun refreshConnection() {
         scope.launch {
@@ -66,6 +78,9 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                 if (status.connected && status.providerHealthy) {
                     repositories.clear()
                     repositories.addAll(GitHubPluginApi.listRepositories())
+                    if (selectedRepository.isBlank() || repositories.none { it.fullName == selectedRepository }) {
+                        selectedRepository = repositories.firstOrNull()?.fullName.orEmpty()
+                    }
                     message = "Live GitHub API check succeeded."
                 } else if (status.connected) {
                     repositories.clear()
@@ -105,6 +120,34 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
             connecting = false
             loading = false
             message = "Authorization is not confirmed yet. Finish GitHub approval in the browser, then press Refresh."
+        }
+    }
+
+    LaunchedEffect(activeTab, status.connected, status.providerHealthy, selectedRepository) {
+        if (!status.connected || !status.providerHealthy || activeTab == 0) return@LaunchedEffect
+        browseLoading = true
+        browseMessage = ""
+        try {
+            when (activeTab) {
+                1 -> {
+                    issues.clear()
+                    issues.addAll(GitHubPluginApi.listAssignedIssues())
+                }
+                2 -> {
+                    if (selectedRepository.isBlank()) {
+                        pullRequests.clear()
+                        browseMessage = "Connect an account with at least one accessible public repository first."
+                    } else {
+                        pullRequests.clear()
+                        pullRequests.addAll(GitHubPluginApi.listPullRequests(selectedRepository))
+                    }
+                }
+            }
+        } catch (error: Exception) {
+            browseMessage = error.message?.takeIf { it.isNotBlank() }
+                ?: "Could not load GitHub data. Try refreshing."
+        } finally {
+            browseLoading = false
         }
     }
 
@@ -192,31 +235,139 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
             }
 
             if (status.connected && status.providerHealthy) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Repositories", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                        Text("Most recently updated · first 10", color = GithubMuted, fontSize = 11.sp)
+                TabRow(selectedTabIndex = activeTab) {
+                    Tab(selected = activeTab == 0, onClick = { activeTab = 0 }, text = { Text("Repositories") })
+                    Tab(selected = activeTab == 1, onClick = { activeTab = 1 }, text = { Text("Assigned issues") })
+                    Tab(selected = activeTab == 2, onClick = { activeTab = 2 }, text = { Text("Pull requests") })
+                }
+                when (activeTab) {
+                    0 -> {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Repositories", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Recently updated · first 10", color = GithubMuted, fontSize = 11.sp)
+                            }
+                            Text(repositories.size.toString(), color = GithubPurple, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (repositories.isEmpty() && !loading) {
+                            Text("No repositories were returned for this account.", color = GithubMuted, fontSize = 12.sp)
+                        }
+                        repositories.take(10).forEach { repository ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    if (repository.htmlUrl.isNotBlank()) {
+                                        runCatching {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(repository.htmlUrl)))
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
+                                    Text(repository.fullName, color = GithubInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    val visibility = if (repository.isPrivate) "Private" else "Public"
+                                    val branchLabel = repository.defaultBranch.takeIf { it.isNotBlank() }?.let { "Default: $it" }.orEmpty()
+                                    Text(
+                                        text = listOf(visibility, branchLabel).filter { it.isNotBlank() }.joinToString(" · "),
+                                        color = GithubMuted, fontSize = 11.sp,
+                                    )
+                                }
+                            }
+                        }
                     }
-                    Text(repositories.size.toString(), color = GithubPurple, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                }
-                if (repositories.isEmpty() && !loading) {
-                    Text("No repositories were returned for this account.", color = GithubMuted, fontSize = 12.sp)
-                }
-                repositories.take(10).forEach { repository ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFECE7F8)),
-                    ) {
-                        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
-                            Text(repository.fullName, color = GithubInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            val visibility = if (repository.isPrivate) "Private" else "Public"
-                            val branchLabel = repository.defaultBranch.takeIf { it.isNotBlank() }?.let { "Default: $it" }.orEmpty()
-                            Text(
-                                text = listOf(visibility, branchLabel).filter { it.isNotBlank() }.joinToString(" · "),
-                                color = GithubMuted, fontSize = 11.sp,
-                            )
+                    1 -> {
+                        Text("Open issues assigned to your GitHub account", color = GithubMuted, fontSize = 12.sp)
+                        if (browseLoading) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = GithubPurple, strokeWidth = 2.dp)
+                                Text("Loading assigned issues…", color = GithubMuted, fontSize = 12.sp)
+                            }
+                        } else if (browseMessage.isNotBlank()) {
+                            Text(browseMessage, color = GithubMuted, fontSize = 12.sp)
+                        } else if (issues.isEmpty()) {
+                            Text("No open assigned issues were returned.", color = GithubMuted, fontSize = 12.sp)
+                        }
+                        issues.take(10).forEach { issue ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    if (issue.htmlUrl.isNotBlank()) {
+                                        runCatching {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(issue.htmlUrl)))
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("#${issue.number} · ${issue.title}", color = GithubInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        listOf(issue.state, issue.labels.joinToString(", ")).filter { it.isNotBlank() }.joinToString(" · "),
+                                        color = GithubMuted, fontSize = 11.sp,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Pull requests", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Open pull requests in the selected repository", color = GithubMuted, fontSize = 11.sp)
+                            }
+                            TextButton(onClick = { repositoryMenuExpanded = true }, enabled = repositories.isNotEmpty()) {
+                                Text("Choose repo")
+                            }
+                            DropdownMenu(
+                                expanded = repositoryMenuExpanded,
+                                onDismissRequest = { repositoryMenuExpanded = false },
+                            ) {
+                                repositories.forEach { repository ->
+                                    DropdownMenuItem(
+                                        text = { Text(repository.fullName) },
+                                        onClick = {
+                                            selectedRepository = repository.fullName
+                                            repositoryMenuExpanded = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        Text(selectedRepository.ifBlank { "No repository selected" }, color = GithubPurple, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        if (browseLoading) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = GithubPurple, strokeWidth = 2.dp)
+                                Text("Loading pull requests…", color = GithubMuted, fontSize = 12.sp)
+                            }
+                        } else if (browseMessage.isNotBlank()) {
+                            Text(browseMessage, color = GithubMuted, fontSize = 12.sp)
+                        } else if (pullRequests.isEmpty()) {
+                            Text("No open pull requests were returned for this repository.", color = GithubMuted, fontSize = 12.sp)
+                        }
+                        pullRequests.take(10).forEach { pullRequest ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    if (pullRequest.htmlUrl.isNotBlank()) {
+                                        runCatching {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pullRequest.htmlUrl)))
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("#${pullRequest.number} · ${pullRequest.title}", color = GithubInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        if (pullRequest.draft) "Draft · ${pullRequest.state}" else pullRequest.state,
+                                        color = GithubMuted, fontSize = 11.sp,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
