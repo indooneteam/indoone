@@ -169,6 +169,10 @@ fun MenuDrawer(
                     showPlugins = false
                     showEmailPlugin = true
                 },
+                onGitHubClick = {
+                    showPlugins = false
+                    showGitHubPlugin = true
+                },
             )
         }
         return

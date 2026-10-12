@@ -404,6 +404,7 @@ class MainActivity : ComponentActivity() {
                     AppRoute.PLUGINS -> PluginsMenuScreen(
                         onBack = { navigate(AppRoute.PROFILE) },
                         onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
+                        onGitHubClick = { navigate(AppRoute.GITHUB_PLUGIN) },
                     )
 
                     AppRoute.EMAIL_PLUGIN -> EmailPluginMenuScreen(
