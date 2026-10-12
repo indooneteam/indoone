@@ -31,7 +31,7 @@ android {
         targetSdk 35
 
         def channel = System.getenv('GITHUB_REF_NAME') == 'develop' ? 'develop' : 'main'
-        def backendUrl = System.getenv('INDOONE_BACKEND_URL') ?: 'https://indoone-backend.onrender.com'
+        def backendUrl = System.getenv('INDOONE_BACKEND_URL') ?: 'https://52.62.244.79'
         buildConfigField 'String', 'INDOONE_CHANNEL', "\"${channel}\""
         buildConfigField 'String', 'INDOONE_BACKEND_URL', "\"${backendUrl}\""
     }

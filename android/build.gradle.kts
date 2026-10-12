@@ -105,7 +105,7 @@ android {
             "terminal" -> "terminal"
             else -> "main"
         }
-        val defaultBackendUrl = if (channel == "terminal") "http://127.0.0.1:8000" else "https://indoone-backend.onrender.com"
+        val defaultBackendUrl = "https://52.62.244.79"
         val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: defaultBackendUrl
         buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")

@@ -144,6 +144,7 @@ class AssistantClient(
         val backend = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
 
         if (BuildConfig.INDOONE_CHANNEL == "terminal" &&
+            backend != "https://52.62.244.79" &&
             backend != "http://52.62.244.79:8000" &&
             backend != "http://127.0.0.1:8000"
         ) {
