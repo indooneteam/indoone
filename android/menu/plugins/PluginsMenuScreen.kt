@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,15 +63,16 @@ private val ConnectedGreen = Color(0xFF218653)
 fun PluginsMenuScreen(
     onBack: () -> Unit,
     onEmailClick: () -> Unit,
-    onZohoMailClick: () -> Unit,
-    onGitHubClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var checking by remember { mutableStateOf(true) }
     var gmailConnected by remember { mutableStateOf<Boolean?>(null) }
     var gmailAddress by remember { mutableStateOf("") }
     var zohoConnected by remember { mutableStateOf<Boolean?>(null) }
     var zohoAddress by remember { mutableStateOf("") }
+    var zohoUpdatedAt by remember { mutableStateOf<String?>(null) }
+    var zohoAuthorizing by remember { mutableStateOf(false) }
     var githubStatus by remember { mutableStateOf<GitHubConnectionStatus?>(null) }
     var githubBusy by remember { mutableStateOf(false) }
     var githubStatusMessage by remember { mutableStateOf("Checking GitHub connection…") }
@@ -93,6 +95,7 @@ fun PluginsMenuScreen(
         runCatching { ZohoMailPluginApi.getConnectionStatus() }
             .onSuccess { result ->
                 zohoConnected = result.connected
+                zohoUpdatedAt = result.updatedAt
                 if (result.connected) {
                     runCatching { ZohoMailPluginApi.listAccounts().firstOrNull()?.emailAddress.orEmpty() }
                         .onSuccess { zohoAddress = it }
@@ -122,6 +125,56 @@ fun PluginsMenuScreen(
                 githubStatusMessage = "Could not check GitHub connection. You can retry with +."
             }
         checking = false
+    }
+
+    fun startZohoAuthorization() {
+        if (checking || zohoAuthorizing || disconnectingProvider == "zoho-mail") return
+        scope.launch {
+            val wasConnected = zohoConnected == true
+            val previousUpdatedAt = zohoUpdatedAt
+            zohoAuthorizing = true
+            statusMessage = if (wasConnected) {
+                "Opening Zoho Mail reauthorization…"
+            } else {
+                "Opening Zoho Mail authorization…"
+            }
+            try {
+                val authorizationUrl = ZohoMailPluginApi.createAuthorizationUrl()
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(authorizationUrl)))
+                statusMessage = "Approve Indoone in Zoho Mail. Waiting for connection verification…"
+                var confirmed = false
+                var latestConnected = false
+                for (attempt in 0 until 60) {
+                    delay(2_000L)
+                    val latest = runCatching { ZohoMailPluginApi.getConnectionStatus() }.getOrNull() ?: continue
+                    zohoConnected = latest.connected
+                    zohoUpdatedAt = latest.updatedAt
+                    latestConnected = latest.connected
+                    val authorizationChanged = !wasConnected ||
+                        (latest.updatedAt != null && latest.updatedAt != previousUpdatedAt)
+                    if (latest.connected && latest.permissionsComplete &&
+                        !latest.reauthorizationRequired && authorizationChanged
+                    ) {
+                        val accounts = runCatching { ZohoMailPluginApi.listAccounts() }.getOrNull().orEmpty()
+                        if (accounts.isNotEmpty()) {
+                            zohoAddress = accounts.firstOrNull()?.emailAddress.orEmpty()
+                            confirmed = true
+                            break
+                        }
+                    }
+                }
+                statusMessage = when {
+                    confirmed -> "Zoho Mail connected and verified."
+                    latestConnected -> "Zoho Mail is connected, but mailbox access needs verification. Reauthorize to restore access."
+                    else -> "Zoho Mail authorization was not confirmed. Finish approval in the browser, then tap + to retry."
+                }
+            } catch (error: Exception) {
+                statusMessage = error.message?.takeIf { it.isNotBlank() }
+                    ?: "Could not start Zoho Mail authorization. Please retry."
+            } finally {
+                zohoAuthorizing = false
+            }
+        }
     }
 
     fun startGitHubAuthorization() {
@@ -183,6 +236,7 @@ fun PluginsMenuScreen(
                     "zoho-mail" -> {
                         ZohoMailPluginApi.disconnect()
                         zohoConnected = false
+                        zohoUpdatedAt = null
                         zohoAddress = ""
                     }
                     "github" -> {
@@ -191,7 +245,11 @@ fun PluginsMenuScreen(
                         githubStatusMessage = "GitHub disconnected."
                     }
                 }
-                statusMessage = if (provider == "email") "Email disconnected." else "Zoho Mail disconnected."
+                statusMessage = when (provider) {
+                    "email" -> "Email disconnected."
+                    "zoho-mail" -> "Zoho Mail disconnected."
+                    else -> "GitHub disconnected."
+                }
             } catch (error: Exception) {
                 statusMessage = error.message
                     ?.takeIf { it.isNotBlank() }
@@ -248,9 +306,9 @@ fun PluginsMenuScreen(
                 accountAddress = zohoAddress,
                 connected = zohoConnected,
                 isZoho = true,
-                busy = checking || disconnectingProvider == "zoho-mail",
-                onAdd = onZohoMailClick,
-                onReauthorize = onZohoMailClick,
+                busy = checking || zohoAuthorizing || disconnectingProvider == "zoho-mail",
+                onAdd = { startZohoAuthorization() },
+                onReauthorize = { startZohoAuthorization() },
                 onDisconnect = { pendingDisconnect = "zoho-mail" },
             )
 
