@@ -169,14 +169,6 @@ fun MenuDrawer(
                     showPlugins = false
                     showEmailPlugin = true
                 },
-                onZohoMailClick = {
-                    showPlugins = false
-                    showZohoMailPlugin = true
-                },
-                onGitHubClick = {
-                    showPlugins = false
-                    showGitHubPlugin = true
-                },
             )
         }
         return
