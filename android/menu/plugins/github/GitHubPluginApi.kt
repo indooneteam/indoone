@@ -339,6 +339,27 @@ object GitHubPluginApi {
         )
     }
 
+    suspend fun suggestRepositoryFileEdit(
+        repository: String,
+        path: String,
+        instruction: String,
+        currentContent: String,
+    ): String = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/code-edit-suggestion",
+            JSONObject().apply {
+                put("repository", repository.trim())
+                put("path", path.trim())
+                put("instruction", instruction.trim())
+                put("content", currentContent)
+            },
+        )
+        result.optString("content").takeIf { it.isNotBlank() }
+            ?: throw GitHubPluginException("Indoone AI returned no complete file proposal.")
+    }
+
     suspend fun searchRepositoryCode(
         repository: String,
         query: String,

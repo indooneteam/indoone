@@ -82,6 +82,8 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     var fileCommitMessage by remember { mutableStateOf("") }
     var showFileCommitConfirmation by remember { mutableStateOf(false) }
     var committingFile by remember { mutableStateOf(false) }
+    var fileEditInstruction by remember { mutableStateOf("") }
+    var suggestingFileEdit by remember { mutableStateOf(false) }
     var codeQuery by remember { mutableStateOf("") }
     val codeMatches = remember { mutableStateListOf<GitHubCodeSearchMatch>() }
     var codeSearchLoading by remember { mutableStateOf(false) }
@@ -512,6 +514,44 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                             color = GithubMuted, fontSize = 11.sp, lineHeight = 16.sp,
                                         )
                                         OutlinedTextField(
+                                            value = fileEditInstruction,
+                                            onValueChange = { fileEditInstruction = it },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            label = { Text("Describe the change for Indoone AI") },
+                                            minLines = 2,
+                                            maxLines = 4,
+                                        )
+                                        Button(
+                                            onClick = {
+                                                val instruction = fileEditInstruction.trim()
+                                                if (instruction.isBlank() || suggestingFileEdit || committingFile) return@Button
+                                                scope.launch {
+                                                    suggestingFileEdit = true
+                                                    browseMessage = ""
+                                                    try {
+                                                        val proposal = GitHubPluginApi.suggestRepositoryFileEdit(
+                                                            repository = selectedRepository,
+                                                            path = file.path,
+                                                            instruction = instruction,
+                                                            currentContent = editedFileContent,
+                                                        )
+                                                        editedFileContent = proposal
+                                                        fileCommitMessage = "AI edit: ${instruction.take(140)}"
+                                                        browseMessage = "AI proposal ready. Review the complete file before committing."
+                                                    } catch (error: Exception) {
+                                                        browseMessage = error.message?.takeIf { it.isNotBlank() }
+                                                            ?: "Indoone AI could not prepare a file proposal."
+                                                    } finally {
+                                                        suggestingFileEdit = false
+                                                    }
+                                                }
+                                            },
+                                            enabled = !suggestingFileEdit && !committingFile && fileEditInstruction.isNotBlank(),
+                                            colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
+                                        ) {
+                                            Text(if (suggestingFileEdit) "Preparing proposal…" else "Ask Indoone AI")
+                                        }
+                                        OutlinedTextField(
                                             value = editedFileContent,
                                             onValueChange = { editedFileContent = it },
                                             modifier = Modifier.fillMaxWidth(),
@@ -541,6 +581,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                     editingFile = false
                                                     editedFileContent = file.content
                                                     fileCommitMessage = ""
+                                                    fileEditInstruction = ""
                                                 },
                                                 enabled = !committingFile,
                                             ) { Text("Cancel edit", color = GithubPurple) }
@@ -558,6 +599,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                 onClick = {
                                                     editedFileContent = file.content
                                                     fileCommitMessage = "Update ${file.path}"
+                                                    fileEditInstruction = ""
                                                     editingFile = true
                                                 },
                                                 enabled = !committingFile,
