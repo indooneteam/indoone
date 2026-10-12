@@ -529,8 +529,8 @@ private fun MailProviderRow(
                 }
             }
         }
-
-
+    }
+}
 
 @Composable
 private fun GitHubProviderRow(
@@ -666,8 +666,5 @@ private fun GitHubProviderRow(
                 }
             }
         }
-    }
-}
-
     }
 }
