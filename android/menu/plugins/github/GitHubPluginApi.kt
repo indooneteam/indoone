@@ -44,6 +44,29 @@ data class GitHubPullRequest(
     val draft: Boolean,
 )
 
+data class GitHubRepositoryEntry(
+    val name: String,
+    val path: String,
+    val type: String,
+    val size: Long,
+    val htmlUrl: String,
+)
+
+data class GitHubRepositoryFileContent(
+    val path: String,
+    val sha: String,
+    val htmlUrl: String,
+    val content: String,
+    val truncated: Boolean,
+)
+
+data class GitHubCodeSearchMatch(
+    val name: String,
+    val path: String,
+    val htmlUrl: String,
+    val snippets: List<String>,
+)
+
 object GitHubPluginApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 20_000
@@ -198,6 +221,103 @@ object GitHubPluginApi {
                         state = item.optString("state").trim(),
                         htmlUrl = item.optString("html_url").trim(),
                         draft = item.optBoolean("draft", false),
+                    ),
+                )
+            }
+        }
+    }
+
+    suspend fun listRepositoryContents(
+        repository: String,
+        path: String = "",
+        ref: String = "",
+    ): List<GitHubRepositoryEntry> = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/contents",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("path", path.trim())
+                put("ref", ref.trim())
+            },
+        )
+        val items = result.optJSONArray("contents") ?: JSONArray()
+        buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                add(
+                    GitHubRepositoryEntry(
+                        name = item.optString("name").trim(),
+                        path = item.optString("path").trim(),
+                        type = item.optString("type").trim(),
+                        size = item.optLong("size", 0L).coerceAtLeast(0L),
+                        htmlUrl = item.optString("html_url").trim(),
+                    ),
+                )
+            }
+        }
+    }
+
+    suspend fun readRepositoryFile(
+        repository: String,
+        path: String,
+        ref: String = "",
+    ): GitHubRepositoryFileContent = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/read-file",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("path", path.trim())
+                put("ref", ref.trim())
+            },
+        )
+        GitHubRepositoryFileContent(
+            path = result.optString("path").trim(),
+            sha = result.optString("sha").trim(),
+            htmlUrl = result.optString("html_url").trim(),
+            content = result.optString("content"),
+            truncated = result.optBoolean("truncated", false),
+        )
+    }
+
+    suspend fun searchRepositoryCode(
+        repository: String,
+        query: String,
+        perPage: Int = 10,
+    ): List<GitHubCodeSearchMatch> = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/search-code",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("query", query.trim())
+                put("per_page", perPage.coerceIn(1, 30))
+            },
+        )
+        val items = result.optJSONArray("results") ?: JSONArray()
+        buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                val snippetsJson = item.optJSONArray("snippets") ?: JSONArray()
+                val snippets = buildList {
+                    for (snippetIndex in 0 until snippetsJson.length()) {
+                        val snippet = snippetsJson.optString(snippetIndex)
+                        if (snippet.isNotBlank()) add(snippet)
+                    }
+                }
+                add(
+                    GitHubCodeSearchMatch(
+                        name = item.optString("name").trim(),
+                        path = item.optString("path").trim(),
+                        htmlUrl = item.optString("html_url").trim(),
+                        snippets = snippets,
                     ),
                 )
             }

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -24,6 +26,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -41,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +73,13 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     var browseMessage by remember { mutableStateOf("") }
     var selectedRepository by remember { mutableStateOf("") }
     var repositoryMenuExpanded by remember { mutableStateOf(false) }
+    val directoryContents = remember { mutableStateListOf<GitHubRepositoryEntry>() }
+    var currentPath by remember { mutableStateOf("") }
+    var selectedFileContent by remember { mutableStateOf<GitHubRepositoryFileContent?>(null) }
+    var codeQuery by remember { mutableStateOf("") }
+    val codeMatches = remember { mutableStateListOf<GitHubCodeSearchMatch>() }
+    var codeSearchLoading by remember { mutableStateOf(false) }
+    var codeSearchMessage by remember { mutableStateOf("") }
 
     fun refreshConnection() {
         scope.launch {
@@ -123,7 +134,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
         }
     }
 
-    LaunchedEffect(activeTab, status.connected, status.providerHealthy, selectedRepository) {
+    LaunchedEffect(activeTab, status.connected, status.providerHealthy, selectedRepository, currentPath) {
         if (!status.connected || !status.providerHealthy || activeTab == 0) return@LaunchedEffect
         browseLoading = true
         browseMessage = ""
@@ -142,6 +153,18 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                         pullRequests.addAll(GitHubPluginApi.listPullRequests(selectedRepository))
                     }
                 }
+                3 -> {
+                    if (selectedRepository.isBlank()) {
+                        directoryContents.clear()
+                        browseMessage = "Choose a repository before browsing files."
+                    } else {
+                        directoryContents.clear()
+                        directoryContents.addAll(
+                            GitHubPluginApi.listRepositoryContents(selectedRepository, currentPath),
+                        )
+                        selectedFileContent = null
+                    }
+                }
             }
         } catch (error: Exception) {
             browseMessage = error.message?.takeIf { it.isNotBlank() }
@@ -153,7 +176,10 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -239,6 +265,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                     Tab(selected = activeTab == 0, onClick = { activeTab = 0 }, text = { Text("Repositories") })
                     Tab(selected = activeTab == 1, onClick = { activeTab = 1 }, text = { Text("Assigned issues") })
                     Tab(selected = activeTab == 2, onClick = { activeTab = 2 }, text = { Text("Pull requests") })
+                    Tab(selected = activeTab == 3, onClick = { activeTab = 3 }, text = { Text("Files & code") })
                 }
                 when (activeTab) {
                     0 -> {
@@ -312,7 +339,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                             }
                         }
                     }
-                    else -> {
+                    2 -> {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Pull requests", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
@@ -370,10 +397,165 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                             }
                         }
                     }
+                    else -> {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Files & code", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Browse folders, read source files, and search code", color = GithubMuted, fontSize = 11.sp)
+                            }
+                            TextButton(onClick = { repositoryMenuExpanded = true }, enabled = repositories.isNotEmpty()) {
+                                Text("Choose repo")
+                            }
+                            DropdownMenu(
+                                expanded = repositoryMenuExpanded,
+                                onDismissRequest = { repositoryMenuExpanded = false },
+                            ) {
+                                repositories.forEach { repository ->
+                                    DropdownMenuItem(
+                                        text = { Text(repository.fullName) },
+                                        onClick = {
+                                            selectedRepository = repository.fullName
+                                            currentPath = ""
+                                            selectedFileContent = null
+                                            repositoryMenuExpanded = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        Text(selectedRepository.ifBlank { "No repository selected" }, color = GithubPurple, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedButton(
+                                onClick = {
+                                    currentPath = currentPath.substringBeforeLast("/", "")
+                                    selectedFileContent = null
+                                },
+                                enabled = currentPath.isNotBlank() && !browseLoading,
+                            ) { Text("Up one folder") }
+                            Text(currentPath.ifBlank { "/" }, color = GithubMuted, fontSize = 12.sp)
+                        }
+                        if (browseLoading) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), color = GithubPurple, strokeWidth = 2.dp)
+                                Text("Loading repository files…", color = GithubMuted, fontSize = 12.sp)
+                            }
+                        } else if (browseMessage.isNotBlank()) {
+                            Text(browseMessage, color = GithubMuted, fontSize = 12.sp)
+                        } else if (directoryContents.isEmpty() && selectedFileContent == null) {
+                            Text("This folder is empty, or GitHub returned no entries.", color = GithubMuted, fontSize = 12.sp)
+                        }
+                        directoryContents.take(100).forEach { entry ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    if (entry.type == "dir") {
+                                        currentPath = entry.path
+                                        selectedFileContent = null
+                                    } else if (entry.type == "file") {
+                                        scope.launch {
+                                            browseMessage = ""
+                                            browseLoading = true
+                                            try {
+                                                selectedFileContent = GitHubPluginApi.readRepositoryFile(selectedRepository, entry.path)
+                                            } catch (error: Exception) {
+                                                browseMessage = error.message?.takeIf { it.isNotBlank() }
+                                                    ?: "Could not read this file."
+                                            } finally {
+                                                browseLoading = false
+                                            }
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    Text(if (entry.type == "dir") "📁" else "📄", fontSize = 17.sp)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(entry.name, color = GithubInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text(if (entry.type == "dir") "Folder" else "${entry.size} bytes", color = GithubMuted, fontSize = 11.sp)
+                                    }
+                                }
+                            }
+                        }
+                        selectedFileContent?.let { file ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFFF8F7FB),
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(file.path, color = GithubPurple, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(file.content, color = GithubInk, fontSize = 11.sp, lineHeight = 15.sp, fontFamily = FontFamily.Monospace)
+                                    if (file.truncated) {
+                                        Text("File output is truncated by the backend safety limit.", color = GithubMuted, fontSize = 11.sp)
+                                    }
+                                }
+                            }
+                        }
+                        Text("Search this repository's code", color = GithubInk, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        OutlinedTextField(
+                            value = codeQuery,
+                            onValueChange = { codeQuery = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Function name or text") },
+                            singleLine = true,
+                        )
+                        Button(
+                            onClick = {
+                                if (selectedRepository.isBlank() || codeQuery.isBlank() || codeSearchLoading) return@Button
+                                scope.launch {
+                                    codeSearchLoading = true
+                                    codeSearchMessage = ""
+                                    codeMatches.clear()
+                                    try {
+                                        codeMatches.addAll(GitHubPluginApi.searchRepositoryCode(selectedRepository, codeQuery))
+                                        if (codeMatches.isEmpty()) codeSearchMessage = "No matching code was found."
+                                    } catch (error: Exception) {
+                                        codeSearchMessage = error.message?.takeIf { it.isNotBlank() }
+                                            ?: "Code search failed."
+                                    } finally {
+                                        codeSearchLoading = false
+                                    }
+                                }
+                            },
+                            enabled = selectedRepository.isNotBlank() && codeQuery.isNotBlank() && !codeSearchLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
+                        ) {
+                            Text(if (codeSearchLoading) "Searching…" else "Search code")
+                        }
+                        if (codeSearchMessage.isNotBlank()) {
+                            Text(codeSearchMessage, color = GithubMuted, fontSize = 12.sp)
+                        }
+                        codeMatches.take(20).forEach { match ->
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    if (match.htmlUrl.isNotBlank()) {
+                                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(match.htmlUrl))) }
+                                    }
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    Text(match.path, color = GithubInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    match.snippets.take(2).forEach { snippet ->
+                                        Text(snippet, color = GithubMuted, fontSize = 11.sp, fontFamily = FontFamily.Monospace, maxLines = 4)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.size(12.dp))
             Text(
                 "For least privilege, this OAuth setup requests public-repository access. Private-repository access needs a separately configured GitHub App with granular permissions.",
                 color = GithubMuted, fontSize = 11.sp, lineHeight = 16.sp,
