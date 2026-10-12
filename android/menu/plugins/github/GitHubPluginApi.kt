@@ -179,8 +179,6 @@ object GitHubPluginApi {
         buildList {
             for (index in 0 until items.length()) {
                 val item = items.optJSONObject(index) ?: continue
-                val head = item.optJSONObject("head")
-                val base = item.optJSONObject("base")
                 add(
                     GitHubPullRequest(
                         number = item.optInt("number"),
