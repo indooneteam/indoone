@@ -1,10 +1,10 @@
-package com.indoone.home
+package com.indoone.home.message
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
-import com.indoone.menu.data.CloudChatRepository
+import com.indoone.home.message.CloudChatRepository
 
 class ChatCleanupWorker(
     appContext: Context,

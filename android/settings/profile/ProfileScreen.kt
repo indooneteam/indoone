@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.indoone.menu.plugins.email.gmail.GmailPluginApi
 import com.indoone.settings.SettingsScreen
 
 private fun profileIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
@@ -73,6 +75,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onMobileClick: () -> Unit,
     onEmailClick: () -> Unit,
+    onPluginsClick: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
     onConnectClick: () -> Unit,
@@ -86,6 +89,22 @@ fun ProfileScreen(
         mutableStateOf(state.email.takeUnless { it.contains("not available", true) }.orEmpty())
     }
     var password by remember(sheet) { mutableStateOf("") }
+    var gmailConnectionSummary by remember { mutableStateOf("Checking saved connections…") }
+
+    LaunchedEffect(Unit) {
+        runCatching { GmailPluginApi.readProfileConnection() }
+            .onSuccess { connection ->
+                gmailConnectionSummary = when {
+                    connection?.connected == true && connection.emailAddress.isNotBlank() ->
+                        "Gmail linked · ${connection.emailAddress}"
+                    connection?.connected == true -> "Gmail linked to this Indoone profile"
+                    else -> "Connect Gmail and manage your plugin connections"
+                }
+            }
+            .onFailure {
+                gmailConnectionSummary = "Could not load saved connections"
+            }
+    }
 
     Box(Modifier.fillMaxSize()) {
         SettingsScreen(
@@ -216,6 +235,12 @@ fun ProfileScreen(
                                 password = ""
                                 sheet = ProfileSheet.EMAIL
                             },
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        ProfileActionRow(
+                            title = "Connections & plugins",
+                            description = gmailConnectionSummary,
+                            onClick = onPluginsClick,
                         )
 
                         state.error?.let {

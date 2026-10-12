@@ -1,5 +1,7 @@
 package com.indoone.accounts.storage
 
+import android.util.Log
+
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -22,7 +24,21 @@ class AccountRepositoryProvider(
     }
 
     override suspend fun getAll(): List<AccountRecord> {
-        return activeRepository().getAll()
+        val activeCloud = cloud?.takeIf { FirebaseAuth.getInstance().currentUser != null }
+        if (activeCloud != null) {
+            return runCatching { activeCloud.getAll() }.getOrElse { error ->
+                // Keep app startup usable when Firebase Realtime Database rules or
+                // connectivity temporarily block the cloud read. The encrypted
+                // local repository remains the safe offline source of truth.
+                Log.w(
+                    "AccountRepositoryProvider",
+                    "Cloud account read unavailable; using encrypted local accounts.",
+                    error,
+                )
+                local.getAll()
+            }
+        }
+        return local.getAll()
     }
 
     override suspend fun remove(id: String) {

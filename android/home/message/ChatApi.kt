@@ -1,9 +1,10 @@
-package com.indoone.home
+package com.indoone.home.message
 
 import android.util.Base64
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -26,20 +27,43 @@ data class FileUploadResponse(
     val textPreview: String,
 )
 
+data class ChatMediaAttachment(
+    val filename: String,
+    val mimeType: String,
+    val bytes: ByteArray,
+)
+
 object ChatApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
-    private const val READ_TIMEOUT_MS = 120_000
+    // Local Qwen CPU inference can legitimately take a couple of minutes,
+// especially while the model is first loaded into memory. Keep the client
+// timeout comfortably above observed inference time so valid replies are not
+// reported as timeouts.
+private const val READ_TIMEOUT_MS = 300_000
     private const val WARMUP_TIMEOUT_MS = 15_000
     private const val WARMUP_RETRIES = 1
     private const val WARMUP_COOLDOWN_MS = 60_000L
     private const val CHAT_TRANSIENT_RETRIES = 1
     private const val CHAT_RETRY_DELAY_MS = 5_000L
     private const val MAX_UPLOAD_BYTES = 2_000_000
+    private const val MAX_CHAT_IMAGE_BYTES = 5_000_000
+    private const val MAX_CHAT_DOCUMENT_BYTES = 8_000_000
+    private const val MAX_CHAT_TOTAL_ATTACHMENT_BYTES = 20_000_000
+    private const val MAX_CHAT_ATTACHMENTS = 10
 
     @Volatile
     private var lastSuccessfulWarmupAt = 0L
 
-    fun sendMessage(message: String, conversationId: String? = null, fileId: String? = null): ChatResponse {
+    fun sendMessage(
+        message: String,
+        conversationId: String? = null,
+        fileId: String? = null,
+        attachmentFilename: String? = null,
+        attachmentMimeType: String? = null,
+        attachmentBytes: ByteArray? = null,
+        fileIds: List<String> = emptyList(),
+        mediaAttachments: List<ChatMediaAttachment> = emptyList(),
+    ): ChatResponse {
         val backendUrl = requireBackendUrl()
         val authToken = requireAuthToken()
 
@@ -48,10 +72,78 @@ object ChatApi {
         // application, so a single cooldown-controlled warm-up is safer.
         warmUpBackend(backendUrl)
 
+        val mediaCount = mediaAttachments.size + if (attachmentBytes != null) 1 else 0
+        val totalAttachmentCount = fileIds.size + (if (fileId != null) 1 else 0) + mediaCount
+        if (totalAttachmentCount > MAX_CHAT_ATTACHMENTS) {
+            throw IllegalArgumentException("You can attach up to 10 files per message.")
+        }
+        if (attachmentBytes != null && mediaAttachments.isNotEmpty()) {
+            throw IllegalArgumentException("Use one media attachment format per request.")
+        }
+
         val payload = JSONObject().apply {
             put("message", message)
             conversationId?.takeIf { it.isNotBlank() }?.let { put("conversation_id", it) }
             fileId?.takeIf { it.isNotBlank() }?.let { put("file_id", it) }
+            if (fileIds.isNotEmpty()) {
+                put("file_ids", JSONArray().apply { fileIds.forEach { put(it) } })
+            }
+            if (mediaAttachments.isNotEmpty()) {
+                var totalBytes = 0
+                val attachmentArray = JSONArray()
+                mediaAttachments.forEach { attachment ->
+                    if (attachment.bytes.isEmpty()) {
+                        throw IllegalArgumentException("The selected attachment is empty.")
+                    }
+                    val safeFilename = attachment.filename.trim().takeIf { it.isNotBlank() }
+                        ?: throw IllegalArgumentException("The selected attachment has no filename.")
+                    val mimeType = attachment.mimeType.trim().lowercase().takeIf { it.isNotBlank() }
+                        ?: throw IllegalArgumentException("The selected attachment type could not be detected.")
+                    val maxAttachmentBytes = if (mimeType.startsWith("image/")) {
+                        MAX_CHAT_IMAGE_BYTES
+                    } else {
+                        MAX_CHAT_DOCUMENT_BYTES
+                    }
+                    if (attachment.bytes.size > maxAttachmentBytes) {
+                        val limit = if (mimeType.startsWith("image/")) "5 MB" else "8 MB"
+                        throw IllegalArgumentException("This attachment exceeds the $limit limit.")
+                    }
+                    totalBytes += attachment.bytes.size
+                    if (totalBytes > MAX_CHAT_TOTAL_ATTACHMENT_BYTES) {
+                        throw IllegalArgumentException("Attachments together exceed the 20 MB upload limit.")
+                    }
+                    attachmentArray.put(JSONObject().apply {
+                        put("filename", safeFilename)
+                        put("mime_type", mimeType)
+                        put("content_base64", Base64.encodeToString(attachment.bytes, Base64.NO_WRAP))
+                    })
+                }
+                put("attachments", attachmentArray)
+            }
+            if (attachmentBytes != null) {
+                if (fileId != null || fileIds.isNotEmpty()) {
+                    throw IllegalArgumentException("Send either a text file or a media attachment, not both.")
+                }
+                if (attachmentBytes.isEmpty()) {
+                    throw IllegalArgumentException("The selected attachment is empty.")
+                }
+                val safeFilename = attachmentFilename?.trim()?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException("The selected attachment has no filename.")
+                val mimeType = attachmentMimeType?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException("The selected attachment type could not be detected.")
+                val maxAttachmentBytes = if (mimeType.startsWith("image/")) {
+                    MAX_CHAT_IMAGE_BYTES
+                } else {
+                    MAX_CHAT_DOCUMENT_BYTES
+                }
+                if (attachmentBytes.size > maxAttachmentBytes) {
+                    val limit = if (mimeType.startsWith("image/")) "5 MB" else "8 MB"
+                    throw IllegalArgumentException("This attachment exceeds the $limit limit.")
+                }
+                put("attachment_filename", safeFilename)
+                put("attachment_mime_type", mimeType)
+                put("attachment_base64", Base64.encodeToString(attachmentBytes, Base64.NO_WRAP))
+            }
         }.toString()
 
         var lastTransientError: ChatApiException? = null
@@ -125,6 +217,11 @@ object ChatApi {
     private fun requireBackendUrl(): String {
         val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
         if (backendUrl.isBlank()) throw ChatApiException("Indoone backend URL is not configured")
+        if (BuildConfig.INDOONE_CHANNEL == "terminal" &&
+            backendUrl != "https://52.62.244.79"
+        ) {
+            throw ChatApiException("Terminal build is configured for an unsupported backend")
+        }
         return backendUrl
     }
 

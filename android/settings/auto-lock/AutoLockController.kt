@@ -5,13 +5,10 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
-import android.view.MotionEvent
-import android.view.Window
-import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.Lifecycle
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.indoone.settings.applock.AppLockStore
@@ -24,50 +21,45 @@ class AutoLockController(private val context: Context) {
     private val autoLockStore = AutoLockStore(context)
     private val appLockStore = AppLockStore(context)
     private val biometricStore = BiometricUnlockStore(context)
-    private var lastActivity = SystemClock.elapsedRealtime()
     private var activity: ComponentActivity? = null
     private var dialog: Dialog? = null
-    private var checking = false
+    private var pendingBackgroundDurationMs: Long? = null
 
-    private val checker = object : Runnable {
-        override fun run() {
-            if (checking && shouldLock() && dialog == null) {
-                val idleMs = SystemClock.elapsedRealtime() - lastActivity
-                if (idleMs >= autoLockStore.minutes() * 60_000L) {
+    fun onResumed(activity: ComponentActivity, backgroundDurationMs: Long? = null) {
+        this.activity = activity
+        configureActivitySystemBars(activity)
+
+        val backgroundDuration = backgroundDurationMs ?: pendingBackgroundDurationMs
+        pendingBackgroundDurationMs = null
+        if (
+            backgroundDuration != null &&
+            shouldLock() &&
+            backgroundDuration >= autoLockStore.minutes() * 60_000L
+        ) {
+            handler.post {
+                if (
+                    this.activity === activity &&
+                    !activity.isFinishing &&
+                    (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 || !activity.isDestroyed) &&
+                    activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                ) {
                     showLock()
                 }
             }
-            handler.postDelayed(this, 1_000L)
         }
-    }
-
-    fun onResumed(activity: ComponentActivity) {
-        this.activity = activity
-        configureActivitySystemBars(activity)
-        lastActivity = SystemClock.elapsedRealtime().coerceAtMost(lastActivity)
-        if (!checking) {
-            checking = true
-            handler.removeCallbacks(checker)
-            handler.post(checker)
-        }
-        installActivityTouchWatcher(activity)
     }
 
     fun onPaused() {
-        checking = false
-        handler.removeCallbacks(checker)
+        // Activity pauses during normal in-app navigation and when another
+        // Indoone activity is displayed. Auto-Lock is based on app background time.
     }
 
     fun onDestroyed() {
-        checking = false
-        handler.removeCallbacks(checker)
+        handler.removeCallbacksAndMessages(null)
         dialog?.dismiss()
         dialog = null
         activity = null
-    }
-
-    fun touch() {
-        if (dialog == null) lastActivity = SystemClock.elapsedRealtime()
+        pendingBackgroundDurationMs = null
     }
 
     private fun shouldLock(): Boolean = appLockStore.isEnabled() || biometricStore.isEnabled()
@@ -83,23 +75,12 @@ class AutoLockController(private val context: Context) {
         }
     }
 
-    private fun installActivityTouchWatcher(activity: ComponentActivity) {
-        val decor = activity.window.decorView
-        if (decor.getTag(TAG_TOUCH_WATCHER) == true) return
-        decor.setTag(TAG_TOUCH_WATCHER, true)
-        decor.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) touch()
-            false
-        }
-    }
-
     private fun showLock() {
         val currentActivity = activity ?: return
         if (dialog != null || !shouldLock()) return
-        lastActivity = SystemClock.elapsedRealtime()
 
         val lockDialog = Dialog(currentActivity)
-        lockDialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        lockDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
         lockDialog.setCancelable(false)
         lockDialog.setCanceledOnTouchOutside(false)
         lockDialog.window?.let { dialogWindow ->
@@ -107,7 +88,7 @@ class AutoLockController(private val context: Context) {
             dialogWindow.navigationBarColor = Color.WHITE
         }
 
-        val root = FrameLayout(currentActivity)
+        val root = android.widget.FrameLayout(currentActivity)
         val compose = ComposeView(currentActivity).apply {
             setContent {
                 MaterialTheme {
@@ -135,13 +116,18 @@ class AutoLockController(private val context: Context) {
                 }
             }
         }
-        root.addView(compose, FrameLayout.LayoutParams(-1, -1))
+
+        root.addView(compose, android.widget.FrameLayout.LayoutParams(-1, -1))
         lockDialog.setContentView(root)
         lockDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        lockDialog.window?.setLayout(-1, -1)
         lockDialog.setOnDismissListener { dialog = null }
         dialog = lockDialog
-        lockDialog.show()
+        runCatching { lockDialog.show() }
+            .onFailure {
+                dialog = null
+                lockDialog.dismiss()
+                return
+            }
         lockDialog.window?.let { dialogWindow ->
             dialogWindow.statusBarColor = Color.WHITE
             dialogWindow.navigationBarColor = Color.WHITE
@@ -157,10 +143,6 @@ class AutoLockController(private val context: Context) {
     private fun dismissLock() {
         dialog?.dismiss()
         dialog = null
-        lastActivity = SystemClock.elapsedRealtime()
-    }
-
-    private companion object {
-        const val TAG_TOUCH_WATCHER = 0x1D001001
+        pendingBackgroundDurationMs = null
     }
 }

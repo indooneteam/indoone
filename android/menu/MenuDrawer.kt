@@ -1,10 +1,19 @@
 package com.indoone.menu
 
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.Path
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,14 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.GridView
@@ -64,6 +70,8 @@ import com.indoone.menu.memory.MemoryMenuScreen
 import com.indoone.menu.plugins.PluginsMenuScreen
 import com.indoone.menu.plugins.email.EmailPluginMenuScreen
 import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
+import com.indoone.menu.plugins.github.GitHubPluginMenuScreen
+import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.menu.chathistory.ChatHistoryMenuScreen
 import com.indoone.menu.dataprivacy.DataPrivacyMenuScreen
 import com.indoone.settings.applock.AppLockStore
@@ -98,6 +106,32 @@ fun MenuDrawer(
     var showPlugins by remember { mutableStateOf(false) }
     var showEmailPlugin by remember { mutableStateOf(false) }
     var showGmailPlugin by remember { mutableStateOf(false) }
+    var showZohoMailPlugin by remember { mutableStateOf(false) }
+    var showGitHubPlugin by remember { mutableStateOf(false) }
+
+    if (showGitHubPlugin) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            GitHubPluginMenuScreen(
+                onBack = {
+                    showGitHubPlugin = false
+                    showPlugins = true
+                },
+            )
+        }
+        return
+    }
+
+    if (showZohoMailPlugin) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+            ZohoMailPluginMenuScreen(
+                onBack = {
+                    showZohoMailPlugin = false
+                    showPlugins = true
+                },
+            )
+        }
+        return
+    }
 
     if (showGmailPlugin) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
@@ -134,6 +168,10 @@ fun MenuDrawer(
                 onEmailClick = {
                     showPlugins = false
                     showEmailPlugin = true
+                },
+                onGitHubClick = {
+                    showPlugins = false
+                    showGitHubPlugin = true
                 },
             )
         }
@@ -196,19 +234,64 @@ fun MenuDrawer(
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        Surface(modifier = Modifier.width(310.dp).fillMaxHeight(), color = Color.White, shadowElevation = 16.dp) {
-            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 25.dp)) {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Surface(
+            modifier = Modifier.width(320.dp).fillMaxHeight(),
+            color = Color(0xFFF7F3FC),
+            shadowElevation = 22.dp,
+            shape = RoundedCornerShape(topEnd = 26.dp, bottomEnd = 26.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFAF8FF),
+                                Color(0xFFF2ECFA),
+                                Color(0xFFF8F4FC),
+                            ),
+                        ),
+                    )
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 15.dp, vertical = 19.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 5.dp, end = 0.dp, top = 3.dp, bottom = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Keep Indoone's existing logo and wordmark unchanged; no avatar is added.
                     IndooneMenuLogo(modifier = Modifier.size(36.dp))
-                    Column(modifier = Modifier.padding(start = 9.dp)) {
-                        Text("Indoone", color = Color(0xFF5E2DD2), fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
-                        Text("Authenticator", color = Color(0xFF77717D), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Indoone",
+                        modifier = Modifier.padding(start = 9.dp).weight(1f),
+                        color = Color(0xFF263753),
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(38.dp)) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = "Close menu",
+                            tint = Color(0xFF59677D),
+                            modifier = Modifier.size(20.dp),
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(17.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 5.dp),
+                    color = Color(0xFFE8DDF4),
+                    thickness = 1.dp,
+                )
 
-                DrawerItem(Icons.Outlined.AddComment, "New Chat", null) {
+                DrawerItem(
+                    icon = Icons.Outlined.AddComment,
+                    title = "New Chat",
+                    trailing = null,
+                    highlighted = true,
+                ) {
                     context.startActivity(
                         Intent(context, MainActivity::class.java).apply {
                             putExtra("start_new_chat", true)
@@ -216,34 +299,44 @@ fun MenuDrawer(
                         },
                     )
                 }
+
+                DrawerSectionLabel("PERSONAL")
                 DrawerItem(Icons.Outlined.PersonOutline, "Profile", null) { showProfile = true }
                 DrawerItem(Icons.Outlined.Memory, "Memory", null) { showMemory = true }
-                DrawerItem(Icons.Outlined.Apps, "Plugins", null) { showPlugins = true }
+                DrawerItem(Icons.Outlined.Apps, "Plugins", null, showChevron = true) { showPlugins = true }
                 DrawerItem(Icons.Outlined.History, "Chat History", null) { showChatHistory = true }
                 DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
 
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp), color = Color(0xFFEEEAF2))
-
-                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onAccounts)
-                DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onFavorites)
+                DrawerSectionLabel("ACCOUNTS")
+                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onClick = onAccounts)
+                DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onClick = onFavorites)
                 DrawerItem(Icons.Outlined.DeleteOutline, "Trash", null) { showTrash = true }
 
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp), color = Color(0xFFEEEAF2))
-
+                DrawerSectionLabel("SECURITY & INFORMATION")
                 DrawerItem(Icons.Outlined.Security, "Security", null) { showSecurity = true }
                 DrawerItem(Icons.Outlined.Description, "Terms of Use", null) { showTerms = true }
                 DrawerItem(Icons.Outlined.Visibility, "Privacy Policy", null) { showPrivacy = true }
                 DrawerItem(Icons.Outlined.Info, "About Indoone", null) { showAbout = true }
                 DrawerItem(Icons.Outlined.Lock, "Lock App", null) {
                     if (AppLockStore(context).isEnabled()) {
-                        onDismiss(); context.startActivity(Intent(context, UnlockAppActivity::class.java))
+                        onDismiss()
+                        context.startActivity(Intent(context, UnlockAppActivity::class.java))
                     } else {
-                        onDismiss(); Toast.makeText(context, "App Lock is not enabled.", Toast.LENGTH_SHORT).show()
+                        onDismiss()
+                        Toast.makeText(context, "App Lock is not enabled.", Toast.LENGTH_SHORT).show()
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
             }
         }
-        Spacer(modifier = Modifier.weight(1f).fillMaxHeight().background(Color.Black.copy(alpha = 0.33f)).clickable(onClick = onDismiss))
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(Color(0xFF101827).copy(alpha = 0.30f))
+                .clickable(onClick = onDismiss),
+        )
     }
 }
 
@@ -252,25 +345,132 @@ private fun IndooneMenuLogo(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val scaleFactor = size.minDimension / 48f
         scale(scaleFactor) {
-            rotate(45f, pivot = androidx.compose.ui.geometry.Offset(24f, 24f)) {
+            rotate(
+                45f,
+                pivot = androidx.compose.ui.geometry.Offset(24f, 24f),
+            ) {
                 drawRoundRect(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(colors = listOf(Color(0xFFC15CFF), Color(0xFF7C3AED), Color(0xFF22C7FF)), start = androidx.compose.ui.geometry.Offset(11f, 11f), end = androidx.compose.ui.geometry.Offset(37f, 37f)),
-                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f), size = androidx.compose.ui.geometry.Size(26f, 26f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
+                    brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            androidx.compose.ui.graphics.Color(0xFFC15CFF),
+                            androidx.compose.ui.graphics.Color(0xFF7C3AED),
+                            androidx.compose.ui.graphics.Color(0xFF22C7FF),
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(11f, 11f),
+                        end = androidx.compose.ui.geometry.Offset(37f, 37f),
+                    ),
+                    topLeft = androidx.compose.ui.geometry.Offset(11f, 11f),
+                    size = androidx.compose.ui.geometry.Size(26f, 26f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(6f, 6f),
                 )
             }
-            val outer = Path().apply { moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f); lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close() }
-            drawPath(outer, color = Color(0xFF0A0A18))
-            val inner = Path().apply { moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f); lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close() }
-            drawPath(inner, color = Color(0xFF60A5FA))
+            val outer = androidx.compose.ui.graphics.Path().apply {
+                moveTo(24f, 14f); lineTo(27.2f, 20.8f); lineTo(34f, 24f); lineTo(27.2f, 27.2f)
+                lineTo(24f, 34f); lineTo(20.8f, 27.2f); lineTo(14f, 24f); lineTo(20.8f, 20.8f); close()
+            }
+            drawPath(outer, color = androidx.compose.ui.graphics.Color(0xFF0A0A18))
+            val inner = androidx.compose.ui.graphics.Path().apply {
+                moveTo(24f, 20.8f); lineTo(25.2f, 22.8f); lineTo(27.2f, 24f); lineTo(25.2f, 25.2f)
+                lineTo(24f, 27.2f); lineTo(22.8f, 25.2f); lineTo(20.8f, 24f); lineTo(22.8f, 22.8f); close()
+            }
+            drawPath(inner, color = androidx.compose.ui.graphics.Color(0xFF60A5FA))
         }
     }
 }
 
 @Composable
-private fun DrawerItem(icon: ImageVector, title: String, trailing: String?, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 12.dp).height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-        androidx.compose.material3.Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color(0xFF4A4650))
-        Text(title, modifier = Modifier.weight(1f).padding(start = 12.dp), color = Color(0xFF413C48), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        trailing?.let { Surface(color = Color(0xFFF0EBFA), shape = RoundedCornerShape(10.dp)) { Text(it, color = Color(0xFF7041CE), fontSize = 11.sp, modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)) } }
+private fun DrawerSectionLabel(label: String) {
+    Text(
+        text = label,
+        modifier = Modifier.padding(start = 9.dp, top = 15.dp, bottom = 5.dp),
+        color = Color(0xFF8592A8),
+        fontSize = 10.sp,
+        lineHeight = 13.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.0.sp,
+    )
+}
+
+@Composable
+private fun DrawerItem(
+    icon: ImageVector,
+    title: String,
+    trailing: String?,
+    highlighted: Boolean = false,
+    showChevron: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(15.dp)
+    val iconColor = if (highlighted) Color.White else Color(0xFF51627D)
+    val labelColor = if (highlighted) Color(0xFF6E35C8) else Color(0xFF34445F)
+    val rowBackground = if (highlighted) Color(0xFFEDE3FA) else Color.Transparent
+    val iconBackground = if (highlighted) {
+        Brush.linearGradient(listOf(Color(0xFF9A68E8), Color(0xFF6F35C5)))
+    } else {
+        Brush.linearGradient(listOf(Color.White, Color(0xFFF8F4FC)))
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .clip(shape)
+            .background(rowBackground)
+            .clickable(onClick = onClick)
+            .height(48.dp)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.Transparent,
+            shadowElevation = if (highlighted) 3.dp else 0.dp,
+        ) {
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(iconBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = iconColor,
+                )
+            }
+        }
+
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f).padding(start = 11.dp),
+            color = labelColor,
+            fontSize = 13.sp,
+            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.SemiBold,
+            lineHeight = 17.sp,
+        )
+
+        if (trailing != null) {
+            Surface(
+                color = Color(0xFFECE2F7),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    text = trailing,
+                    color = Color(0xFF6B3FA5),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                )
+            }
+        } else if (showChevron) {
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = "Open $title",
+                tint = Color(0xFF8B9AB0),
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
