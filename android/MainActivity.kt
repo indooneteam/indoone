@@ -1,11 +1,18 @@
 package com.indoone
 
+import android.Manifest
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -16,7 +23,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.indoone.assistant.AssistantService
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
@@ -43,14 +54,27 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordina
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
 import com.indoone.connect.ConnectScreen
+import com.indoone.connect.integrations.instagram.InstagramConnectScreen
+import com.indoone.connect.integrations.whatsapp.WhatsAppConnectScreen
 import com.indoone.home.HomeScreen
+import com.indoone.home.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
+import com.indoone.menu.plugins.PluginsMenuScreen
+import com.indoone.menu.plugins.email.EmailPluginMenuScreen
+import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
+import com.indoone.menu.plugins.github.GitHubPluginMenuScreen
+import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
+import com.indoone.notifications.NotificationPreferences
+import com.indoone.notifications.NotificationCenterScreen
+import com.indoone.notifications.NotificationRepository
+import com.indoone.notifications.NotificationSettingsScreen
 import com.indoone.menu.favorites.FavoritesScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
+import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
@@ -63,8 +87,15 @@ private enum class AppRoute {
     ACCOUNTS,
     LOBBY,
     CONNECT,
+    CONNECT_INSTAGRAM,
+    CONNECT_WHATSAPP,
     SETTINGS,
     PROFILE,
+    PLUGINS,
+    EMAIL_PLUGIN,
+    GMAIL_PLUGIN,
+    ZOHO_MAIL_PLUGIN,
+    GITHUB_PLUGIN,
     CHANGE_MOBILE,
     CHANGE_EMAIL,
     FAVORITES,
@@ -78,9 +109,36 @@ private enum class AppRoute {
     IMPORT_ACCOUNT_DETAILS,
     ACCOUNT_DETAILS,
     EDIT_ACCOUNT,
+    VIBE,
+    NOTIFICATIONS,
+    NOTIFICATION_CENTER,
 }
 
 class MainActivity : ComponentActivity() {
+    private var assistantMicPrompted = false
+
+    override fun onResume() {
+        super.onResume()
+
+        if (
+            !assistantMicPrompted &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO,
+            ) != PackageManager.PERMISSION_GRANTED &&
+            android.service.voice.VoiceInteractionService.isActiveService(
+                this,
+                ComponentName(this, AssistantService::class.java),
+            )
+        ) {
+            assistantMicPrompted = true
+            requestPermissions(
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                4102,
+            )
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configureSystemBarsDirectly()
@@ -101,11 +159,69 @@ class MainActivity : ComponentActivity() {
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
+                var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
+                var isCheckingUpdate by remember { mutableStateOf(false) }
+                var isDownloadingUpdate by remember { mutableStateOf(false) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
                 var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
+                val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
+                val notificationRepository = remember { NotificationRepository.getInstance(applicationContext) }
+                val unreadNotificationCount by notificationRepository.observeUnreadCount().collectAsState(initial = 0)
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission(),
+                ) { granted ->
+                    if (granted) notificationPreferences.markPermissionRequested()
+                }
+
+                fun checkForUpdates(showUpToDateMessage: Boolean) {
+                    if (isCheckingUpdate || isDownloadingUpdate) return
+                    isCheckingUpdate = true
+                    coroutineScope.launch {
+                        runCatching {
+                            AppUpdateManager.checkForUpdate(this@MainActivity)
+                        }.onSuccess { update ->
+                            availableUpdate = update
+                            if (update == null && showUpToDateMessage) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "You're up to date.",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }.onFailure { error ->
+                            if (showUpToDateMessage) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    error.message ?: "Could not check for updates.",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                        isCheckingUpdate = false
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    checkForUpdates(showUpToDateMessage = false)
+                }
+
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (granted) {
+                            notificationPreferences.markPermissionRequested()
+                        } else if (!notificationPreferences.wasPermissionRequested()) {
+                            notificationPreferences.markPermissionRequested()
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
 
                 fun navigate(target: AppRoute) {
                     menuOpen = false
@@ -166,6 +282,13 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         startNewChat = intent.getBooleanExtra("start_new_chat", false),
                         openConversationId = intent.getStringExtra("open_conversation_id"),
+                        onVibeClick = { navigate(AppRoute.VIBE) },
+                        hasUnreadNotifications = unreadNotificationCount > 0,
+                        onNotificationClick = { navigate(AppRoute.NOTIFICATION_CENTER) },
+                    )
+
+                    AppRoute.VIBE -> VibeScreen(
+                        onClose = { navigate(AppRoute.HOME) },
                     )
 
                     AppRoute.ACCOUNTS -> {
@@ -222,6 +345,16 @@ class MainActivity : ComponentActivity() {
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                        onWhatsAppClick = { navigate(AppRoute.CONNECT_WHATSAPP) },
+                        onInstagramClick = { navigate(AppRoute.CONNECT_INSTAGRAM) },
+                    )
+
+                    AppRoute.CONNECT_INSTAGRAM -> InstagramConnectScreen(
+                        onBack = { navigate(AppRoute.CONNECT) },
+                    )
+
+                    AppRoute.CONNECT_WHATSAPP -> WhatsAppConnectScreen(
+                        onBack = { navigate(AppRoute.CONNECT) },
                     )
 
                     AppRoute.SETTINGS -> SettingsScreen(
@@ -234,6 +367,17 @@ class MainActivity : ComponentActivity() {
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
                         onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                        onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
+                        onCheckForUpdates = { checkForUpdates(showUpToDateMessage = true) },
+                    )
+
+                    AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
+                        onBack = { navigate(AppRoute.SETTINGS) },
+                    )
+
+                    AppRoute.NOTIFICATION_CENTER -> NotificationCenterScreen(
+                        repository = notificationRepository,
+                        onBack = { navigate(AppRoute.HOME) },
                     )
 
                     AppRoute.PROFILE -> {
@@ -249,12 +393,36 @@ class MainActivity : ComponentActivity() {
                                 profileViewModel.clearFeedback()
                                 route = AppRoute.CHANGE_EMAIL
                             },
+                            onPluginsClick = { navigate(AppRoute.PLUGINS) },
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
+
+                    AppRoute.PLUGINS -> PluginsMenuScreen(
+                        onBack = { navigate(AppRoute.PROFILE) },
+                        onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
+                        onGitHubClick = { navigate(AppRoute.GITHUB_PLUGIN) },
+                    )
+
+                    AppRoute.EMAIL_PLUGIN -> EmailPluginMenuScreen(
+                        onBack = { navigate(AppRoute.PLUGINS) },
+                        onGmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
+                    )
+
+                    AppRoute.GMAIL_PLUGIN -> GmailPluginMenuScreen(
+                        onBack = { navigate(AppRoute.PLUGINS) },
+                    )
+
+                    AppRoute.ZOHO_MAIL_PLUGIN -> ZohoMailPluginMenuScreen(
+                        onBack = { navigate(AppRoute.PLUGINS) },
+                    )
+
+                    AppRoute.GITHUB_PLUGIN -> GitHubPluginMenuScreen(
+                        onBack = { navigate(AppRoute.PLUGINS) },
+                    )
 
                     AppRoute.CHANGE_MOBILE -> {
                         val state by profileViewModel.state.collectAsState()
@@ -558,6 +726,66 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                if (availableUpdate != null || isDownloadingUpdate) {
+                    val update = availableUpdate
+                    AlertDialog(
+                        onDismissRequest = {
+                            if (!isDownloadingUpdate) {
+                                availableUpdate = null
+                            }
+                        },
+                        title = {
+                            Text(
+                                if (isDownloadingUpdate) "Downloading update"
+                                else "New update available",
+                            )
+                        },
+                        text = {
+                            Text(
+                                if (isDownloadingUpdate) {
+                                    "Downloading the latest Indoone APK. Please wait."
+                                } else {
+                                    "A newer Indoone update is available."
+                                },
+                            )
+                        },
+                        confirmButton = {
+                            if (!isDownloadingUpdate && update != null) {
+                                TextButton(
+                                    onClick = {
+                                        isDownloadingUpdate = true
+                                        availableUpdate = null
+                                        coroutineScope.launch {
+                                            runCatching {
+                                                AppUpdateManager.downloadAndInstall(
+                                                    this@MainActivity,
+                                                    update,
+                                                )
+                                            }.onFailure { error ->
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    error.message ?: "Could not install the update.",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                            }
+                                            isDownloadingUpdate = false
+                                        }
+                                    },
+                                ) {
+                                    Text("Update")
+                                }
+                            }
+                        },
+                        dismissButton = {
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { availableUpdate = null }) {
+                                    Text("Later")
+                                }
+                            }
+                        },
+                    )
+                }
+
                 if (menuOpen) {
                     MenuDrawer(
                         accountCount = accountsViewModel.state.value.accounts.size,
@@ -579,8 +807,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun configureSystemBarsDirectly() {
-        window.statusBarColor = Color.WHITE
-        window.navigationBarColor = Color.WHITE
+        // Keep the system bars aligned with the app's light lavender-purple palette.
+        window.statusBarColor = Color.rgb(248, 244, 255)
+        window.navigationBarColor = Color.rgb(248, 244, 255)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = true

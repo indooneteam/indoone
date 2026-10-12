@@ -2,12 +2,14 @@ name: Android Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, terminal ]
   pull_request:
     branches: [ main ]
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,7 +24,7 @@ jobs:
         with:
           gradle-version: '9.6.0'
       - name: Prepare stable develop signing key
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal'
         shell: bash
         env:
           INDOONE_KEYSTORE_BASE64: ${{ secrets.INDOONE_KEYSTORE_BASE64 }}
@@ -31,13 +33,32 @@ jobs:
           test -n "$INDOONE_KEYSTORE_BASE64"
           printf '%s' "$INDOONE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/indoone-develop.keystore"
           test -s "$RUNNER_TEMP/indoone-develop.keystore"
+      - name: Print Android OAuth signing fingerprint
+        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal'
+        shell: bash
+        env:
+          INDOONE_KEYSTORE_PATH: ${{ runner.temp }}/indoone-develop.keystore
+          INDOONE_KEYSTORE_PASSWORD: ${{ secrets.INDOONE_KEYSTORE_PASSWORD }}
+          INDOONE_KEY_ALIAS: ${{ secrets.INDOONE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$INDOONE_KEYSTORE_PASSWORD"
+          test -n "$INDOONE_KEY_ALIAS"
+          echo "Android package: com.indoone.authenticator"
+          keytool -list -v \
+            -keystore "$INDOONE_KEYSTORE_PATH" \
+            -storepass "$INDOONE_KEYSTORE_PASSWORD" \
+            -alias "$INDOONE_KEY_ALIAS" \
+            | awk '/SHA1:/{print "Android signing SHA-1: " $2; found=1} END {if (!found) exit 1}'
       - name: Assemble debug APK
         shell: bash
         env:
-          INDOONE_KEYSTORE_PATH: ${{ github.ref == 'refs/heads/develop' && format('{0}/indoone-develop.keystore', runner.temp) || '' }}
-          INDOONE_KEYSTORE_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
-          INDOONE_KEY_ALIAS: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_ALIAS || '' }}
-          INDOONE_KEY_PASSWORD: ${{ github.ref == 'refs/heads/develop' && secrets.INDOONE_KEY_PASSWORD || '' }}
+          INDOONE_KEYSTORE_PATH: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && format('{0}/indoone-develop.keystore', runner.temp) || '' }}
+          INDOONE_KEYSTORE_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEYSTORE_PASSWORD || '' }}
+          INDOONE_KEY_ALIAS: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_ALIAS || '' }}
+          INDOONE_KEY_PASSWORD: ${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/terminal') && secrets.INDOONE_KEY_PASSWORD || '' }}
+          INDOONE_BACKEND_URL: ${{ github.ref == 'refs/heads/terminal' && 'https://52.62.244.79' || '' }}
+          INDOONE_BUILD_VERSION_CODE: ${{ github.run_number }}
         run: gradle assembleDebug --stacktrace
       - name: Verify APK output
         shell: bash
@@ -57,6 +78,23 @@ jobs:
           name: indoone-debug-apk
           path: android/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+      - name: Publish terminal APK release
+        if: github.ref == 'refs/heads/terminal'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INDOONE_BUILD_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          apk="$(find android/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          release_apk="$RUNNER_TEMP/indoone-terminal.apk"
+          cp "$apk" "$release_apk"
+          tag="terminal-build-${INDOONE_BUILD_VERSION_CODE}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$release_apk" --clobber
+          else
+            gh release create "$tag" "$release_apk" --target terminal --title "Indoone terminal build ${INDOONE_BUILD_VERSION_CODE}" --notes "Automated terminal APK build for Indoone."
+          fi
 
   sync-main-to-develop:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

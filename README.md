@@ -279,3 +279,10 @@ The roadmap is intentionally incremental. Each phase must be implemented, tested
 - Do not make web technology the architecture of the native Android application.
 - Do not replace working authentication/TOTP behavior while implementing chat/memory features unless a future change explicitly requires it.
 - Every major change is developed and tested on `develop` before promotion to `main`.
+
+
+## Gmail backend connection flow
+
+The Email plugin currently exposes Gmail only. The Android app requests Google offline access using the server OAuth client ID supplied by the backend, then sends the one-time server authorization code to `POST /api/integrations/gmail/server-auth-code`. The backend exchanges it and stores access/refresh credentials encrypted server-side. The phone and Firebase user profile store only connection display metadata, not provider tokens.
+
+The app reads `GET /api/integrations/gmail/auth-config` before prompting for Google authorization. Backend deployment therefore needs `INDOONE_GOOGLE_CLIENT_ID`, `INDOONE_GOOGLE_CLIENT_SECRET`, and a valid `INDOONE_OAUTH_ENCRYPTION_KEY`. Production SQLite storage must use a durable `INDOONE_CAPABILITY_DB` path. Verify real Google consent and persistent storage after the CI/build stage; a green build alone does not prove server credentials are correct.
