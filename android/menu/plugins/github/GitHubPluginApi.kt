@@ -39,7 +39,7 @@ object GitHubPluginApi {
         }
         val result = request(
             "POST",
-            "\${backendUrl}/api/integrations/github/connect",
+            "${backendUrl}/api/integrations/github/connect",
             payload,
         )
         val authorizationUrl = result.optString("authorization_url").trim()
@@ -54,7 +54,7 @@ object GitHubPluginApi {
         val userId = requireUserId()
         val status = request(
             "GET",
-            "\${backendUrl}/api/integrations/github/status?user_id=\${URLEncoder.encode(userId, "UTF-8")}",
+            "${backendUrl}/api/integrations/github/status?user_id=${URLEncoder.encode(userId, "UTF-8")}",
         )
         val connected = status.optBoolean("connected", false)
         if (!connected) return@withContext GitHubConnectionStatus(connected = false)
@@ -62,7 +62,7 @@ object GitHubPluginApi {
         val probe = runCatching {
             request(
                 "POST",
-                "\${backendUrl}/api/integrations/github/probe",
+                "${backendUrl}/api/integrations/github/probe",
                 JSONObject().put("user_id", userId),
             )
         }.getOrNull()
@@ -78,7 +78,7 @@ object GitHubPluginApi {
             val backendUrl = requireBackendUrl()
             val result = request(
                 "POST",
-                "\${backendUrl}/api/integrations/github/repositories",
+                "${backendUrl}/api/integrations/github/repositories",
                 JSONObject().apply {
                     put("user_id", requireUserId())
                     put("page", page)
@@ -132,7 +132,7 @@ object GitHubPluginApi {
             doOutput = payload != null
             useCaches = false
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("Authorization", "Bearer \${requireAuthToken()}")
+            setRequestProperty("Authorization", "Bearer ${requireAuthToken()}")
             if (payload != null) setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         }
         try {
