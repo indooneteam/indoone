@@ -313,6 +313,7 @@ object GitHubPluginApi {
         expectedSha: String,
         approvalToken: String,
         branch: String = "",
+        create: Boolean = false,
     ): GitHubFileCommitResult = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
         val result = request(
@@ -325,6 +326,7 @@ object GitHubPluginApi {
                 put("content", content)
                 put("message", message.trim())
                 put("sha", expectedSha.trim())
+                put("create", create)
                 put("approval_token", approvalToken.trim())
                 put("branch", branch.trim())
             },

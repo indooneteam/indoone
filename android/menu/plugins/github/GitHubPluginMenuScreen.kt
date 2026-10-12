@@ -82,6 +82,8 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     var fileCommitMessage by remember { mutableStateOf("") }
     var showFileCommitConfirmation by remember { mutableStateOf(false) }
     var committingFile by remember { mutableStateOf(false) }
+    var isCreatingFile by remember { mutableStateOf(false) }
+    var filePathDraft by remember { mutableStateOf("") }
     var fileEditInstruction by remember { mutableStateOf("") }
     var suggestingFileEdit by remember { mutableStateOf(false) }
     var codeQuery by remember { mutableStateOf("") }
@@ -409,8 +411,26 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Files & code", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                                Text("Browse folders, read source files, and search code", color = GithubMuted, fontSize = 11.sp)
+                                Text("Browse, read, create, and edit repository files", color = GithubMuted, fontSize = 11.sp)
                             }
+                            TextButton(
+                                onClick = {
+                                    val draftPath = if (currentPath.isBlank()) "new_file.txt" else "${currentPath.trimEnd('/')}/new_file.txt"
+                                    selectedFileContent = GitHubRepositoryFileContent(
+                                        path = draftPath, sha = "", htmlUrl = "", content = "", truncated = false,
+                                    )
+                                    editedFileContent = ""
+                                    filePathDraft = draftPath
+                                    fileEditInstruction = ""
+                                    fileCommitMessage = "Create file $draftPath"
+                                    isCreatingFile = true
+                                    editingFile = true
+                                    showFileCommitConfirmation = false
+                                    browseMessage = ""
+                                },
+                                enabled = selectedRepository.isNotBlank() && repositories.isNotEmpty() &&
+                                    status.connected && status.providerHealthy && !browseLoading && !committingFile,
+                            ) { Text("New file") }
                             TextButton(onClick = { repositoryMenuExpanded = true }, enabled = repositories.isNotEmpty()) {
                                 Text("Choose repo")
                             }
@@ -426,6 +446,9 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                             currentPath = ""
                                             selectedFileContent = null
                                             editingFile = false
+                                            isCreatingFile = false
+                                            filePathDraft = ""
+                                            fileEditInstruction = ""
                                             showFileCommitConfirmation = false
                                             repositoryMenuExpanded = false
                                         },
@@ -440,6 +463,9 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                     currentPath = currentPath.substringBeforeLast("/", "")
                                     selectedFileContent = null
                                     editingFile = false
+                                    isCreatingFile = false
+                                    filePathDraft = ""
+                                    fileEditInstruction = ""
                                     showFileCommitConfirmation = false
                                 },
                                 enabled = currentPath.isNotBlank() && !browseLoading,
@@ -463,6 +489,9 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                         currentPath = entry.path
                                         selectedFileContent = null
                                         editingFile = false
+                                        isCreatingFile = false
+                                        filePathDraft = ""
+                                        fileEditInstruction = ""
                                         showFileCommitConfirmation = false
                                     } else if (entry.type == "file") {
                                         scope.launch {
@@ -473,6 +502,9 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                 selectedFileContent = loadedFile
                                                 editedFileContent = loadedFile.content
                                                 editingFile = false
+                                                isCreatingFile = false
+                                                filePathDraft = ""
+                                                fileEditInstruction = ""
                                             } catch (error: Exception) {
                                                 browseMessage = error.message?.takeIf { it.isNotBlank() }
                                                     ?: "Could not read this file."
@@ -508,7 +540,18 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                             ) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(file.path, color = GithubPurple, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                    if (editingFile && !file.truncated && file.sha.matches(Regex("[0-9a-fA-F]{40}"))) {
+                                    if (editingFile && !file.truncated &&
+                                        (isCreatingFile || file.sha.matches(Regex("[0-9a-fA-F]{40}")))
+                                    ) {
+                                        if (isCreatingFile) {
+                                            OutlinedTextField(
+                                                value = filePathDraft,
+                                                onValueChange = { filePathDraft = it },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                label = { Text("New file path") },
+                                                singleLine = true,
+                                            )
+                                        }
                                         Text(
                                             "Edit the text, review the commit message, then confirm before writing to GitHub.",
                                             color = GithubMuted, fontSize = 11.sp, lineHeight = 16.sp,
@@ -531,7 +574,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                     try {
                                                         val proposal = GitHubPluginApi.suggestRepositoryFileEdit(
                                                             repository = selectedRepository,
-                                                            path = file.path,
+                                                            path = if (isCreatingFile) filePathDraft.trim() else file.path,
                                                             instruction = instruction,
                                                             currentContent = editedFileContent,
                                                         )
@@ -582,8 +625,11 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                     editedFileContent = file.content
                                                     fileCommitMessage = ""
                                                     fileEditInstruction = ""
+                                                    if (isCreatingFile) selectedFileContent = null
+                                                    isCreatingFile = false
+                                                    filePathDraft = ""
                                                 },
-                                                enabled = !committingFile,
+                                                enabled = !committingFile && !suggestingFileEdit,
                                             ) { Text("Cancel edit", color = GithubPurple) }
                                         }
                                         Text(
@@ -618,7 +664,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                     title = { Text("Confirm GitHub commit") },
                                     text = {
                                         Text(
-                                            "Repository: $selectedRepository\nFile: ${file.path}\nCommit: ${fileCommitMessage.trim()}\n\nThis writes the edited file to the repository's default branch. Confirm only if you approve these exact changes.",
+                                            "Repository: $selectedRepository\nFile: ${if (isCreatingFile) filePathDraft.trim() else file.path}\nCommit: ${fileCommitMessage.trim()}\n\nThis writes the edited file to the repository's default branch. Confirm only if you approve these exact changes.",
                                         )
                                     },
                                     confirmButton = {
@@ -633,12 +679,15 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                         val approvalToken = GitHubPluginApi.requestRepositoryFileCommitApproval()
                                                         val result = GitHubPluginApi.commitRepositoryFile(
                                                             repository = selectedRepository,
-                                                            path = file.path,
+                                                            path = if (isCreatingFile) filePathDraft.trim() else file.path,
                                                             content = editedFileContent,
                                                             message = fileCommitMessage.trim(),
-                                                            expectedSha = file.sha,
+                                                            expectedSha = if (isCreatingFile) "" else file.sha,
                                                             approvalToken = approvalToken,
+                                                            create = isCreatingFile,
                                                         )
+                                                        val createdFile = isCreatingFile
+                                                        val targetParent = result.path.substringBeforeLast("/", "")
                                                         selectedFileContent = GitHubRepositoryFileContent(
                                                             path = result.path,
                                                             sha = result.fileSha,
@@ -646,8 +695,24 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                                             content = editedFileContent,
                                                             truncated = false,
                                                         )
+                                                        if (createdFile && targetParent == currentPath) {
+                                                            directoryContents.removeAll { it.path == result.path }
+                                                            directoryContents.add(
+                                                                GitHubRepositoryEntry(
+                                                                    name = result.path.substringAfterLast("/"),
+                                                                    path = result.path,
+                                                                    type = "file",
+                                                                    size = editedFileContent.toByteArray(Charsets.UTF_8).size.toLong(),
+                                                                    htmlUrl = result.fileUrl,
+                                                                ),
+                                                            )
+                                                        }
+                                                        if (createdFile) currentPath = targetParent
                                                         editingFile = false
+                                                        isCreatingFile = false
+                                                        filePathDraft = ""
                                                         fileCommitMessage = ""
+                                                        fileEditInstruction = ""
                                                         browseMessage = "Committed successfully: ${result.commitSha.take(7)}"
                                                     } catch (error: Exception) {
                                                         browseMessage = error.message?.takeIf { it.isNotBlank() }
