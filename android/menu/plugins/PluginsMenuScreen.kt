@@ -124,28 +124,6 @@ fun PluginsMenuScreen(
         checking = false
     }
 
-    fun refreshGitHubConnection() {
-        if (checking || githubBusy || disconnectingProvider == "github") return
-        scope.launch {
-            githubBusy = true
-            try {
-                val result = GitHubPluginApi.getConnectionStatus()
-                githubStatus = result
-                githubStatusMessage = when {
-                    !result.connected -> "GitHub is not connected yet."
-                    result.providerHealthy -> "GitHub connected and verified" +
-                        result.login.takeIf { it.isNotBlank() }?.let { " as $it." }.orEmpty()
-                    else -> "GitHub is connected, but API verification failed. Reauthorize to restore access."
-                }
-            } catch (error: Exception) {
-                githubStatusMessage = error.message?.takeIf { it.isNotBlank() }
-                    ?: "Could not refresh GitHub connection."
-            } finally {
-                githubBusy = false
-            }
-        }
-    }
-
     fun startGitHubAuthorization() {
         if (checking || githubBusy || disconnectingProvider == "github") return
         scope.launch {
@@ -166,17 +144,18 @@ fun PluginsMenuScreen(
                     val latest = runCatching { GitHubPluginApi.getConnectionStatus() }.getOrNull() ?: continue
                     githubStatus = latest
                     val authorizationChanged = previous?.connected != true ||
-                        (latest.updatedAt.isNotBlank() && latest.updatedAt != previous.updatedAt)
+                        (latest.updatedAt.isNotBlank() && latest.updatedAt != previous?.updatedAt)
                     if (latest.connected && latest.providerHealthy && authorizationChanged) {
                         confirmed = latest
                         break
                     }
                 }
-                githubStatusMessage = when {
-                    confirmed != null -> "GitHub connected and verified" +
-                        confirmed.login.takeIf { it.isNotBlank() }?.let { " as $it." }.orEmpty()
+                githubStatusMessage = confirmed?.let { connection ->
+                    "GitHub connected and verified" +
+                        connection.login.takeIf { it.isNotBlank() }?.let { " as $it." }.orEmpty()
+                } ?: when {
                     githubStatus?.connected == true ->
-                        "GitHub authorization is saved, but access could not be verified. Use Reauthorize or Refresh."
+                        "GitHub authorization is saved, but access could not be verified. Reauthorize to restore access."
                     else ->
                         "GitHub authorization was not confirmed. Finish approval in the browser, then tap + to retry."
                 }
@@ -282,7 +261,6 @@ fun PluginsMenuScreen(
                 busy = checking || githubBusy || disconnectingProvider == "github",
                 onAdd = { startGitHubAuthorization() },
                 onReauthorize = { startGitHubAuthorization() },
-                onRefresh = { refreshGitHubConnection() },
                 onDisconnect = { pendingDisconnect = "github" },
             )
 
@@ -540,7 +518,6 @@ private fun GitHubProviderRow(
     busy: Boolean,
     onAdd: () -> Unit,
     onReauthorize: () -> Unit,
-    onRefresh: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -617,14 +594,6 @@ private fun GitHubProviderRow(
                             onClick = {
                                 menuExpanded = false
                                 onReauthorize()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Refresh status", color = Ink) },
-                            leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null, tint = AppPurple) },
-                            onClick = {
-                                menuExpanded = false
-                                onRefresh()
                             },
                         )
                         DropdownMenuItem(
