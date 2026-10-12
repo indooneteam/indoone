@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -76,6 +77,11 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     val directoryContents = remember { mutableStateListOf<GitHubRepositoryEntry>() }
     var currentPath by remember { mutableStateOf("") }
     var selectedFileContent by remember { mutableStateOf<GitHubRepositoryFileContent?>(null) }
+    var editingFile by remember { mutableStateOf(false) }
+    var editedFileContent by remember { mutableStateOf("") }
+    var fileCommitMessage by remember { mutableStateOf("") }
+    var showFileCommitConfirmation by remember { mutableStateOf(false) }
+    var committingFile by remember { mutableStateOf(false) }
     var codeQuery by remember { mutableStateOf("") }
     val codeMatches = remember { mutableStateListOf<GitHubCodeSearchMatch>() }
     var codeSearchLoading by remember { mutableStateOf(false) }
@@ -417,6 +423,8 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                             selectedRepository = repository.fullName
                                             currentPath = ""
                                             selectedFileContent = null
+                                            editingFile = false
+                                            showFileCommitConfirmation = false
                                             repositoryMenuExpanded = false
                                         },
                                     )
@@ -429,6 +437,8 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                 onClick = {
                                     currentPath = currentPath.substringBeforeLast("/", "")
                                     selectedFileContent = null
+                                    editingFile = false
+                                    showFileCommitConfirmation = false
                                 },
                                 enabled = currentPath.isNotBlank() && !browseLoading,
                             ) { Text("Up one folder") }
@@ -450,12 +460,17 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                     if (entry.type == "dir") {
                                         currentPath = entry.path
                                         selectedFileContent = null
+                                        editingFile = false
+                                        showFileCommitConfirmation = false
                                     } else if (entry.type == "file") {
                                         scope.launch {
                                             browseMessage = ""
                                             browseLoading = true
                                             try {
-                                                selectedFileContent = GitHubPluginApi.readRepositoryFile(selectedRepository, entry.path)
+                                                val loadedFile = GitHubPluginApi.readRepositoryFile(selectedRepository, entry.path)
+                                                selectedFileContent = loadedFile
+                                                editedFileContent = loadedFile.content
+                                                editingFile = false
                                             } catch (error: Exception) {
                                                 browseMessage = error.message?.takeIf { it.isNotBlank() }
                                                     ?: "Could not read this file."
@@ -491,11 +506,124 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                             ) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(file.path, color = GithubPurple, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                    Text(file.content, color = GithubInk, fontSize = 11.sp, lineHeight = 15.sp, fontFamily = FontFamily.Monospace)
-                                    if (file.truncated) {
-                                        Text("File output is truncated by the backend safety limit.", color = GithubMuted, fontSize = 11.sp)
+                                    if (editingFile && !file.truncated && file.sha.matches(Regex("[0-9a-fA-F]{40}"))) {
+                                        Text(
+                                            "Edit the text, review the commit message, then confirm before writing to GitHub.",
+                                            color = GithubMuted, fontSize = 11.sp, lineHeight = 16.sp,
+                                        )
+                                        OutlinedTextField(
+                                            value = editedFileContent,
+                                            onValueChange = { editedFileContent = it },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            label = { Text("File content") },
+                                            minLines = 8,
+                                            maxLines = 30,
+                                        )
+                                        OutlinedTextField(
+                                            value = fileCommitMessage,
+                                            onValueChange = { fileCommitMessage = it },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            label = { Text("Commit message") },
+                                            singleLine = true,
+                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            Button(
+                                                onClick = { showFileCommitConfirmation = true },
+                                                enabled = !committingFile &&
+                                                    editedFileContent.isNotBlank() &&
+                                                    editedFileContent != file.content &&
+                                                    editedFileContent.toByteArray(Charsets.UTF_8).size <= 50_000 &&
+                                                    fileCommitMessage.isNotBlank(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
+                                            ) { Text("Review commit") }
+                                            TextButton(
+                                                onClick = {
+                                                    editingFile = false
+                                                    editedFileContent = file.content
+                                                    fileCommitMessage = ""
+                                                },
+                                                enabled = !committingFile,
+                                            ) { Text("Cancel edit", color = GithubPurple) }
+                                        }
+                                        Text(
+                                            "Target: repository default branch. Files larger than 50 KB cannot be committed here.",
+                                            color = GithubMuted, fontSize = 11.sp, lineHeight = 16.sp,
+                                        )
+                                    } else {
+                                        Text(file.content, color = GithubInk, fontSize = 11.sp, lineHeight = 15.sp, fontFamily = FontFamily.Monospace)
+                                        if (file.truncated) {
+                                            Text("File output is truncated by the backend safety limit; editing is disabled.", color = GithubMuted, fontSize = 11.sp)
+                                        } else if (file.sha.matches(Regex("[0-9a-fA-F]{40}"))) {
+                                            TextButton(
+                                                onClick = {
+                                                    editedFileContent = file.content
+                                                    fileCommitMessage = "Update ${file.path}"
+                                                    editingFile = true
+                                                },
+                                                enabled = !committingFile,
+                                            ) { Text("Edit file", color = GithubPurple) }
+                                        } else {
+                                            Text("Editing is unavailable because GitHub did not provide a valid file SHA.", color = GithubMuted, fontSize = 11.sp)
+                                        }
                                     }
                                 }
+                            }
+                        }
+                        if (showFileCommitConfirmation) {
+                            selectedFileContent?.let { file ->
+                                AlertDialog(
+                                    onDismissRequest = { if (!committingFile) showFileCommitConfirmation = false },
+                                    title = { Text("Confirm GitHub commit") },
+                                    text = {
+                                        Text(
+                                            "Repository: $selectedRepository\nFile: ${file.path}\nCommit: ${fileCommitMessage.trim()}\n\nThis writes the edited file to the repository's default branch. Confirm only if you approve these exact changes.",
+                                        )
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            enabled = !committingFile,
+                                            onClick = {
+                                                showFileCommitConfirmation = false
+                                                scope.launch {
+                                                    committingFile = true
+                                                    browseMessage = ""
+                                                    try {
+                                                        val approvalToken = GitHubPluginApi.requestRepositoryFileCommitApproval()
+                                                        val result = GitHubPluginApi.commitRepositoryFile(
+                                                            repository = selectedRepository,
+                                                            path = file.path,
+                                                            content = editedFileContent,
+                                                            message = fileCommitMessage.trim(),
+                                                            expectedSha = file.sha,
+                                                            approvalToken = approvalToken,
+                                                        )
+                                                        selectedFileContent = GitHubRepositoryFileContent(
+                                                            path = result.path,
+                                                            sha = result.fileSha,
+                                                            htmlUrl = result.fileUrl,
+                                                            content = editedFileContent,
+                                                            truncated = false,
+                                                        )
+                                                        editingFile = false
+                                                        fileCommitMessage = ""
+                                                        browseMessage = "Committed successfully: ${result.commitSha.take(7)}"
+                                                    } catch (error: Exception) {
+                                                        browseMessage = error.message?.takeIf { it.isNotBlank() }
+                                                            ?: "Could not commit the file. Please retry."
+                                                    } finally {
+                                                        committingFile = false
+                                                    }
+                                                }
+                                            },
+                                        ) { Text(if (committingFile) "Committing…" else "Confirm commit") }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = { showFileCommitConfirmation = false },
+                                            enabled = !committingFile,
+                                        ) { Text("Cancel") }
+                                    },
+                                )
                             }
                         }
                         Text("Search this repository's code", color = GithubInk, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)

@@ -67,6 +67,15 @@ data class GitHubCodeSearchMatch(
     val snippets: List<String>,
 )
 
+data class GitHubFileCommitResult(
+    val path: String,
+    val fileSha: String,
+    val fileUrl: String,
+    val commitSha: String,
+    val commitUrl: String,
+    val commitMessage: String,
+)
+
 object GitHubPluginApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 20_000
@@ -282,6 +291,51 @@ object GitHubPluginApi {
             htmlUrl = result.optString("html_url").trim(),
             content = result.optString("content"),
             truncated = result.optBoolean("truncated", false),
+        )
+    }
+
+    suspend fun requestRepositoryFileCommitApproval(): String = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/approvals/issue",
+            JSONObject().put("tool", "github_update_repository_file").put("ttl_seconds", 180),
+        )
+        result.optString("approval_token").trim().takeIf { it.isNotBlank() }
+            ?: throw GitHubPluginException("Indoone did not issue a file-commit approval token.")
+    }
+
+    suspend fun commitRepositoryFile(
+        repository: String,
+        path: String,
+        content: String,
+        message: String,
+        expectedSha: String,
+        approvalToken: String,
+        branch: String = "",
+    ): GitHubFileCommitResult = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/commit-file",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("path", path.trim())
+                put("content", content)
+                put("message", message.trim())
+                put("sha", expectedSha.trim())
+                put("approval_token", approvalToken.trim())
+                put("branch", branch.trim())
+            },
+        )
+        GitHubFileCommitResult(
+            path = result.optString("path").trim(),
+            fileSha = result.optString("file_sha").trim(),
+            fileUrl = result.optString("file_url").trim(),
+            commitSha = result.optString("commit_sha").trim(),
+            commitUrl = result.optString("commit_url").trim(),
+            commitMessage = result.optString("commit_message").trim(),
         )
     }
 
