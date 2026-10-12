@@ -105,7 +105,7 @@ android {
             "terminal" -> "terminal"
             else -> "main"
         }
-        val defaultBackendUrl = "https://52.62.244.79"
+        val defaultBackendUrl = "https://indooneai.duckdns.org"
         val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: defaultBackendUrl
         buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
