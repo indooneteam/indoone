@@ -26,6 +26,23 @@ data class GitHubRepository(
     val htmlUrl: String,
 )
 
+data class GitHubIssue(
+    val number: Int,
+    val title: String,
+    val state: String,
+    val htmlUrl: String,
+    val repositoryUrl: String,
+    val labels: List<String>,
+)
+
+data class GitHubPullRequest(
+    val number: Int,
+    val title: String,
+    val state: String,
+    val htmlUrl: String,
+    val draft: Boolean,
+)
+
 object GitHubPluginApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 20_000
@@ -100,6 +117,82 @@ object GitHubPluginApi {
                 }
             }
         }
+
+
+    suspend fun listAssignedIssues(page: Int = 1, perPage: Int = 10): List<GitHubIssue> =
+        withContext(Dispatchers.IO) {
+            val backendUrl = requireBackendUrl()
+            val result = request(
+                "POST",
+                "${backendUrl}/api/integrations/github/issues",
+                JSONObject().apply {
+                    put("user_id", requireUserId())
+                    put("page", page)
+                    put("per_page", perPage.coerceIn(1, 100))
+                },
+            )
+            val items: JSONArray = result.optJSONArray("issues") ?: JSONArray()
+            buildList {
+                for (index in 0 until items.length()) {
+                    val item = items.optJSONObject(index) ?: continue
+                    val labelsJson = item.optJSONArray("labels") ?: JSONArray()
+                    val labels = buildList {
+                        for (labelIndex in 0 until labelsJson.length()) {
+                            labelsJson.optString(labelIndex).takeIf { it.isNotBlank() }?.let(::add)
+                        }
+                    }
+                    add(
+                        GitHubIssue(
+                            number = item.optInt("number"),
+                            title = item.optString("title").trim(),
+                            state = item.optString("state").trim(),
+                            htmlUrl = item.optString("html_url").trim(),
+                            repositoryUrl = item.optString("repository_url").trim(),
+                            labels = labels,
+                        ),
+                    )
+                }
+            }
+        }
+
+    suspend fun listPullRequests(
+        repository: String,
+        page: Int = 1,
+        perPage: Int = 10,
+    ): List<GitHubPullRequest> = withContext(Dispatchers.IO) {
+        val normalizedRepository = repository.trim()
+        if (normalizedRepository.isBlank()) {
+            throw GitHubPluginException("Choose a repository to load its pull requests.")
+        }
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/pull-requests",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", normalizedRepository)
+                put("page", page)
+                put("per_page", perPage.coerceIn(1, 100))
+            },
+        )
+        val items: JSONArray = result.optJSONArray("pull_requests") ?: JSONArray()
+        buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                val head = item.optJSONObject("head")
+                val base = item.optJSONObject("base")
+                add(
+                    GitHubPullRequest(
+                        number = item.optInt("number"),
+                        title = item.optString("title").trim(),
+                        state = item.optString("state").trim(),
+                        htmlUrl = item.optString("html_url").trim(),
+                        draft = item.optBoolean("draft", false),
+                    ),
+                )
+            }
+        }
+    }
 
     private fun requireBackendUrl(): String =
         BuildConfig.INDOONE_BACKEND_URL.trimEnd('/').takeIf { it.isNotBlank() }
