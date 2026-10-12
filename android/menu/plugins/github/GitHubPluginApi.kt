@@ -18,6 +18,7 @@ data class GitHubConnectionStatus(
     val connected: Boolean,
     val login: String = "",
     val providerHealthy: Boolean = false,
+    val updatedAt: String = "",
 )
 data class GitHubRepository(
     val fullName: String,
@@ -66,6 +67,15 @@ object GitHubPluginApi {
         GitHubConnectResult(authorizationUrl)
     }
 
+    suspend fun disconnect() = withContext(Dispatchers.IO) {
+        val backendUrl = requireBackendUrl()
+        request(
+            "POST",
+            "${backendUrl}/api/integrations/github/disconnect",
+            JSONObject().put("user_id", requireUserId()),
+        )
+    }
+
     suspend fun getConnectionStatus(): GitHubConnectionStatus = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
         val userId = requireUserId()
@@ -74,7 +84,8 @@ object GitHubPluginApi {
             "${backendUrl}/api/integrations/github/status?user_id=${URLEncoder.encode(userId, "UTF-8")}",
         )
         val connected = status.optBoolean("connected", false)
-        if (!connected) return@withContext GitHubConnectionStatus(connected = false)
+        val updatedAt = status.optJSONObject("metadata")?.optString("updated_at").orEmpty()
+        if (!connected) return@withContext GitHubConnectionStatus(connected = false, updatedAt = updatedAt)
 
         val probe = runCatching {
             request(
@@ -87,6 +98,7 @@ object GitHubPluginApi {
             connected = true,
             login = probe?.optJSONObject("summary")?.optString("login").orEmpty(),
             providerHealthy = probe?.optBoolean("provider_ok", false) == true,
+            updatedAt = updatedAt,
         )
     }
 
