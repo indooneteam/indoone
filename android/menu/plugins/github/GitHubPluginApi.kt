@@ -67,6 +67,34 @@ data class GitHubCodeSearchMatch(
     val snippets: List<String>,
 )
 
+data class GitHubRepositoryCommit(
+    val sha: String,
+    val message: String,
+    val author: String,
+    val date: String,
+    val htmlUrl: String,
+)
+
+data class GitHubCommitFileChange(
+    val filename: String,
+    val status: String,
+    val additions: Int,
+    val deletions: Int,
+    val changes: Int,
+    val htmlUrl: String,
+)
+
+data class GitHubCommitComparison(
+    val repository: String,
+    val base: String,
+    val head: String,
+    val status: String,
+    val aheadBy: Int,
+    val behindBy: Int,
+    val totalCommits: Int,
+    val files: List<GitHubCommitFileChange>,
+)
+
 data class GitHubFileCommitResult(
     val path: String,
     val fileSha: String,
@@ -399,6 +427,92 @@ object GitHubPluginApi {
                 )
             }
         }
+    }
+
+    suspend fun listRepositoryCommits(
+        repository: String,
+        path: String = "",
+        perPage: Int = 10,
+    ): List<GitHubRepositoryCommit> = withContext(Dispatchers.IO) {
+        if (repository.isBlank()) {
+            throw GitHubPluginException("Choose a repository to load its commit history.")
+        }
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/commits",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("path", path.trim())
+                put("per_page", perPage.coerceIn(1, 30))
+            },
+        )
+        val items = result.optJSONArray("commits") ?: JSONArray()
+        buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                add(
+                    GitHubRepositoryCommit(
+                        sha = item.optString("sha").trim(),
+                        message = item.optString("message").trim(),
+                        author = item.optString("author").trim(),
+                        date = item.optString("date").trim(),
+                        htmlUrl = item.optString("html_url").trim(),
+                    ),
+                )
+            }
+        }
+    }
+
+    suspend fun compareRepositoryCommits(
+        repository: String,
+        base: String,
+        head: String,
+    ): GitHubCommitComparison = withContext(Dispatchers.IO) {
+        if (repository.isBlank()) {
+            throw GitHubPluginException("Choose a repository before comparing commits.")
+        }
+        if (base.isBlank() || head.isBlank()) {
+            throw GitHubPluginException("Enter both the base and comparison branch or commit.")
+        }
+        val backendUrl = requireBackendUrl()
+        val result = request(
+            "POST",
+            "${backendUrl}/api/integrations/github/compare",
+            JSONObject().apply {
+                put("user_id", requireUserId())
+                put("repository", repository.trim())
+                put("base", base.trim())
+                put("head", head.trim())
+            },
+        )
+        val fileItems = result.optJSONArray("files") ?: JSONArray()
+        val changedFiles = buildList {
+            for (index in 0 until fileItems.length()) {
+                val item = fileItems.optJSONObject(index) ?: continue
+                add(
+                    GitHubCommitFileChange(
+                        filename = item.optString("filename").trim(),
+                        status = item.optString("status").trim(),
+                        additions = item.optInt("additions"),
+                        deletions = item.optInt("deletions"),
+                        changes = item.optInt("changes"),
+                        htmlUrl = item.optString("html_url").trim(),
+                    ),
+                )
+            }
+        }
+        GitHubCommitComparison(
+            repository = result.optString("repository").ifBlank { repository.trim() },
+            base = result.optString("base").ifBlank { base.trim() },
+            head = result.optString("head").ifBlank { head.trim() },
+            status = result.optString("status").ifBlank { "unknown" },
+            aheadBy = result.optInt("ahead_by"),
+            behindBy = result.optInt("behind_by"),
+            totalCommits = result.optInt("total_commits"),
+            files = changedFiles,
+        )
     }
 
     private fun requireBackendUrl(): String =

@@ -90,6 +90,15 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
     val codeMatches = remember { mutableStateListOf<GitHubCodeSearchMatch>() }
     var codeSearchLoading by remember { mutableStateOf(false) }
     var codeSearchMessage by remember { mutableStateOf("") }
+    val commitHistory = remember { mutableStateListOf<GitHubRepositoryCommit>() }
+    var historyPath by remember { mutableStateOf("") }
+    var historyLoading by remember { mutableStateOf(false) }
+    var historyMessage by remember { mutableStateOf("") }
+    var compareBaseRef by remember { mutableStateOf("main") }
+    var compareHeadRef by remember { mutableStateOf("") }
+    var comparison by remember { mutableStateOf<GitHubCommitComparison?>(null) }
+    var compareLoading by remember { mutableStateOf(false) }
+    var compareMessage by remember { mutableStateOf("") }
 
     fun refreshConnection() {
         scope.launch {
@@ -214,12 +223,12 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Connect GitHub to Indoone", color = GithubInk, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Review public repositories, assigned issues, and pull requests. Issue creation and comments still require explicit approval.",
+                        "Browse public repositories, assigned issues, pull requests, file contents, code search, commit history, and comparisons. File changes require explicit confirmation.",
                         color = GithubMuted, fontSize = 12.sp, lineHeight = 18.sp,
                     )
                     Button(
                         onClick = {
-                            if (connecting || loading || status.connected) return@Button
+                            if (connecting || loading || (status.connected && status.providerHealthy)) return@Button
                             connecting = true
                             loading = true
                             message = "Opening GitHub authorization…"
@@ -242,10 +251,10 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !status.connected && !loading && !connecting,
+                        enabled = (!status.connected || !status.providerHealthy) && !loading && !connecting,
                         colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
                     ) {
-                        Text(if (status.connected) "CONNECTED" else if (connecting) "WAITING FOR AUTHORIZATION…" else "CONNECT GITHUB")
+                        Text(if (status.connected && status.providerHealthy) "CONNECTED" else if (connecting) "WAITING FOR AUTHORIZATION…" else if (status.connected) "REAUTHORIZE GITHUB" else "CONNECT GITHUB")
                     }
                     if (loading || connecting) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -411,7 +420,7 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Files & code", color = GithubInk, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-                                Text("Browse, read, create, and edit repository files", color = GithubMuted, fontSize = 11.sp)
+                                Text("Browse files, read code, search, review history, and compare branches", color = GithubMuted, fontSize = 11.sp)
                             }
                             TextButton(
                                 onClick = {
@@ -782,6 +791,180 @@ fun GitHubPluginMenuScreen(onBack: () -> Unit) {
                                     Text(match.path, color = GithubInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                     match.snippets.take(2).forEach { snippet ->
                                         Text(snippet, color = GithubMuted, fontSize = 11.sp, fontFamily = FontFamily.Monospace, maxLines = 4)
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text("Commit history", color = GithubInk, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Review recent commits for the selected repository or a specific file.", color = GithubMuted, fontSize = 11.sp)
+                                OutlinedTextField(
+                                    value = historyPath,
+                                    onValueChange = { historyPath = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("Optional file path") },
+                                    singleLine = true,
+                                )
+                                Button(
+                                    onClick = {
+                                        if (selectedRepository.isBlank() || historyLoading) return@Button
+                                        scope.launch {
+                                            historyLoading = true
+                                            historyMessage = ""
+                                            commitHistory.clear()
+                                            try {
+                                                commitHistory.addAll(
+                                                    GitHubPluginApi.listRepositoryCommits(
+                                                        selectedRepository,
+                                                        historyPath.trim(),
+                                                    ),
+                                                )
+                                                if (commitHistory.isEmpty()) historyMessage = "No recent commits were returned."
+                                            } catch (error: Exception) {
+                                                historyMessage = error.message?.takeIf { it.isNotBlank() }
+                                                    ?: "Could not load commit history."
+                                            } finally {
+                                                historyLoading = false
+                                            }
+                                        }
+                                    },
+                                    enabled = selectedRepository.isNotBlank() && !historyLoading,
+                                    colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
+                                ) {
+                                    Text(if (historyLoading) "Loading history…" else "Load commit history")
+                                }
+                                if (historyMessage.isNotBlank()) {
+                                    Text(historyMessage, color = GithubMuted, fontSize = 12.sp)
+                                }
+                                commitHistory.take(10).forEach { commit ->
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth().clickable {
+                                            if (commit.htmlUrl.isNotBlank()) {
+                                                runCatching {
+                                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(commit.htmlUrl)))
+                                                }
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = Color(0xFFF8F7FB),
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(10.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        ) {
+                                            Text(commit.message.ifBlank { "(No commit message)" }, color = GithubInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                "${commit.sha.take(8)} · ${commit.author} · ${commit.date}",
+                                                color = GithubMuted,
+                                                fontSize = 10.sp,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, Color(0xFFECE7F8)),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text("Compare branches or commits", color = GithubInk, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Compare two branch names or commit SHAs to review changed files.", color = GithubMuted, fontSize = 11.sp)
+                                OutlinedTextField(
+                                    value = compareBaseRef,
+                                    onValueChange = { compareBaseRef = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("Base branch or commit") },
+                                    singleLine = true,
+                                )
+                                OutlinedTextField(
+                                    value = compareHeadRef,
+                                    onValueChange = { compareHeadRef = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("Compare with branch or commit") },
+                                    singleLine = true,
+                                )
+                                Button(
+                                    onClick = {
+                                        if (selectedRepository.isBlank() || compareBaseRef.isBlank() ||
+                                            compareHeadRef.isBlank() || compareLoading
+                                        ) return@Button
+                                        scope.launch {
+                                            compareLoading = true
+                                            compareMessage = ""
+                                            comparison = null
+                                            try {
+                                                comparison = GitHubPluginApi.compareRepositoryCommits(
+                                                    selectedRepository,
+                                                    compareBaseRef.trim(),
+                                                    compareHeadRef.trim(),
+                                                )
+                                                if (comparison?.files.isNullOrEmpty()) {
+                                                    compareMessage = "The comparison returned no changed files."
+                                                }
+                                            } catch (error: Exception) {
+                                                compareMessage = error.message?.takeIf { it.isNotBlank() }
+                                                    ?: "Could not compare these references."
+                                            } finally {
+                                                compareLoading = false
+                                            }
+                                        }
+                                    },
+                                    enabled = selectedRepository.isNotBlank() && compareBaseRef.isNotBlank() &&
+                                        compareHeadRef.isNotBlank() && !compareLoading,
+                                    colors = ButtonDefaults.buttonColors(containerColor = GithubPurple),
+                                ) {
+                                    Text(if (compareLoading) "Comparing…" else "Compare")
+                                }
+                                if (compareMessage.isNotBlank()) {
+                                    Text(compareMessage, color = GithubMuted, fontSize = 12.sp)
+                                }
+                                comparison?.let { result ->
+                                    Text(
+                                        "${result.base} → ${result.head} · ${result.status} · ${result.totalCommits} commits · ahead ${result.aheadBy}, behind ${result.behindBy}",
+                                        color = GithubInk,
+                                        fontSize = 11.sp,
+                                    )
+                                    result.files.take(50).forEach { change ->
+                                        Surface(
+                                            modifier = Modifier.fillMaxWidth().clickable {
+                                                if (change.htmlUrl.isNotBlank()) {
+                                                    runCatching {
+                                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(change.htmlUrl)))
+                                                    }
+                                                }
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = Color(0xFFF8F7FB),
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.padding(10.dp),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                            ) {
+                                                Text(change.filename, color = GithubInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                                Text(
+                                                    "${change.status} · +${change.additions} / -${change.deletions} (${change.changes} changes)",
+                                                    color = GithubMuted,
+                                                    fontSize = 10.sp,
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
