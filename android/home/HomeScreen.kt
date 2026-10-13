@@ -87,6 +87,7 @@ import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.home.message.ChatApi
+import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatRepository
 import com.indoone.home.plus.PlusAttachmentSheet
@@ -744,10 +745,21 @@ fun HomeScreen(
                     )
                 }
                 if (input.isBlank()) input = typed
-                messages = messages + ChatMessage(
-                    error.message ?: "Indoone AI could not complete the request.",
-                    false,
-                )
+                val failureReply = error.message ?: "Indoone AI could not complete the request."
+                messages = messages + ChatMessage(failureReply, false)
+                // A reply the backend actually sent is part of the conversation, so
+                // save it: refreshing the chat then shows what was said at the time.
+                if ((error as? ChatApiException)?.statusCode != null) {
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = requestConversationId,
+                                role = "assistant",
+                                content = failureReply,
+                            )
+                        }
+                    }
+                }
             }
             isSending = false
             chatActivityState = ChatActivityState.IDLE
