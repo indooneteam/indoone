@@ -3,7 +3,6 @@ package com.indoone.menu.plugins.github
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ServerValue
 import com.indoone.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
@@ -159,7 +158,7 @@ object GitHubPluginApi {
             )
         }.getOrNull()
         val login = probe?.optJSONObject("summary")?.optString("login").orEmpty()
-        saveProfileConnection(login = login)
+        saveProfileConnection()
         GitHubConnectionStatus(
             connected = true,
             login = login,
@@ -521,17 +520,8 @@ object GitHubPluginApi {
         )
     }
 
-    private suspend fun saveProfileConnection(login: String) = withContext(Dispatchers.IO) {
-        val userId = requireUserId()
-        val metadata = mapOf(
-            "provider" to "github",
-            "providerName" to "GitHub",
-            "connected" to true,
-            "login" to login.trim(),
-            "updatedAt" to ServerValue.TIMESTAMP,
-            "lastVerifiedAt" to ServerValue.TIMESTAMP,
-        )
-        Tasks.await(githubConnectionReference(userId).setValue(metadata))
+    private suspend fun saveProfileConnection() = withContext(Dispatchers.IO) {
+        Tasks.await(githubConnectionReference(requireUserId()).setValue("GitHub"))
     }
 
     private fun githubConnectionReference(userId: String) =
@@ -539,9 +529,7 @@ object GitHubPluginApi {
             .child("users")
             .child(userId)
             .child("profile")
-            .child("connections")
             .child("plugins")
-            .child("developer")
             .child("github")
 
     private fun requireBackendUrl(): String =
