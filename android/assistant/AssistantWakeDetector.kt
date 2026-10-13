@@ -245,7 +245,14 @@ class AssistantWakeDetector(
                         buffer.size,
                         AudioRecord.READ_BLOCKING,
                     )
-                    if (count <= 0) continue
+                    if (count < 0) {
+                        // A negative result means the recorder died, for example because the
+                        // system took the microphone away. Break so the record is released
+                        // and the service can start a fresh detector.
+                        mainHandler.post { onError("Wake microphone stopped (code $count)") }
+                        break
+                    }
+                    if (count == 0) continue
 
                     val accepted = runCatching {
                         recognizer.acceptWaveForm(buffer, count)

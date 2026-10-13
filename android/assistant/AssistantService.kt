@@ -24,9 +24,13 @@ class AssistantService : VoiceInteractionService() {
         private const val CHANNEL_ID = "indoone_assistant_wake"
         private const val NOTIFICATION_ID = 4101
         private const val TAG = "IndooneAssistant"
+        private const val MAX_WAKE_RESTARTS = 5
+        private const val WAKE_RESTART_DELAY_MS = 3_000L
     }
 
     private var sessionShowing = false
+    private var wakeRestartAttempts = 0
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     private val wakeDetector by lazy {
         AssistantWakeDetector(
@@ -116,6 +120,7 @@ class AssistantService : VoiceInteractionService() {
         updateNotification("Waiting for “Hey Indoone”")
         wakeDetector.initialize {
             if (!sessionShowing) {
+                wakeRestartAttempts = 0
                 wakeDetector.start()
                 Log.i(TAG, "Silent offline wake detector started")
             }
@@ -173,7 +178,20 @@ class AssistantService : VoiceInteractionService() {
 
     private fun onWakeError(message: String) {
         Log.w(TAG, message)
-        updateNotification("Wake listener error: $message")
+        if (sessionShowing) {
+            return
+        }
+        // A wake listener that dies must not stay dead: start a fresh one, but give
+        // up after a few tries so a permanently unavailable microphone cannot spin.
+        if (wakeRestartAttempts >= MAX_WAKE_RESTARTS) {
+            Log.e(TAG, "Wake listener stopped after repeated failures")
+            updateNotification("Wake listener stopped: $message")
+            return
+        }
+        wakeRestartAttempts++
+        updateNotification("Restarting wake listener: $message")
+        wakeDetector.stop()
+        mainHandler.postDelayed({ startWakeDetector() }, WAKE_RESTART_DELAY_MS)
     }
 
     private fun ensureWakeNotificationChannel() {
