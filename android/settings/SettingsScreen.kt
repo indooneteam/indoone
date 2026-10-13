@@ -78,8 +78,6 @@ private val LogoutIcon = Icons.Outlined.Logout
 private val ChevronIcon = Icons.Outlined.ChevronRight
 
 private val ItemTitleColor = Color(0xFF2C2733)
-private val ItemSubtitleColor = Color(0xFF8A8392)
-private val SectionLabelColor = Color(0xFF8592A8)
 
 @Composable
 fun SettingsScreen(
@@ -176,29 +174,18 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 18.dp, vertical = 18.dp),
             ) {
-                Column(Modifier.padding(top = 6.dp, bottom = 4.dp)) {
+                Column(Modifier.padding(top = 6.dp, bottom = 10.dp)) {
                     Text("Settings", Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
                     Text("Manage your account, security and app preferences.", Modifier.padding(top = 7.dp), color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 19.sp)
                 }
 
-                SettingsSectionLabel("ACCOUNT")
-                SettingsMenuItem(ProfileIcon, "Profile", "Email & mobile number", onProfileClick)
+                SettingsMenuItem(ProfileIcon, "Profile", onProfileClick)
 
-                SettingsSectionLabel("SECURITY")
-                SettingsMenuItem(
-                    LockIcon,
-                    "App Lock",
-                    if (appLockStore.isEnabled()) "PIN is set" else "Not set",
-                ) {
+                SettingsMenuItem(LockIcon, "App Lock") {
                     flow.sync(appLockStore.isEnabled())
                     appLockPage = true
                 }
-                SettingsMenuToggle(
-                    BiometricIcon,
-                    "Biometric Unlock",
-                    "Fingerprint / device credential",
-                    biometricOn,
-                ) { enabled ->
+                SettingsMenuToggle(BiometricIcon, "Biometric Unlock", biometricOn) { enabled ->
                     if (enabled) {
                         requestBiometricEnable()
                     } else {
@@ -207,23 +194,13 @@ fun SettingsScreen(
                         biometricError = null
                     }
                 }
-                SettingsMenuItem(
-                    TimerIcon,
-                    "Auto-Lock",
-                    if (autoLockStore.minutes() > 0) {
-                        "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}"
-                    } else {
-                        "Never"
-                    },
-                ) { autoLockPage = true }
+                SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
-                SettingsSectionLabel("APP")
-                SettingsMenuItem(NotificationsIcon, "Notifications", "Security, AI, Vibe and other alerts", onNotificationsClick)
-                SettingsMenuItem(InfoIcon, "About Indoone", "Version 0.1.0 · Updates") { aboutPage = true }
+                SettingsMenuItem(NotificationsIcon, "Notifications", onNotificationsClick)
+                SettingsMenuItem(InfoIcon, "About Indoone") { aboutPage = true }
 
-                SettingsSectionLabel("DANGER ZONE")
-                SettingsMenuItem(DangerZoneIcon, "Danger Zone", "Delete local data or your Indoone account") { dangerZonePage = true }
-                SettingsMenuItem(LogoutIcon, "Log out", "Sign out from this device") { logoutPage = true }
+                SettingsMenuItem(DangerZoneIcon, "Danger Zone") { dangerZonePage = true }
+                SettingsMenuItem(LogoutIcon, "Log out") { logoutPage = true }
 
                 Spacer(Modifier.height(8.dp))
             }
@@ -372,20 +349,6 @@ fun SettingsScreen(
     }
 }
 
-/** Small uppercase heading, matching the main menu's section labels. */
-@Composable
-private fun SettingsSectionLabel(label: String) {
-    Text(
-        text = label,
-        modifier = Modifier.padding(start = 9.dp, top = 16.dp, bottom = 5.dp),
-        color = SectionLabelColor,
-        fontSize = 10.sp,
-        lineHeight = 13.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.0.sp,
-    )
-}
-
 /** The rounded icon tile the main menu uses for every entry. */
 @Composable
 private fun SettingsMenuIcon(icon: ImageVector) {
@@ -409,23 +372,27 @@ private fun SettingsMenuIcon(icon: ImageVector) {
 private fun SettingsMenuRow(
     icon: ImageVector,
     title: String,
-    subtitle: String,
     modifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .padding(vertical = 5.dp)
             .clip(RoundedCornerShape(15.dp))
-            .heightIn(min = 56.dp)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingsMenuIcon(icon)
-        Column(Modifier.weight(1f).padding(start = 11.dp)) {
-            Text(title, color = ItemTitleColor, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, Modifier.padding(top = 2.dp), color = ItemSubtitleColor, fontSize = 11.sp, lineHeight = 14.sp)
-        }
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f).padding(start = 11.dp),
+            color = ItemTitleColor,
+            fontSize = 13.sp,
+            lineHeight = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
         trailing?.invoke()
     }
 }
@@ -434,13 +401,11 @@ private fun SettingsMenuRow(
 private fun SettingsMenuItem(
     icon: ImageVector,
     title: String,
-    subtitle: String,
     onClick: () -> Unit,
 ) {
     SettingsMenuRow(
         icon = icon,
         title = title,
-        subtitle = subtitle,
         modifier = Modifier.clickable(onClick = onClick),
     ) {
         Icon(ChevronIcon, "Open $title", Modifier.size(18.dp), tint = Color(0xFF8B9AB0))
@@ -451,11 +416,10 @@ private fun SettingsMenuItem(
 private fun SettingsMenuToggle(
     icon: ImageVector,
     title: String,
-    subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    SettingsMenuRow(icon = icon, title = title, subtitle = subtitle) {
+    SettingsMenuRow(icon = icon, title = title) {
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
