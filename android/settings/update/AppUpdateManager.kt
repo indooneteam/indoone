@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import java.io.File
+import java.util.Locale
 
 object AppUpdateManager {
     data class UpdateInfo(
@@ -28,6 +29,15 @@ object AppUpdateManager {
     private const val PROGRESS_BUFFER_BYTES = 64 * 1024
 
     private val httpClient = OkHttpClient()
+
+    /**
+     * One place formats sizes, so the dialog and the notification cannot disagree
+     * about how big the download is.
+     */
+    fun formatMegabytes(bytes: Long): String {
+        if (bytes <= 0L) return "0 MB"
+        return String.format(Locale.US, "%.1f MB", bytes.toDouble() / (1024.0 * 1024.0))
+    }
 
     fun currentVersionCode(context: Context): Long {
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -51,8 +61,9 @@ object AppUpdateManager {
             context.packageManager.canRequestPackageInstalls()
 
     /**
-     * Opens the "install unknown apps" screen. That permission has to be granted
-     * before the download is worth starting, otherwise the installer cannot open.
+     * Opens the "install unknown apps" screen. This is only ever called from a
+     * button the user pressed: jumping here on its own made the app look like it
+     * was closing the moment an update was started.
      */
     fun openInstallPermissionSettings(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -143,16 +154,15 @@ object AppUpdateManager {
     }
 
     /**
-     * Downloads the APK into the cache and reports progress as a percentage.
+     * Downloads the APK into the cache and reports real byte progress.
      *
      * This is called from the worker, not from a screen, so the download belongs to
-     * the work rather than to the dialog. Closing the dialog leaves it running, and
-     * the work survives the app being sent to the background.
+     * the work rather than to the dialog. Leaving the app does not stop it.
      */
     suspend fun downloadApk(
         context: Context,
         update: UpdateInfo,
-        onProgress: suspend (Int) -> Unit,
+        onProgress: suspend (downloadedBytes: Long, totalBytes: Long) -> Unit,
     ): File = withContext(Dispatchers.IO) {
         val updateDir = File(context.cacheDir, UPDATE_DIR).apply { mkdirs() }
         val apkFile = File(updateDir, APK_ASSET_NAME)
@@ -170,12 +180,13 @@ object AppUpdateManager {
 
             val body = response.body ?: error("APK download returned no file.")
             val totalBytes = body.contentLength().takeIf { it > 0L } ?: update.sizeBytes
+            onProgress(0L, totalBytes)
 
             body.byteStream().use { input ->
                 apkFile.outputStream().use { output ->
                     val buffer = ByteArray(PROGRESS_BUFFER_BYTES)
                     var copied = 0L
-                    var lastPercent = -1
+                    var lastReported = 0L
 
                     while (true) {
                         val read = input.read(buffer)
@@ -184,14 +195,16 @@ object AppUpdateManager {
                         output.write(buffer, 0, read)
                         copied += read
 
-                        if (totalBytes > 0L) {
-                            val percent = ((copied * 100L) / totalBytes).toInt().coerceIn(0, 100)
-                            if (percent != lastPercent) {
-                                lastPercent = percent
-                                onProgress(percent)
-                            }
+                        // Report about every percent, so the figure the user reads
+                        // moves steadily without flooding the work database.
+                        val step = (totalBytes / 100L).coerceAtLeast(1L)
+                        if (copied - lastReported >= step) {
+                            lastReported = copied
+                            onProgress(copied, totalBytes)
                         }
                     }
+
+                    onProgress(copied, totalBytes)
                 }
             }
         }

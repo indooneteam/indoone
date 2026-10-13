@@ -2,14 +2,10 @@ package com.indoone
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -80,12 +76,12 @@ import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.update.UpdateDownloadWorker
+import com.indoone.settings.power.BatteryOptimisationStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
 import com.indoone.settings.profile.change_mobile_number.ChangeMobileNumberScreen
 import kotlinx.coroutines.delay
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
@@ -121,26 +117,15 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
-    private var batteryExemptionPrompted = false
-
     override fun onResume() {
         super.onResume()
 
         // Vibe keeps its voice session alive while the app is in another app or the
-        // screen is off. Android freezes an app that is still subject to battery
-        // optimisation, so ask for the exemption once, from a visible screen.
-        if (!batteryExemptionPrompted) {
-            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-            if (!power.isIgnoringBatteryOptimizations(packageName)) {
-                batteryExemptionPrompted = true
-                runCatching {
-                    startActivity(
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                            .setData(Uri.parse("package:$packageName")),
-                    )
-                }
-            }
-        }
+        // screen is off, and Android freezes an app that is still subject to battery
+        // optimisation. The request is remembered: the system dialog it opens covers
+        // the app, so asking on every launch looked like the app closing the moment
+        // it opened.
+        BatteryOptimisationStore(this).requestOnce(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -192,8 +177,17 @@ class MainActivity : ComponentActivity() {
                 val isDownloadingUpdate =
                     updateWork?.state == WorkInfo.State.ENQUEUED ||
                         updateWork?.state == WorkInfo.State.RUNNING
-                val updateProgress = updateWork?.progress
-                    ?.getInt(UpdateDownloadWorker.KEY_PROGRESS, 0) ?: 0
+                val downloadedBytes = updateWork?.progress
+                    ?.getLong(UpdateDownloadWorker.KEY_DOWNLOADED_BYTES, 0L) ?: 0L
+                val progressTotalBytes = updateWork?.progress
+                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
+                val outputTotalBytes = updateWork?.outputData
+                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
+                val totalBytes = when {
+                    progressTotalBytes > 0L -> progressTotalBytes
+                    outputTotalBytes > 0L -> outputTotalBytes
+                    else -> availableUpdate?.sizeBytes ?: 0L
+                }
                 val readyVersionCode = updateWork?.outputData
                     ?.getLong(UpdateDownloadWorker.KEY_VERSION_CODE, 0L) ?: 0L
                 val updateReady =
@@ -777,8 +771,17 @@ class MainActivity : ComponentActivity() {
 
                 if (showUpdateDialog) {
                     val update = availableUpdate
+                    val canInstall = AppUpdateManager.canInstall(this@MainActivity)
+                    val sizeLine = AppUpdateManager.formatMegabytes(totalBytes)
+                    val remainingLine = AppUpdateManager.formatMegabytes(
+                        (totalBytes - downloadedBytes).coerceAtLeast(0L),
+                    )
+
                     AlertDialog(
-                        onDismissRequest = { updateDialogHidden = true },
+                        // The download page stays put while it runs: it is the only
+                        // place the progress is shown. The download itself is
+                        // background work, so leaving the app does not stop it.
+                        onDismissRequest = { if (!isDownloadingUpdate) updateDialogHidden = true },
                         title = {
                             Text(
                                 when {
@@ -789,29 +792,26 @@ class MainActivity : ComponentActivity() {
                             )
                         },
                         text = {
-                            Text(
-                                when {
-                                    updateReady ->
-                                        "Indoone $readyVersionCode is downloaded. " +
-                                            "Tap Install to open the system installer."
+                            val body = when {
+                                updateReady ->
+                                    "$sizeLine downloaded. Tap Install to open the " +
+                                        "system installer."
 
-                                    isDownloadingUpdate ->
-                                        "Downloading the latest Indoone APK — " +
-                                            "$updateProgress%. You can close this; " +
-                                            "the download keeps going."
+                                isDownloadingUpdate ->
+                                    "Downloaded " +
+                                        "${AppUpdateManager.formatMegabytes(downloadedBytes)} " +
+                                        "of $sizeLine · $remainingLine left"
 
-                                    update != null ->
-                                        "Indoone ${update.versionCode} is available. " +
-                                            "Download size " +
-                                            "${formatUpdateSize(update.sizeBytes)}."
-
-                                    else -> "A newer Indoone update is available."
-                                },
-                            )
+                                else -> "Download size $sizeLine"
+                            }
+                            val permissionNote =
+                                if (canInstall) "" else "\n\nIndoone is not allowed to " +
+                                    "install updates yet."
+                            Text(body + permissionNote)
                         },
                         confirmButton = {
                             when {
-                                updateReady -> TextButton(
+                                updateReady && canInstall -> TextButton(
                                     onClick = {
                                         AppUpdateManager.installApk(
                                             this@MainActivity,
@@ -822,15 +822,18 @@ class MainActivity : ComponentActivity() {
                                     Text("Install")
                                 }
 
+                                updateReady -> TextButton(
+                                    onClick = {
+                                        AppUpdateManager.openInstallPermissionSettings(
+                                            this@MainActivity,
+                                        )
+                                    },
+                                ) {
+                                    Text("Allow installing")
+                                }
+
                                 !isDownloadingUpdate && update != null -> TextButton(
                                     onClick = {
-                                        // Ask for the install permission first: without
-                                        // it the download would finish and be unusable.
-                                        if (!AppUpdateManager.canInstall(this@MainActivity)) {
-                                            AppUpdateManager.openInstallPermissionSettings(
-                                                this@MainActivity,
-                                            )
-                                        }
                                         UpdateDownloadWorker.enqueue(this@MainActivity, update)
                                         availableUpdate = null
                                     },
@@ -840,8 +843,10 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { updateDialogHidden = true }) {
-                                Text(if (isDownloadingUpdate) "Hide" else "Later")
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { updateDialogHidden = true }) {
+                                    Text("Later")
+                                }
                             }
                         },
                     )
@@ -961,9 +966,3 @@ private fun List<AccountRecord>.toUiAccounts(nowMillis: Long = System.currentTim
             serviceClass = record.cls,
         )
     }
-
-private fun formatUpdateSize(bytes: Long): String {
-    if (bytes <= 0L) return "unknown"
-    val megabytes = bytes.toDouble() / (1024.0 * 1024.0)
-    return String.format(Locale.US, "%.1f MB", megabytes)
-}
