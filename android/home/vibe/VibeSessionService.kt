@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import com.indoone.MainActivity
 import com.indoone.R
@@ -296,6 +297,12 @@ class VibeSessionService : Service() {
             openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        val content = RemoteViews(packageName, R.layout.notification_vibe_session)
+        content.setImageViewResource(R.id.vibe_notification_icon, R.drawable.ic_indoone_notification)
+        content.setTextViewText(R.id.vibe_notification_title, "Indoone AI")
+        content.setTextViewText(R.id.vibe_notification_status, statusText())
+        content.setOnClickPendingIntent(R.id.vibe_notification_icon, openPendingIntent)
+        content.setOnClickPendingIntent(R.id.vibe_notification_close, stopPendingIntent)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_indoone_notification)
@@ -304,6 +311,8 @@ class VibeSessionService : Service() {
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .setContentIntent(openPendingIntent)
+                .setCustomContentView(content)
+                .setCustomBigContentView(content)
                 .addAction(R.drawable.ic_indoone_close, "", stopPendingIntent)
                 .build()
         } else {
@@ -314,6 +323,8 @@ class VibeSessionService : Service() {
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .setContentIntent(openPendingIntent)
+                .setCustomContentView(content)
+                .setCustomBigContentView(content)
                 .addAction(R.drawable.ic_indoone_close, "", stopPendingIntent)
                 .build()
         }
