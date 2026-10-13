@@ -1,6 +1,7 @@
 package com.indoone
 
 import android.Manifest
+import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -122,6 +123,7 @@ private enum class AppRoute {
 class MainActivity : ComponentActivity() {
     private var assistantMicPrompted = false
     private var batteryExemptionPrompted = false
+    private var assistantRoleAsked = false
 
     override fun onResume() {
         super.onResume()
@@ -242,6 +244,26 @@ class MainActivity : ComponentActivity() {
                         } else if (!notificationPreferences.wasPermissionRequested()) {
                             notificationPreferences.markPermissionRequested()
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    // Ask to become the phone's digital assistant in one tap instead of
+                    // making the user hunt through Settings. Only until it is granted.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !assistantRoleAsked) {
+                        val roleManager = getSystemService(RoleManager::class.java)
+                        if (
+                            roleManager != null &&
+                            roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT) &&
+                            !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+                        ) {
+                            assistantRoleAsked = true
+                            runCatching {
+                                startActivity(
+                                    roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT),
+                                )
+                            }
                         }
                     }
                 }
