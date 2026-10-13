@@ -88,6 +88,7 @@ class VibeSessionService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var clientConnected = false
     private var sessionStopped = false
+    private var foregroundStarted = false
 
     override fun onCreate() {
         super.onCreate()
@@ -153,6 +154,7 @@ class VibeSessionService : Service() {
             audioEngine.startRecording()
         }
         _state.value = _state.value.copy(isListening = audioEngine.isRecording())
+        refreshNotification()
     }
 
     private fun handleSetSpeaker(on: Boolean) {
@@ -214,6 +216,7 @@ class VibeSessionService : Service() {
                 )
             }
         }
+        refreshNotification()
     }
 
     private fun handleFailure(message: String) {
@@ -222,6 +225,7 @@ class VibeSessionService : Service() {
             isListening = false,
             transcript = message,
         )
+        refreshNotification()
     }
 
     private fun stopSession() {
@@ -253,6 +257,7 @@ class VibeSessionService : Service() {
     }
 
     private fun startForegroundCompat() {
+        foregroundStarted = true
         val notification = buildNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
@@ -295,6 +300,7 @@ class VibeSessionService : Service() {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_indoone_notification)
                 .setContentTitle("Indoone AI")
+                .setContentText(statusText())
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .setContentIntent(openPendingIntent)
@@ -304,12 +310,34 @@ class VibeSessionService : Service() {
             Notification.Builder(this)
                 .setSmallIcon(R.drawable.ic_indoone_notification)
                 .setContentTitle("Indoone AI")
+                .setContentText(statusText())
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .setContentIntent(openPendingIntent)
                 .addAction(R.drawable.ic_indoone_close, "", stopPendingIntent)
                 .build()
         }
+    }
+
+    /**
+     * Android only keeps the notification's action in the collapsed row when the
+     * notification also has a text line, so the button is visible without tapping
+     * the expand arrow.
+     */
+    private fun statusText(): String {
+        val state = _state.value
+        if (state.isListening) {
+            return "Listening"
+        }
+        return state.connectionState
+    }
+
+    private fun refreshNotification() {
+        if (!foregroundStarted) {
+            return
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(NOTIFICATION_ID, buildNotification())
     }
 
     private fun acquireWakeLock() {
