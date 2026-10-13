@@ -315,7 +315,7 @@ private const val READ_TIMEOUT_MS = 300_000
                 // A 503 carries wording written for the user ("handling a lot of
                 // requests"), so show that wording on its own instead of wrapping
                 // it in an HTTP status line.
-                val displayMessage = if (responseCode == 503 && !safeServerMessage.isNullOrBlank()) {
+                val displayMessage = if (responseCode >= 500 && !safeServerMessage.isNullOrBlank()) {
                     safeServerMessage
                 } else {
                     safeServerMessage?.let { "Indoone backend returned HTTP $responseCode: $it" }
