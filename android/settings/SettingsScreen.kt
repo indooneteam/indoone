@@ -452,8 +452,8 @@ private fun SettingsMenuRow(
 private fun SettingsMenuItem(
     icon: ImageVector,
     title: String,
-    onClick: () -> Unit,
     subtitle: String? = null,
+    onClick: () -> Unit,
 ) {
     SettingsMenuRow(
         icon = icon,
