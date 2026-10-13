@@ -4,18 +4,20 @@ import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -29,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
@@ -72,6 +76,10 @@ private val NotificationsIcon = Icons.Outlined.NotificationsNone
 private val DangerZoneIcon = Icons.Outlined.WarningAmber
 private val LogoutIcon = Icons.Outlined.Logout
 private val ChevronIcon = Icons.Outlined.ChevronRight
+
+private val ItemTitleColor = Color(0xFF2C2733)
+private val ItemSubtitleColor = Color(0xFF8A8392)
+private val SectionLabelColor = Color(0xFF8592A8)
 
 @Composable
 fun SettingsScreen(
@@ -168,36 +176,56 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 18.dp, vertical = 18.dp),
             ) {
-                Column(Modifier.padding(top = 6.dp, bottom = 16.dp)) {
-                        Text("Settings", Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
+                Column(Modifier.padding(top = 6.dp, bottom = 4.dp)) {
+                    Text("Settings", Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 26.sp, lineHeight = 29.sp, fontWeight = FontWeight.Bold)
                     Text("Manage your account, security and app preferences.", Modifier.padding(top = 7.dp), color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 19.sp)
                 }
-                SettingsActionRow("Profile", "Email & mobile number", ProfileIcon, onProfileClick)
-                SettingsActionRow("App Lock", "PIN", LockIcon) {
+
+                SettingsSectionLabel("ACCOUNT")
+                SettingsMenuItem(ProfileIcon, "Profile", "Email & mobile number", onProfileClick)
+
+                SettingsSectionLabel("SECURITY")
+                SettingsMenuItem(
+                    LockIcon,
+                    "App Lock",
+                    if (appLockStore.isEnabled()) "PIN is set" else "Not set",
+                ) {
                     flow.sync(appLockStore.isEnabled())
                     appLockPage = true
                 }
-                SettingsToggleRow("Biometric Unlock", "Fingerprint / device credential", BiometricIcon, biometricOn) { enabled ->
-                    if (enabled) requestBiometricEnable() else {
+                SettingsMenuToggle(
+                    BiometricIcon,
+                    "Biometric Unlock",
+                    "Fingerprint / device credential",
+                    biometricOn,
+                ) { enabled ->
+                    if (enabled) {
+                        requestBiometricEnable()
+                    } else {
                         biometricStore.setEnabled(false)
                         biometricOn = false
                         biometricError = null
                     }
                 }
-                SettingsActionRow(
-                    "Auto-Lock",
-                    if (autoLockStore.minutes() > 0) "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}" else "Never",
+                SettingsMenuItem(
                     TimerIcon,
+                    "Auto-Lock",
+                    if (autoLockStore.minutes() > 0) {
+                        "After ${autoLockStore.minutes()} minute${if (autoLockStore.minutes() == 1) "" else "s"}"
+                    } else {
+                        "Never"
+                    },
                 ) { autoLockPage = true }
-                SettingsActionRow(
-                    "Notifications",
-                    "Security, AI, Vibe and other alerts",
-                    NotificationsIcon,
-                    onNotificationsClick,
-                )
-                SettingsActionRow("About Indoone", "Version 0.1.0 · Updates", InfoIcon) { aboutPage = true }
-                SettingsActionRow("Danger Zone", "Delete local data or your Indoone account", DangerZoneIcon) { dangerZonePage = true }
-                SettingsActionRow("Log out", "Sign out from this device", LogoutIcon) { logoutPage = true }
+
+                SettingsSectionLabel("APP")
+                SettingsMenuItem(NotificationsIcon, "Notifications", "Security, AI, Vibe and other alerts", onNotificationsClick)
+                SettingsMenuItem(InfoIcon, "About Indoone", "Version 0.1.0 · Updates") { aboutPage = true }
+
+                SettingsSectionLabel("DANGER ZONE")
+                SettingsMenuItem(DangerZoneIcon, "Danger Zone", "Delete local data or your Indoone account") { dangerZonePage = true }
+                SettingsMenuItem(LogoutIcon, "Log out", "Sign out from this device") { logoutPage = true }
+
+                Spacer(Modifier.height(8.dp))
             }
             AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
         }
@@ -344,40 +372,90 @@ fun SettingsScreen(
     }
 }
 
+/** Small uppercase heading, matching the main menu's section labels. */
 @Composable
-private fun SettingsActionRow(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+private fun SettingsSectionLabel(label: String) {
+    Text(
+        text = label,
+        modifier = Modifier.padding(start = 9.dp, top = 16.dp, bottom = 5.dp),
+        color = SectionLabelColor,
+        fontSize = 10.sp,
+        lineHeight = 13.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.0.sp,
+    )
+}
+
+/** The rounded icon tile the main menu uses for every entry. */
+@Composable
+private fun SettingsMenuIcon(icon: ImageVector) {
+    Surface(
+        modifier = Modifier.size(32.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = Color.Transparent,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.linearGradient(listOf(Color.White, Color(0xFFF3EFFA)))),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, null, Modifier.size(22.dp), tint = Color(0xFF756D80))
-            Column(Modifier.weight(1f)) {
-                Text(title, color = Color(0xFF2C2733), fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.sp)
-            }
-            Icon(ChevronIcon, null, Modifier.size(18.dp), tint = Color(0xFFAAA3B0))
+            Icon(icon, null, Modifier.size(18.dp), tint = Color(0xFF51627D))
         }
-        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
     }
 }
 
 @Composable
-private fun SettingsToggleRow(title: String, subtitle: String, icon: ImageVector, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(icon, null, Modifier.size(22.dp), tint = Color(0xFF756D80))
-            Column(Modifier.weight(1f)) {
-                Text(title, color = Color(0xFF2C2733), fontSize = 13.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold)
-                Text(subtitle, Modifier.padding(top = 3.dp), color = Color(0xFF8A8392), fontSize = 11.sp, lineHeight = 15.sp)
-            }
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+private fun SettingsMenuRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable (() -> Unit)? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(15.dp))
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsMenuIcon(icon)
+        Column(Modifier.weight(1f).padding(start = 11.dp)) {
+            Text(title, color = ItemTitleColor, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, Modifier.padding(top = 2.dp), color = ItemSubtitleColor, fontSize = 11.sp, lineHeight = 14.sp)
         }
-        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
+        trailing?.invoke()
+    }
+}
+
+@Composable
+private fun SettingsMenuItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    SettingsMenuRow(
+        icon = icon,
+        title = title,
+        subtitle = subtitle,
+        modifier = Modifier.clickable(onClick = onClick),
+    ) {
+        Icon(ChevronIcon, "Open $title", Modifier.size(18.dp), tint = Color(0xFF8B9AB0))
+    }
+}
+
+@Composable
+private fun SettingsMenuToggle(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingsMenuRow(icon = icon, title = title, subtitle = subtitle) {
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
