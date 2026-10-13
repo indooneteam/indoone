@@ -17,27 +17,87 @@ object AppUpdateManager {
     data class UpdateInfo(
         val versionCode: Long,
         val downloadUrl: String,
+        val sizeBytes: Long,
     )
 
     private const val RELEASES_URL =
         "https://api.github.com/repos/indooneteam/indoone/releases?per_page=20"
     private const val RELEASE_TAG_PREFIX = "terminal-build-"
     private const val APK_ASSET_NAME = "indoone-terminal.apk"
+    private const val UPDATE_DIR = "updates"
+    private const val PROGRESS_BUFFER_BYTES = 64 * 1024
 
     private val httpClient = OkHttpClient()
 
-    suspend fun checkForUpdate(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
-        val currentVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            context.packageManager
-                .getPackageInfo(context.packageName, 0)
-                .longVersionCode
+    fun currentVersionCode(context: Context): Long {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.longVersionCode
         } else {
             @Suppress("DEPRECATION")
-            context.packageManager
-                .getPackageInfo(context.packageName, 0)
-                .versionCode
-                .toLong()
+            info.versionCode.toLong()
         }
+    }
+
+    fun apkFile(context: Context): File =
+        File(File(context.cacheDir, UPDATE_DIR), APK_ASSET_NAME)
+
+    /**
+     * True when the system will let us open the package installer. Android only
+     * allows installing packages after the user has allowed it for this app.
+     */
+    fun canInstall(context: Context): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            context.packageManager.canRequestPackageInstalls()
+
+    /**
+     * Opens the "install unknown apps" screen. That permission has to be granted
+     * before the download is worth starting, otherwise the installer cannot open.
+     */
+    fun openInstallPermissionSettings(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        runCatching {
+            context.startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:${context.packageName}"),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
+
+    /**
+     * The intent that installs a downloaded APK. When the app is not allowed to
+     * install packages yet this is the settings screen instead, so a caller always
+     * has something useful to open.
+     */
+    fun installerIntent(context: Context, apkFile: File): Intent {
+        if (!canInstall(context)) {
+            return Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${context.packageName}"),
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        val apkUri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            apkFile,
+        )
+
+        return Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(apkUri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    fun installApk(context: Context, apkFile: File) {
+        runCatching { context.startActivity(installerIntent(context, apkFile)) }
+    }
+
+    suspend fun checkForUpdate(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
+        val installedVersionCode = currentVersionCode(context)
 
         val request = Request.Builder()
             .url(RELEASES_URL)
@@ -68,8 +128,12 @@ object AppUpdateManager {
                     if (asset.optString("name") != APK_ASSET_NAME) continue
 
                     val downloadUrl = asset.optString("browser_download_url")
-                    if (versionCode > currentVersionCode && downloadUrl.isNotBlank()) {
-                        return@withContext UpdateInfo(versionCode, downloadUrl)
+                    if (versionCode > installedVersionCode && downloadUrl.isNotBlank()) {
+                        return@withContext UpdateInfo(
+                            versionCode = versionCode,
+                            downloadUrl = downloadUrl,
+                            sizeBytes = asset.optLong("size"),
+                        )
                     }
                 }
             }
@@ -78,22 +142,19 @@ object AppUpdateManager {
         }
     }
 
-    suspend fun downloadAndInstall(context: Context, update: UpdateInfo) = withContext(Dispatchers.IO) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !context.packageManager.canRequestPackageInstalls()
-        ) {
-            withContext(Dispatchers.Main) {
-                context.startActivity(
-                    Intent(
-                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        Uri.parse("package:${context.packageName}"),
-                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
-            return@withContext
-        }
-
-        val updateDir = File(context.cacheDir, "updates").apply { mkdirs() }
+    /**
+     * Downloads the APK into the cache and reports progress as a percentage.
+     *
+     * This is called from the worker, not from a screen, so the download belongs to
+     * the work rather than to the dialog. Closing the dialog leaves it running, and
+     * the work survives the app being sent to the background.
+     */
+    suspend fun downloadApk(
+        context: Context,
+        update: UpdateInfo,
+        onProgress: suspend (Int) -> Unit,
+    ): File = withContext(Dispatchers.IO) {
+        val updateDir = File(context.cacheDir, UPDATE_DIR).apply { mkdirs() }
         val apkFile = File(updateDir, APK_ASSET_NAME)
         if (apkFile.exists()) apkFile.delete()
 
@@ -108,9 +169,29 @@ object AppUpdateManager {
             }
 
             val body = response.body ?: error("APK download returned no file.")
+            val totalBytes = body.contentLength().takeIf { it > 0L } ?: update.sizeBytes
+
             body.byteStream().use { input ->
                 apkFile.outputStream().use { output ->
-                    input.copyTo(output)
+                    val buffer = ByteArray(PROGRESS_BUFFER_BYTES)
+                    var copied = 0L
+                    var lastPercent = -1
+
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+
+                        output.write(buffer, 0, read)
+                        copied += read
+
+                        if (totalBytes > 0L) {
+                            val percent = ((copied * 100L) / totalBytes).toInt().coerceIn(0, 100)
+                            if (percent != lastPercent) {
+                                lastPercent = percent
+                                onProgress(percent)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -119,18 +200,6 @@ object AppUpdateManager {
             error("Downloaded APK is empty.")
         }
 
-        withContext(Dispatchers.Main) {
-            val apkUri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                apkFile,
-            )
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(apkUri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            context.startActivity(installIntent)
-        }
+        apkFile
     }
 }

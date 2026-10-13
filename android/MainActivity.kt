@@ -31,6 +31,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.WorkInfo
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
@@ -78,11 +79,13 @@ import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
+import com.indoone.settings.update.UpdateDownloadWorker
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
 import com.indoone.settings.profile.change_mobile_number.ChangeMobileNumberScreen
 import kotlinx.coroutines.delay
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 private enum class AppRoute {
@@ -162,7 +165,7 @@ class MainActivity : ComponentActivity() {
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
                 var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
                 var isCheckingUpdate by remember { mutableStateOf(false) }
-                var isDownloadingUpdate by remember { mutableStateOf(false) }
+                var updateDialogHidden by remember { mutableStateOf(false) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
                 var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.ACCOUNTS) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
@@ -177,6 +180,46 @@ class MainActivity : ComponentActivity() {
                     if (granted) notificationPreferences.markPermissionRequested()
                 }
 
+                // The download is background work, so the dialog only reflects it.
+                // Closing the dialog or leaving the app does not touch the work.
+                val installedVersionCode = remember {
+                    AppUpdateManager.currentVersionCode(this@MainActivity)
+                }
+                val updateWorkInfos by UpdateDownloadWorker
+                    .observe(this@MainActivity)
+                    .collectAsState(initial = emptyList())
+                val updateWork = updateWorkInfos.firstOrNull()
+                val isDownloadingUpdate =
+                    updateWork?.state == WorkInfo.State.ENQUEUED ||
+                        updateWork?.state == WorkInfo.State.RUNNING
+                val updateProgress = updateWork?.progress
+                    ?.getInt(UpdateDownloadWorker.KEY_PROGRESS, 0) ?: 0
+                val readyVersionCode = updateWork?.outputData
+                    ?.getLong(UpdateDownloadWorker.KEY_VERSION_CODE, 0L) ?: 0L
+                val updateReady =
+                    updateWork?.state == WorkInfo.State.SUCCEEDED &&
+                        readyVersionCode > installedVersionCode &&
+                        AppUpdateManager.apkFile(this@MainActivity).exists()
+
+                // Show the dialog again when the download starts or finishes, and
+                // report a failure once instead of leaving the user guessing.
+                LaunchedEffect(updateWork?.state) {
+                    when (updateWork?.state) {
+                        WorkInfo.State.ENQUEUED,
+                        WorkInfo.State.RUNNING,
+                        WorkInfo.State.SUCCEEDED -> updateDialogHidden = false
+
+                        WorkInfo.State.FAILED -> {
+                            val message = updateWork?.outputData
+                                ?.getString(UpdateDownloadWorker.KEY_ERROR)
+                                ?: "Could not download the update."
+                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                        }
+
+                        else -> Unit
+                    }
+                }
+
                 fun checkForUpdates(showUpToDateMessage: Boolean) {
                     if (isCheckingUpdate || isDownloadingUpdate) return
                     isCheckingUpdate = true
@@ -185,6 +228,7 @@ class MainActivity : ComponentActivity() {
                             AppUpdateManager.checkForUpdate(this@MainActivity)
                         }.onSuccess { update ->
                             availableUpdate = update
+                            if (update != null) updateDialogHidden = false
                             if (update == null && showUpToDateMessage) {
                                 Toast.makeText(
                                     this@MainActivity,
@@ -727,50 +771,68 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (availableUpdate != null || isDownloadingUpdate) {
+                val showUpdateDialog =
+                    (availableUpdate != null || isDownloadingUpdate || updateReady) &&
+                        !updateDialogHidden
+
+                if (showUpdateDialog) {
                     val update = availableUpdate
                     AlertDialog(
-                        onDismissRequest = {
-                            if (!isDownloadingUpdate) {
-                                availableUpdate = null
-                            }
-                        },
+                        onDismissRequest = { updateDialogHidden = true },
                         title = {
                             Text(
-                                if (isDownloadingUpdate) "Downloading update"
-                                else "New update available",
+                                when {
+                                    updateReady -> "Update ready to install"
+                                    isDownloadingUpdate -> "Downloading update"
+                                    else -> "New update available"
+                                },
                             )
                         },
                         text = {
                             Text(
-                                if (isDownloadingUpdate) {
-                                    "Downloading the latest Indoone APK. Please wait."
-                                } else {
-                                    "A newer Indoone update is available."
+                                when {
+                                    updateReady ->
+                                        "Indoone $readyVersionCode is downloaded. " +
+                                            "Tap Install to open the system installer."
+
+                                    isDownloadingUpdate ->
+                                        "Downloading the latest Indoone APK — " +
+                                            "$updateProgress%. You can close this; " +
+                                            "the download keeps going."
+
+                                    update != null ->
+                                        "Indoone ${update.versionCode} is available. " +
+                                            "Download size " +
+                                            "${formatUpdateSize(update.sizeBytes)}."
+
+                                    else -> "A newer Indoone update is available."
                                 },
                             )
                         },
                         confirmButton = {
-                            if (!isDownloadingUpdate && update != null) {
-                                TextButton(
+                            when {
+                                updateReady -> TextButton(
                                     onClick = {
-                                        isDownloadingUpdate = true
-                                        availableUpdate = null
-                                        coroutineScope.launch {
-                                            runCatching {
-                                                AppUpdateManager.downloadAndInstall(
-                                                    this@MainActivity,
-                                                    update,
-                                                )
-                                            }.onFailure { error ->
-                                                Toast.makeText(
-                                                    this@MainActivity,
-                                                    error.message ?: "Could not install the update.",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                            }
-                                            isDownloadingUpdate = false
+                                        AppUpdateManager.installApk(
+                                            this@MainActivity,
+                                            AppUpdateManager.apkFile(this@MainActivity),
+                                        )
+                                    },
+                                ) {
+                                    Text("Install")
+                                }
+
+                                !isDownloadingUpdate && update != null -> TextButton(
+                                    onClick = {
+                                        // Ask for the install permission first: without
+                                        // it the download would finish and be unusable.
+                                        if (!AppUpdateManager.canInstall(this@MainActivity)) {
+                                            AppUpdateManager.openInstallPermissionSettings(
+                                                this@MainActivity,
+                                            )
                                         }
+                                        UpdateDownloadWorker.enqueue(this@MainActivity, update)
+                                        availableUpdate = null
                                     },
                                 ) {
                                     Text("Update")
@@ -778,10 +840,8 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         dismissButton = {
-                            if (!isDownloadingUpdate) {
-                                TextButton(onClick = { availableUpdate = null }) {
-                                    Text("Later")
-                                }
+                            TextButton(onClick = { updateDialogHidden = true }) {
+                                Text(if (isDownloadingUpdate) "Hide" else "Later")
                             }
                         },
                     )
@@ -901,3 +961,9 @@ private fun List<AccountRecord>.toUiAccounts(nowMillis: Long = System.currentTim
             serviceClass = record.cls,
         )
     }
+
+private fun formatUpdateSize(bytes: Long): String {
+    if (bytes <= 0L) return "unknown"
+    val megabytes = bytes.toDouble() / (1024.0 * 1024.0)
+    return String.format(Locale.US, "%.1f MB", megabytes)
+}
