@@ -2,10 +2,15 @@ package com.indoone
 
 import android.Manifest
 import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -116,9 +121,15 @@ private enum class AppRoute {
 
 class MainActivity : ComponentActivity() {
     private var assistantMicPrompted = false
+    private var batteryExemptionPrompted = false
 
     override fun onResume() {
         super.onResume()
+
+        val isActiveAssistant = android.service.voice.VoiceInteractionService.isActiveService(
+            this,
+            ComponentName(this, AssistantService::class.java),
+        )
 
         if (
             !assistantMicPrompted &&
@@ -126,16 +137,28 @@ class MainActivity : ComponentActivity() {
                 this,
                 Manifest.permission.RECORD_AUDIO,
             ) != PackageManager.PERMISSION_GRANTED &&
-            android.service.voice.VoiceInteractionService.isActiveService(
-                this,
-                ComponentName(this, AssistantService::class.java),
-            )
+            isActiveAssistant
         ) {
             assistantMicPrompted = true
             requestPermissions(
                 arrayOf(Manifest.permission.RECORD_AUDIO),
                 4102,
             )
+        }
+
+        // Without this exemption Android freezes the assistant once it is in the
+        // background, so the wake word stops working after a while.
+        if (!batteryExemptionPrompted && isActiveAssistant) {
+            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!power.isIgnoringBatteryOptimizations(packageName)) {
+                batteryExemptionPrompted = true
+                runCatching {
+                    startActivity(
+                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                            .setData(Uri.parse("package:$packageName")),
+                    )
+                }
+            }
         }
     }
 
