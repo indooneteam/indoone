@@ -68,6 +68,12 @@ class AssistantService : VoiceInteractionService() {
                 startWakeDetector()
             }
         }
+        // The app starts this service from a visible screen so the microphone foreground
+        // service is established while the app can still hold the microphone. Android
+        // silences a microphone service that is created from the background.
+        if (!sessionShowing) {
+            startWakeDetector()
+        }
         return START_STICKY
     }
 

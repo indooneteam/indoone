@@ -162,6 +162,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Establish the wake listener's microphone service from a visible screen, so it is
+        // already holding the microphone when the app goes to the background. Android
+        // silences a microphone foreground service that is created from the background.
+        if (isActiveAssistant) {
+            runCatching {
+                startService(Intent(this, AssistantService::class.java))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
