@@ -1,12 +1,7 @@
 package com.indoone.settings
 
 import android.app.Activity
-import android.app.role.RoleManager
-import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -46,7 +41,6 @@ import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Logout
-import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Timer
@@ -79,7 +73,6 @@ private val BiometricIcon = Icons.Outlined.Fingerprint
 private val TimerIcon = Icons.Outlined.Timer
 private val InfoIcon = Icons.Outlined.Info
 private val NotificationsIcon = Icons.Outlined.NotificationsNone
-private val AssistantIcon = Icons.Outlined.Mic
 private val DangerZoneIcon = Icons.Outlined.WarningAmber
 private val LogoutIcon = Icons.Outlined.Logout
 private val ChevronIcon = Icons.Outlined.ChevronRight
@@ -204,12 +197,6 @@ fun SettingsScreen(
                 SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
                 SettingsMenuItem(NotificationsIcon, "Notifications", onClick = onNotificationsClick)
-                SettingsMenuItem(
-                    icon = AssistantIcon,
-                    title = "Hey Indoone",
-                    subtitle = "Say Hey Indoone from anywhere",
-                    onClick = { openAssistantSetup(context) },
-                )
                 SettingsMenuItem(InfoIcon, "About Indoone") { aboutPage = true }
 
                 SettingsMenuItem(DangerZoneIcon, "Danger Zone") { dangerZonePage = true }
@@ -380,47 +367,6 @@ private fun SettingsMenuIcon(icon: ImageVector) {
         }
     }
 }
-
-private fun openAssistantSetup(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val roleManager = context.getSystemService(RoleManager::class.java)
-        if (
-            roleManager != null &&
-            roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT) &&
-            !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
-        ) {
-            val opened = openScreen(
-                context,
-                roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT),
-            )
-            if (opened) {
-                return
-            }
-        }
-    }
-    // Some phones have no role picker, so fall back through the system screens. The
-    // first one that opens wins; if none does, say where to go instead of doing nothing.
-    val screens = listOf(
-        Intent(Settings.ACTION_VOICE_INPUT_SETTINGS),
-        Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS),
-        Intent(Settings.ACTION_SETTINGS),
-    )
-    for (screen in screens) {
-        if (openScreen(context, screen)) {
-            return
-        }
-    }
-    Toast.makeText(
-        context,
-        "Open Settings, then Default apps, then Digital assistant, and choose Indoone.",
-        Toast.LENGTH_LONG,
-    ).show()
-}
-
-private fun openScreen(context: Context, intent: Intent): Boolean =
-    runCatching {
-        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }.isSuccess
 
 @Composable
 private fun SettingsMenuRow(
