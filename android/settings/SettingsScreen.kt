@@ -185,7 +185,7 @@ fun SettingsScreen(
                     Text("Manage your account, security and app preferences.", Modifier.padding(top = 7.dp), color = Color(0xFF77717F), fontSize = 12.sp, lineHeight = 19.sp)
                 }
 
-                SettingsMenuItem(ProfileIcon, "Profile", onProfileClick)
+                SettingsMenuItem(ProfileIcon, "Profile", onClick = onProfileClick)
 
                 SettingsMenuItem(LockIcon, "App Lock") {
                     flow.sync(appLockStore.isEnabled())
@@ -202,7 +202,7 @@ fun SettingsScreen(
                 }
                 SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
-                SettingsMenuItem(NotificationsIcon, "Notifications", onNotificationsClick)
+                SettingsMenuItem(NotificationsIcon, "Notifications", onClick = onNotificationsClick)
                 SettingsMenuItem(
                     icon = AssistantIcon,
                     title = "Hey Indoone",
