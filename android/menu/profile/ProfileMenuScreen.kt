@@ -83,6 +83,8 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
             runCatching {
                 repository.updateProfileFields(name, nickname, profession)
             }.onSuccess {
+                // Best effort: the backend then knows the name, so a reply can use it.
+                runCatching { repository.publishNameToBackend(name, nickname) }
                 status = "Profile saved."
                 editing = false
             }.onFailure {
