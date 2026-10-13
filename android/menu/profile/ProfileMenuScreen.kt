@@ -179,14 +179,17 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                         description = "Cancel editing",
                         tint = Color(0xFF6E6777),
                     ) {
-                        runCatching { repository.readProfile() }
-                            .onSuccess { profile ->
-                                name = profile["name"]?.toString().orEmpty()
-                                nickname = profile["nickname"]?.toString().orEmpty()
-                                profession = profile["profession"]?.toString().orEmpty()
-                            }
                         status = null
                         editing = false
+                        // Reload the saved values, so a cancelled edit is discarded.
+                        scope.launch {
+                            runCatching { repository.readProfile() }
+                                .onSuccess { profile ->
+                                    name = profile["name"]?.toString().orEmpty()
+                                    nickname = profile["nickname"]?.toString().orEmpty()
+                                    profession = profile["profession"]?.toString().orEmpty()
+                                }
+                        }
                     }
                     Spacer(Modifier.width(8.dp))
                     RoundActionButton(
