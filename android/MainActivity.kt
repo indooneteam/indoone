@@ -1,8 +1,6 @@
 package com.indoone
 
 import android.Manifest
-import android.app.role.RoleManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -33,7 +31,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.indoone.assistant.AssistantService
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
@@ -121,36 +118,15 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
-    private var assistantMicPrompted = false
     private var batteryExemptionPrompted = false
-    private var assistantRoleAsked = false
 
     override fun onResume() {
         super.onResume()
 
-        val isActiveAssistant = android.service.voice.VoiceInteractionService.isActiveService(
-            this,
-            ComponentName(this, AssistantService::class.java),
-        )
-
-        if (
-            !assistantMicPrompted &&
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO,
-            ) != PackageManager.PERMISSION_GRANTED &&
-            isActiveAssistant
-        ) {
-            assistantMicPrompted = true
-            requestPermissions(
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                4102,
-            )
-        }
-
-        // Without this exemption Android freezes the assistant once it is in the
-        // background, so the wake word stops working after a while.
-        if (!batteryExemptionPrompted && isActiveAssistant) {
+        // Vibe keeps its voice session alive while the app is in another app or the
+        // screen is off. Android freezes an app that is still subject to battery
+        // optimisation, so ask for the exemption once, from a visible screen.
+        if (!batteryExemptionPrompted) {
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
             if (!power.isIgnoringBatteryOptimizations(packageName)) {
                 batteryExemptionPrompted = true
@@ -160,15 +136,6 @@ class MainActivity : ComponentActivity() {
                             .setData(Uri.parse("package:$packageName")),
                     )
                 }
-            }
-        }
-
-        // Establish the wake listener's microphone service from a visible screen, so it is
-        // already holding the microphone when the app goes to the background. Android
-        // silences a microphone foreground service that is created from the background.
-        if (isActiveAssistant) {
-            runCatching {
-                startService(Intent(this, AssistantService::class.java))
             }
         }
     }
@@ -253,26 +220,6 @@ class MainActivity : ComponentActivity() {
                         } else if (!notificationPreferences.wasPermissionRequested()) {
                             notificationPreferences.markPermissionRequested()
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    }
-                }
-
-                LaunchedEffect(Unit) {
-                    // Ask to become the phone's digital assistant in one tap instead of
-                    // making the user hunt through Settings. Only until it is granted.
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !assistantRoleAsked) {
-                        val roleManager = getSystemService(RoleManager::class.java)
-                        if (
-                            roleManager != null &&
-                            roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT) &&
-                            !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
-                        ) {
-                            assistantRoleAsked = true
-                            runCatching {
-                                startActivity(
-                                    roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT),
-                                )
-                            }
                         }
                     }
                 }
