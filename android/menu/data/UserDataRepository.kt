@@ -45,7 +45,8 @@ class UserDataRepository(
         if (value.isBlank()) return@withContext
         val base = BuildConfig.INDOONE_BACKEND_URL.trim().trimEnd('/')
         if (base.isBlank()) return@withContext
-        val token = Tasks.await(auth.currentUser?.getIdToken(false))?.token
+        val user = auth.currentUser ?: return@withContext
+        val token = Tasks.await(user.getIdToken(false)).token
             ?.takeIf { it.isNotBlank() }
             ?: return@withContext
 
