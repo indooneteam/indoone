@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +64,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
-import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -73,95 +73,35 @@ fun VibeScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
-    var isListening by remember { mutableStateOf(false) }
-    var isSpeakerOn by remember { mutableStateOf(true) }
-    var connectionState by remember { mutableStateOf("Connecting") }
-    var transcript by remember { mutableStateOf("Your live conversation will appear here.") }
+    val sessionState by VibeSessionService.state.collectAsState()
+    var permissionDenied by remember { mutableStateOf(false) }
 
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    val vibeClient = remember { VibeClient(scope = scope) }
-    val audioEngine = remember {
-        VibeAudioEngine(
-            context = context,
-            onCapturedPcm = { pcm -> vibeClient.sendAudio(pcm) },
-            onPlaybackEnabled = { isSpeakerOn },
-        )
+    val connectionState = if (permissionDenied) {
+        "Microphone permission required"
+    } else {
+        sessionState.connectionState
     }
-
-    fun startVibe() {
-        scope.launch {
-            connectionState = "Connecting"
-            vibeClient.connect(
-                onEvent = { event ->
-                    when (event.optString("type")) {
-                        "ready", "connected" -> {
-                            connectionState = "Connected"
-                            if (!audioEngine.isRecording()) {
-                                audioEngine.startRecording()
-                                isListening = audioEngine.isRecording()
-                            }
-                        }
-                        "status" -> {
-                            connectionState = when (event.optString("interaction_status").uppercase()) {
-                                "IN_PROGRESS" -> "Thinking…"
-                                "IDLE" -> "Connected"
-                                else -> connectionState
-                            }
-                        }
-                        "transcript" -> {
-                            val text = event.optString("text").trim()
-                            if (text.isNotBlank()) {
-                                transcript = when (event.optString("role")) {
-                                    "user" -> "You: $text"
-                                    "assistant" -> "Indoone: $text"
-                                    else -> text
-                                }
-                            }
-                        }
-                        "audio" -> {
-                            if (isSpeakerOn) {
-                                event.optString("audio_base64")
-                                    .takeIf { it.isNotBlank() }
-                                    ?.let(audioEngine::playResponse)
-                            }
-                        }
-                        "interrupted" -> audioEngine.flushPlayback()
-                        "closed" -> {
-                            connectionState = "Disconnected"
-                            isListening = false
-                        }
-                        "error" -> {
-                            connectionState = "Connection error"
-                            isListening = false
-                            transcript = event.optString("detail").ifBlank {
-                                "Vibe connection failed."
-                            }
-                        }
-                    }
-                },
-                onFailure = { message ->
-                    connectionState = "Connection error"
-                    isListening = false
-                    transcript = message
-                },
-            )
-        }
+    val transcript = if (permissionDenied) {
+        "Microphone permission is required for Vibe."
+    } else {
+        sessionState.transcript
     }
+    val isListening = sessionState.isListening
+    val isSpeakerOn = sessionState.isSpeakerOn
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) {
-            startVibe()
+            permissionDenied = false
+            VibeSessionService.start(context)
         } else {
-            connectionState = "Microphone permission required"
-            transcript = "Microphone permission is required for Vibe."
+            permissionDenied = true
         }
     }
 
     BackHandler(onBack = {
-        audioEngine.stop()
-        vibeClient.close()
+        VibeSessionService.stop(context)
         onClose()
     })
 
@@ -171,16 +111,9 @@ fun VibeScreen(
                 Manifest.permission.RECORD_AUDIO,
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            startVibe()
+            VibeSessionService.start(context)
         } else {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            audioEngine.stop()
-            vibeClient.close()
         }
     }
 
@@ -419,13 +352,7 @@ fun VibeScreen(
                     label = if (isListening) "Mute" else "Unmute",
                     active = isListening,
                     onClick = {
-                        if (isListening) {
-                            audioEngine.stopRecording()
-                            isListening = false
-                        } else if (connectionState == "Connected") {
-                            audioEngine.startRecording()
-                            isListening = audioEngine.isRecording()
-                        }
+                        VibeSessionService.toggleMicrophone(context)
                     },
                 )
 
@@ -444,7 +371,10 @@ fun VibeScreen(
                                 ),
                             ),
                         )
-                        .clickable(onClick = onClose),
+                        .clickable(onClick = {
+                            VibeSessionService.stop(context)
+                            onClose()
+                        }),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -462,10 +392,7 @@ fun VibeScreen(
                     label = if (isSpeakerOn) "Speaker" else "Muted",
                     active = isSpeakerOn,
                     onClick = {
-                        isSpeakerOn = !isSpeakerOn
-                        if (!isSpeakerOn) {
-                            audioEngine.flushPlayback()
-                        }
+                        VibeSessionService.setSpeaker(context, !isSpeakerOn)
                     },
                 )
             }
