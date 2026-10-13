@@ -1,7 +1,11 @@
 package com.indoone.settings
 
 import android.app.Activity
+import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,6 +45,7 @@ import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Timer
@@ -73,6 +78,7 @@ private val BiometricIcon = Icons.Outlined.Fingerprint
 private val TimerIcon = Icons.Outlined.Timer
 private val InfoIcon = Icons.Outlined.Info
 private val NotificationsIcon = Icons.Outlined.NotificationsNone
+private val AssistantIcon = Icons.Outlined.Mic
 private val DangerZoneIcon = Icons.Outlined.WarningAmber
 private val LogoutIcon = Icons.Outlined.Logout
 private val ChevronIcon = Icons.Outlined.ChevronRight
@@ -197,6 +203,12 @@ fun SettingsScreen(
                 SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
                 SettingsMenuItem(NotificationsIcon, "Notifications", onNotificationsClick)
+                SettingsMenuItem(
+                    icon = AssistantIcon,
+                    title = "Hey Indoone",
+                    subtitle = "Say Hey Indoone from anywhere",
+                    onClick = { openAssistantSetup(context) },
+                )
                 SettingsMenuItem(InfoIcon, "About Indoone") { aboutPage = true }
 
                 SettingsMenuItem(DangerZoneIcon, "Danger Zone") { dangerZonePage = true }
@@ -368,11 +380,38 @@ private fun SettingsMenuIcon(icon: ImageVector) {
     }
 }
 
+private fun openAssistantSetup(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val roleManager = context.getSystemService(RoleManager::class.java)
+        if (
+            roleManager != null &&
+            roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT) &&
+            !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+        ) {
+            runCatching {
+                context.startActivity(
+                    roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+            return
+        }
+    }
+    // Already the assistant, or this phone has no role picker: open the system screen.
+    runCatching {
+        context.startActivity(
+            Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
+
 @Composable
 private fun SettingsMenuRow(
     icon: ImageVector,
     title: String,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
@@ -385,14 +424,26 @@ private fun SettingsMenuRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingsMenuIcon(icon)
-        Text(
-            text = title,
+        Column(
             modifier = Modifier.weight(1f).padding(start = 11.dp),
-            color = ItemTitleColor,
-            fontSize = 13.sp,
-            lineHeight = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
+        ) {
+            Text(
+                text = title,
+                color = ItemTitleColor,
+                fontSize = 13.sp,
+                lineHeight = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    modifier = Modifier.padding(top = 2.dp),
+                    color = Color(0xFF77717F),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
+            }
+        }
         trailing?.invoke()
     }
 }
@@ -402,11 +453,13 @@ private fun SettingsMenuItem(
     icon: ImageVector,
     title: String,
     onClick: () -> Unit,
+    subtitle: String? = null,
 ) {
     SettingsMenuRow(
         icon = icon,
         title = title,
         modifier = Modifier.clickable(onClick = onClick),
+        subtitle = subtitle,
     ) {
         Icon(ChevronIcon, "Open $title", Modifier.size(18.dp), tint = Color(0xFF8B9AB0))
     }
