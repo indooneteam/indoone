@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -388,23 +389,38 @@ private fun openAssistantSetup(context: Context) {
             roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT) &&
             !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
         ) {
-            runCatching {
-                context.startActivity(
-                    roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
+            val opened = openScreen(
+                context,
+                roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT),
+            )
+            if (opened) {
+                return
             }
+        }
+    }
+    // Some phones have no role picker, so fall back through the system screens. The
+    // first one that opens wins; if none does, say where to go instead of doing nothing.
+    val screens = listOf(
+        Intent(Settings.ACTION_VOICE_INPUT_SETTINGS),
+        Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS),
+        Intent(Settings.ACTION_SETTINGS),
+    )
+    for (screen in screens) {
+        if (openScreen(context, screen)) {
             return
         }
     }
-    // Already the assistant, or this phone has no role picker: open the system screen.
-    runCatching {
-        context.startActivity(
-            Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-    }
+    Toast.makeText(
+        context,
+        "Open Settings, then Default apps, then Digital assistant, and choose Indoone.",
+        Toast.LENGTH_LONG,
+    ).show()
 }
+
+private fun openScreen(context: Context, intent: Intent): Boolean =
+    runCatching {
+        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }.isSuccess
 
 @Composable
 private fun SettingsMenuRow(
