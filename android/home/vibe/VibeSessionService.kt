@@ -299,6 +299,7 @@ class VibeSessionService : Service() {
         )
         val content = RemoteViews(packageName, R.layout.notification_vibe_session)
         content.setImageViewResource(R.id.vibe_notification_icon, R.drawable.ic_indoone_notification)
+        content.setImageViewResource(R.id.vibe_notification_close, R.drawable.ic_indoone_close)
         content.setTextViewText(R.id.vibe_notification_title, "Indoone AI")
         content.setTextViewText(R.id.vibe_notification_status, statusText())
         content.setOnClickPendingIntent(R.id.vibe_notification_icon, openPendingIntent)
