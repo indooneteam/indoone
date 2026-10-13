@@ -19,6 +19,7 @@ import com.indoone.R
 class AssistantService : VoiceInteractionService() {
     companion object {
         const val ACTION_RESUME_WAKE = "com.indoone.assistant.RESUME_WAKE"
+        const val ACTION_STOP = "com.indoone.assistant.STOP"
         const val EXTRA_AUTH_TOKEN = "com.indoone.assistant.AUTH_TOKEN"
         private const val CHANNEL_ID = "indoone_assistant_wake"
         private const val NOTIFICATION_ID = 4101
@@ -49,10 +50,19 @@ class AssistantService : VoiceInteractionService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_RESUME_WAKE) {
-            Log.i(TAG, "Resuming silent Hey Indoone detector")
-            sessionShowing = false
-            startWakeDetector()
+        when (intent?.action) {
+            ACTION_STOP -> {
+                Log.i(TAG, "Stopping silent Hey Indoone detector")
+                sessionShowing = false
+                stopWakeForeground()
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_RESUME_WAKE -> {
+                Log.i(TAG, "Resuming silent Hey Indoone detector")
+                sessionShowing = false
+                startWakeDetector()
+            }
         }
         return START_STICKY
     }
@@ -219,6 +229,14 @@ class AssistantService : VoiceInteractionService() {
         text: String,
         includePermissionAction: Boolean = false,
     ): Notification {
+        val stopIntent = Intent(this, AssistantService::class.java)
+            .setAction(ACTION_STOP)
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            NOTIFICATION_ID + 2,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_indoone_notification)
@@ -251,6 +269,11 @@ class AssistantService : VoiceInteractionService() {
                             pendingIntent,
                         )
                     }
+                    addAction(
+                        R.drawable.ic_indoone_close,
+                        "",
+                        stopPendingIntent,
+                    )
                 }
                 .build()
         } else {
@@ -285,6 +308,11 @@ class AssistantService : VoiceInteractionService() {
                             pendingIntent,
                         )
                     }
+                    addAction(
+                        R.drawable.ic_indoone_close,
+                        "",
+                        stopPendingIntent,
+                    )
                 }
                 .build()
         }
