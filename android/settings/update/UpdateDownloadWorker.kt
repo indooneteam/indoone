@@ -21,19 +21,18 @@ import java.io.File
 
 /**
  * Downloads an Indoone update as background work, so the download outlives the
- * dialog that started it. The dialog only observes this work: closing it changes
- * nothing, and the download also continues while the app is in the background.
+ * dialog that started it. The dialog only observes this work: leaving the app
+ * changes nothing, and the work survives the process being backgrounded.
  *
- * When the download finishes the worker posts a notification whose tap opens the
- * system package installer. The in-app dialog offers the same Install button, so
- * the user can install from either place.
+ * Progress is published in real bytes, so the app can show how much has arrived
+ * and how much is left rather than an abstract percentage.
  */
 class UpdateDownloadWorker(
     appContext: Context,
     workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun getForegroundInfo(): ForegroundInfo = foregroundInfo(0)
+    override suspend fun getForegroundInfo(): ForegroundInfo = foregroundInfo(0L, 0L)
 
     override suspend fun doWork(): Result {
         val downloadUrl = inputData.getString(KEY_DOWNLOAD_URL)
@@ -53,12 +52,18 @@ class UpdateDownloadWorker(
         // Android 12 and later can refuse to promote the worker to a foreground
         // service. The download is still worth attempting without the promotion,
         // and the work data reports the progress either way.
-        runCatching { setForeground(foregroundInfo(0)) }
+        runCatching { setForeground(foregroundInfo(0L, sizeBytes)) }
 
         val apkFile = runCatching {
-            AppUpdateManager.downloadApk(applicationContext, update) { percent ->
-                setProgress(workDataOf(KEY_PROGRESS to percent))
-                runCatching { setForeground(foregroundInfo(percent)) }
+            AppUpdateManager.downloadApk(applicationContext, update) { downloaded, total ->
+                setProgress(
+                    workDataOf(
+                        KEY_DOWNLOADED_BYTES to downloaded,
+                        KEY_TOTAL_BYTES to total,
+                        KEY_PROGRESS to percentOf(downloaded, total),
+                    ),
+                )
+                runCatching { setForeground(foregroundInfo(downloaded, total)) }
             }
         }.getOrElse { error ->
             return Result.failure(
@@ -72,20 +77,19 @@ class UpdateDownloadWorker(
             workDataOf(
                 KEY_VERSION_CODE to versionCode,
                 KEY_APK_PATH to apkFile.absolutePath,
+                KEY_TOTAL_BYTES to apkFile.length(),
             ),
         )
     }
 
-    private fun foregroundInfo(percent: Int): ForegroundInfo {
+    private fun foregroundInfo(downloadedBytes: Long, totalBytes: Long): ForegroundInfo {
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_indoone_notification)
             .setContentTitle("Downloading Indoone update")
-            .setContentText(
-                if (percent > 0) "$percent% downloaded" else "Starting the download…",
-            )
+            .setContentText(progressText(downloadedBytes, totalBytes))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setProgress(100, percent, percent <= 0)
+            .setProgress(100, percentOf(downloadedBytes, totalBytes), totalBytes <= 0L)
             .setContentIntent(openAppIntent())
             .build()
 
@@ -102,8 +106,11 @@ class UpdateDownloadWorker(
 
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_indoone_notification)
-            .setContentTitle("Indoone $versionCode is ready to install")
-            .setContentText("Tap to open the installer.")
+            .setContentTitle("Indoone update ready to install")
+            .setContentText(
+                "${AppUpdateManager.formatMegabytes(apkFile.length())} downloaded. " +
+                    "Tap to open the installer.",
+            )
             .setAutoCancel(true)
             .setContentIntent(installer)
             .build()
@@ -129,6 +136,8 @@ class UpdateDownloadWorker(
         const val KEY_DOWNLOAD_URL = "download_url"
         const val KEY_VERSION_CODE = "version_code"
         const val KEY_SIZE_BYTES = "size_bytes"
+        const val KEY_DOWNLOADED_BYTES = "downloaded_bytes"
+        const val KEY_TOTAL_BYTES = "total_bytes"
         const val KEY_PROGRESS = "progress"
         const val KEY_APK_PATH = "apk_path"
         const val KEY_ERROR = "error"
@@ -160,5 +169,20 @@ class UpdateDownloadWorker(
 
         fun observe(context: Context): Flow<List<WorkInfo>> =
             WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(UNIQUE_NAME)
+    }
+
+    private fun progressText(downloadedBytes: Long, totalBytes: Long): String {
+        if (totalBytes <= 0L) {
+            return "${AppUpdateManager.formatMegabytes(downloadedBytes)} downloaded"
+        }
+        val remaining = (totalBytes - downloadedBytes).coerceAtLeast(0L)
+        return "${AppUpdateManager.formatMegabytes(downloadedBytes)} of " +
+            "${AppUpdateManager.formatMegabytes(totalBytes)} · " +
+            "${AppUpdateManager.formatMegabytes(remaining)} left"
+    }
+
+    private fun percentOf(downloadedBytes: Long, totalBytes: Long): Int {
+        if (totalBytes <= 0L) return 0
+        return ((downloadedBytes * 100L) / totalBytes).toInt().coerceIn(0, 100)
     }
 }
