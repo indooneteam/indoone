@@ -125,6 +125,19 @@
       }
 
       return response.json();
+    } catch (error) {
+      // A fetch that never reached the server throws a TypeError with no
+      // status. That is what a blocked cross-origin call looks like, and it
+      // was being flattened into "could not reach" - which tells nobody
+      // anything. Say which it is.
+      if (error instanceof TypeError) {
+        throw new Error(
+          'The server did not accept the call from this page ' +
+            '(a cross-origin block, or no network).'
+        );
+      }
+
+      throw error;
     } finally {
       clearTimeout(timer);
     }
