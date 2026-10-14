@@ -30,7 +30,7 @@
   border-radius: 10px;
 }
 
-/* Lobby icon is owned by app/lobby/icon.svg and uses a mask so active/inactive
+/* Lobby icon is owned by lobby/icon.svg and uses a mask so active/inactive
    navigation states inherit the same currentColor as every other nav icon. */
 .lobby-nav-icon {
   width: 23px;
@@ -39,8 +39,8 @@
   flex: none;
   background: currentColor;
   opacity: 0.78;
-  -webkit-mask: url('app/lobby/icon.svg') center/contain no-repeat;
-  mask: url('app/lobby/icon.svg') center/contain no-repeat;
+  -webkit-mask: url('lobby/icon.svg') center/contain no-repeat;
+  mask: url('lobby/icon.svg') center/contain no-repeat;
 }
 
 .nav-btn.active .lobby-nav-icon {
