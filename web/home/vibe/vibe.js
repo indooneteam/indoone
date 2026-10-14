@@ -65,9 +65,12 @@
     // its slash is the line that looked like a mark over the microphone.
     if (muteIcon) {
       muteIcon.dataset.appIcon = listening ? 'mic' : 'micOff';
-    }
 
-    window.IndooneIcons?.apply?.(mute);
+      // redraw, not apply. apply() skips anything it has already drawn, so
+      // changing the name alone left the old icon in place - which is why the
+      // button looked the same whether it was muted or not.
+      window.IndooneIcons?.redraw?.(muteIcon);
+    }
   }
 
   function paintSpeaker() {
