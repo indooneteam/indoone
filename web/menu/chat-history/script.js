@@ -1,0 +1,83 @@
+window.initMenuChatHistory = function () {
+  const list = document.getElementById('menuChatHistoryList');
+  const status = document.getElementById('menuChatHistoryStatus');
+
+  function setStatus(text) {
+    if (status) {
+      status.textContent = text;
+    }
+  }
+
+  function row(chat) {
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-history-row';
+
+    const text = document.createElement('span');
+    const title = document.createElement('b');
+    title.textContent = 'Conversation';
+    const when = document.createElement('small');
+    when.textContent = chat.savedAt
+      ? new Date(Number(chat.savedAt)).toLocaleString()
+      : chat.id;
+    text.appendChild(title);
+    text.appendChild(when);
+
+    const actions = document.createElement('span');
+    actions.className = 'chat-history-actions';
+
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.textContent = 'Open';
+    open.addEventListener('click', () => {
+      window.closeModal?.();
+      window.IndooneChatStore?.setConversationId?.(chat.id);
+      window.showHome?.();
+    });
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'danger';
+    remove.textContent = 'Delete';
+    remove.addEventListener('click', async () => {
+      try {
+        await window.IndooneUserData.deleteChat(chat.id);
+        void load();
+      } catch (error) {
+        setStatus(error?.message || 'Chat could not be deleted.');
+      }
+    });
+
+    actions.appendChild(open);
+    actions.appendChild(remove);
+    wrap.appendChild(text);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  async function load() {
+    setStatus('Loading chats…');
+
+    try {
+      const chats = await window.IndooneUserData.listChats();
+
+      if (list) {
+        list.textContent = '';
+
+        if (!chats.length) {
+          const empty = document.createElement('p');
+          empty.className = 'menu-feature-note';
+          empty.textContent = 'No saved chats yet.';
+          list.appendChild(empty);
+        } else {
+          chats.forEach(chat => list.appendChild(row(chat)));
+        }
+      }
+
+      setStatus('');
+    } catch (error) {
+      setStatus(error?.message || 'Chat history could not be loaded right now.');
+    }
+  }
+
+  void load();
+};

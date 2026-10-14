@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20260907e';
+  const ASSET_VERSION = '20261014a';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
@@ -17,7 +17,20 @@
     about: 'initMenuAbout',
     lock: 'initMenuLock',
     'danger-zone': 'initMenuDangerZone',
-    logout: 'initMenuLogout'
+    logout: 'initMenuLogout',
+    profile: 'initMenuProfile',
+    memory: 'initMenuMemory',
+    'chat-history': 'initMenuChatHistory',
+    'data-privacy': 'initMenuDataPrivacy',
+    plugins: 'initMenuPlugins'
+  };
+
+  // Two sections moved out of the menu and into settings, and one was renamed
+  // to match the app, so the action name and the folder are no longer the same.
+  const featurePaths = {
+    lock: 'menu/lock-app',
+    'danger-zone': 'settings/danger-zone',
+    logout: 'settings/logout'
   };
 
   const nestedInitializers = {
@@ -96,7 +109,7 @@
   }
 
   function getFeatureBase(path) {
-    return `menu/${path}`;
+    return featurePaths[path] || `menu/${path}`;
   }
 
   async function loadStyle(base) {
@@ -180,9 +193,18 @@
     const action = item.dataset.action;
     if (action === 'accounts') {
       closeDrawer();
-      document.getElementById('accountsNav')?.click();
+      window.showAccounts?.();
       return;
     }
+
+    if (action === 'new-chat') {
+      closeDrawer();
+      window.IndooneChatStore?.clear?.();
+      window.showHome?.();
+      window.IndooneChatHome?.refresh?.();
+      return;
+    }
+
     window.openMenuFeature(action);
   });
 

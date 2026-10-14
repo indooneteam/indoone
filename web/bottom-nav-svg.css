@@ -1,52 +1,97 @@
+/* The bottom navigation bar, built to match AppBottomNav in the app.
+ *
+ * The app draws a soft neumorphic pill: a light violet bar, an inner rounded
+ * tray with a white hairline and a wide soft shadow, and one raised, tinted
+ * pill behind whichever tab is active. The web had a flat white strip, so the
+ * bar did not read as the same control. These are the app's colours and
+ * measurements.
+ */
+
+.bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 5px;
+  border-radius: 30px;
+  background: linear-gradient(
+    to bottom,
+    #faf8ff,
+    #f5f0fa 50%,
+    #eee7f7
+  );
+  border: 1px solid #ffffff;
+  box-shadow: 0 10px 26px #5b3fa81f;
+}
+
 .nav-btn {
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 0;
-}
-
-.nav-icon {
-  width: 23px;
-  height: 23px;
-  display: block;
-  flex: none;
-  fill: currentColor;
-  color: inherit;
+  height: 56px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  color: #344157;
+  font: inherit;
+  cursor: pointer;
+  transition: background .18s, color .18s, box-shadow .18s;
 }
 
 .nav-btn span {
-  line-height: 1;
+  line-height: 11px;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.nav-btn.active {
+  background: linear-gradient(
+    to bottom,
+    #f0e6ff,
+    #e0ceff 50%,
+    #e9dafa
+  );
+  border: 1px solid #ffffff;
+  box-shadow: 0 5px 13px #6d35d02e;
+  color: #6d35d0;
+}
+
+.nav-btn.active span {
+  font-weight: 700;
+}
+
+.nav-icon {
+  width: 19px;
+  height: 19px;
+  display: block;
+  flex: none;
+  color: inherit;
 }
 
 .nav-btn:not(.active) .nav-icon {
-  opacity: 0.78;
+  opacity: 0.9;
 }
 
 .nav-btn:focus-visible {
   outline: 2px solid #9a6be8;
-  outline-offset: -4px;
-  border-radius: 10px;
+  outline-offset: -3px;
+  border-radius: 15px;
 }
 
-/* Lobby icon is owned by lobby/icon.svg and uses a mask so active/inactive
-   navigation states inherit the same currentColor as every other nav icon. */
-.lobby-nav-icon {
-  width: 23px;
-  height: 23px;
-  display: block;
-  flex: none;
-  background: currentColor;
-  opacity: 0.78;
-  -webkit-mask: url('lobby/icon.svg') center/contain no-repeat;
-  mask: url('lobby/icon.svg') center/contain no-repeat;
+/* The Lobby status dot keeps the same family as the navigation icons. */
+.lobby-status-icon,
+.ui-svg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
 }
 
-.nav-btn.active .lobby-nav-icon {
-  opacity: 1;
-}
-
-.nav-btn:not(.active) .lobby-nav-icon {
-  opacity: 0.78;
+.lobby-svg-icon {
+  width: 19px;
+  height: 19px;
 }

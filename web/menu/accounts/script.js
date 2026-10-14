@@ -2,7 +2,7 @@
   function goToAccounts() {
     window.closeModal?.();
     window.closeDrawer?.();
-    document.getElementById('accountsNav')?.click();
+    document.getElementById('homeNav')?.click();
     return false;
   }
 

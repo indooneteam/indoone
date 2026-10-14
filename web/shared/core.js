@@ -81,7 +81,7 @@ window.showHome = function () {
     .querySelectorAll('.bottom-nav button')
     .forEach(button => button.classList.remove('active'));
 
-  document.getElementById('accountsNav')?.classList.add('active');
+  document.getElementById('homeNav')?.classList.add('active');
 
   window.IndooneHome?.restoreHome?.();
 };
