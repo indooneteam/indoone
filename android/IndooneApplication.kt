@@ -23,6 +23,7 @@ import com.indoone.notifications.IndooneAppState
 import com.indoone.notifications.IndooneNotificationChannels
 import com.indoone.notifications.NotificationApi
 import com.indoone.notifications.NotificationPreferences
+import com.indoone.settings.diagnostics.CrashLogStore
 import com.indoone.settings.autolock.AutoLockController
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +49,22 @@ class IndooneApplication : Application() {
         }
     }
 
+    /**
+     * The app has no crash reporting, so an unexpected close used to be invisible:
+     * nothing recorded it. Write the details down, then let the platform handle the
+     * exception exactly as it did before.
+     */
+    private fun installCrashRecorder() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            CrashLogStore.record(this, CrashLogStore.buildDetail(this, throwable))
+            previous?.uncaughtException(thread, throwable)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
+        installCrashRecorder()
         IndooneNotificationChannels.create(this)
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             NotificationPreferences(this).saveFcmToken(token)

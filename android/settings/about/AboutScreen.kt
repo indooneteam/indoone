@@ -85,7 +85,11 @@ fun AboutScreen(
                 )
 
                 Spacer(Modifier.height(14.dp))
-                AboutMetaRow("Version", "2.1.16")
+                val versionContext = androidx.compose.ui.platform.LocalContext.current
+                AboutMetaRow(
+                    "Version",
+                    "Build " + CrashLogStore.buildNumber(versionContext),
+                )
                 AboutMetaRow("Updates", "Check for updates", onClick = onCheckForUpdates)
 
                 Spacer(Modifier.height(1.dp))
