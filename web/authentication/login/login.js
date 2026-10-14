@@ -1,10 +1,12 @@
-// The login screen, built as the app builds it in LoginScreen.kt.
+// The login screen, built from LoginScreen.kt.
 //
-// Three steps, and only one is on screen at a time:
-//   identifier  email or mobile, then Continue with OTP / Continue with Password
-//   otp         the code, then Verify & Login / Resend OTP
-//   password    the password, then Complete Login / Back
+// Three steps, one on screen at a time, with the app's own texts and motion.
 (() => {
+  const WELCOME_LINES = [
+    { text: 'Welcome to your Indoone account', gradient: false },
+    { text: 'Continue with your Indoone account', gradient: true }
+  ];
+
   function logoMarkup() {
     return '<span class="auth-mark" aria-label="Indoone logo"></span>';
   }
@@ -64,59 +66,58 @@
       </div>
 
       <div class="auth-step" data-login-step="identifier">
-        <div class="auth-copy">
-          <p class="eyebrow">SECURE &amp; PRIVATE</p>
-          <h1>Welcome to your Indoone account</h1>
-          <p>Continue with your Indoone account</p>
-        </div>
+        <h1
+          class="auth-welcome"
+          id="loginWelcome"
+        ></h1>
 
         <div class="field">
           <label>EMAIL OR MOBILE NUMBER</label>
           ${mobileField()}
         </div>
 
-        <button
-          type="button"
-          class="primary auth-action-button"
-          data-auth-action="login-continue-otp"
-        >
-          Continue with OTP
-        </button>
+        <div class="auth-button-row">
+          <button
+            type="button"
+            class="primary auth-action-button"
+            data-auth-action="login-continue-otp"
+          >
+            Continue with OTP
+          </button>
+
+          <button
+            type="button"
+            class="primary auth-action-button"
+            data-auth-action="login-continue-password"
+          >
+            Continue with Password
+          </button>
+        </div>
 
         <button
           type="button"
-          class="secondary auth-action-button"
-          data-auth-action="login-continue-password"
-        >
-          Continue with Password
-        </button>
-
-        <button
-          type="button"
-          class="secondary auth-action-button"
+          class="secondary auth-green auth-action-button"
           data-auth-action="signup"
         >
           Create Account
         </button>
-
-        <button
-          type="button"
-          class="link-button auth-action-button"
-          data-auth-action="forgot-password"
-        >
-          Forgot password?
-        </button>
       </div>
 
       <div class="auth-step" data-login-step="otp" hidden>
-        <div class="auth-copy">
-          <p class="eyebrow">VERIFICATION</p>
-          <h1>Enter OTP</h1>
-          <p>
-            We have sent a 6-digit OTP to<br />
-            <strong id="loginOtpEmail"></strong>
-          </p>
-        </div>
+        <button
+          type="button"
+          class="auth-back auth-action-button"
+          data-auth-action="login-back"
+        >
+          ← Back
+        </button>
+
+        <h1 class="auth-heading">Enter OTP</h1>
+
+        <p class="auth-note">
+          We have sent a 6-digit OTP to<br />
+          <strong id="loginOtpEmail"></strong>
+        </p>
 
         <div class="field">
           <label>VERIFICATION OTP</label>
@@ -145,22 +146,22 @@
         >
           Resend OTP
         </button>
+      </div>
 
+      <div class="auth-step" data-login-step="password" hidden>
         <button
           type="button"
-          class="link-button auth-action-button"
+          class="auth-back auth-action-button"
           data-auth-action="login-back"
         >
           ← Back
         </button>
-      </div>
 
-      <div class="auth-step" data-login-step="password" hidden>
-        <div class="auth-copy">
-          <p class="eyebrow">PASSWORD</p>
-          <h1>Enter Password</h1>
-          <p>Continue with your Indoone account</p>
-        </div>
+        <h1 class="auth-heading">Enter Password</h1>
+
+        <p class="auth-note auth-note-gradient">
+          Continue with your Indoone account
+        </p>
 
         <div class="field">
           <label>EMAIL OR MOBILE NUMBER</label>
@@ -189,20 +190,53 @@
         >
           Complete Login
         </button>
-
-        <button
-          type="button"
-          class="link-button auth-action-button"
-          data-auth-action="login-back"
-        >
-          ← Back
-        </button>
       </div>
 
-      <div class="auth-footer">
-        Protect your Indoone account with password and email OTP verification.
+      <div
+        class="auth-dots"
+        id="loginDots"
+        aria-hidden="true"
+      >
+        <span data-dot="identifier"></span>
+        <span data-dot="otp"></span>
+        <span data-dot="password"></span>
       </div>
     `;
+  }
+
+  // The app swaps the welcome line every two seconds: the outgoing line fades
+  // out while sliding left, the incoming one fades in from the right.
+  let welcomeTimer = null;
+  let welcomeIndex = 0;
+
+  function paintWelcome(root) {
+    const node = root.querySelector('#loginWelcome');
+
+    if (!node) return;
+
+    const line = WELCOME_LINES[welcomeIndex % WELCOME_LINES.length];
+    node.textContent = line.text;
+    node.classList.toggle('is-gradient', line.gradient);
+    node.classList.remove('is-entering');
+    void node.offsetWidth;
+    node.classList.add('is-entering');
+  }
+
+  function startWelcome(root) {
+    stopWelcome();
+    welcomeIndex = 0;
+    paintWelcome(root);
+    welcomeTimer = setInterval(() => {
+      welcomeIndex += 1;
+      paintWelcome(root);
+    }, 2000);
+  }
+
+  function stopWelcome() {
+    if (welcomeTimer) {
+      clearInterval(welcomeTimer);
+      welcomeTimer = null;
+    }
   }
 
   // Only one step is ever visible. The identifier carries across so the
@@ -219,6 +253,10 @@
       panel.hidden = panel.dataset.loginStep !== step;
     });
 
+    root.querySelectorAll('#loginDots [data-dot]').forEach(dot => {
+      dot.classList.toggle('on', dot.dataset.dot === step);
+    });
+
     const focus = {
       identifier: '#loginIdentifier',
       otp: '#loginOtp',
@@ -226,6 +264,12 @@
     }[step];
 
     root.querySelector(focus)?.focus();
+
+    if (step === 'identifier') {
+      startWelcome(root);
+    } else {
+      stopWelcome();
+    }
   }
 
   function otpEmail(email, root = document) {
@@ -240,6 +284,7 @@
     html,
     showStep,
     otpEmail,
+    stopWelcome,
     show: () => window.IndooneAuthUI?.showLogin?.()
   };
 })();

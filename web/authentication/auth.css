@@ -355,3 +355,168 @@
 .auth-page .password-toggle:hover {
   background: #f1ece1;
 }
+
+/* ------------------------------------------- the animated welcome line */
+
+/* The app swaps this line every two seconds: the old one fades out sliding
+   left, the new one fades in from the right. 30sp bold, -0.7 tracking. */
+.auth-page .auth-welcome {
+  margin: 0 0 20px;
+  color: #17151d;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  line-height: 36px;
+  min-height: 72px;
+}
+
+.auth-page .auth-welcome.is-gradient {
+  background: linear-gradient(90deg, #6330db, #9147ed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.auth-page .auth-welcome.is-entering {
+  animation: authSlideIn 350ms ease both;
+}
+
+@keyframes authSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(25%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --------------------------------------------------- the step headings */
+
+.auth-page .auth-heading {
+  margin: 0 0 8px;
+  color: #17151d;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  line-height: 36px;
+}
+
+.auth-page .auth-title-box {
+  height: 40px;
+  overflow: hidden;
+}
+
+.auth-page .auth-title-box .auth-heading {
+  font-size: 34px;
+  letter-spacing: -1px;
+  line-height: 40px;
+  transition: color 500ms ease;
+}
+
+.auth-page .auth-heading.is-purple {
+  color: #7650d8;
+}
+
+/* --------------------------------------------------------- the step note */
+
+.auth-page .auth-note {
+  margin: 0 0 14px;
+  color: #675c8a;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.auth-page .auth-note strong {
+  font-weight: 600;
+  color: #17151d;
+}
+
+.auth-page .auth-note-gradient {
+  background: linear-gradient(90deg, #6330db, #9147ed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ------------------------------------------------------- the button row */
+
+/* The app puts Continue with OTP and Continue with Password side by side,
+   both as primary buttons. */
+.auth-page .auth-button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-page .auth-button-row .primary {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.auth-page .secondary.auth-green {
+  color: #2e7d32;
+  border-color: #e3dfe8;
+}
+
+.auth-page .secondary.auth-green:hover {
+  background: #f3f8f3;
+}
+
+/* -------------------------------------------------------- the back link */
+
+.auth-page .auth-back {
+  align-self: flex-start;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #5f5966;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-page .auth-back:hover {
+  color: #6330db;
+}
+
+/* --------------------------------------------------------- the page dots */
+
+.auth-page .auth-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 0;
+}
+
+.auth-page .auth-dots span {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d8d1eb;
+  transition: width 200ms ease, height 200ms ease, background 200ms ease;
+}
+
+.auth-page .auth-dots span.on {
+  width: 9px;
+  height: 9px;
+  background: #6330db;
+}
+
+/* ------------------------------------------------------- the signup foot */
+
+.auth-page .auth-footer {
+  margin: 10px 0 0;
+  text-align: left;
+  color: #76717d;
+  font-size: 12px;
+  line-height: 18px;
+}
