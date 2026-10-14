@@ -41,6 +41,24 @@
     return ready;
   }
 
+  function showHistorySpinner(on) {
+    const list = document.getElementById('chatList');
+    const welcome = document.getElementById('chatWelcome');
+
+    if (!list) return;
+
+    if (on) {
+      welcome?.setAttribute('hidden', '');
+      list.textContent = '';
+      const row = document.createElement('div');
+      row.className = 'chat-loading';
+      row.appendChild(document.createElement('span'));
+      list.appendChild(row);
+    } else {
+      list.textContent = '';
+    }
+  }
+
   function scrollToBottom() {
     const scroller = document.getElementById('chatScroll');
 
@@ -214,8 +232,15 @@
       }
     });
 
-    // Load the saved conversation once the account is known.
-    await window.IndooneChatStore?.load?.();
+    // The app shows a spinner while it reads the saved conversation.
+    showHistorySpinner(true);
+
+    try {
+      await window.IndooneChatStore?.load?.();
+    } finally {
+      showHistorySpinner(false);
+    }
+
     paintThread();
     syncComposer();
   }
