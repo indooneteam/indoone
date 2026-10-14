@@ -272,10 +272,13 @@
   display: grid;
   place-items: center;
   color: #fff;
+  /* VibeScreen.kt gives this brush no radius, so Compose uses the size
+     itself: 68px. Measured against the app, that is what it does - the
+     second colour lands exactly on the button's edge. */
   background: radial-gradient(
-    circle at 50% 50%,
+    circle 68px at 50% 50%,
     #9b5cff 0%,
-    #6d3bdb 55%,
+    #6d3bdb 50%,
     #3c216e 100%
   );
 }
