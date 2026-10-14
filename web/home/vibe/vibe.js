@@ -164,13 +164,32 @@
     recognition.interimResults = true;
 
     recognition.onresult = event => {
-      let spoken = '';
+      let interim = '';
+      let settled = '';
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        spoken += event.results[i][0].transcript;
+        const result = event.results[i];
+        const text = result[0].transcript;
+
+        if (result.isFinal) {
+          settled += text;
+        } else {
+          interim += text;
+        }
       }
 
-      setTranscript(spoken.trim());
+      if (settled) {
+        // The browser has decided this sentence is finished, so this is the
+        // moment to answer. Waiting for the session to end would never come:
+        // the microphone stays open for the whole screen.
+        heard = '';
+        setTranscript(settled.trim());
+        void ask(settled.trim());
+        return;
+      }
+
+      heard = interim;
+      setTranscript(interim.trim());
     };
 
     recognition.onerror = () => {
