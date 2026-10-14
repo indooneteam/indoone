@@ -1,10 +1,13 @@
-// The sign-up screen, built as the app builds it in SignUpScreen.kt.
-//
-// Two steps:
-//   details  email, mobile and password, then Continue with OTP /
-//            Continue with Password / Resend OTP
-//   otp      the code, then Verify & Create Account
+// The sign-up screen, built from SignUpScreen.kt.
 (() => {
+  const TITLE_LINES = [
+    { text: 'Get started with', purple: true },
+    { text: 'Creating your account', purple: false }
+  ];
+  const DESCRIPTION =
+    'Securely create an Indoone account for your authenticator vault.';
+  const DESCRIPTION_MS = 2000;
+
   function logoMarkup() {
     return '<span class="auth-mark" aria-label="Indoone logo"></span>';
   }
@@ -64,13 +67,17 @@
       </div>
 
       <div class="auth-step" data-signup-step="details">
-        <div class="auth-copy">
-          <p class="eyebrow">GET STARTED</p>
-          <h1>Get started with Indoone</h1>
-          <p>
-            Securely create an Indoone account for your authenticator vault.
-          </p>
+        <div class="auth-title-box">
+          <h1
+            class="auth-heading"
+            id="signupTitle"
+          ></h1>
         </div>
+
+        <p
+          class="auth-note"
+          id="signupDescription"
+        ></p>
 
         <div class="field">
           <label>EMAIL ID</label>
@@ -105,30 +112,17 @@
 
         <button
           type="button"
-          class="secondary auth-action-button"
+          class="primary auth-action-button"
           data-auth-action="signup-password"
         >
           Continue with Password
         </button>
-
-        <button
-          type="button"
-          class="secondary auth-action-button"
-          data-auth-action="login"
-        >
-          Already have an account? Login
-        </button>
       </div>
 
       <div class="auth-step" data-signup-step="otp" hidden>
-        <div class="auth-copy">
-          <p class="eyebrow">VERIFICATION</p>
-          <h1>Enter OTP</h1>
-          <p>
-            OTP sent to<br />
-            <strong id="signupOtpEmail"></strong>
-          </p>
-        </div>
+        <p class="auth-note">
+          OTP sent to <strong id="signupOtpEmail"></strong>
+        </p>
 
         <div class="field">
           <label>VERIFICATION OTP</label>
@@ -152,25 +146,87 @@
 
         <button
           type="button"
-          class="secondary auth-action-button"
+          class="primary auth-action-button"
           data-auth-action="signup-resend"
         >
           Resend OTP
         </button>
-
-        <button
-          type="button"
-          class="link-button auth-action-button"
-          data-auth-action="signup-back"
-        >
-          ← Back
-        </button>
       </div>
 
-      <div class="auth-footer">
-        Your Indoone account is activated after successful email OTP verification.
-      </div>
+      <button
+        type="button"
+        class="secondary auth-green auth-action-button"
+        data-auth-action="login"
+      >
+        Already have an account? Login
+      </button>
+
+      <p class="auth-footer">
+        Continue with OTP verifies your email. Continue with Password creates
+        the account directly using your password.
+      </p>
     `;
+  }
+
+  // The app alternates the title every two seconds, and types the description
+  // out over the same two seconds.
+  let titleTimer = null;
+  let typeTimer = null;
+  let titleIndex = 0;
+
+  function paintTitle(root) {
+    const node = root.querySelector('#signupTitle');
+
+    if (!node) return;
+
+    const line = TITLE_LINES[titleIndex % TITLE_LINES.length];
+    node.textContent = line.text;
+    node.classList.toggle('is-purple', line.purple);
+  }
+
+  function startTitle(root) {
+    stopTitle();
+    titleIndex = 0;
+    paintTitle(root);
+    titleTimer = setInterval(() => {
+      titleIndex += 1;
+      paintTitle(root);
+    }, 2000);
+  }
+
+  function stopTitle() {
+    if (titleTimer) {
+      clearInterval(titleTimer);
+      titleTimer = null;
+    }
+  }
+
+  function startTyping(root) {
+    stopTyping();
+
+    const node = root.querySelector('#signupDescription');
+
+    if (!node) return;
+
+    let shown = 0;
+    node.textContent = '';
+    const step = Math.max(DESCRIPTION_MS / DESCRIPTION.length, 16);
+
+    typeTimer = setInterval(() => {
+      shown += 1;
+      node.textContent = DESCRIPTION.slice(0, shown);
+
+      if (shown >= DESCRIPTION.length) {
+        stopTyping();
+      }
+    }, step);
+  }
+
+  function stopTyping() {
+    if (typeTimer) {
+      clearInterval(typeTimer);
+      typeTimer = null;
+    }
   }
 
   function showStep(step, root = document) {
@@ -184,6 +240,14 @@
     }[step];
 
     root.querySelector(focus)?.focus();
+
+    if (step === 'details') {
+      startTitle(root);
+      startTyping(root);
+    } else {
+      stopTitle();
+      stopTyping();
+    }
   }
 
   function otpEmail(email, root = document) {
