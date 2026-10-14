@@ -982,6 +982,18 @@ html, body { height: 100%; }
 .account-info strong { font-size: 21px !important; }
 .timer { width: 33px !important; height: 33px !important; font-size: 10px !important; }
 
+/* The hidden attribute has to win everywhere.
+
+   The chat page carries .chat-page { display: flex } and the Notification
+   Center carries .notifications-page { display: flex }. A display rule in the
+   stylesheet beats the browser's own [hidden] { display: none }, so putting
+   hidden on those pages did nothing at all: the chat stayed up under the
+   Notification Center, which is exactly what it looked like. One rule, marked
+   important, and the attribute means hidden for every element on the page. */
+[hidden] {
+  display: none !important;
+}
+
 /* Step 4: safe-area sizing/offsets live only in
    shared/safe-layout/safe-layout.css. This file keeps only visual geometry and
    viewport/flex behavior so the same inset is never applied twice. */
