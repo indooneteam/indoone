@@ -16,15 +16,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.WorkOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +42,10 @@ import androidx.compose.ui.unit.sp
 import com.indoone.menu.data.UserDataRepository
 import kotlinx.coroutines.launch
 
+private val LabelColor = Color(0xFF77717F)
+private val ValueColor = Color(0xFF201B28)
+private val AccentColor = Color(0xFF2168D6)
+
 @Composable
 fun ProfileMenuScreen(onBack: () -> Unit) {
     val repository = remember { UserDataRepository() }
@@ -49,6 +54,8 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
     var nickname by remember { mutableStateOf("") }
     var profession by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<String?>(null) }
+    var editing by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         runCatching { repository.readProfile() }
@@ -67,6 +74,25 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
         .take(2)
         .joinToString("") { it.first().uppercase() }
         .ifBlank { "I" }
+
+    fun save() {
+        if (saving) return
+        saving = true
+        scope.launch {
+            status = "Saving…"
+            runCatching {
+                repository.updateProfileFields(name, nickname, profession)
+            }.onSuccess {
+                // Best effort: the backend then knows the name, so a reply can use it.
+                runCatching { repository.publishNameToBackend(name, nickname) }
+                status = "Profile saved."
+                editing = false
+            }.onFailure {
+                status = it.message ?: "Could not save profile."
+            }
+            saving = false
+        }
+    }
 
     Surface(Modifier.fillMaxSize(), color = Color.White) {
         Column(
@@ -112,7 +138,7 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                         ) {
                             Text(
                                 initials,
-                                color = Color(0xFF2168D6),
+                                color = AccentColor,
                                 fontSize = 25.sp,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -121,57 +147,114 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                     Text(
                         displayName,
                         modifier = Modifier.padding(top = 10.dp),
-                        color = Color(0xFF201B28),
+                        color = ValueColor,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
                         "Your Indoone profile",
                         modifier = Modifier.padding(top = 3.dp),
-                        color = Color(0xFF77717F),
+                        color = LabelColor,
                         fontSize = 12.sp,
                     )
                 }
             }
 
-            Text(
-                "Personal details",
-                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-                color = Color(0xFF201B28),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-            )
+            // The heading keeps the edit control on its right: one round button that
+            // opens editing, and turns into the save button once editing is open.
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Personal details",
+                    modifier = Modifier.weight(1f),
+                    color = ValueColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (editing) {
+                    RoundActionButton(
+                        icon = Icons.Outlined.Close,
+                        description = "Cancel editing",
+                        tint = Color(0xFF6E6777),
+                    ) {
+                        status = null
+                        editing = false
+                        // Reload the saved values, so a cancelled edit is discarded.
+                        scope.launch {
+                            runCatching { repository.readProfile() }
+                                .onSuccess { profile ->
+                                    name = profile["name"]?.toString().orEmpty()
+                                    nickname = profile["nickname"]?.toString().orEmpty()
+                                    profession = profile["profession"]?.toString().orEmpty()
+                                }
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    RoundActionButton(
+                        icon = Icons.Outlined.Check,
+                        description = "Save profile",
+                        tint = AccentColor,
+                    ) { save() }
+                } else {
+                    RoundActionButton(
+                        icon = Icons.Outlined.Edit,
+                        description = "Edit profile",
+                        tint = AccentColor,
+                    ) {
+                        status = null
+                        editing = true
+                    }
+                }
+            }
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it; status = null },
-                label = { Text("Name") },
-                leadingIcon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
+            if (editing) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it; status = null },
+                    label = { Text("Name") },
+                    leadingIcon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
 
-            Spacer(Modifier.size(10.dp))
+                Spacer(Modifier.size(10.dp))
 
-            OutlinedTextField(
-                value = nickname,
-                onValueChange = { nickname = it; status = null },
-                label = { Text("Nickname") },
-                leadingIcon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
+                OutlinedTextField(
+                    value = nickname,
+                    onValueChange = { nickname = it; status = null },
+                    label = { Text("Nickname") },
+                    leadingIcon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
 
-            Spacer(Modifier.size(10.dp))
+                Spacer(Modifier.size(10.dp))
 
-            OutlinedTextField(
-                value = profession,
-                onValueChange = { profession = it; status = null },
-                label = { Text("Profession") },
-                leadingIcon = { Icon(Icons.Outlined.WorkOutline, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
+                OutlinedTextField(
+                    value = profession,
+                    onValueChange = { profession = it; status = null },
+                    label = { Text("Profession") },
+                    leadingIcon = { Icon(Icons.Outlined.WorkOutline, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color(0xFFF7F5FB),
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        DetailRow(Icons.Outlined.PersonOutline, "Name", name)
+                        Spacer(Modifier.size(12.dp))
+                        DetailRow(Icons.Outlined.PersonOutline, "Nickname", nickname)
+                        Spacer(Modifier.size(12.dp))
+                        DetailRow(Icons.Outlined.WorkOutline, "Profession", profession)
+                    }
+                }
+            }
 
             Surface(
                 modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
@@ -196,36 +279,6 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                 }
             }
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-                shape = RoundedCornerShape(15.dp),
-                color = Color(0xFFEDF5FF),
-            ) {
-                TextButton(
-                    onClick = {
-                        scope.launch {
-                            status = "Saving…"
-                            runCatching {
-                                repository.updateProfileFields(name, nickname, profession)
-                            }.onSuccess {
-                                status = "Profile saved."
-                            }.onFailure {
-                                status = it.message ?: "Could not save profile."
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Outlined.Save, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Save profile",
-                        color = Color(0xFF2168D6),
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-
             status?.let {
                 Text(
                     it,
@@ -234,6 +287,50 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                     fontSize = 12.sp,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RoundActionButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.size(36.dp),
+        shape = CircleShape,
+        color = Color(0xFFEFEBF8),
+    ) {
+        IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
+            Icon(icon, contentDescription = description, tint = tint, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = Color(0xFF756D80), modifier = Modifier.size(20.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, color = LabelColor, fontSize = 11.sp, lineHeight = 14.sp)
+            Text(
+                value.trim().ifBlank { "Not set" },
+                modifier = Modifier.padding(top = 2.dp),
+                color = ValueColor,
+                fontSize = 14.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }

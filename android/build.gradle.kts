@@ -1,85 +1,3 @@
-
-import java.net.URI
-import java.util.zip.ZipFile
-
-val prepareVoskModel = tasks.register("prepareVoskModel") {
-    doLast {
-        val assetRoot = file("src/main/assets")
-        val modelRoot = file("src/main/assets/model-en-us")
-        val uuidFile = file("src/main/assets/model-en-us/uuid")
-
-        val requiredFiles = listOf(
-            File(modelRoot, "am/final.mdl"),
-            File(modelRoot, "conf/model.conf"),
-            File(modelRoot, "graph/Gr.fst"),
-            File(modelRoot, "graph/HCLr.fst"),
-        )
-
-        if (uuidFile.exists() && requiredFiles.all(File::exists)) {
-            println("Vosk wake model already prepared.")
-            return@doLast
-        }
-
-        val archive = File(temporaryDir, "vosk-model-small-en-us-0.15.zip")
-        val url = URI(
-            "https://alphacephei.com/vosk/models/" +
-                "vosk-model-small-en-us-0.15.zip"
-        ).toURL()
-
-        val connection = url.openConnection().apply {
-            connectTimeout = 30_000
-            readTimeout = 120_000
-        }
-
-        connection.getInputStream().use { input ->
-            archive.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-
-        if (modelRoot.exists()) {
-            modelRoot.deleteRecursively()
-        }
-        modelRoot.mkdirs()
-
-        ZipFile(archive).use { zip ->
-            val prefix = "vosk-model-small-en-us-0.15/"
-            zip.entries().asSequence()
-                .filter { !it.isDirectory && it.name.startsWith(prefix) }
-                .forEach { entry ->
-                    val relativePath = entry.name.removePrefix(prefix)
-                    if (relativePath.isBlank()) return@forEach
-
-                    val target = File(modelRoot, relativePath)
-                    target.parentFile.mkdirs()
-
-                    zip.getInputStream(entry).use { input ->
-                        target.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                }
-        }
-
-        if (!uuidFile.exists()) {
-            uuidFile.writeText("indoone-vosk-small-en-us-0.15")
-        }
-
-        val missing = requiredFiles.filterNot(File::exists)
-        check(missing.isEmpty()) {
-            "Vosk wake model download is incomplete; missing: " +
-                missing.joinToString { it.relativeTo(modelRoot).path }
-        }
-
-        println("Vosk wake model prepared successfully at " + modelRoot.absolutePath)
-    }
-}
-
-tasks.named("preBuild").configure {
-    dependsOn(prepareVoskModel)
-}
-
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -105,7 +23,7 @@ android {
             "terminal" -> "terminal"
             else -> "main"
         }
-        val defaultBackendUrl = if (channel == "terminal") "http://127.0.0.1:8000" else "https://indoone-backend.onrender.com"
+        val defaultBackendUrl = "https://indooneai.duckdns.org"
         val backendUrl = System.getenv("INDOONE_BACKEND_URL") ?: defaultBackendUrl
         buildConfigField("String", "INDOONE_CHANNEL", "\"$channel\"")
         buildConfigField("String", "INDOONE_BACKEND_URL", "\"$backendUrl\"")
@@ -158,7 +76,6 @@ android {
             "MainActivity.kt",
             "authentication",
             "accounts",
-            "assistant",
             "menu",
             "home",
             "lobby",
@@ -208,7 +125,6 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("net.java.dev.jna:jna:5.18.1@aar")
-    implementation("com.alphacephei:vosk-android:0.3.75@aar")
         implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.biometric:biometric:1.1.0")
 }

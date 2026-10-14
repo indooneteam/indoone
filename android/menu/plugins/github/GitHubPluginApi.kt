@@ -2,6 +2,7 @@ package com.indoone.menu.plugins.github
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.indoone.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
@@ -129,11 +130,13 @@ object GitHubPluginApi {
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
+        val userId = requireUserId()
         request(
             "POST",
             "${backendUrl}/api/integrations/github/disconnect",
-            JSONObject().put("user_id", requireUserId()),
+            JSONObject().put("user_id", userId),
         )
+        Tasks.await(githubConnectionReference(userId).removeValue())
     }
 
     suspend fun getConnectionStatus(): GitHubConnectionStatus = withContext(Dispatchers.IO) {
@@ -154,9 +157,11 @@ object GitHubPluginApi {
                 JSONObject().put("user_id", userId),
             )
         }.getOrNull()
+        val login = probe?.optJSONObject("summary")?.optString("login").orEmpty()
+        saveProfileConnection()
         GitHubConnectionStatus(
             connected = true,
-            login = probe?.optJSONObject("summary")?.optString("login").orEmpty(),
+            login = login,
             providerHealthy = probe?.optBoolean("provider_ok", false) == true,
             updatedAt = updatedAt,
         )
@@ -514,6 +519,18 @@ object GitHubPluginApi {
             files = changedFiles,
         )
     }
+
+    private suspend fun saveProfileConnection() = withContext(Dispatchers.IO) {
+        Tasks.await(githubConnectionReference(requireUserId()).setValue("GitHub"))
+    }
+
+    private fun githubConnectionReference(userId: String) =
+        FirebaseDatabase.getInstance().reference
+            .child("users")
+            .child(userId)
+            .child("profile")
+            .child("plugins")
+            .child("github")
 
     private fun requireBackendUrl(): String =
         BuildConfig.INDOONE_BACKEND_URL.trimEnd('/').takeIf { it.isNotBlank() }

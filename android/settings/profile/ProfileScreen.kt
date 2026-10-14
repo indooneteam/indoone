@@ -92,12 +92,12 @@ fun ProfileScreen(
     var gmailConnectionSummary by remember { mutableStateOf("Checking saved connections…") }
 
     LaunchedEffect(Unit) {
-        runCatching { GmailPluginApi.readProfileConnection() }
-            .onSuccess { connection ->
+        runCatching { GmailPluginApi.getConnectionStatus() }
+            .onSuccess { status ->
                 gmailConnectionSummary = when {
-                    connection?.connected == true && connection.emailAddress.isNotBlank() ->
-                        "Gmail linked · ${connection.emailAddress}"
-                    connection?.connected == true -> "Gmail linked to this Indoone profile"
+                    status.connected && !status.emailAddress.isNullOrBlank() ->
+                        "Gmail linked · ${status.emailAddress}"
+                    status.connected -> "Gmail linked to this Indoone profile"
                     else -> "Connect Gmail and manage your plugin connections"
                 }
             }

@@ -3,8 +3,12 @@ package com.indoone.menu.data
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.indoone.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class UserDataRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
@@ -27,6 +31,46 @@ class UserDataRepository(
                 "updatedAt" to System.currentTimeMillis(),
             )
         ))
+    }
+
+    /**
+     * Tell the backend the user's name, so a reply can address them by name.
+     *
+     * Only the name is sent. The backend stores it in its memory store and adds one
+     * short line to the prompt, which costs a few tokens and nothing when unknown.
+     * A failure here never fails the profile save: the name simply stays unknown.
+     */
+    suspend fun publishNameToBackend(name: String, nickname: String) = withContext(Dispatchers.IO) {
+        val value = name.trim().ifBlank { nickname.trim() }
+        if (value.isBlank()) return@withContext
+        val base = BuildConfig.INDOONE_BACKEND_URL.trim().trimEnd('/')
+        if (base.isBlank()) return@withContext
+        val user = auth.currentUser ?: return@withContext
+        val token = Tasks.await(user.getIdToken(false)).token
+            ?.takeIf { it.isNotBlank() }
+            ?: return@withContext
+
+        val connection = (URL("$base/api/memory").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 10_000
+            readTimeout = 15_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("Authorization", "Bearer $token")
+        }
+        try {
+            val payload = JSONObject()
+                .put("user_id", uid)
+                .put("key", "name")
+                .put("value", value)
+                .put("confidence", 1.0)
+                .put("source", "profile")
+                .toString()
+            connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+            connection.responseCode
+        } finally {
+            connection.disconnect()
+        }
     }
 
     suspend fun readMemory(): Map<String, Any?> = withContext(Dispatchers.IO) {

@@ -2,6 +2,7 @@ package com.indoone.menu.plugins.zoho_mail
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.indoone.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
@@ -94,8 +95,12 @@ object ZohoMailPluginApi {
                     missingScopesJson.optString(index).trim().takeIf { it.isNotBlank() }
                 }
             }
+            val connected = json.optBoolean("connected", false)
+            if (connected) {
+                saveProfileConnection()
+            }
             ZohoMailConnectionStatus(
-                connected = json.optBoolean("connected", false),
+                connected = connected,
                 scope = json.optString("scope", ""),
                 permissionsComplete = json.optBoolean("permissions_complete", false),
                 missingScopes = missingScopes,
@@ -246,11 +251,27 @@ object ZohoMailPluginApi {
     }
 
     suspend fun disconnect() {
+        val userId = requireUserId()
         postJson(
             "/api/integrations/zoho-mail/disconnect",
-            JSONObject().put("user_id", requireUserId()),
+            JSONObject().put("user_id", userId),
         )
+        withContext(Dispatchers.IO) {
+            Tasks.await(zohoMailConnectionReference(userId).removeValue())
+        }
     }
+
+    private suspend fun saveProfileConnection() = withContext(Dispatchers.IO) {
+        Tasks.await(zohoMailConnectionReference(requireUserId()).setValue("Zoho Mail"))
+    }
+
+    private fun zohoMailConnectionReference(userId: String) =
+        FirebaseDatabase.getInstance().reference
+            .child("users")
+            .child(userId)
+            .child("profile")
+            .child("plugins")
+            .child("zoho_mail")
 
     private suspend fun postJson(path: String, payload: JSONObject): JSONObject = withContext(Dispatchers.IO) {
         val backendUrl = requireBackendUrl()
