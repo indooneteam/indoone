@@ -160,6 +160,19 @@
     }
   }
 
+  // On a wide screen the panel also comes out when the pointer reaches the
+  // left edge. It slides over the app; the app never moves aside.
+  const hoverZone = document.getElementById('drawerHoverZone');
+
+  hoverZone?.addEventListener('mouseenter', () => {
+    drawer?.classList.add('open');
+    drawer?.setAttribute('aria-hidden', 'false');
+  });
+
+  document
+    .getElementById('drawerClose')
+    ?.addEventListener('click', () => window.closeDrawer?.());
+
   window.toggleMenu = function () {
     if (!drawer) return;
     ensureLegalMenuItems();

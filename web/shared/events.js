@@ -269,7 +269,7 @@
   bindClick($('menuBtn'), () => window.toggleMenu?.());
   bindClick($('addBtn'), () => window.showAdd?.());
   bindClick($('emptyAddBtn'), () => window.showAdd?.());
-  bindClick($('searchBtn'), () => window.IndooneHomeSearch?.show?.());
+  bindClick($('notificationsBtn'), () => window.IndooneNotifications?.show?.());
   bindClick($('clearSearch'), () => window.IndooneHomeSearch?.clear?.());
   bindClick($('brandBtn'), showHome);
   bindClick($('homeNav'), showHome);
