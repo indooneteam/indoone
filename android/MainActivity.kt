@@ -76,6 +76,7 @@ import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.update.UpdateDownloadWorker
+import com.indoone.settings.diagnostics.CrashLogStore
 import com.indoone.settings.power.BatteryOptimisationStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
@@ -843,10 +844,42 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         dismissButton = {
-                            if (!isDownloadingUpdate) {
-                                TextButton(onClick = { updateDialogHidden = true }) {
-                                    Text("Later")
-                                }
+                            // Always offered: the download is background work, so
+                            // closing this page does not stop it.
+                            TextButton(onClick = { updateDialogHidden = true }) {
+                                Text("Later")
+                            }
+                        },
+                    )
+                }
+
+                // If the app closed on its own last time, say so and show why.
+                // Without this there is nothing to look at: the app has no crash
+                // reporting, so the reason was lost every time.
+                var lastCrash by remember {
+                    mutableStateOf(CrashLogStore.last(this@MainActivity))
+                }
+                if (lastCrash != null) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            CrashLogStore.clear(this@MainActivity)
+                            lastCrash = null
+                        },
+                        title = { Text("Indoone closed unexpectedly") },
+                        text = {
+                            Text(
+                                CrashLogStore.summary(lastCrash.orEmpty()) +
+                                    "\n\nPlease screenshot this and send it.",
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    CrashLogStore.clear(this@MainActivity)
+                                    lastCrash = null
+                                },
+                            ) {
+                                Text("Close")
                             }
                         },
                     )
