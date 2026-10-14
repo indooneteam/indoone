@@ -88,7 +88,6 @@ window.initMenuDeleteAccount = function () {
     } catch (_) {}
 
     try {
-      window.IndooneBiometric?.disable?.();
     } catch (_) {}
   };
 

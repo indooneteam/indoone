@@ -147,31 +147,10 @@
   padding-right: calc(14px + var(--indoone-safe-right)) !important;
 }
 
-.overlay.indoone-app-lock-overlay .app-lock-screen {
-  justify-content: center !important;
-  gap: clamp(14px, 4vh, 28px) !important;
-}
 
-.overlay.indoone-app-lock-overlay .app-lock-screen > div:last-child {
-  flex: 0 0 auto !important;
-}
 
-.overlay.indoone-app-lock-overlay .app-lock-top {
-  flex: 0 0 auto !important;
-}
 
-@media (max-height: 620px) {
-  .overlay.indoone-app-lock-overlay .app-lock-screen {
-    gap: 8px !important;
-  }
-}
 
-@media (orientation: landscape) and (max-height: 600px) {
-  .overlay.indoone-app-lock-overlay .app-lock-screen {
-    justify-content: initial !important;
-    gap: 0 !important;
-  }
-}
 
 @media (min-width: 700px) {
   #app.phone-shell > #content,
