@@ -174,3 +174,24 @@
   font-weight: 800;
   cursor: pointer;
 }
+
+/* Each control is an icon over its word, as the app draws it. */
+.vibe-control,
+.vibe-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.vibe-control span:last-child,
+.vibe-end span:last-child {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.vibe-control .app-icon,
+.vibe-end .app-icon {
+  color: inherit;
+}

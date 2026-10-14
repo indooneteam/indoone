@@ -989,6 +989,7 @@ html, body { height: 100%; }
 #app.phone-shell > #content,
 #app.phone-shell > #homeContent,
 #app.phone-shell > #connectContent,
+#app.phone-shell > .notifications-page,
 #app.phone-shell > .settings-content {
   flex: 1 1 auto !important;
   min-height: 0 !important;

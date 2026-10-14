@@ -212,9 +212,14 @@
     const vibe = document.getElementById('vibeBtn');
 
     if (vibe && !vibe.querySelector('.vibe-orbit')) {
+      const shine = document.createElement('span');
+      shine.className = 'vibe-shine';
+
       const orbit = document.createElement('span');
       orbit.className = 'vibe-orbit';
       orbit.appendChild(document.createElement('i'));
+
+      vibe.appendChild(shine);
       vibe.appendChild(orbit);
     }
 

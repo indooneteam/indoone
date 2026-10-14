@@ -18,6 +18,10 @@
   const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const database = firebase.database ? firebase.database() : null;
+  // The app's CloudChatRepository writes the conversation to Firestore, so
+  // the web has to reach the same place. Without this the chat had nowhere
+  // to save and every write failed quietly.
+  const firestore = firebase.firestore ? firebase.firestore() : null;
 
   // Start LOCAL persistence immediately and expose its promise so the app can
   // attach the auth-state listener only after Firebase finishes configuring it.
@@ -27,5 +31,13 @@
       })
     : Promise.resolve();
 
-  window.IndooneFirebase = { app, auth, database, config: firebaseConfig, persistenceReady };
+  window.IndooneFirebase = {
+    app,
+    auth,
+    database,
+    firestore,
+    fieldValue: firebase.firestore ? firebase.firestore.FieldValue : null,
+    config: firebaseConfig,
+    persistenceReady
+  };
 })();

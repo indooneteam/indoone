@@ -47,7 +47,7 @@
     const db = firestore();
     const user = uid();
     const conversation = db.collection(COLLECTION).doc(conversationId);
-    const now = firebase().firestore.FieldValue.serverTimestamp();
+    const now = firebase().fieldValue.serverTimestamp();
 
     const parent = {
       userId: user,
