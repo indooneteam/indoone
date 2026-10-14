@@ -73,19 +73,6 @@ fun AboutScreen(
                 }
 
                 Spacer(Modifier.height(12.dp))
-
-                Text(
-                    text = "Private authenticator with cloud sync and secure device pairing.\nUpdates are checked automatically when the app opens.",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 5.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    color = Color(0xFF756F7F),
-                    fontSize = 12.sp,
-                    lineHeight = 19.sp,
-                )
-
-                Spacer(Modifier.height(14.dp))
                 val versionContext = androidx.compose.ui.platform.LocalContext.current
                 AboutMetaRow(
                     "Version",
