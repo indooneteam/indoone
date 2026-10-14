@@ -1,7 +1,7 @@
 (() => {
   const CONTENT_ID = 'content';
-  const ADD_HASH = '#home/add-account';
-  const ADD_SCRIPT = 'home/add-account/script.js?v=20260916a';
+  const ADD_HASH = '#menu/accounts/add-account';
+  const ADD_SCRIPT = 'menu/accounts/add-account/script.js?v=20260916a';
   const SCREENSHOT_SCRIPT = 'home/screenshot-protection.js?v=20260904b';
 
   let homeView = null;

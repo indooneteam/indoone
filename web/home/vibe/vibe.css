@@ -1,0 +1,67 @@
+.vibe-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px;
+  background: linear-gradient(160deg, #1b1030, #2a1450 60%, #140d24);
+  color: #fff;
+  text-align: center;
+}
+
+.vibe-screen[hidden] {
+  display: none;
+}
+
+.vibe-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: #ffffff1a;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.vibe-orb {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #c15cff, #7c3aed 55%, #22c7ff);
+  box-shadow: 0 0 60px #9b51f166;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.vibe-orb.listening {
+  transform: scale(1.06);
+  box-shadow: 0 0 90px #c15cff99;
+}
+
+.vibe-screen h2 {
+  margin: 6px 0 0;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.vibe-screen p {
+  margin: 0;
+  color: #cfc6e4;
+  font-size: 13px;
+}
+
+.vibe-transcript {
+  max-width: 460px;
+  color: #eae5f7;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 20px;
+}

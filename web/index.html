@@ -16,7 +16,11 @@
   />
   <title>Indoone Authenticator</title>
 
-  <link rel="stylesheet" href="style.css?v=20261014b" />
+  <link rel="stylesheet" href="style.css?v=20261014c" />
+  <link rel="stylesheet" href="home/home.css?v=20261014a" />
+  <link rel="stylesheet" href="home/message/message.css?v=20261014a" />
+  <link rel="stylesheet" href="home/plus/plus.css?v=20261014a" />
+  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261014a" />
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20260908c" />
   <link rel="stylesheet" href="connect/connect.css?v=20260918a" />
@@ -101,8 +105,85 @@
     </section>
 
     <section
+      class="chat-page"
+      id="homeContent"
+      data-feature="home"
+    >
+      <div
+        class="chat-scroll"
+        id="chatScroll"
+      >
+        <div
+          class="chat-welcome"
+          id="chatWelcome"
+        >
+          <div
+            class="welcome-mark"
+            id="welcomeMark"
+          ></div>
+          <h2>Indoone AI</h2>
+          <p id="welcomeLine">Ask me anything.</p>
+          <div
+            class="quick-prompts"
+            id="quickPrompts"
+          ></div>
+        </div>
+
+        <div
+          class="chat-list"
+          id="chatList"
+        ></div>
+      </div>
+
+      <div class="chat-composer">
+        <div
+          class="pending-attachments"
+          id="pendingAttachments"
+          hidden
+        ></div>
+
+        <div class="composer-row">
+          <button
+            type="button"
+            class="composer-btn"
+            id="plusBtn"
+            aria-label="Add attachment"
+          >
+            +
+          </button>
+
+          <textarea
+            id="chatInput"
+            rows="1"
+            placeholder="Message Indoone AI"
+            aria-label="Message Indoone AI"
+          ></textarea>
+
+          <button
+            type="button"
+            class="composer-btn"
+            id="voiceBtn"
+            aria-label="Speak your message"
+          >
+            ◉
+          </button>
+
+          <button
+            type="button"
+            class="composer-send"
+            id="sendBtn"
+            aria-label="Send message"
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    </section>
+
+<section
       class="content"
       id="content"
+      hidden
     >
       <div class="page-heading">
         <div>
@@ -430,6 +511,79 @@
   </aside>
 
   <div
+    class="plus-sheet"
+    id="plusSheet"
+    hidden
+  >
+    <div class="plus-sheet-card">
+      <span class="plus-grip"></span>
+
+      <button
+        type="button"
+        class="plus-option"
+        data-plus="camera"
+      >
+        <span class="plus-icon">◉</span>
+        <span>
+          <b>Camera</b>
+          <small>Take a photo now</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="plus-option"
+        data-plus="photos"
+      >
+        <span class="plus-icon">▣</span>
+        <span>
+          <b>Photos</b>
+          <small>Choose from your device</small>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="plus-option"
+        data-plus="files"
+      >
+        <span class="plus-icon">⌘</span>
+        <span>
+          <b>Files</b>
+          <small>Attach a document</small>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="vibe-screen"
+    id="vibeScreen"
+    hidden
+  >
+    <button
+      type="button"
+      class="vibe-close"
+      id="vibeClose"
+      aria-label="Close vibe"
+    >
+      ×
+    </button>
+
+    <div
+      class="vibe-orb"
+      id="vibeOrb"
+    ></div>
+
+    <h2>Indoone Vibe</h2>
+    <p id="vibeStatus">Tap the orb and speak.</p>
+    <div
+      class="vibe-transcript"
+      id="vibeTranscript"
+    ></div>
+  </div>
+
+  <div
     class="overlay hidden"
     id="overlay"
   >
@@ -462,7 +616,8 @@
   <script src="authentication/login/login.js?v=20260918b"></script>
   <script src="authentication/sign-up/signup.js?v=20260914c"></script>
 
-  <script src="home/home.js?v=20260915b"></script>
+  <script src="home/home.js?v=20261014a"></script>
+  <script src="home/chat-home.js?v=20261014a"></script>
   <script src="shared/branding.js?v=20261014a"></script>
   <script src="shared/core.js?v=20260914b"></script>
   <script src="shared/state.js?v=20260922c"></script>
@@ -473,9 +628,9 @@
   <script src="menu/accounts/recovery-pdf.js?v=20260914a"></script>
 
   <script src="menu/script.js?v=20260903f"></script>
-  <script src="home/search/script.js?v=20260903e"></script>
-  <script src="home/account/script.js?v=20260904a"></script>
-  <script src="home/account/edit.js?v=20260904a"></script>
+  <script src="menu/accounts/search/script.js?v=20260903e"></script>
+  <script src="menu/accounts/account/script.js?v=20260904a"></script>
+  <script src="menu/accounts/account/edit.js?v=20260904a"></script>
   <script src="menu/accounts/totp-controller.js?v=20260914a"></script>
   <script src="shared/favorite.js?v=20260914a"></script>
 
