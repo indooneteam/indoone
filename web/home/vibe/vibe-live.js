@@ -13,7 +13,6 @@
 (() => {
   const BACKEND_URL = 'https://indooneai.duckdns.org';
   const SESSION_PATH = '/api/vibe/session';
-  const PROTOCOL = 'indoone.vibe.v1';
   const INPUT_RATE = 16000;
   const OUTPUT_RATE = 24000;
   const CAPTURE_MODULE = 'home/vibe/vibe-capture.js?v=20261028a';
@@ -268,7 +267,11 @@
       return;
     }
 
-    socket = new WebSocket(sessionUrl(), PROTOCOL);
+    // No subprotocol. The app names its protocol in a header, and a browser
+    // cannot set one - but it can name a subprotocol, and that is not the same
+    // thing. If the server does not echo the subprotocol back, the browser
+    // closes the socket itself, which is what "The Vibe session ended." was.
+    socket = new WebSocket(sessionUrl());
 
     socket.onopen = () => {
       socket.send(JSON.stringify({ type: 'auth', token }));
@@ -292,10 +295,20 @@
       }
     };
 
-    socket.onclose = () => {
-      if (!closing) {
-        onFailure?.('The Vibe session ended.');
+    socket.onclose = event => {
+      if (closing) {
+        return;
       }
+
+      // 1008 is the server refusing the token; 1006 is the socket dropping
+      // before the server said anything.
+      const reason = event?.code === 1008
+        ? 'The Vibe service refused the sign-in.'
+        : event?.code === 1006
+          ? 'The Vibe service could not be reached.'
+          : 'The Vibe session ended.';
+
+      onFailure?.(reason);
     };
   }
 
