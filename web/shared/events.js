@@ -509,8 +509,6 @@
   window.addEventListener('load', async () => {
     const auth = window.IndooneFirebase?.auth;
 
-    window.__indooneLoginOtp = null;
-    window.__indooneSignupDraft = null;
     window.__indooneAuthPending = false;
 
     if (!auth) {

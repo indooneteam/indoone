@@ -1,3 +1,9 @@
+// The sign-up screen, built as the app builds it in SignUpScreen.kt.
+//
+// Two steps:
+//   details  email, mobile and password, then Continue with OTP /
+//            Continue with Password / Resend OTP
+//   otp      the code, then Verify & Create Account
 (() => {
   function logoMarkup() {
     return '<span class="auth-mark" aria-label="Indoone logo"></span>';
@@ -57,49 +63,72 @@
         </div>
       </div>
 
-      <div class="auth-copy">
-        <p class="eyebrow">GET STARTED</p>
-        <h1>Create your account</h1>
-        <p>
-          Securely create an Indoone account for your authenticator vault.
-        </p>
+      <div class="auth-step" data-signup-step="details">
+        <div class="auth-copy">
+          <p class="eyebrow">GET STARTED</p>
+          <h1>Get started with Indoone</h1>
+          <p>
+            Securely create an Indoone account for your authenticator vault.
+          </p>
+        </div>
+
+        <div class="field">
+          <label>EMAIL ID</label>
+          <input
+            id="signupEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div class="field">
+          <label>MOBILE NUMBER</label>
+          ${mobileField()}
+        </div>
+
+        <div class="field">
+          <label>PASSWORD</label>
+          ${passwordField()}
+        </div>
+
+        <button
+          type="button"
+          class="primary auth-action-button"
+          data-auth-action="signup-submit"
+        >
+          Continue with OTP
+        </button>
+
+        <button
+          type="button"
+          class="secondary auth-action-button"
+          data-auth-action="signup-password"
+        >
+          Continue with Password
+        </button>
+
+        <button
+          type="button"
+          class="secondary auth-action-button"
+          data-auth-action="login"
+        >
+          Already have an account? Login
+        </button>
       </div>
 
-      <div class="field">
-        <label>EMAIL ID</label>
-        <input
-          id="signupEmail"
-          name="email"
-          type="email"
-          autocomplete="email"
-          autocapitalize="none"
-          spellcheck="false"
-          placeholder="you@example.com"
-        />
-      </div>
-
-      <div class="field">
-        <label>MOBILE NUMBER</label>
-        ${mobileField()}
-      </div>
-
-      <div class="field">
-        <label>PASSWORD</label>
-        ${passwordField()}
-      </div>
-
-      <button
-        type="button"
-        class="primary auth-action-button"
-        data-auth-action="signup-submit"
-      >
-        Send OTP
-      </button>
-
-      <div id="signupOtpArea" hidden>
-        <p class="auth-otp-note">
-          OTP sent to <strong id="signupOtpEmail"></strong>
-        </p>
+      <div class="auth-step" data-signup-step="otp" hidden>
+        <div class="auth-copy">
+          <p class="eyebrow">VERIFICATION</p>
+          <h1>Enter OTP</h1>
+          <p>
+            OTP sent to<br />
+            <strong id="signupOtpEmail"></strong>
+          </p>
+        </div>
 
         <div class="field">
           <label>VERIFICATION OTP</label>
@@ -120,15 +149,23 @@
         >
           Verify &amp; Create Account
         </button>
-      </div>
 
-      <button
-        type="button"
-        class="secondary auth-action-button"
-        data-auth-action="login"
-      >
-        Already have an account? Login
-      </button>
+        <button
+          type="button"
+          class="secondary auth-action-button"
+          data-auth-action="signup-resend"
+        >
+          Resend OTP
+        </button>
+
+        <button
+          type="button"
+          class="link-button auth-action-button"
+          data-auth-action="signup-back"
+        >
+          ← Back
+        </button>
+      </div>
 
       <div class="auth-footer">
         Your Indoone account is activated after successful email OTP verification.
@@ -136,8 +173,40 @@
     `;
   }
 
+  function showStep(step, root = document) {
+    root.querySelectorAll('[data-signup-step]').forEach(panel => {
+      panel.hidden = panel.dataset.signupStep !== step;
+    });
+
+    const focus = {
+      details: '#signupEmail',
+      otp: '#signupOtp'
+    }[step];
+
+    root.querySelector(focus)?.focus();
+  }
+
+  function otpEmail(email, root = document) {
+    const node = root.querySelector('#signupOtpEmail');
+
+    if (node) {
+      node.textContent = email || '';
+    }
+  }
+
+  function values(root = document) {
+    return {
+      email: root.querySelector('#signupEmail')?.value || '',
+      mobile: root.querySelector('#signupMobile')?.value || '',
+      password: root.querySelector('#signupPassword')?.value || ''
+    };
+  }
+
   window.IndooneSignupFeature = {
     html,
+    showStep,
+    otpEmail,
+    values,
     show: () => window.IndooneAuthUI?.showSignup?.()
   };
 })();
