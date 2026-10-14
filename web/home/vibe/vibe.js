@@ -27,6 +27,9 @@
   // Closing has to end the session for good: no late result, and no reply
   // spoken after the screen is gone.
   let closed = false;
+  // The app keeps its microphone open for the whole session: it does not stop
+  // after one sentence. This is what "listening" means here.
+  let wantListening = false;
 
   // VibeScreen.kt shows the connection state until Connected, then Listening
   // or Paused.
@@ -147,13 +150,17 @@
       return;
     }
 
+    wantListening = true;
+
     if (listening) {
       return;
     }
 
     recognition = new SpeechRecognition();
     recognition.lang = navigator.language || 'en-IN';
-    recognition.continuous = false;
+    // Keep the microphone open, as the app's session does. Without this it
+    // stopped after every sentence and had to be unmuted again.
+    recognition.continuous = true;
     recognition.interimResults = true;
 
     recognition.onresult = event => {
@@ -179,17 +186,25 @@
       listening = false;
       paintMute();
 
-      if (closed) {
+      if (closed || !wantListening) {
+        setState('Paused');
         return;
       }
-
-      setState('Paused');
 
       const said = String(heard || '').trim();
 
       if (said) {
+        heard = '';
         void ask(said);
       }
+
+      // The browser ends the session on its own now and then. The app's
+      // microphone stays open, so open it again.
+      setTimeout(() => {
+        if (!closed && wantListening && !listening) {
+          listen();
+        }
+      }, 250);
     };
 
     connected = true;
@@ -213,6 +228,7 @@
   }
 
   function stop() {
+    wantListening = false;
     listening = false;
     paintMute();
 
@@ -237,6 +253,7 @@
 
   function close() {
     closed = true;
+    wantListening = false;
     heard = '';
     stop();
     screen?.setAttribute('hidden', '');
@@ -255,7 +272,7 @@
 
     // Tapping the orb starts or stops listening, as the app's mic button does.
     orb?.addEventListener('click', () => {
-      if (listening) {
+      if (listening || wantListening) {
         stop();
         setState('Paused');
       } else {
@@ -268,7 +285,7 @@
     // In the app this is the microphone switch, and its look follows the
     // listening state, so tapping it simply turns listening on or off.
     mute?.addEventListener('click', () => {
-      if (listening) {
+      if (listening || wantListening) {
         stop();
         setState('Paused');
       } else {
