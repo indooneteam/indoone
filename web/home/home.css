@@ -373,3 +373,23 @@
   font-size: 12px;
   font-weight: 500;
 }
+
+/* While the saved conversation is being read. */
+.chat-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.chat-loading span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.2px solid #e3d9f8;
+  border-top-color: #703be2;
+  animation: chatSpin 800ms linear infinite;
+}
+
+@keyframes chatSpin {
+  to { transform: rotate(360deg); }
+}
