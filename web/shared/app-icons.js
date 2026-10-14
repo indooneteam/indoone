@@ -1,5 +1,12 @@
 // The app's icons. Same shapes as the Material icons the app draws, so the
 // web and the app show the same thing.
+//
+// The rule this file has to obey: drawing an icon must not look like a change
+// that needs drawing again. The first version put data-app-icon on the svg it
+// made, so apply() kept finding its own work, and drew an icon inside the icon
+// inside the icon, without end. The page pegged a core and Chrome put up
+// "Page Unresponsive". The made svg now carries data-app-icon-drawn, which
+// apply() never looks for, and apply() skips anything that is already an svg.
 (() => {
   const ICONS = {
     // Icons.Outlined.Mic
@@ -69,16 +76,15 @@
     ].join('')
   };
 
-  const FILLED = new Set(['notifications']);
+  const SVG_NS = 'http://www.w3.org/2000/svg';
 
   function make(name, className = 'app-icon') {
-    const svg = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'svg'
-    );
+    const svg = document.createElementNS(SVG_NS, 'svg');
 
     svg.setAttribute('class', className);
-    svg.setAttribute('data-app-icon', name);
+    // NOT data-app-icon: that is what apply() looks for, and the made svg must
+    // never look like something still waiting to be drawn.
+    svg.setAttribute('data-app-icon-drawn', name);
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
@@ -89,30 +95,51 @@
     svg.setAttribute('stroke-linejoin', 'round');
     svg.innerHTML = ICONS[name] || '';
 
-    if (FILLED.has(name)) {
-      svg.setAttribute('stroke-width', '1.7');
-    }
-
     return svg;
   }
 
-  // Any element carrying data-app-icon gets its icon, and keeps getting it as
-  // the page changes.
+  function draw(element) {
+    const name = element.dataset.appIcon;
+
+    if (!name) {
+      return;
+    }
+
+    element.textContent = '';
+    element.appendChild(
+      make(name, element.dataset.appIconClass || 'app-icon')
+    );
+    element.dataset.appIconDone = 'true';
+  }
+
+  // Any element carrying data-app-icon gets its icon. Only those elements:
+  // a made svg carries data-app-icon-drawn instead, so it is never picked up.
   function apply(root = document) {
     root.querySelectorAll('[data-app-icon]').forEach(element => {
+      if (element.tagName.toLowerCase() === 'svg') {
+        return;
+      }
+
       if (element.dataset.appIconDone === 'true') {
         return;
       }
 
-      element.dataset.appIconDone = 'true';
-      element.textContent = '';
-      element.appendChild(
-        make(element.dataset.appIcon, element.dataset.appIconClass || 'app-icon')
-      );
+      draw(element);
     });
   }
 
-  window.IndooneIcons = { make, apply, names: Object.keys(ICONS) };
+  // Call this after putting new markup on the page. It is safe to call at any
+  // time and safe to call repeatedly.
+  function redraw(element) {
+    if (!element) {
+      return;
+    }
+
+    element.dataset.appIconDone = 'false';
+    apply(element.parentNode || element);
+  }
+
+  window.IndooneIcons = { make, apply, redraw, names: Object.keys(ICONS) };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => apply(), { once: true });
@@ -120,11 +147,13 @@
     apply();
   }
 
-  if (typeof MutationObserver !== 'undefined') {
+  if (typeof MutationObserver !== 'undefined' && document.body) {
     let queued = false;
 
     const observer = new MutationObserver(() => {
-      if (queued) return;
+      if (queued) {
+        return;
+      }
 
       queued = true;
       queueMicrotask(() => {
@@ -133,6 +162,9 @@
       });
     });
 
+    // Only childList. Attribute changes are not watched, and drawing an icon
+    // only ever changes attributes on the svg, never adds an element that
+    // still needs drawing.
     observer.observe(document.body, { childList: true, subtree: true });
   }
 })();
