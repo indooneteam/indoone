@@ -188,7 +188,13 @@
       .catch(error => console.warn('Indoone chat save failed:', error));
 
     try {
-      const result = await window.IndooneChatApi.send({
+      const api = window.IndooneChatApi;
+
+      if (!api) {
+        throw new Error('Indoone AI is not reachable right now.');
+      }
+
+      const result = await api.send({
         message,
         conversationId,
         attachments
@@ -209,7 +215,12 @@
 
       store.remove(mine);
       store.add({
-        text: error?.message || 'Indoone AI could not complete the request.',
+        // never the raw failure text
+        text:
+          error?.message &&
+          !/undefined|not a function|null/i.test(error.message)
+            ? error.message
+            : 'Indoone AI could not complete the request.',
         mine: false
       });
     } finally {
