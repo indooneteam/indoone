@@ -3,9 +3,15 @@
 // It renders whichever screen the user is on and drives the app's steps. The
 // work itself lives in firebase-auth-otp.js, which mirrors IndooneAuthService;
 // this file only moves between steps and reports what happened.
+//
+// The screen is rendered ONCE. Moving between the app's steps only shows and
+// hides panels. It used to re-render the whole screen on every step change,
+// which wiped everything the user had typed - the identifier was empty by the
+// time the password step appeared, so Complete Login could never work.
 (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
   let busy = false;
+  let currentScreen = null;
 
   const $ = id => document.getElementById(id);
 
@@ -33,22 +39,39 @@
     overlay.classList.add(AUTH_CLASS);
     document.body.classList.add('auth-open', 'auth-pending');
 
+    // The status line sits below the card, not inside it, which is where the
+    // app puts it.
     modal.innerHTML = `
       <div class="auth-page">
         ${html}
-        <div
-          id="authStatus"
-          class="auth-status"
-          hidden
-          aria-live="polite"
-        ></div>
       </div>
+      <div
+        id="authStatus"
+        class="auth-status"
+        hidden
+        aria-live="polite"
+      ></div>
     `;
 
     bindButtons(modal);
     bindMobileDefaults(modal);
     bindPasswordToggles(modal);
 
+    return true;
+  }
+
+  // Render the screen only if it is not already the one on display, so a step
+  // change never throws away what has been typed.
+  function renderScreen(name, html) {
+    if (currentScreen === name && $('modal')?.querySelector('.auth-page')) {
+      return true;
+    }
+
+    if (!showShell(html)) {
+      return false;
+    }
+
+    currentScreen = name;
     return true;
   }
 
@@ -126,13 +149,11 @@
   }
 
   function bindMobileDefaults(scope) {
+    // The login identifier shows +91 while it looks like a number. The password
+    // step's identifier has no prefix in the app, so it is not bound here - it
+    // was, and it only pushed the text sideways with no prefix visible.
     bindMobileInput(
       scope.querySelector('#loginIdentifier'),
-      scope.querySelector('#loginMobilePrefix')
-    );
-
-    bindMobileInput(
-      scope.querySelector('#loginPasswordIdentifier'),
       scope.querySelector('#loginMobilePrefix')
     );
 
@@ -196,20 +217,22 @@
   function showLogin(step = 'identifier') {
     const feature = window.IndooneLoginFeature;
 
-    if (!showShell(feature?.html?.() || fallbackLoginHtml())) {
+    if (!renderScreen('login', feature?.html?.() || fallbackLoginHtml())) {
       return;
     }
 
+    feature?.bind?.(root());
     feature?.showStep?.(step, root());
   }
 
   function showSignup(step = 'details') {
     const feature = window.IndooneSignupFeature;
 
-    if (!showShell(feature?.html?.() || fallbackSignupHtml())) {
+    if (!renderScreen('signup', feature?.html?.() || fallbackSignupHtml())) {
       return;
     }
 
+    feature?.bind?.(root());
     feature?.showStep?.(step, root());
   }
 
@@ -232,7 +255,9 @@
   }
 
   async function showForgotPassword() {
-    if (!showShell('<div class="auth-loading">Loading…</div>')) return;
+    if (!renderScreen('forgot', '<div class="auth-loading">Loading…</div>')) {
+      return;
+    }
 
     const scope = root();
 
@@ -254,7 +279,7 @@
     } catch (error) {
       console.error('Forgot Password page failed to load:', error);
 
-      showShell(`
+      renderScreen('forgot', `
         <div class="auth-copy">
           <p class="eyebrow">ACCOUNT RECOVERY</p>
           <h1>Forgot password?</h1>
@@ -274,17 +299,17 @@
     }
   }
 
+  // Whichever identifier field is on screen. Both carry the same text because
+  // login.js mirrors them, so either one is the right answer.
   function readLoginIdentifier() {
     const scope = root();
-    const stepOne = scope.querySelector('#loginIdentifier');
     const stepThree = scope.querySelector('#loginPasswordIdentifier');
 
-    // Whichever identifier field is on screen right now.
     if (stepThree && !stepThree.closest('[data-login-step]')?.hidden) {
       return stepThree.value;
     }
 
-    return stepOne?.value || stepThree?.value || '';
+    return scope.querySelector('#loginIdentifier')?.value || '';
   }
 
   async function run(button) {
@@ -375,6 +400,8 @@
       }
 
       busy = false;
+      window.IndooneLoginFeature?.applyRules?.(scope);
+      window.IndooneSignupFeature?.applyRules?.(scope);
     }
   }
 
@@ -402,6 +429,8 @@
     if ($('modal')) {
       $('modal').innerHTML = '';
     }
+
+    currentScreen = null;
   }
 
   const api = {

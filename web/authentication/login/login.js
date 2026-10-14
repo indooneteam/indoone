@@ -1,6 +1,11 @@
 // The login screen, built from LoginScreen.kt.
 //
 // Three steps, one on screen at a time, with the app's own texts and motion.
+//
+// The identifier is ONE value in the app, shared by the entry step and the
+// password step. Here the two fields mirror each other, so whatever is typed on
+// one is already there on the other - nothing has to be copied across when the
+// step changes, and nothing is lost.
 (() => {
   const WELCOME_LINES = [
     { text: 'Welcome to your Indoone account', gradient: false },
@@ -204,6 +209,81 @@
     `;
   }
 
+  // ------------------------------------------------------------- the wiring
+
+  function buttonFor(root, action) {
+    return root.querySelector(`[data-auth-action="${action}"]`);
+  }
+
+  // The app keeps one identifier. These two fields are that one value.
+  function bindMirror(root) {
+    const stepOne = root.querySelector('#loginIdentifier');
+    const stepThree = root.querySelector('#loginPasswordIdentifier');
+
+    if (!stepOne || !stepThree) return;
+
+    if (stepOne.dataset.mirrorBound !== 'true') {
+      stepOne.dataset.mirrorBound = 'true';
+      stepThree.dataset.mirrorBound = 'true';
+
+      stepOne.addEventListener('input', () => {
+        stepThree.value = stepOne.value;
+        applyRules(root);
+      });
+
+      stepThree.addEventListener('input', () => {
+        stepOne.value = stepThree.value;
+        applyRules(root);
+      });
+    }
+  }
+
+  // The app only lets Verify & Login be pressed once six digits are in, and
+  // Complete Login once both fields have something in them.
+  function applyRules(root) {
+    const otp = root.querySelector('#loginOtp');
+    const verify = buttonFor(root, 'login-verify');
+
+    if (verify && otp) {
+      verify.disabled = otp.value.replace(/\D/g, '').length !== 6;
+    }
+
+    const identifier = root.querySelector('#loginIdentifier');
+    const passwordIdentifier = root.querySelector('#loginPasswordIdentifier');
+    const password = root.querySelector('#loginPassword');
+    const complete = buttonFor(root, 'login-complete');
+
+    if (complete) {
+      const identifierValue = (
+        passwordIdentifier?.value ||
+        identifier?.value ||
+        ''
+      ).trim();
+
+      complete.disabled = !identifierValue || !(password?.value || '');
+    }
+  }
+
+  function bind(root) {
+    if (!root?.querySelector) return;
+
+    bindMirror(root);
+
+    ['#loginOtp', '#loginPassword', '#loginIdentifier',
+      '#loginPasswordIdentifier'].forEach(selector => {
+      const input = root.querySelector(selector);
+
+      if (input && input.dataset.rulesBound !== 'true') {
+        input.dataset.rulesBound = 'true';
+        input.addEventListener('input', () => applyRules(root));
+      }
+    });
+
+    applyRules(root);
+  }
+
+  // ------------------------------------------------------- the welcome line
+
   // The app swaps the welcome line every two seconds: the outgoing line fades
   // out while sliding left, the incoming one fades in from the right.
   let welcomeTimer = null;
@@ -239,16 +319,9 @@
     }
   }
 
-  // Only one step is ever visible. The identifier carries across so the
-  // password step starts from what was already typed.
+  // ------------------------------------------------------------- the steps
+
   function showStep(step, root = document) {
-    const identifier = root.querySelector('#loginIdentifier');
-    const passwordIdentifier = root.querySelector('#loginPasswordIdentifier');
-
-    if (step === 'password' && identifier && passwordIdentifier) {
-      passwordIdentifier.value = identifier.value;
-    }
-
     root.querySelectorAll('[data-login-step]').forEach(panel => {
       panel.hidden = panel.dataset.loginStep !== step;
     });
@@ -270,6 +343,8 @@
     } else {
       stopWelcome();
     }
+
+    applyRules(root);
   }
 
   function otpEmail(email, root = document) {
@@ -282,8 +357,10 @@
 
   window.IndooneLoginFeature = {
     html,
+    bind,
     showStep,
     otpEmail,
+    applyRules,
     stopWelcome,
     show: () => window.IndooneAuthUI?.showLogin?.()
   };
