@@ -31,6 +31,10 @@ class VibeAudioEngine(
         private const val CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
         private const val AUDIO_CHUNK_BYTES = 3_200
+
+        // Half a second of 24 kHz mono 16-bit audio. The minimum the platform
+        // reports is far smaller, and far too small to ride out a late chunk.
+        private const val PLAYBACK_BUFFER_BYTES = 24_000
     }
 
     private val recording = AtomicBoolean(false)
@@ -273,7 +277,11 @@ class VibeAudioEngine(
                     .setChannelMask(CHANNEL_OUT)
                     .build(),
             )
-            .setBufferSizeInBytes(minBuffer.coerceAtLeast(9_600) * 2)
+            // The reply arrived in pieces. AudioTrack logs an underrun every
+            // time its buffer runs dry, and each one is an audible gap: the
+            // live audio arrives in chunks, and a chunk a moment late emptied
+            // the buffer. Half a second of room absorbs that.
+            .setBufferSizeInBytes(minBuffer.coerceAtLeast(PLAYBACK_BUFFER_BYTES))
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
 
