@@ -141,6 +141,7 @@
     setHint('Speak naturally');
     paintMute();
     paintSpeaker();
+    window.IndooneVibeLive?.setSpeaker?.(speakerOn);
 
     void window.IndooneVibeLive?.open?.(onEvent, onFailure);
   }
@@ -195,6 +196,8 @@
     speaker?.addEventListener('click', () => {
       speakerOn = !speakerOn;
       paintSpeaker();
+      // and actually silence it, as the app does
+      window.IndooneVibeLive?.setSpeaker?.(speakerOn);
     });
 
     end?.addEventListener('click', close);
