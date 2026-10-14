@@ -1,3 +1,9 @@
+/* The Vibe screen, to match VibeScreen.kt.
+
+   Every number here is the app's: the gradient, the 270dp stage, the two ring
+   radii, the core at 0.33 of the stage, the eight dots at 0.4686 with the
+   seven-second turn, the 78dp control columns and the 68dp end circle. */
+
 .vibe-screen {
   position: fixed;
   inset: 0;
@@ -5,193 +11,292 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 22px 20px 26px;
-  background: linear-gradient(165deg, #1b1030, #2a1450 58%, #140d24);
+  padding: 0 20px;
+  background: linear-gradient(
+    180deg,
+    #070512 0%,
+    #0e0920 50%,
+    #080612 100%
+  );
   color: #fff;
-  text-align: center;
-  overflow-y: auto;
 }
 
 .vibe-screen[hidden] {
-  display: none;
+  display: none !important;
 }
 
-.vibe-top {
-  width: 100%;
+/* the split title, centred */
+.vibe-head {
+  flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 12px;
 }
 
-.vibe-title b {
-  font-size: 17px;
+.vibe-brand {
+  display: inline-flex;
+  align-items: baseline;
+  color: #9a82ff;
+}
+
+.vibe-brand b {
+  font-size: 25px;
   font-weight: 700;
+}
+
+.vibe-brand span {
+  font-size: 17px;
+}
+
+.vibe-word {
+  font-size: 24px;
   color: #fff;
 }
 
-.vibe-title i {
-  font-style: normal;
-  font-size: 17px;
-  font-weight: 700;
-  background: linear-gradient(90deg, #c15cff, #22c7ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* the stage */
+.vibe-stage {
+  position: relative;
+  flex: none;
+  width: 270px;
+  height: 270px;
+  margin-top: auto;
+  margin-bottom: auto;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.vibe-stage > span {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* the outer glow, 0.48 of the stage across */
+.vibe-glow {
+  width: 96%;
+  height: 96%;
+  background: radial-gradient(
+    circle,
+    rgba(232, 217, 255, .96) 0%,
+    rgba(168, 108, 255, .72) 32%,
+    rgba(108, 57, 255, .18) 62%,
+    transparent 100%
+  );
+}
+
+/* ring at 0.5016 of the stage, 3dp, breathing with the core */
+.vibe-ring-pulse {
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(183, 124, 255, .18);
+  animation: vibeScreenPulse 1500ms cubic-bezier(.4, 0, .2, 1) infinite alternate;
+}
+
+/* ring at 0.396 of the stage, 1.5dp, still */
+.vibe-ring-fixed {
+  width: 79%;
+  height: 79%;
+  border: 1.5px solid rgba(127, 91, 255, .26);
+}
+
+/* the core, 0.33 of the stage across, breathing */
+.vibe-core {
+  width: 66%;
+  height: 66%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, .98) 0%,
+    rgba(225, 201, 255, .96) 34%,
+    rgba(140, 77, 255, .62) 68%,
+    transparent 100%
+  );
+  animation: vibeScreenPulse 1500ms cubic-bezier(.4, 0, .2, 1) infinite alternate;
+}
+
+/* eight dots on a 0.4686 ring, turning once in seven seconds */
+.vibe-orbit {
+  width: 100%;
+  height: 100%;
+  animation: vibeScreenTurn 7000ms linear infinite;
+}
+
+.vibe-orbit {
+  /* the dots ride a ring at 0.4686 of the stage; the stage is 270px */
+  --vibe-ring: 126.5px;
+}
+
+.vibe-orbit i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: rgba(216, 196, 255, .80);
+  /* turn into place, then out along the ring */
+  transform: rotate(var(--a)) translateY(calc(var(--vibe-ring) * -1));
+}
+
+.vibe-orbit i:nth-child(odd) {
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background: rgba(107, 201, 255, .60);
+}
+
+.vibe-orbit i:nth-child(1) { --a: 0deg; }
+.vibe-orbit i:nth-child(2) { --a: 45deg; }
+.vibe-orbit i:nth-child(3) { --a: 90deg; }
+.vibe-orbit i:nth-child(4) { --a: 135deg; }
+.vibe-orbit i:nth-child(5) { --a: 180deg; }
+.vibe-orbit i:nth-child(6) { --a: 225deg; }
+.vibe-orbit i:nth-child(7) { --a: 270deg; }
+.vibe-orbit i:nth-child(8) { --a: 315deg; }
+
+/* the words sit inside the orb, as the app puts them */
+.vibe-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
 }
 
 .vibe-label {
-  color: #b9a6e6;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.4px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #7c5cff;
 }
 
 .vibe-state {
-  color: #cfc6e4;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.vibe-stage {
-  position: relative;
-  width: 190px;
-  height: 190px;
-  margin: 8px 0 2px;
-  display: grid;
-  place-items: center;
-}
-
-.vibe-core {
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 34%, #e3c8ff, #9a5cff 52%, #6f35da);
-  box-shadow: 0 0 60px #9a5cff88;
-  animation: vibeCorePulse 1100ms ease-in-out infinite alternate;
-}
-
-.vibe-ring {
-  position: absolute;
-  inset: 12px;
-  border-radius: 50%;
-  border: 1px solid #b98cff55;
-}
-
-.ring-one {
-  animation: vibeRingSpin 3200ms linear infinite;
-  border-top-color: #d6b7ff;
-}
-
-.ring-two {
-  inset: 34px;
-  animation: vibeRingSpin 5200ms linear infinite reverse;
-  border-bottom-color: #22c7ffaa;
-}
-
-.vibe-screen.listening .vibe-core {
-  box-shadow: 0 0 90px #c15cffcc;
-}
-
-@keyframes vibeCorePulse {
-  from { transform: scale(.92); }
-  to   { transform: scale(1.08); }
-}
-
-@keyframes vibeRingSpin {
-  to { transform: rotate(360deg); }
+  font-size: 22px;
+  color: #fff;
 }
 
 .vibe-hint {
-  margin: 0;
-  color: #e6dcff;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .56);
 }
 
+/* the transcript card */
 .vibe-transcript-box {
+  flex: none;
   width: 100%;
-  max-width: 460px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: #ffffff12;
-  border: 1px solid #ffffff1f;
-  text-align: left;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .055);
+  border: 1px solid rgba(255, 255, 255, .10);
 }
 
 .vibe-transcript-label {
   display: block;
-  margin-bottom: 6px;
-  color: #b9a6e6;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: #a78bff;
 }
 
 .vibe-transcript {
-  color: #eae5f7;
-  font-size: 14px;
-  line-height: 1.5;
-  min-height: 20px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, .62);
+  min-height: 18px;
 }
 
+/* the three controls */
 .vibe-controls {
-  width: 100%;
-  max-width: 460px;
+  flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 2px;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .vibe-control {
-  flex: 1 1 0;
-  height: 44px;
-  border: 1px solid #ffffff26;
-  border-radius: 13px;
-  background: #ffffff14;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.vibe-control.on {
-  background: #703be2;
-  border-color: #703be2;
-}
-
-.vibe-end {
-  flex: 1.2 1 0;
-  height: 44px;
-  border: 0;
-  border-radius: 13px;
-  background: linear-gradient(90deg, #b3261e, #e0523f);
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* Each control is an icon over its word, as the app draws it. */
-.vibe-control,
-.vibe-end {
+  width: 78px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, .52);
 }
 
-.vibe-control span:last-child,
-.vibe-end span:last-child {
-  font-size: 10.5px;
-  font-weight: 700;
+.vibe-control-round {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .055);
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, .52);
 }
 
-.vibe-control .app-icon,
-.vibe-end .app-icon {
-  color: inherit;
+.vibe-control.on .vibe-control-round {
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+
+.vibe-control > span:last-child {
+  margin-top: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, .52);
+}
+
+.vibe-icon {
+  width: 21px;
+  height: 21px;
+}
+
+/* the end button: a 68dp circle, not a bar of text */
+.vibe-end {
+  width: 68px;
+  height: 68px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: radial-gradient(
+    circle at 50% 50%,
+    #9b5cff 0%,
+    #6d3bdb 55%,
+    #3c216e 100%
+  );
+}
+
+.vibe-end-icon {
+  width: 27px;
+  height: 27px;
+}
+
+@keyframes vibeScreenPulse {
+  from { transform: scale(.94); }
+  to   { transform: scale(1.08); }
+}
+
+@keyframes vibeScreenTurn {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (max-height: 620px) {
+  .vibe-stage {
+    width: 200px;
+    height: 200px;
+  }
+
+  .vibe-orbit {
+    --vibe-ring: 93.7px;
+  }
 }
