@@ -1,6 +1,8 @@
-// The voice-first screen, laid out as VibeScreen.kt lays it out: the split
-// title, the VIBE label, the state, Speak naturally, the live transcript, and
-// the three controls.
+// The Vibe screen, wired the way VibeScreen.kt wires it.
+//
+// The microphone control is not a separate switch in the app: it shows the
+// listening state. Listening means it reads "Mute" and is lit; not listening
+// means "Unmute" and it is dim. The speaker control is its own switch.
 (() => {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -37,6 +39,49 @@
     }
   }
 
+  // The microphone button follows the listening state, as the app's does.
+  function paintMute() {
+    if (!mute) {
+      return;
+    }
+
+    const icon = document.getElementById('vibeMuteIcon');
+    const label = document.getElementById('vibeMuteLabel');
+
+    mute.classList.toggle('on', listening);
+
+    if (label) {
+      label.textContent = listening ? 'Mute' : 'Unmute';
+    }
+
+    if (icon) {
+      icon.dataset.appIcon = listening ? 'mic' : 'micOff';
+      icon.dataset.appIconDone = 'false';
+      window.IndooneIcons?.apply?.(mute);
+    }
+  }
+
+  function paintSpeaker() {
+    if (!speaker) {
+      return;
+    }
+
+    const icon = document.getElementById('vibeSpeakerIcon');
+    const label = document.getElementById('vibeSpeakerLabel');
+
+    speaker.classList.toggle('on', speakerOn);
+
+    if (label) {
+      label.textContent = speakerOn ? 'Speaker' : 'Muted';
+    }
+
+    if (icon) {
+      icon.dataset.appIcon = speakerOn ? 'volumeUp' : 'volumeOff';
+      icon.dataset.appIconDone = 'false';
+      window.IndooneIcons?.apply?.(speaker);
+    }
+  }
+
   function speak(text) {
     if (!speakerOn || !('speechSynthesis' in window) || !text) {
       return;
@@ -56,7 +101,6 @@
 
     store.add({ text: spoken, mine: true });
     setState('Thinking');
-    setHint('One moment…');
 
     try {
       const result = await window.IndooneChatApi.send({
@@ -68,13 +112,11 @@
       store.add({ text: result.reply, mine: false });
       setTranscript(result.reply);
       setState(listening ? 'Listening' : 'Paused');
-      setHint('Speak naturally');
       speak(result.reply);
     } catch (error) {
       console.error('Indoone vibe failed:', error);
       setState('Paused');
-      setHint('Could not reach Indoone AI.');
-      setTranscript(error.message || '');
+      setTranscript(error.message || 'Could not reach Indoone AI.');
     }
   }
 
@@ -105,14 +147,13 @@
 
     recognition.onerror = () => {
       listening = false;
-      screen?.classList.remove('listening');
+      paintMute();
       setState('Paused');
-      setHint('Speak naturally');
     };
 
     recognition.onend = () => {
       listening = false;
-      screen?.classList.remove('listening');
+      paintMute();
       setState('Paused');
 
       const said = String(heard || '').trim();
@@ -123,7 +164,7 @@
     };
 
     listening = true;
-    screen?.classList.add('listening');
+    paintMute();
     setState('Listening');
     setHint('Speak naturally');
     recognition.start();
@@ -131,7 +172,7 @@
 
   function stop() {
     listening = false;
-    screen?.classList.remove('listening');
+    paintMute();
     recognition?.stop?.();
     window.speechSynthesis?.cancel?.();
   }
@@ -140,13 +181,16 @@
     screen?.removeAttribute('hidden');
     setTranscript('');
     setState('Paused');
-    setHint('Tap the orb and speak.');
+    setHint('Speak naturally');
+    paintMute();
+    paintSpeaker();
     listen();
   }
 
   function close() {
     stop();
     screen?.setAttribute('hidden', '');
+    setState('Paused');
   }
 
   function init() {
@@ -158,6 +202,7 @@
     mute = document.getElementById('vibeMute');
     speaker = document.getElementById('vibeSpeaker');
 
+    // Tapping the orb starts or stops listening, as the app's mic button does.
     orb?.addEventListener('click', () => {
       if (listening) {
         stop();
@@ -169,41 +214,20 @@
 
     document.getElementById('vibeEnd')?.addEventListener('click', close);
 
-    // The app flips both the icon and the word.
+    // In the app this is the microphone switch, and its look follows the
+    // listening state, so tapping it simply turns listening on or off.
     mute?.addEventListener('click', () => {
-      const nowMuted = mute.classList.toggle('on');
-      const icon = document.getElementById('vibeMuteIcon');
-      const label = document.getElementById('vibeMuteLabel');
-
-      if (label) {
-        label.textContent = nowMuted ? 'Unmute' : 'Mute';
+      if (listening) {
+        stop();
+        setState('Paused');
+      } else {
+        listen();
       }
-
-      if (icon) {
-        icon.dataset.appIcon = nowMuted ? 'micOff' : 'mic';
-        icon.dataset.appIconDone = 'false';
-        window.IndooneIcons?.apply?.(mute);
-      }
-
-      recognition?.stop?.();
     });
 
     speaker?.addEventListener('click', () => {
       speakerOn = !speakerOn;
-      speaker.classList.toggle('on', speakerOn);
-
-      const icon = document.getElementById('vibeSpeakerIcon');
-      const label = document.getElementById('vibeSpeakerLabel');
-
-      if (label) {
-        label.textContent = speakerOn ? 'Speaker' : 'Muted';
-      }
-
-      if (icon) {
-        icon.dataset.appIcon = speakerOn ? 'volumeUp' : 'volumeOff';
-        icon.dataset.appIconDone = 'false';
-        window.IndooneIcons?.apply?.(speaker);
-      }
+      paintSpeaker();
 
       if (!speakerOn) {
         window.speechSynthesis?.cancel?.();

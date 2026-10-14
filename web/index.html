@@ -748,35 +748,35 @@
     id="vibeScreen"
     hidden
   >
-    <div class="vibe-top">
-      <span class="vibe-title">
-        <b>ndoone</b><i>Vibe</i>
-      </span>
-
-      <span
-        class="vibe-label"
-        id="vibeLabel"
-      >VIBE</span>
-
-      <span
-        class="vibe-state"
-        id="vibeState"
-      >Paused</span>
+    <div class="vibe-head">
+      <span class="vibe-brand"><b>I</b><span>ndoone</span></span>
+      <span class="vibe-word">Vibe</span>
     </div>
 
     <div
       class="vibe-stage"
       id="vibeOrb"
     >
-      <span class="vibe-ring ring-one"></span>
-      <span class="vibe-ring ring-two"></span>
+      <span class="vibe-glow"></span>
+      <span class="vibe-ring vibe-ring-pulse"></span>
+      <span class="vibe-ring vibe-ring-fixed"></span>
       <span class="vibe-core"></span>
-    </div>
+      <span class="vibe-orbit">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
 
-    <p
-      class="vibe-hint"
-      id="vibeHint"
-    >Speak naturally</p>
+      <div class="vibe-center">
+        <span class="vibe-label">VIBE</span>
+        <span
+          class="vibe-state"
+          id="vibeState"
+        >Paused</span>
+        <span
+          class="vibe-hint"
+          id="vibeHint"
+        >Speak naturally</span>
+      </div>
+    </div>
 
     <div class="vibe-transcript-box">
       <span class="vibe-transcript-label">LIVE TRANSCRIPT</span>
@@ -791,13 +791,15 @@
         type="button"
         class="vibe-control"
         id="vibeMute"
+        aria-label="Microphone"
       >
-        <span
-          class="vibe-control-icon"
-          id="vibeMuteIcon"
-          data-app-icon="micOff"
-          data-app-icon-class="app-icon app-icon-sm"
-        ></span>
+        <span class="vibe-control-round">
+          <span
+            id="vibeMuteIcon"
+            data-app-icon="micOff"
+            data-app-icon-class="app-icon vibe-icon"
+          ></span>
+        </span>
         <span id="vibeMuteLabel">Unmute</span>
       </button>
 
@@ -808,24 +810,24 @@
         aria-label="End Vibe"
       >
         <span
-          class="vibe-end-icon"
           data-app-icon="close"
-          data-app-icon-class="app-icon app-icon-sm"
+          data-app-icon-class="app-icon vibe-end-icon"
         ></span>
-        <span>End Vibe</span>
       </button>
 
       <button
         type="button"
         class="vibe-control"
         id="vibeSpeaker"
+        aria-label="Speaker"
       >
-        <span
-          class="vibe-control-icon"
-          id="vibeSpeakerIcon"
-          data-app-icon="volumeUp"
-          data-app-icon-class="app-icon app-icon-sm"
-        ></span>
+        <span class="vibe-control-round">
+          <span
+            id="vibeSpeakerIcon"
+            data-app-icon="volumeUp"
+            data-app-icon-class="app-icon vibe-icon"
+          ></span>
+        </span>
         <span id="vibeSpeakerLabel">Speaker</span>
       </button>
     </div>
