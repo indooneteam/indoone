@@ -1,40 +1,50 @@
-// The voice-first screen, the same idea as VibeScreen native-side: speak, the
-// reply is spoken back, and the whole exchange lands in the chat thread.
+// The voice-first screen, laid out as VibeScreen.kt lays it out: the split
+// title, the VIBE label, the state, Speak naturally, the live transcript, and
+// the three controls.
 (() => {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
   let screen = null;
   let orb = null;
-  let status = null;
+  let state = null;
+  let hint = null;
   let transcript = null;
+  let mute = null;
+  let speaker = null;
   let recognition = null;
   let listening = false;
+  let speakerOn = true;
+  let heard = '';
+
+  function setState(text) {
+    if (state) {
+      state.textContent = text;
+    }
+  }
+
+  function setHint(text) {
+    if (hint) {
+      hint.textContent = text;
+    }
+  }
+
+  function setTranscript(text) {
+    heard = text;
+
+    if (transcript) {
+      transcript.textContent = text;
+    }
+  }
 
   function speak(text) {
-    if (!('speechSynthesis' in window) || !text) {
+    if (!speakerOn || !('speechSynthesis' in window) || !text) {
       return;
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = navigator.language || 'en-IN';
     window.speechSynthesis.speak(utterance);
-  }
-
-  function setStatus(text) {
-    if (status) {
-      status.textContent = text;
-    }
-  }
-
-  function setTranscript(text) {
-    if (transcript) {
-      transcript.textContent = text;
-    }
-  }
-
-  function paint() {
-    orb?.classList.toggle('listening', listening);
   }
 
   async function ask(spoken) {
@@ -45,8 +55,8 @@
     }
 
     store.add({ text: spoken, mine: true });
-    setStatus('Thinking…');
-    setTranscript(spoken);
+    setState('Thinking');
+    setHint('One moment…');
 
     try {
       const result = await window.IndooneChatApi.send({
@@ -56,19 +66,21 @@
 
       store.setConversationId(result.conversationId);
       store.add({ text: result.reply, mine: false });
-      setStatus('Tap the orb and speak.');
       setTranscript(result.reply);
+      setState(listening ? 'Listening' : 'Paused');
+      setHint('Speak naturally');
       speak(result.reply);
     } catch (error) {
       console.error('Indoone vibe failed:', error);
-      setStatus('Could not reach Indoone AI.');
+      setState('Paused');
+      setHint('Could not reach Indoone AI.');
       setTranscript(error.message || '');
     }
   }
 
   function listen() {
     if (!SpeechRecognition) {
-      window.toast?.('This browser cannot take voice input.');
+      setHint('This browser cannot take voice input.');
       return;
     }
 
@@ -93,47 +105,85 @@
 
     recognition.onerror = () => {
       listening = false;
-      paint();
-      setStatus('Tap the orb and speak.');
+      screen?.classList.remove('listening');
+      setState('Paused');
+      setHint('Speak naturally');
     };
 
     recognition.onend = () => {
       listening = false;
-      paint();
+      screen?.classList.remove('listening');
+      setState('Paused');
 
-      const heard = (transcript?.textContent || '').trim();
+      const said = String(heard || '').trim();
 
-      if (heard) {
-        void ask(heard);
+      if (said) {
+        void ask(said);
       }
     };
 
     listening = true;
-    paint();
-    setStatus('Listening…');
+    screen?.classList.add('listening');
+    setState('Listening');
+    setHint('Speak naturally');
     recognition.start();
+  }
+
+  function stop() {
+    listening = false;
+    screen?.classList.remove('listening');
+    recognition?.stop?.();
+    window.speechSynthesis?.cancel?.();
   }
 
   function open() {
     screen?.removeAttribute('hidden');
+    setTranscript('');
+    setState('Paused');
+    setHint('Tap the orb and speak.');
+    listen();
   }
 
   function close() {
+    stop();
     screen?.setAttribute('hidden', '');
-    recognition?.stop?.();
-    window.speechSynthesis?.cancel?.();
   }
 
   function init() {
     screen = document.getElementById('vibeScreen');
     orb = document.getElementById('vibeOrb');
-    status = document.getElementById('vibeStatus');
+    state = document.getElementById('vibeState');
+    hint = document.getElementById('vibeHint');
     transcript = document.getElementById('vibeTranscript');
+    mute = document.getElementById('vibeMute');
+    speaker = document.getElementById('vibeSpeaker');
 
-    orb?.addEventListener('click', listen);
-    document
-      .getElementById('vibeClose')
-      ?.addEventListener('click', close);
+    orb?.addEventListener('click', () => {
+      if (listening) {
+        stop();
+        setState('Paused');
+      } else {
+        listen();
+      }
+    });
+
+    document.getElementById('vibeEnd')?.addEventListener('click', close);
+
+    mute?.addEventListener('click', () => {
+      const nowMuted = mute.classList.toggle('on');
+      mute.textContent = nowMuted ? 'Unmute' : 'Mute';
+      recognition?.stop?.();
+    });
+
+    speaker?.addEventListener('click', () => {
+      speakerOn = !speakerOn;
+      speaker.classList.toggle('on', speakerOn);
+      speaker.textContent = speakerOn ? 'Speaker' : 'Muted';
+
+      if (!speakerOn) {
+        window.speechSynthesis?.cancel?.();
+      }
+    });
   }
 
   window.IndooneVibe = { init, open, close };

@@ -5,63 +5,172 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 28px;
-  background: linear-gradient(160deg, #1b1030, #2a1450 60%, #140d24);
+  gap: 14px;
+  padding: 22px 20px 26px;
+  background: linear-gradient(165deg, #1b1030, #2a1450 58%, #140d24);
   color: #fff;
   text-align: center;
+  overflow-y: auto;
 }
 
 .vibe-screen[hidden] {
   display: none;
 }
 
-.vibe-close {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 0;
-  background: #ffffff1a;
+.vibe-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vibe-title b {
+  font-size: 17px;
+  font-weight: 700;
   color: #fff;
-  font-size: 22px;
-  cursor: pointer;
 }
 
-.vibe-orb {
-  width: 132px;
-  height: 132px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #c15cff, #7c3aed 55%, #22c7ff);
-  box-shadow: 0 0 60px #9b51f166;
-  cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
+.vibe-title i {
+  font-style: normal;
+  font-size: 17px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #c15cff, #22c7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.vibe-orb.listening {
-  transform: scale(1.06);
-  box-shadow: 0 0 90px #c15cff99;
-}
-
-.vibe-screen h2 {
-  margin: 6px 0 0;
-  font-size: 19px;
+.vibe-label {
+  color: #b9a6e6;
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 1.4px;
 }
 
-.vibe-screen p {
-  margin: 0;
+.vibe-state {
   color: #cfc6e4;
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vibe-stage {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  margin: 8px 0 2px;
+  display: grid;
+  place-items: center;
+}
+
+.vibe-core {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, #e3c8ff, #9a5cff 52%, #6f35da);
+  box-shadow: 0 0 60px #9a5cff88;
+  animation: vibeCorePulse 1100ms ease-in-out infinite alternate;
+}
+
+.vibe-ring {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid #b98cff55;
+}
+
+.ring-one {
+  animation: vibeRingSpin 3200ms linear infinite;
+  border-top-color: #d6b7ff;
+}
+
+.ring-two {
+  inset: 34px;
+  animation: vibeRingSpin 5200ms linear infinite reverse;
+  border-bottom-color: #22c7ffaa;
+}
+
+.vibe-screen.listening .vibe-core {
+  box-shadow: 0 0 90px #c15cffcc;
+}
+
+@keyframes vibeCorePulse {
+  from { transform: scale(.92); }
+  to   { transform: scale(1.08); }
+}
+
+@keyframes vibeRingSpin {
+  to { transform: rotate(360deg); }
+}
+
+.vibe-hint {
+  margin: 0;
+  color: #e6dcff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vibe-transcript-box {
+  width: 100%;
+  max-width: 460px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ffffff12;
+  border: 1px solid #ffffff1f;
+  text-align: left;
+}
+
+.vibe-transcript-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #b9a6e6;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
 }
 
 .vibe-transcript {
-  max-width: 460px;
   color: #eae5f7;
   font-size: 14px;
   line-height: 1.5;
   min-height: 20px;
+}
+
+.vibe-controls {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.vibe-control {
+  flex: 1 1 0;
+  height: 44px;
+  border: 1px solid #ffffff26;
+  border-radius: 13px;
+  background: #ffffff14;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vibe-control.on {
+  background: #703be2;
+  border-color: #703be2;
+}
+
+.vibe-end {
+  flex: 1.2 1 0;
+  height: 44px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(90deg, #b3261e, #e0523f);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
 }

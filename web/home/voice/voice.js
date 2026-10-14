@@ -1,6 +1,5 @@
-// Voice input through the Web Speech API. Native uses the platform speech
-// recogniser; this is the browser's equivalent, and it degrades quietly where
-// the API is missing.
+// Voice input. The app shows a red error line under the composer and a card
+// while the mic is on, so this does the same instead of a passing toast.
 (() => {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -9,16 +8,33 @@
   let listening = false;
   let base = '';
 
-  function available() {
-    return Boolean(SpeechRecognition);
+  function card() {
+    return document.getElementById('listeningCard');
   }
 
-  function button() {
-    return document.getElementById('voiceBtn');
+  function errorNode() {
+    return document.getElementById('voiceError');
+  }
+
+  function setError(text) {
+    const node = errorNode();
+
+    if (!node) {
+      return;
+    }
+
+    node.textContent = text || '';
+    node.hidden = !text;
   }
 
   function paint() {
-    button()?.classList.toggle('listening', listening);
+    const node = card();
+
+    if (node) {
+      node.hidden = !listening;
+    }
+
+    window.IndooneChatHome?.syncComposer?.();
   }
 
   function stop() {
@@ -27,16 +43,22 @@
     recognition?.stop?.();
   }
 
-  function start() {
-    if (!available()) {
-      window.toast?.('This browser cannot take voice input.');
-      return;
-    }
-
+  function toggle() {
     if (listening) {
       stop();
       return;
     }
+
+    start();
+  }
+
+  function start() {
+    if (!SpeechRecognition) {
+      setError('Speech recognition is not available in this browser.');
+      return;
+    }
+
+    setError('');
 
     const input = document.getElementById('chatInput');
     base = input?.value || '';
@@ -54,14 +76,25 @@
       }
 
       if (input) {
-        input.value = base ? `${base} ${spoken}`.trim() : spoken.trim();
+        input.value = base
+          ? `${base} ${spoken}`.trim()
+          : spoken.trim();
+        input.dispatchEvent(new Event('input', { bubbles: true }));
       }
     };
 
-    recognition.onerror = error => {
-      console.warn('Indoone voice input failed:', error);
+    recognition.onerror = event => {
       listening = false;
       paint();
+
+      const messages = {
+        'no-speech': 'No speech detected. Try again.',
+        'not-allowed': 'Microphone permission is required.',
+        'service-not-allowed': 'Microphone permission is required.',
+        'audio-capture': 'Microphone permission is required.'
+      };
+
+      setError(messages[event.error] || 'Voice input failed. Please try again.');
     };
 
     recognition.onend = () => {
@@ -74,5 +107,5 @@
     recognition.start();
   }
 
-  window.IndooneVoice = { start, stop, available };
+  window.IndooneVoice = { start, stop, toggle, available: Boolean(SpeechRecognition) };
 })();

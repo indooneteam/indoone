@@ -28,9 +28,27 @@ window.initMenuChatHistory = function () {
     const open = document.createElement('button');
     open.type = 'button';
     open.textContent = 'Open';
-    open.addEventListener('click', () => {
+    open.addEventListener('click', async () => {
       window.closeModal?.();
-      window.IndooneChatStore?.setConversationId?.(chat.id);
+
+      try {
+        const conversation = await window.IndooneCloudChat?.loadConversation?.(
+          chat.id
+        );
+
+        if (conversation) {
+          window.IndooneChatStore?.setConversationId?.(chat.id);
+          window.IndooneChatStore?.replace?.(
+            conversation.messages.map(item => ({
+              text: item.content,
+              mine: item.role === 'user'
+            }))
+          );
+        }
+      } catch (error) {
+        console.warn('Indoone chat could not be opened:', error);
+      }
+
       window.showHome?.();
     });
 

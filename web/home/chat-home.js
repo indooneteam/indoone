@@ -1,31 +1,22 @@
-// The chat home, the web counterpart of android/home/HomeScreen.kt. Loads the
-// pieces beside it, wires the composer, and keeps the welcome block and the
-// thread in step. The accounts list that used to live here now sits under
-// menu/accounts, so its own controller (home.js) is left alone.
+// The chat home, the web counterpart of android/home/HomeScreen.kt.
 (() => {
   const MODULES = [
-    'home/message/chat-api.js?v=20261014a',
-    'home/message/chat-store.js?v=20261014a',
-    'home/message/message.js?v=20261014a',
-    'home/send/send.js?v=20261014a',
-    'home/voice/voice.js?v=20261014a',
-    'home/plus/plus.js?v=20261014a',
-    'home/plus/camera/camera.js?v=20261014a',
-    'home/plus/photos/photos.js?v=20261014a',
-    'home/plus/files/files.js?v=20261014a',
-    'home/vibe/vibe.js?v=20261014a'
+    'home/message/cloud-chat.js?v=20261015a',
+    'home/message/chat-store.js?v=20261015a',
+    'home/message/message.js?v=20261015a',
+    'home/send/send.js?v=20261015a',
+    'home/voice/voice.js?v=20261015a',
+    'home/plus/plus.js?v=20261015a',
+    'home/plus/camera/camera.js?v=20261015a',
+    'home/plus/photos/photos.js?v=20261015a',
+    'home/plus/files/files.js?v=20261015a',
+    'home/vibe/vibe.js?v=20261015a'
   ];
 
+  // The app alternates these two, every two seconds.
   const WELCOME_LINES = [
-    'Ask me anything.',
-    'What can I help you with?'
-  ];
-
-  const QUICK_PROMPTS = [
-    'Explain this',
-    'Create image',
-    'Help me plan',
-    'More…'
+    'I am Indoone AI. How can I help you today?',
+    'Ask me anything.'
   ];
 
   let ready = null;
@@ -101,34 +92,55 @@
     }
   }
 
-  function buildQuickPrompts() {
-    const host = document.getElementById('quickPrompts');
+  function bindQuickPrompts() {
+    document.querySelectorAll('.quick-chip').forEach(chip => {
+      if (chip.dataset.promptBound === 'true') {
+        return;
+      }
 
-    if (!host || host.childElementCount) {
-      return;
-    }
+      chip.dataset.promptBound = 'true';
 
-    QUICK_PROMPTS.forEach(label => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'quick-chip';
-      chip.textContent = label;
       chip.addEventListener('click', () => {
         const input = document.getElementById('chatInput');
 
         if (input) {
-          input.value = label;
+          input.value = chip.dataset.prompt || chip.textContent.trim();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
           input.focus();
         }
       });
-      host.appendChild(chip);
     });
+  }
+
+  // The app shows Send only when there is text or an attachment; with an empty
+  // box the same spot holds the Vibe button.
+  function syncComposer() {
+    const input = document.getElementById('chatInput');
+    const send = document.getElementById('sendBtn');
+    const vibe = document.getElementById('vibeBtn');
+    const listening = document.getElementById('listeningCard');
+    const mic = document.getElementById('voiceBtn');
+    const pending = window.IndooneSend?.getPending?.() || [];
+    const hasText = Boolean((input?.value || '').trim());
+    const showSend = hasText || pending.length > 0;
+    const isListening = Boolean(listening && !listening.hasAttribute('hidden'));
+
+    if (send) {
+      send.hidden = !showSend;
+      send.disabled = isListening;
+    }
+
+    if (vibe) {
+      vibe.hidden = showSend || isListening;
+    }
+
+    mic?.classList.toggle('listening', isListening);
   }
 
   function autoGrow(event) {
     const input = event.target;
     input.style.height = 'auto';
-    input.style.height = `${Math.min(input.scrollHeight, 132)}px`;
+    input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
   }
 
   async function init() {
@@ -147,14 +159,13 @@
       return;
     }
 
-    window.IndooneChatStore?.load();
     window.IndooneChatScroll = { toBottom: scrollToBottom };
     window.IndoonePlusSheet?.init(document.getElementById('plusSheet'));
     window.IndooneVibe?.init();
 
-    buildQuickPrompts();
+    bindQuickPrompts();
     paintWelcome();
-    paintThread();
+    startWelcomeLoop();
 
     document
       .getElementById('plusBtn')
@@ -170,26 +181,49 @@
 
     document
       .getElementById('voiceBtn')
-      ?.addEventListener('click', () => window.IndooneVoice?.start?.());
+      ?.addEventListener('click', () => window.IndooneVoice?.toggle?.());
 
     document
       .getElementById('sendBtn')
       ?.addEventListener('click', () => window.IndooneSend?.send?.());
 
+    document
+      .getElementById('vibeBtn')
+      ?.addEventListener('click', () => window.IndooneVibe?.open?.());
+
+    const vibe = document.getElementById('vibeBtn');
+
+    if (vibe && !vibe.querySelector('.vibe-orbit')) {
+      const orbit = document.createElement('span');
+      orbit.className = 'vibe-orbit';
+      orbit.appendChild(document.createElement('i'));
+      vibe.appendChild(orbit);
+    }
+
     const input = document.getElementById('chatInput');
 
-    input?.addEventListener('input', autoGrow);
+    input?.addEventListener('input', event => {
+      autoGrow(event);
+      syncComposer();
+    });
+
     input?.addEventListener('keydown', event => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         void window.IndooneSend?.send?.();
       }
     });
+
+    // Load the saved conversation once the account is known.
+    await window.IndooneChatStore?.load?.();
+    paintThread();
+    syncComposer();
   }
 
   function refresh() {
     paintThread();
+    syncComposer();
   }
 
-  window.IndooneChatHome = { init, refresh };
+  window.IndooneChatHome = { init, refresh, syncComposer, scrollToBottom };
 })();
