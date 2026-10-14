@@ -1,42 +1,75 @@
 <section
-  class="home-page"
+  class="chat-page"
+  id="homeContent"
   data-feature="home"
 >
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">SECURE &amp; PRIVATE</p>
-      <h1>Your accounts</h1>
+  <div
+    class="chat-scroll"
+    id="chatScroll"
+  >
+    <div
+      class="chat-welcome"
+      id="chatWelcome"
+    >
+      <div
+        class="welcome-mark"
+        id="welcomeMark"
+      ></div>
+      <h2>Indoone AI</h2>
+      <p id="welcomeLine">Ask me anything.</p>
+      <div
+        class="quick-prompts"
+        id="quickPrompts"
+      ></div>
     </div>
 
-    <button
-      type="button"
-      class="small-btn"
-      id="sortBtn"
-    >
-      Sort ↕
-    </button>
+    <div
+      class="chat-list"
+      id="chatList"
+    ></div>
   </div>
 
-  <div
-    class="account-list"
-    id="accountList"
-  ></div>
+  <div class="chat-composer">
+    <div
+      class="pending-attachments"
+      id="pendingAttachments"
+      hidden
+    ></div>
 
-  <div
-    class="empty-state"
-    id="emptyState"
-    hidden
-  >
-    <div class="empty-icon">⌁</div>
-    <h3>No accounts found</h3>
-    <p>Add an account or try a different search.</p>
+    <div class="composer-row">
+      <button
+        type="button"
+        class="composer-btn"
+        id="plusBtn"
+        aria-label="Add attachment"
+      >
+        +
+      </button>
 
-    <button
-      type="button"
-      class="primary compact"
-      id="emptyAddBtn"
-    >
-      Add account
-    </button>
+      <textarea
+        id="chatInput"
+        rows="1"
+        placeholder="Message Indoone AI"
+        aria-label="Message Indoone AI"
+      ></textarea>
+
+      <button
+        type="button"
+        class="composer-btn"
+        id="voiceBtn"
+        aria-label="Speak your message"
+      >
+        ◉
+      </button>
+
+      <button
+        type="button"
+        class="composer-send"
+        id="sendBtn"
+        aria-label="Send message"
+      >
+        ➤
+      </button>
+    </div>
   </div>
 </section>

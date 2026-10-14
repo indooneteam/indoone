@@ -1,7 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const overlay = $('overlay');
-  const ADD_ROUTE_PREFIX = '#home/add-account';
+  const ADD_ROUTE_PREFIX = '#menu/accounts/add-account';
 
   let authResolved = false;
   let authGateRunning = false;
@@ -68,6 +68,29 @@
     element.addEventListener('click', handler);
   }
 
+  function showHome({ remember = true } = {}) {
+    if (remember) {
+      window.IndoonePageState?.set('home');
+    }
+
+    closeDrawer();
+    closeModal();
+    window.showConnectHome?.({ remember: false });
+
+    $('homeContent')?.removeAttribute('hidden');
+    $('content')?.setAttribute('hidden', '');
+    $('connectContent')?.setAttribute('hidden', '');
+    $('addBtn')?.setAttribute('hidden', '');
+    $('searchWrap')?.setAttribute('hidden', '');
+    $('accountsNav')?.classList.add('active');
+    $('lobbyNav')?.classList.remove('active');
+    $('connectNav')?.classList.remove('active');
+    $('settingsNav')?.classList.remove('active');
+
+    window.IndooneChatHome?.init?.();
+    window.IndooneChatHome?.refresh?.();
+  }
+
   function showAccounts({ remember = true } = {}) {
     if (remember) {
       window.IndoonePageState?.set('home');
@@ -77,6 +100,7 @@
     closeModal();
     window.showConnectHome?.({ remember: false });
 
+    $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
@@ -95,6 +119,7 @@
     }
 
     closeDrawer();
+    $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
@@ -182,7 +207,7 @@
 
       case 'home':
       default:
-        showAccounts({ remember: false });
+        showHome({ remember: false });
         break;
     }
   }
@@ -246,8 +271,8 @@
   bindClick($('emptyAddBtn'), () => window.showAdd?.());
   bindClick($('searchBtn'), () => window.IndooneHomeSearch?.show?.());
   bindClick($('clearSearch'), () => window.IndooneHomeSearch?.clear?.());
-  bindClick($('brandBtn'), showAccounts);
-  bindClick($('accountsNav'), showAccounts);
+  bindClick($('brandBtn'), showHome);
+  bindClick($('accountsNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
   bindClick(
     $('lobbyNav'),

@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'home/add-account/manual/index.html?v=20260903b';
+    'menu/accounts/add-account/manual/index.html?v=20260903b';
   const STYLE_URL =
-    'home/add-account/manual/style.css?v=20260903b';
+    'menu/accounts/add-account/manual/style.css?v=20260903b';
 
   function loadStyle() {
     const baseUrl = STYLE_URL.split('?')[0];

@@ -1,6 +1,6 @@
 (() => {
   const VERIFIED_KEY = 'indoone_otp_verified_uid';
-  const ADD_ROUTE_PREFIX = '#home/add-account';
+  const ADD_ROUTE_PREFIX = '#menu/accounts/add-account';
   let attached = false;
   let loading = false;
   let verificationWatch = null;
