@@ -16,11 +16,11 @@
   />
   <title>Indoone Authenticator</title>
 
-  <link rel="stylesheet" href="style.css?v=20261015a" />
-  <link rel="stylesheet" href="home/home.css?v=20261015b" />
+  <link rel="stylesheet" href="style.css?v=20261015b" />
+  <link rel="stylesheet" href="home/home.css?v=20261015c" />
   <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
-  <link rel="stylesheet" href="home/plus/plus.css?v=20261015b" />
-  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261015a" />
+  <link rel="stylesheet" href="home/plus/plus.css?v=20261015c" />
+  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261015b" />
   <link rel="stylesheet" href="notifications/style.css?v=20261015a" />
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
@@ -74,21 +74,10 @@
           id="notificationsBtn"
           aria-label="Notifications"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="21"
-            height="21"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="M12 3.6a5.4 5.4 0 0 0-5.4 5.4v3.4L5.2 16h13.6l-1.4-3.6V9A5.4 5.4 0 0 0 12 3.6Z"></path>
-            <path d="M9.8 19a2.2 2.2 0 0 0 4.4 0"></path>
-          </svg>
+          <span
+            data-app-icon="notificationsNone"
+            data-app-icon-class="app-icon app-icon-lg"
+          ></span>
         </button>
       </div>
     </header>
@@ -213,7 +202,10 @@
             id="voiceBtn"
             aria-label="Voice input"
           >
-            ◉
+            <span
+              data-app-icon="mic"
+              data-app-icon-class="app-icon app-icon-lg"
+            ></span>
           </button>
 
           <button
@@ -223,7 +215,8 @@
             aria-label="Send message"
             hidden
           >
-            ➤
+            <span class="send-arrow">➤</span>
+            <span class="send-spinner" hidden></span>
           </button>
 
           <button
@@ -246,7 +239,7 @@
           id="listeningCard"
           hidden
         >
-          <span class="listening-mic">◉</span>
+          <span class="listening-mic" data-app-icon="mic" data-app-icon-class="app-icon app-icon-sm"></span>
           <span>Listening… tap mic to stop</span>
         </div>
       </div>
@@ -263,7 +256,7 @@
           id="notificationsBack"
           aria-label="Back"
         >
-          ‹
+          <span data-app-icon="arrowBack" data-app-icon-class="app-icon app-icon-sm"></span>
         </button>
 
         <h2>Notifications</h2>
@@ -375,7 +368,7 @@
             class="connect-action"
             data-connect-action="devices"
           >
-            <strong>▣</strong>
+            <span data-app-icon="photo" data-app-icon-class="app-icon app-icon-sm"></span>
             <span>Devices</span>
             <small>Manage connected devices</small>
           </button>
@@ -706,7 +699,11 @@
         class="plus-option"
         data-plus="camera"
       >
-        <span class="plus-icon">◉</span>
+        <span
+        class="plus-icon"
+        data-app-icon="photoCamera"
+        data-app-icon-class="app-icon"
+      ></span>
         <span>
           <b>Camera</b>
           </span>
@@ -717,7 +714,11 @@
         class="plus-option"
         data-plus="photos"
       >
-        <span class="plus-icon">▣</span>
+        <span
+        class="plus-icon"
+        data-app-icon="photo"
+        data-app-icon-class="app-icon"
+      ></span>
         <span>
           <b>Photos</b>
           </span>
@@ -728,7 +729,11 @@
         class="plus-option"
         data-plus="files"
       >
-        <span class="plus-icon">⌘</span>
+        <span
+        class="plus-icon"
+        data-app-icon="attachFile"
+        data-app-icon-class="app-icon"
+      ></span>
         <span>
           <b>Files</b>
           <small>PDFs, Docs, Videos, Audio, and more</small>
@@ -786,7 +791,13 @@
         class="vibe-control"
         id="vibeMute"
       >
-        Mute
+        <span
+          class="vibe-control-icon"
+          id="vibeMuteIcon"
+          data-app-icon="micOff"
+          data-app-icon-class="app-icon app-icon-sm"
+        ></span>
+        <span id="vibeMuteLabel">Unmute</span>
       </button>
 
       <button
@@ -795,7 +806,12 @@
         id="vibeEnd"
         aria-label="End Vibe"
       >
-        End Vibe
+        <span
+          class="vibe-end-icon"
+          data-app-icon="close"
+          data-app-icon-class="app-icon app-icon-sm"
+        ></span>
+        <span>End Vibe</span>
       </button>
 
       <button
@@ -803,7 +819,13 @@
         class="vibe-control"
         id="vibeSpeaker"
       >
-        Speaker
+        <span
+          class="vibe-control-icon"
+          id="vibeSpeakerIcon"
+          data-app-icon="volumeUp"
+          data-app-icon-class="app-icon app-icon-sm"
+        ></span>
+        <span id="vibeSpeakerLabel">Speaker</span>
       </button>
     </div>
   </div>
@@ -831,7 +853,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="authentication/firebase-config.js?v=20260914a"></script>
+  <script src="authentication/firebase-config.js?v=20261015a"></script>
   <script src="authentication/firebase-auth.js?v=20260914a"></script>
   <script src="authentication/indoverification.js?v=20260904c"></script>
   <script src="authentication/firebase-auth-otp.js?v=20261014a"></script>
@@ -842,9 +864,10 @@
   <script src="authentication/sign-up/signup.js?v=20261015a"></script>
 
   <script src="home/home.js?v=20261014a"></script>
-  <script src="home/chat-home.js?v=20261015b"></script>
-  <script src="notifications/script.js?v=20261015a"></script>
+  <script src="home/chat-home.js?v=20261015c"></script>
+  <script src="notifications/script.js?v=20261015b"></script>
   <script src="shared/branding.js?v=20261015a"></script>
+  <script src="shared/app-icons.js?v=20261015a"></script>
   <script src="shared/core.js?v=20261014a"></script>
   <script src="shared/state.js?v=20260922c"></script>
   <script src="shared/cloud-accounts.js?v=20260922a"></script>

@@ -169,16 +169,41 @@
 
     document.getElementById('vibeEnd')?.addEventListener('click', close);
 
+    // The app flips both the icon and the word.
     mute?.addEventListener('click', () => {
       const nowMuted = mute.classList.toggle('on');
-      mute.textContent = nowMuted ? 'Unmute' : 'Mute';
+      const icon = document.getElementById('vibeMuteIcon');
+      const label = document.getElementById('vibeMuteLabel');
+
+      if (label) {
+        label.textContent = nowMuted ? 'Unmute' : 'Mute';
+      }
+
+      if (icon) {
+        icon.dataset.appIcon = nowMuted ? 'micOff' : 'mic';
+        icon.dataset.appIconDone = 'false';
+        window.IndooneIcons?.apply?.(mute);
+      }
+
       recognition?.stop?.();
     });
 
     speaker?.addEventListener('click', () => {
       speakerOn = !speakerOn;
       speaker.classList.toggle('on', speakerOn);
-      speaker.textContent = speakerOn ? 'Speaker' : 'Muted';
+
+      const icon = document.getElementById('vibeSpeakerIcon');
+      const label = document.getElementById('vibeSpeakerLabel');
+
+      if (label) {
+        label.textContent = speakerOn ? 'Speaker' : 'Muted';
+      }
+
+      if (icon) {
+        icon.dataset.appIcon = speakerOn ? 'volumeUp' : 'volumeOff';
+        icon.dataset.appIconDone = 'false';
+        window.IndooneIcons?.apply?.(speaker);
+      }
 
       if (!speakerOn) {
         window.speechSynthesis?.cancel?.();

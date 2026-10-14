@@ -130,6 +130,19 @@
 
   function setBusy(busy) {
     sending = busy;
+
+    const send = document.getElementById('sendBtn');
+    const arrow = send?.querySelector('.send-arrow');
+    const spinner = send?.querySelector('.send-spinner');
+
+    if (arrow) {
+      arrow.hidden = busy;
+    }
+
+    if (spinner) {
+      spinner.hidden = !busy;
+    }
+
     window.IndooneChatHome?.syncComposer?.();
   }
 

@@ -117,16 +117,62 @@
     void load();
   }
 
+  // The app treats this as its own page, so the chat page goes away while it
+  // is up. It used to leave the chat in place, and the chat covered it.
   function show() {
     if (!host) return;
 
+    document.getElementById('homeContent')?.setAttribute('hidden', '');
+    document.getElementById('content')?.setAttribute('hidden', '');
+    document.getElementById('connectContent')?.setAttribute('hidden', '');
+    document.getElementById('addBtn')?.setAttribute('hidden', '');
     host.hidden = false;
     void load();
+    void paintBell();
   }
 
   function hide() {
     if (host) {
       host.hidden = true;
+    }
+
+    window.showHome?.();
+  }
+
+  // The app fills the bell when something is unread and leaves it outlined
+  // when nothing is.
+  async function paintBell() {
+    const button = document.getElementById('notificationsBtn');
+
+    if (!button) return;
+
+    let unread = false;
+
+    try {
+      const user = window.IndooneFirebase?.auth?.().currentUser;
+
+      if (user) {
+        const snapshot = await window.IndooneFirebase
+          .database()
+          .ref('users')
+          .child(user.uid)
+          .child('notifications')
+          .get();
+        const value = snapshot.val() || {};
+
+        unread = Object.values(value).some(entry => !entry?.isRead);
+      }
+    } catch (error) {
+      unread = false;
+    }
+
+    const holder = button.querySelector('[data-app-icon]') ||
+      button.querySelector('.app-icon');
+
+    if (holder) {
+      holder.dataset.appIcon = unread ? 'notifications' : 'notificationsNone';
+      holder.dataset.appIconDone = 'false';
+      window.IndooneIcons?.apply?.(button);
     }
   }
 
@@ -143,7 +189,7 @@
     host?.setAttribute('hidden', '');
   }
 
-  window.IndooneNotifications = { init, show, hide };
+  window.IndooneNotifications = { init, show, hide, paintBell };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init, { once: true });
