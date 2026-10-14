@@ -7,6 +7,7 @@
 
 .chat-row {
   display: flex;
+  align-items: flex-end;
 }
 
 .chat-row.mine {
@@ -17,35 +18,91 @@
   justify-content: flex-start;
 }
 
+.chat-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px;
+}
+
+.chat-row.mine .chat-column {
+  align-items: flex-end;
+}
+
+/* The app puts the Indoone mark beside every reply of its own. */
+.chat-logo {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  align-self: flex-end;
+}
+
 .chat-bubble {
-  max-width: 82%;
-  padding: 10px 13px;
-  border-radius: 16px;
-  font-size: 14.5px;
-  line-height: 1.45;
+  padding: 12px 15px;
+  font-size: 15px;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .chat-row.mine .chat-bubble {
-  background: linear-gradient(145deg, #5e2ce2, #9b51f1);
+  border-radius: 18px 18px 18px 5px;
+  background: #703be2;
   color: #fff;
-  border-bottom-right-radius: 6px;
 }
 
 .chat-row.theirs .chat-bubble {
-  background: #f4f2f8;
-  color: #24212a;
-  border-bottom-left-radius: 6px;
+  border-radius: 18px 18px 5px 18px;
+  background: #f5f2fb;
+  color: #292331;
 }
 
-.chat-attachment-note {
-  font-size: 11.5px;
-  opacity: .8;
-  margin-bottom: 4px;
+.chat-activity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6f6578;
+  font-size: 13px;
 }
 
-.chat-pending {
-  color: #7a7482;
-  font-style: italic;
+.chat-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.8px solid #d9cff2;
+  border-top-color: #703be2;
+  animation: chatSpin 800ms linear infinite;
+}
+
+@keyframes chatSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sent photos stack, one above the other; sent files show their extension. */
+.chat-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.chat-attachment-photo {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 14px;
+  display: block;
+  object-fit: cover;
+}
+
+.chat-attachment-file {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #f0e9fb;
+  color: #5e2dd2;
+  font-size: 10px;
+  font-weight: 700;
 }

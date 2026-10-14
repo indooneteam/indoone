@@ -98,7 +98,7 @@
 
   function wire(root = document) {
     root
-      .querySelectorAll?.('.brand-mark, .auth-mark, .about-mark, .token-icon')
+      .querySelectorAll?.('.brand-mark, .auth-mark, .about-mark, .token-icon, .chat-logo')
       .forEach(element => {
         if (element.dataset.indooneBranding === 'true') return;
 
@@ -108,7 +108,9 @@
             ? 'about-mark'
             : element.classList.contains('token-icon')
               ? 'token-icon'
-              : 'brand-mark';
+              : element.classList.contains('chat-logo')
+                ? 'chat-logo'
+                : 'brand-mark';
 
         element.replaceWith(createLogo(className));
       });
@@ -144,6 +146,11 @@
         width: 34px !important;
         height: 34px !important;
         align-self: center !important;
+      }
+
+      .chat-logo.branding-image {
+        width: 24px !important;
+        height: 24px !important;
       }
 
       .drawer-brand .branding-image {

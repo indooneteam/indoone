@@ -3,24 +3,68 @@
   id="vibeScreen"
   hidden
 >
-  <button
-    type="button"
-    class="vibe-close"
-    id="vibeClose"
-    aria-label="Close vibe"
-  >
-    ×
-  </button>
+  <div class="vibe-top">
+    <span class="vibe-title">
+      <b>ndoone</b><i>Vibe</i>
+    </span>
+
+    <span
+      class="vibe-label"
+      id="vibeLabel"
+    >VIBE</span>
+
+    <span
+      class="vibe-state"
+      id="vibeState"
+    >Paused</span>
+  </div>
 
   <div
-    class="vibe-orb"
+    class="vibe-stage"
     id="vibeOrb"
-  ></div>
+  >
+    <span class="vibe-ring ring-one"></span>
+    <span class="vibe-ring ring-two"></span>
+    <span class="vibe-core"></span>
+  </div>
 
-  <h2>Indoone Vibe</h2>
-  <p id="vibeStatus">Tap the orb and speak.</p>
-  <div
-    class="vibe-transcript"
-    id="vibeTranscript"
-  ></div>
+  <p
+    class="vibe-hint"
+    id="vibeHint"
+  >Speak naturally</p>
+
+  <div class="vibe-transcript-box">
+    <span class="vibe-transcript-label">LIVE TRANSCRIPT</span>
+    <div
+      class="vibe-transcript"
+      id="vibeTranscript"
+    ></div>
+  </div>
+
+  <div class="vibe-controls">
+    <button
+      type="button"
+      class="vibe-control"
+      id="vibeMute"
+    >
+      Mute
+    </button>
+
+    <button
+      type="button"
+      class="vibe-end"
+      id="vibeEnd"
+      aria-label="End Vibe"
+    >
+      End Vibe
+    </button>
+
+    <button
+      type="button"
+      class="vibe-control"
+      id="vibeSpeaker"
+    >
+      Speaker
+    </button>
+  </div>
 </div>

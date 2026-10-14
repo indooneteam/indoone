@@ -17,10 +17,10 @@
   <title>Indoone Authenticator</title>
 
   <link rel="stylesheet" href="style.css?v=20261014e" />
-  <link rel="stylesheet" href="home/home.css?v=20261014a" />
-  <link rel="stylesheet" href="home/message/message.css?v=20261014a" />
-  <link rel="stylesheet" href="home/plus/plus.css?v=20261014a" />
-  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261014a" />
+  <link rel="stylesheet" href="home/home.css?v=20261015a" />
+  <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
+  <link rel="stylesheet" href="home/plus/plus.css?v=20261015a" />
+  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261015a" />
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
   <link rel="stylesheet" href="connect/connect.css?v=20260918a" />
@@ -115,16 +115,50 @@
           class="chat-welcome"
           id="chatWelcome"
         >
-          <div
-            class="welcome-mark"
-            id="welcomeMark"
-          ></div>
-          <h2>Indoone AI</h2>
-          <p id="welcomeLine">Ask me anything.</p>
-          <div
-            class="quick-prompts"
-            id="quickPrompts"
-          ></div>
+          <h2 class="welcome-title">Indoone AI</h2>
+          <p class="welcome-sub">Your Personal AI Assistant</p>
+
+          <div class="welcome-card">
+            <strong class="welcome-hi">Hi! 👋</strong>
+            <p
+              class="welcome-line"
+              id="welcomeLine"
+            ></p>
+          </div>
+
+          <div class="quick-row">
+            <button
+              type="button"
+              class="quick-chip"
+              data-prompt="Explain this"
+            >
+              Explain this
+            </button>
+            <button
+              type="button"
+              class="quick-chip"
+              data-prompt="Create image"
+            >
+              Create image
+            </button>
+          </div>
+
+          <div class="quick-row">
+            <button
+              type="button"
+              class="quick-chip"
+              data-prompt="Help me plan"
+            >
+              Help me plan
+            </button>
+            <button
+              type="button"
+              class="quick-chip"
+              data-prompt="Tell me more"
+            >
+              More…
+            </button>
+          </div>
         </div>
 
         <div
@@ -133,47 +167,73 @@
         ></div>
       </div>
 
-      <div class="chat-composer">
-        <div
-          class="pending-attachments"
-          id="pendingAttachments"
-          hidden
-        ></div>
+      <div
+        class="pending-attachments"
+        id="pendingAttachments"
+        hidden
+      ></div>
 
+      <div class="chat-composer">
         <div class="composer-row">
           <button
             type="button"
-            class="composer-btn"
+            class="composer-round composer-plus"
             id="plusBtn"
             aria-label="Add attachment"
           >
             +
           </button>
 
-          <textarea
-            id="chatInput"
-            rows="1"
-            placeholder="Message Indoone AI"
-            aria-label="Message Indoone AI"
-          ></textarea>
+          <div class="composer-field">
+            <textarea
+              id="chatInput"
+              rows="1"
+              placeholder="Message Indoone AI"
+              aria-label="Message Indoone AI"
+            ></textarea>
+          </div>
 
           <button
             type="button"
-            class="composer-btn"
+            class="composer-round composer-mic"
             id="voiceBtn"
-            aria-label="Speak your message"
+            aria-label="Voice input"
           >
             ◉
           </button>
 
           <button
             type="button"
-            class="composer-send"
+            class="composer-round composer-send"
             id="sendBtn"
             aria-label="Send message"
+            hidden
           >
             ➤
           </button>
+
+          <button
+            type="button"
+            class="composer-vibe"
+            id="vibeBtn"
+            aria-label="Open Vibe"
+            hidden
+          ></button>
+        </div>
+
+        <p
+          class="voice-error"
+          id="voiceError"
+          hidden
+        ></p>
+
+        <div
+          class="listening-card"
+          id="listeningCard"
+          hidden
+        >
+          <span class="listening-mic">◉</span>
+          <span>Listening… tap mic to stop</span>
         </div>
       </div>
     </section>
@@ -620,26 +680,70 @@
     id="vibeScreen"
     hidden
   >
-    <button
-      type="button"
-      class="vibe-close"
-      id="vibeClose"
-      aria-label="Close vibe"
-    >
-      ×
-    </button>
+    <div class="vibe-top">
+      <span class="vibe-title">
+        <b>ndoone</b><i>Vibe</i>
+      </span>
+
+      <span
+        class="vibe-label"
+        id="vibeLabel"
+      >VIBE</span>
+
+      <span
+        class="vibe-state"
+        id="vibeState"
+      >Paused</span>
+    </div>
 
     <div
-      class="vibe-orb"
+      class="vibe-stage"
       id="vibeOrb"
-    ></div>
+    >
+      <span class="vibe-ring ring-one"></span>
+      <span class="vibe-ring ring-two"></span>
+      <span class="vibe-core"></span>
+    </div>
 
-    <h2>Indoone Vibe</h2>
-    <p id="vibeStatus">Tap the orb and speak.</p>
-    <div
-      class="vibe-transcript"
-      id="vibeTranscript"
-    ></div>
+    <p
+      class="vibe-hint"
+      id="vibeHint"
+    >Speak naturally</p>
+
+    <div class="vibe-transcript-box">
+      <span class="vibe-transcript-label">LIVE TRANSCRIPT</span>
+      <div
+        class="vibe-transcript"
+        id="vibeTranscript"
+      ></div>
+    </div>
+
+    <div class="vibe-controls">
+      <button
+        type="button"
+        class="vibe-control"
+        id="vibeMute"
+      >
+        Mute
+      </button>
+
+      <button
+        type="button"
+        class="vibe-end"
+        id="vibeEnd"
+        aria-label="End Vibe"
+      >
+        End Vibe
+      </button>
+
+      <button
+        type="button"
+        class="vibe-control"
+        id="vibeSpeaker"
+      >
+        Speaker
+      </button>
+    </div>
   </div>
 
   <div
@@ -663,6 +767,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <script src="authentication/firebase-config.js?v=20260914a"></script>
   <script src="authentication/firebase-auth.js?v=20260914a"></script>
@@ -675,8 +780,8 @@
   <script src="authentication/sign-up/signup.js?v=20261015a"></script>
 
   <script src="home/home.js?v=20261014a"></script>
-  <script src="home/chat-home.js?v=20261014a"></script>
-  <script src="shared/branding.js?v=20261014a"></script>
+  <script src="home/chat-home.js?v=20261015a"></script>
+  <script src="shared/branding.js?v=20261015a"></script>
   <script src="shared/core.js?v=20261014a"></script>
   <script src="shared/state.js?v=20260922c"></script>
   <script src="shared/cloud-accounts.js?v=20260922a"></script>
@@ -685,7 +790,7 @@
   <script src="shared/persistence.js?v=20260914a"></script>
   <script src="menu/accounts/recovery-pdf.js?v=20260914a"></script>
 
-  <script src="menu/script.js?v=20261014a"></script>
+  <script src="menu/script.js?v=20261015a"></script>
   <script src="menu/accounts/search/script.js?v=20260903e"></script>
   <script src="menu/accounts/account/script.js?v=20260904a"></script>
   <script src="menu/accounts/account/edit.js?v=20260904a"></script>
