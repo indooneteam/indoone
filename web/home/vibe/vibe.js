@@ -19,10 +19,20 @@
   let speakerOn = true;
   let heard = '';
 
+  // VibeSessionService.kt starts here, and VibeScreen.kt shows the connection
+  // state until it is Connected.
+  const OPENING = 'Connecting';
+  const PLACEHOLDER = 'Your live conversation will appear here.';
+  let connected = false;
+
+  // VibeScreen.kt shows the connection state until Connected, then Listening
+  // or Paused.
   function setState(text) {
-    if (state) {
-      state.textContent = text;
+    if (!state) {
+      return;
     }
+
+    state.textContent = connected ? text : OPENING;
   }
 
   function setHint(text) {
@@ -163,6 +173,7 @@
       }
     };
 
+    connected = true;
     listening = true;
     paintMute();
     setState('Listening');
@@ -179,8 +190,9 @@
 
   function open() {
     screen?.removeAttribute('hidden');
-    setTranscript('');
-    setState('Paused');
+    connected = false;
+    setTranscript(PLACEHOLDER);
+    setState(OPENING);
     setHint('Speak naturally');
     paintMute();
     paintSpeaker();
