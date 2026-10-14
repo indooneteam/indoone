@@ -218,7 +218,9 @@ private const val READ_TIMEOUT_MS = 300_000
         val backendUrl = BuildConfig.INDOONE_BACKEND_URL.trimEnd('/')
         if (backendUrl.isBlank()) throw ChatApiException("Indoone backend URL is not configured")
         if (BuildConfig.INDOONE_CHANNEL == "terminal" &&
-            backendUrl != "https://52.62.244.79"
+            backendUrl != "https://indooneai.duckdns.org" &&
+            backendUrl != "https://52.62.244.79" &&
+            backendUrl != "http://127.0.0.1:8000"
         ) {
             throw ChatApiException("Terminal build is configured for an unsupported backend")
         }
@@ -310,9 +312,17 @@ private const val READ_TIMEOUT_MS = 300_000
                     ?.coerceIn(1L, 30L)
                     ?.times(1000L)
 
-                throw ChatApiException(
+                // A 503 carries wording written for the user ("handling a lot of
+                // requests"), so show that wording on its own instead of wrapping
+                // it in an HTTP status line.
+                val displayMessage = if (responseCode >= 500 && !safeServerMessage.isNullOrBlank()) {
+                    safeServerMessage
+                } else {
                     safeServerMessage?.let { "Indoone backend returned HTTP $responseCode: $it" }
-                        ?: "Indoone backend returned HTTP $responseCode",
+                        ?: "Indoone backend returned HTTP $responseCode"
+                }
+                throw ChatApiException(
+                    displayMessage,
                     statusCode = responseCode,
                     retryAfterMs = retryAfterMs,
                 )

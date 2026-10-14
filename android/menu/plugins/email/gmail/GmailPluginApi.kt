@@ -3,7 +3,6 @@ package com.indoone.menu.plugins.email.gmail
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ServerValue
 import com.indoone.BuildConfig
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -17,12 +16,6 @@ data class GmailConnectionStatus(
     val connected: Boolean,
     val emailAddress: String? = null,
     val profileSaved: Boolean = false,
-)
-
-data class GmailProfileConnection(
-    val connected: Boolean,
-    val emailAddress: String,
-    val scope: String,
 )
 
 object GmailPluginApi {
@@ -79,12 +72,7 @@ object GmailPluginApi {
                 ?.trim()
                 .orEmpty()
             if (isConnected) {
-                saveProfileConnection(
-                    emailAddress = emailAddress,
-                    scope = json.optString("scope").trim().ifBlank {
-                        grantedScope.ifBlank { GMAIL_SCOPE }
-                    },
-                )
+                saveProfileConnection()
             }
             GmailConnectionStatus(
                 connected = isConnected,
@@ -127,10 +115,7 @@ object GmailPluginApi {
                 ?.trim()
                 .orEmpty()
             if (isConnected) {
-                saveProfileConnection(
-                    emailAddress = emailAddress,
-                    scope = grantedScope.ifBlank { GMAIL_SCOPE },
-                )
+                saveProfileConnection()
             }
             GmailConnectionStatus(
                 connected = isConnected,
@@ -146,32 +131,27 @@ object GmailPluginApi {
         val backendUrl = requireBackendUrl()
         val userId = requireUserId()
         val authToken = requireAuthToken()
-        val savedConnection = readProfileConnection()
         val url = "${backendUrl}/api/integrations/gmail/status?user_id=${java.net.URLEncoder.encode(userId, "UTF-8")}"
         val connection = openConnection(url, "GET", authToken)
+        val isConnected: Boolean
         try {
-            val body = execute(connection, null)
-            val json = JSONObject(body)
-            val isConnected = json.optBoolean("connected", false)
-            val backendScope = json.optJSONObject("metadata")
-                ?.optString("scope")
-                ?.trim()
-                .orEmpty()
-            val emailAddress = savedConnection?.emailAddress.orEmpty()
-            if (isConnected) {
-                saveProfileConnection(
-                    emailAddress = emailAddress,
-                    scope = backendScope.ifBlank { savedConnection?.scope.orEmpty().ifBlank { GMAIL_SCOPE } },
-                )
-            }
-            GmailConnectionStatus(
-                connected = isConnected,
-                emailAddress = emailAddress.takeIf { it.isNotBlank() },
-                profileSaved = isConnected || savedConnection?.connected == true,
-            )
+            val json = JSONObject(execute(connection, null))
+            isConnected = json.optBoolean("connected", false)
         } finally {
             connection.disconnect()
         }
+        if (!isConnected) {
+            return@withContext GmailConnectionStatus(connected = false)
+        }
+        val emailAddress = runCatching {
+            probeEmailAddress(backendUrl, userId, authToken)
+        }.getOrNull().orEmpty()
+        saveProfileConnection()
+        GmailConnectionStatus(
+            connected = true,
+            emailAddress = emailAddress.takeIf { it.isNotBlank() },
+            profileSaved = true,
+        )
     }
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
@@ -191,32 +171,26 @@ object GmailPluginApi {
         }
     }
 
-    suspend fun readProfileConnection(): GmailProfileConnection? = withContext(Dispatchers.IO) {
-        val reference = gmailConnectionReference(requireUserId())
-        val snapshot = Tasks.await(reference.get())
-        if (!snapshot.exists()) {
-            null
-        } else {
-            GmailProfileConnection(
-                connected = snapshot.child("connected").getValue(Boolean::class.javaObjectType) ?: false,
-                emailAddress = snapshot.child("emailAddress").getValue(String::class.java).orEmpty(),
-                scope = snapshot.child("scope").getValue(String::class.java).orEmpty(),
-            )
+    private suspend fun probeEmailAddress(
+        backendUrl: String,
+        userId: String,
+        authToken: String,
+    ): String {
+        val connection = openConnection(
+            url = "$backendUrl/api/integrations/gmail/probe",
+            method = "POST",
+            authToken = authToken,
+        )
+        try {
+            val json = JSONObject(execute(connection, JSONObject().put("user_id", userId).toString()))
+            return json.optJSONObject("summary")?.optString("email_address").orEmpty()
+        } finally {
+            connection.disconnect()
         }
     }
 
-    private suspend fun saveProfileConnection(emailAddress: String, scope: String) = withContext(Dispatchers.IO) {
-        val userId = requireUserId()
-        val metadata = mapOf(
-            "provider" to "gmail",
-            "providerName" to "Gmail",
-            "connected" to true,
-            "emailAddress" to emailAddress.trim(),
-            "scope" to scope.trim().ifBlank { GMAIL_SCOPE },
-            "updatedAt" to ServerValue.TIMESTAMP,
-            "lastVerifiedAt" to ServerValue.TIMESTAMP,
-        )
-        Tasks.await(gmailConnectionReference(userId).setValue(metadata))
+    private suspend fun saveProfileConnection() = withContext(Dispatchers.IO) {
+        Tasks.await(gmailConnectionReference(requireUserId()).setValue("Gmail"))
     }
 
     private fun gmailConnectionReference(userId: String) =
@@ -224,9 +198,7 @@ object GmailPluginApi {
             .child("users")
             .child(userId)
             .child("profile")
-            .child("connections")
             .child("plugins")
-            .child("email")
             .child("gmail")
 
     private fun requireBackendUrl(): String {
