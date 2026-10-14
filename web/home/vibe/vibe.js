@@ -104,8 +104,16 @@
 
   async function ask(spoken) {
     const store = window.IndooneChatStore;
+    const api = window.IndooneChatApi;
 
     if (!store || !spoken) {
+      return;
+    }
+
+    // The app shows a plain line, never a raw failure.
+    if (!api) {
+      setState('Paused');
+      setTranscript('Indoone AI is not reachable right now.');
       return;
     }
 
@@ -113,7 +121,7 @@
     setState('Thinking');
 
     try {
-      const result = await window.IndooneChatApi.send({
+      const result = await api.send({
         message: spoken,
         conversationId: store.getConversationId()
       });
@@ -126,7 +134,7 @@
     } catch (error) {
       console.error('Indoone vibe failed:', error);
       setState('Paused');
-      setTranscript(error.message || 'Could not reach Indoone AI.');
+      setTranscript('Could not reach Indoone AI.');
     }
   }
 
