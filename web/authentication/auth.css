@@ -34,3 +34,18 @@
   object-fit: contain !important;
   object-position: center !important;
 }
+
+/* Only one step of the login or sign-up flow is on screen at a time. */
+.auth-step[hidden] {
+  display: none !important;
+}
+
+.auth-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-step .auth-copy {
+  margin-bottom: 2px;
+}

@@ -1,8 +1,17 @@
+// The authentication screen controller.
+//
+// It renders whichever screen the user is on and drives the app's steps. The
+// work itself lives in firebase-auth-otp.js, which mirrors IndooneAuthService;
+// this file only moves between steps and reports what happened.
 (() => {
   const AUTH_CLASS = 'indoone-auth-screen';
   let busy = false;
 
   const $ = id => document.getElementById(id);
+
+  function root() {
+    return $('modal')?.querySelector('.auth-page') || document;
+  }
 
   function setStatus(message = '', error = false) {
     const node = $('authStatus');
@@ -43,12 +52,7 @@
     return true;
   }
 
-  function mobileField(
-    id,
-    prefixId,
-    placeholder = '98765 43210',
-    login = false
-  ) {
+  function mobileField(id, prefixId, placeholder = '98765 43210', login = false) {
     const inputMode = login ? 'text' : 'tel';
     const type = login ? 'text' : 'tel';
     const autocomplete = login ? 'username' : 'tel';
@@ -121,20 +125,25 @@
     });
   }
 
-  function bindMobileDefaults(root) {
+  function bindMobileDefaults(scope) {
     bindMobileInput(
-      root.querySelector('#authIdentifier'),
-      root.querySelector('#loginMobilePrefix')
+      scope.querySelector('#loginIdentifier'),
+      scope.querySelector('#loginMobilePrefix')
     );
 
     bindMobileInput(
-      root.querySelector('#signupMobile'),
-      root.querySelector('#signupMobilePrefix')
+      scope.querySelector('#loginPasswordIdentifier'),
+      scope.querySelector('#loginMobilePrefix')
+    );
+
+    bindMobileInput(
+      scope.querySelector('#signupMobile'),
+      scope.querySelector('#signupMobilePrefix')
     );
   }
 
-  function bindPasswordToggles(root) {
-    root
+  function bindPasswordToggles(scope) {
+    scope
       .querySelectorAll('button[data-password-toggle]')
       .forEach(button => {
         if (button.dataset.passwordToggleBound === 'true') return;
@@ -145,7 +154,9 @@
           event.preventDefault();
           event.stopPropagation();
 
-          const input = $(button.dataset.passwordToggle);
+          const input = scope.querySelector(
+            `#${button.dataset.passwordToggle}`
+          );
 
           if (!input) return;
 
@@ -182,219 +193,64 @@
     `;
   }
 
-  function showLogin() {
-    showShell(
-      window.IndooneLoginFeature?.html?.() || `
-        <div class="auth-brand">
-          <span class="auth-mark">I</span>
-          <div>
-            <strong>Indoone</strong>
-            <small>Authenticator</small>
-          </div>
-        </div>
+  function showLogin(step = 'identifier') {
+    const feature = window.IndooneLoginFeature;
 
-        <div class="auth-copy">
-          <p class="eyebrow">SECURE &amp; PRIVATE</p>
-          <h1>Welcome back</h1>
-          <p>
-            Sign in to protect and sync your authenticator vault.
-          </p>
-        </div>
+    if (!showShell(feature?.html?.() || fallbackLoginHtml())) {
+      return;
+    }
 
-        <div class="field">
-          <label>EMAIL OR MOBILE NUMBER</label>
-          ${mobileField(
-            'authIdentifier',
-            'loginMobilePrefix',
-            'you@example.com or 98765 43210',
-            true
-          )}
-        </div>
-
-        <div class="field">
-          <label>PASSWORD</label>
-          ${passwordField(
-            'authPassword',
-            'current-password',
-            'Enter your password'
-          )}
-        </div>
-
-        <button
-          type="button"
-          class="link-button auth-action-button"
-          data-auth-action="forgot-password"
-        >
-          Forgot password?
-        </button>
-
-        <button
-          type="button"
-          class="primary auth-action-button"
-          data-auth-action="login-submit"
-        >
-          Send OTP
-        </button>
-
-        <div id="loginOtpArea" class="auth-otp-area" hidden>
-          <p class="auth-otp-note">
-            OTP sent to <strong id="loginOtpEmail"></strong>
-          </p>
-
-          <div class="field">
-            <label>VERIFICATION OTP</label>
-            <input
-              id="loginOtp"
-              name="one-time-code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              maxlength="6"
-              placeholder="Enter 6-digit OTP"
-            />
-          </div>
-
-          <button
-            type="button"
-            class="primary auth-action-button"
-            data-auth-action="login-verify"
-          >
-            Verify &amp; Login
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="secondary auth-action-button"
-          data-auth-action="signup"
-        >
-          Create Account
-        </button>
-
-        <div class="auth-footer">
-          Protect your Indoone account with password and email OTP verification.
-        </div>
-      `
-    );
+    feature?.showStep?.(step, root());
   }
 
-  function showSignup() {
-    showShell(
-      window.IndooneSignupFeature?.html?.() || `
-        <div class="auth-brand">
-          <span class="auth-mark">I</span>
-          <div>
-            <strong>Indoone</strong>
-            <small>Authenticator</small>
-          </div>
-        </div>
+  function showSignup(step = 'details') {
+    const feature = window.IndooneSignupFeature;
 
-        <div class="auth-copy">
-          <p class="eyebrow">GET STARTED</p>
-          <h1>Create your account</h1>
-          <p>
-            Securely create an Indoone account for your authenticator vault.
-          </p>
-        </div>
+    if (!showShell(feature?.html?.() || fallbackSignupHtml())) {
+      return;
+    }
 
-        <div class="field">
-          <label>EMAIL ID</label>
-          <input
-            id="signupEmail"
-            name="email"
-            type="email"
-            autocomplete="email"
-            autocapitalize="none"
-            spellcheck="false"
-            placeholder="you@example.com"
-          />
-        </div>
+    feature?.showStep?.(step, root());
+  }
 
-        <div class="field">
-          <label>MOBILE NUMBER</label>
-          ${mobileField('signupMobile', 'signupMobilePrefix')}
-        </div>
+  function fallbackLoginHtml() {
+    return `
+      <div class="auth-copy">
+        <h1>Welcome to your Indoone account</h1>
+        <p>The login screen could not be loaded.</p>
+      </div>
+    `;
+  }
 
-        <div class="field">
-          <label>PASSWORD</label>
-          ${passwordField(
-            'signupPassword',
-            'new-password',
-            'Create a strong password'
-          )}
-        </div>
-
-        <button
-          type="button"
-          class="primary auth-action-button"
-          data-auth-action="signup-submit"
-        >
-          Send OTP
-        </button>
-
-        <div id="signupOtpArea" hidden>
-          <p class="auth-otp-note">
-            OTP sent to <strong id="signupOtpEmail"></strong>
-          </p>
-
-          <div class="field">
-            <label>VERIFICATION OTP</label>
-            <input
-              id="signupOtp"
-              name="one-time-code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              maxlength="6"
-              placeholder="Enter 6-digit OTP"
-            />
-          </div>
-
-          <button
-            type="button"
-            class="primary auth-action-button"
-            data-auth-action="signup-verify"
-          >
-            Verify &amp; Create Account
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="secondary auth-action-button"
-          data-auth-action="login"
-        >
-          Already have an account? Login
-        </button>
-
-        <div class="auth-footer">
-          Your Indoone account is activated after successful email OTP verification.
-        </div>
-      `
-    );
+  function fallbackSignupHtml() {
+    return `
+      <div class="auth-copy">
+        <h1>Get started with Indoone</h1>
+        <p>The sign-up screen could not be loaded.</p>
+      </div>
+    `;
   }
 
   async function showForgotPassword() {
     if (!showShell('<div class="auth-loading">Loading…</div>')) return;
 
-    const modal = $('modal');
-    const root = modal?.querySelector('.auth-page');
+    const scope = root();
 
-    if (!root || !window.IndooneForgotPassword?.load) {
+    if (!window.IndooneForgotPassword?.load) {
       setStatus('Forgot Password page is unavailable.', true);
       return;
     }
 
     try {
-      await window.IndooneForgotPassword.load(root);
+      await window.IndooneForgotPassword.load(scope);
 
-      const back = root.querySelector('#forgotPasswordBack');
-
-      if (back) {
-        back.addEventListener('click', event => {
+      scope
+        .querySelector('#forgotPasswordBack')
+        ?.addEventListener('click', event => {
           event.preventDefault();
           event.stopPropagation();
           showLogin();
         });
-      }
     } catch (error) {
       console.error('Forgot Password page failed to load:', error);
 
@@ -414,26 +270,38 @@
         </button>
       `);
 
-      $('forgotPasswordLoadBack')?.addEventListener('click', showLogin);
+      $('forgotPasswordLoadBack')?.addEventListener('click', () => showLogin());
     }
+  }
+
+  function readLoginIdentifier() {
+    const scope = root();
+    const stepOne = scope.querySelector('#loginIdentifier');
+    const stepThree = scope.querySelector('#loginPasswordIdentifier');
+
+    // Whichever identifier field is on screen right now.
+    if (stepThree && !stepThree.closest('[data-login-step]')?.hidden) {
+      return stepThree.value;
+    }
+
+    return stepOne?.value || stepThree?.value || '';
   }
 
   async function run(button) {
     if (!button || busy || button.disabled) return;
 
     const action = button.dataset.authAction;
+    const auth = window.IndooneFirebaseAuth;
+    const scope = root();
 
     if (action === 'signup') return showSignup();
     if (action === 'login') return showLogin();
     if (action === 'forgot-password') return showForgotPassword();
-
-    const auth = window.IndooneFirebaseAuth;
+    if (action === 'login-back') return showLogin('identifier');
+    if (action === 'signup-back') return showSignup('details');
 
     if (!auth) {
-      setStatus(
-        'Authentication service is still loading. Please try again.',
-        true
-      );
+      setStatus('Authentication service is still loading. Please try again.', true);
       return;
     }
 
@@ -445,32 +313,51 @@
     setStatus('');
 
     try {
-      if (action === 'login-submit') {
-        button.textContent = 'Checking…';
-        await auth.login();
-        button.dataset.authAction = 'login-resend';
-        button.textContent = 'Resend OTP';
+      if (action === 'login-continue-otp') {
+        button.textContent = 'Sending…';
+        const email = await auth.startLoginOtp(readLoginIdentifier());
+        window.IndooneLoginFeature?.otpEmail?.(email, scope);
+        showLogin('otp');
         setStatus('OTP sent. Enter the code from your email.');
+      } else if (action === 'login-continue-password') {
+        showLogin('password');
       } else if (action === 'login-verify') {
         button.textContent = 'Verifying…';
-        await auth.verifyLoginOtp();
+        await auth.verifyLoginOtp(scope.querySelector('#loginOtp')?.value);
       } else if (action === 'login-resend') {
         button.textContent = 'Sending…';
-        await auth.resendLoginOtp();
-        button.textContent = 'Resend OTP';
+        const email = await auth.resendLoginOtp();
+        window.IndooneLoginFeature?.otpEmail?.(email, scope);
         setStatus('New OTP sent. Check your email.');
+      } else if (action === 'login-complete') {
+        button.textContent = 'Logging in…';
+        await auth.loginWithPassword(
+          readLoginIdentifier(),
+          scope.querySelector('#loginPassword')?.value
+        );
       } else if (action === 'signup-submit') {
         button.textContent = 'Sending OTP…';
-        await auth.startSignup();
-        button.textContent = 'Resend OTP';
+        const email = await auth.startSignup(
+          window.IndooneSignupFeature?.values?.(scope) || {}
+        );
+        window.IndooneSignupFeature?.otpEmail?.(email, scope);
+        showSignup('otp');
         setStatus('OTP sent. Enter the code from your email.');
-        button.disabled = false;
-        button.removeAttribute('aria-busy');
-        busy = false;
-        return;
+      } else if (action === 'signup-password') {
+        button.textContent = 'Creating account…';
+        await auth.createSignupWithPassword(
+          window.IndooneSignupFeature?.values?.(scope) || {}
+        );
       } else if (action === 'signup-verify') {
         button.textContent = 'Verifying…';
-        await auth.finishSignupAfterOtp();
+        await auth.finishSignupAfterOtp(
+          scope.querySelector('#signupOtp')?.value
+        );
+      } else if (action === 'signup-resend') {
+        button.textContent = 'Sending…';
+        const email = await auth.resendSignupOtp();
+        window.IndooneSignupFeature?.otpEmail?.(email, scope);
+        setStatus('New OTP sent. Check your email.');
       }
     } catch (error) {
       const message =
@@ -482,12 +369,7 @@
       console.error('Indoone auth action failed:', error);
     } finally {
       if (button.isConnected) {
-        if (button.dataset.authAction === 'login-resend') {
-          button.textContent = 'Resend OTP';
-        } else if (button.textContent !== 'Resend OTP') {
-          button.textContent = previous;
-        }
-
+        button.textContent = previous;
         button.disabled = false;
         button.removeAttribute('aria-busy');
       }
@@ -496,8 +378,8 @@
     }
   }
 
-  function bindButtons(root) {
-    root
+  function bindButtons(scope) {
+    scope
       .querySelectorAll('button[data-auth-action]')
       .forEach(button => {
         if (button.dataset.authBound === 'true') return;
