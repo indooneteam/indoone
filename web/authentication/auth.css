@@ -41,6 +41,9 @@
   box-shadow: none;
   overflow: visible;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* -------------------------------------------------------------- the card */
@@ -270,13 +273,17 @@
 
 .auth-status {
   width: 100%;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 10px 12px;
   border-radius: 10px;
   background: #f1ece1;
   color: #6b6355;
   font-size: 12px;
   line-height: 18px;
+}
+
+.auth-status[hidden] {
+  display: none;
 }
 
 .auth-status[data-error="true"] {
@@ -519,4 +526,47 @@
   color: #76717d;
   font-size: 12px;
   line-height: 18px;
+}
+
+/* ------------------------------------------------- the sign-up page flow */
+
+/* The sign-up is one page: the fields never move. Only the actions block and
+   the OTP block swap places, and the fields keep their place above both. */
+.auth-page .auth-title-box + .auth-note {
+  margin-bottom: 20px;
+}
+
+.auth-page .field + .field {
+  margin-top: 14px;
+}
+
+.auth-page .auth-signup-actions,
+.auth-page .auth-signup-otp {
+  margin-top: 20px;
+}
+
+.auth-page .auth-signup-otp .auth-note-tight {
+  margin: 0;
+}
+
+/* The app leaves 10 above and 10 below Already have an account? Login. */
+.auth-page .auth-signup-login {
+  margin-top: 10px;
+}
+
+/* ------------------------------------------------------- the button states */
+
+/* A button the app would not let you press yet reads as unavailable. */
+.auth-page .primary:disabled,
+.auth-page .secondary:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.auth-page .primary:disabled {
+  background: linear-gradient(90deg, #b9a6e6, #cbb9ee);
+}
+
+.auth-page .secondary:disabled {
+  color: #a9a2ad;
 }
