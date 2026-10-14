@@ -15,6 +15,8 @@
   const SESSION_PATH = '/api/vibe/session';
   const INPUT_RATE = 16000;
   const OUTPUT_RATE = 24000;
+  // How far ahead the reply is scheduled, so a late chunk does not leave a gap.
+  const PLAYBACK_LEAD_SECONDS = 0.12;
   const CAPTURE_MODULE = 'home/vibe/vibe-capture.js?v=20261028a';
 
   let socket = null;
@@ -212,8 +214,13 @@
 
     const now = context.currentTime;
 
-    if (playHead < now) {
-      playHead = now;
+    // Keep a little lead. A chunk that arrives a moment late would otherwise
+    // leave a hole where it should have been, and the voice came out in pieces.
+    // The lead is small enough not to be heard as a delay.
+    const lead = now + PLAYBACK_LEAD_SECONDS;
+
+    if (playHead < lead) {
+      playHead = lead;
     }
 
     source.start(playHead);

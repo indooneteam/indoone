@@ -59,6 +59,14 @@
   function paintMute() {
     mute?.classList.toggle('on', listening);
     muteLabel && (muteLabel.textContent = listening ? 'Mute' : 'Unmute');
+
+    // VibeScreen.kt uses Icons.Outlined.Mic while listening and MicOff when
+    // muted. The slashed one was left on the button whatever the state, and
+    // its slash is the line that looked like a mark over the microphone.
+    if (muteIcon) {
+      muteIcon.dataset.appIcon = listening ? 'mic' : 'micOff';
+    }
+
     window.IndooneIcons?.apply?.(mute);
   }
 
