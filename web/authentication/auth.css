@@ -1,10 +1,314 @@
-/* Shared authentication layout helpers. */
-.indoone-auth-screen .mobile-field {
+/* The authentication screen, matched to the app.
+ *
+ * The app builds this in android/authentication/AuthComponents.kt. It is not a
+ * flat white page: it is a warm card sitting on a beige backdrop, with a cream
+ * gradient, a soft wide shadow, a thin tan hairline, a gradient primary button
+ * and 12dp fields. The web was a white page with no card at all, which is why
+ * the two do not look like each other.
+ *
+ * Everything here is scoped to .auth-page, so the rest of the app is untouched.
+ */
+
+/* ---------------------------------------------------------- the backdrop */
+
+.overlay.indoone-auth-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 18px;
+  overflow-y: auto;
+  background: linear-gradient(
+    180deg,
+    #ece7de 0%,
+    #e2dcd2 55%,
+    #d9d1c6 100%
+  );
+  pointer-events: auto;
+}
+
+.overlay.indoone-auth-screen .modal {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+/* -------------------------------------------------------------- the card */
+
+.auth-page {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 24px 22px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffdf7 0%, #f7f0e3 100%);
+  border: 1px solid #d8cbb8;
+  box-shadow: 0 14px 40px #4a3a1f24;
+  position: relative;
+  z-index: 102;
+  pointer-events: auto;
+}
+
+/* The app widens the card padding on a wide screen. */
+@media (min-width: 700px) {
+  .auth-page {
+    padding: 28px 34px;
+  }
+}
+
+.auth-action-button {
+  position: relative;
+  z-index: 110;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.auth-page input,
+.auth-page button {
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------- the brand */
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 22px;
+  width: 100%;
+}
+
+.auth-brand strong {
+  display: block;
+  color: #5e2dd2;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.auth-brand small {
+  display: block;
+  color: #77717f;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.auth-mark {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  display: block;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0;
+  overflow: visible;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* --------------------------------------------------------- the step copy */
+
+.auth-copy,
+.auth-page .field,
+.auth-page .primary,
+.auth-page .secondary,
+.auth-page .link-button,
+.auth-page .auth-footer,
+.auth-page .auth-step {
+  width: 100%;
+}
+
+.auth-copy {
+  margin-bottom: 16px;
+}
+
+.auth-copy .eyebrow,
+.auth-page .eyebrow {
+  margin: 0 0 7px;
+  color: #7650d8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.auth-copy h1 {
+  margin: 0 0 8px;
+  color: #17151d;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 40px;
+}
+
+.auth-copy p:last-child {
+  margin: 0;
+  color: #77717f;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.auth-copy p:last-child strong {
+  color: #17151d;
+}
+
+/* -------------------------------------------------------------- the steps */
+
+.auth-step[hidden] {
+  display: none !important;
+}
+
+.auth-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ------------------------------------------------------------- the fields */
+
+.auth-page .field {
+  margin: 0;
+}
+
+.auth-page .field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #7650d8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.auth-page .field input,
+.auth-page .field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 13px;
+  border: 1px solid #e3dfe8;
+  border-radius: 12px;
+  background: #fbfafc;
+  color: #17151d;
+  font-size: 14px;
+  outline: none;
+}
+
+.auth-page .field input::placeholder {
+  color: #8a8490;
+  font-size: 13px;
+}
+
+.auth-page .field input:focus,
+.auth-page .field select:focus {
+  border-color: #8652e7;
+  background: #fff;
+}
+
+/* ------------------------------------------------------------ the buttons */
+
+.auth-page .primary {
+  height: 48px;
+  margin: 0;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(90deg, #6330db, #9147ed);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-page .primary:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.auth-page .secondary {
+  height: 46px;
+  margin: 0;
+  border: 1px solid #e3dfe8;
+  border-radius: 13px;
+  background: #fff;
+  color: #5f5966;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-page .secondary:hover {
+  background: #fbfafc;
+}
+
+.auth-page .link-button {
+  height: auto;
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #6330db;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- the status */
+
+.auth-status {
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f1ece1;
+  color: #6b6355;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.auth-status[data-error="true"] {
+  background: #fff0f0;
+  color: #b3261e;
+}
+
+.auth-footer {
+  margin: 18px 0 0;
+  text-align: center;
+  color: #96908a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.auth-loading {
+  padding: 30px 0;
+  text-align: center;
+  color: #77717f;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------ the mobile prefix */
+
+.indoone-auth-screen .mobile-field,
+.auth-page .mobile-field {
   position: relative;
   width: 100%;
 }
 
-.indoone-auth-screen .mobile-field .mobile-prefix {
+.indoone-auth-screen .mobile-field .mobile-prefix,
+.auth-page .mobile-field .mobile-prefix {
   position: absolute;
   left: 13px;
   top: 50%;
@@ -16,36 +320,38 @@
   pointer-events: none;
 }
 
-.indoone-auth-screen .mobile-field input.has-mobile-prefix {
+.indoone-auth-screen .mobile-field input.has-mobile-prefix,
+.auth-page .mobile-field input.has-mobile-prefix {
   padding-left: 42px !important;
 }
 
-.indoone-auth-screen .auth-mark {
-  width: 72px !important;
-  height: 72px !important;
-  flex: 0 0 72px !important;
-  display: block !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  font-size: 0 !important;
-  overflow: visible !important;
-  object-fit: contain !important;
-  object-position: center !important;
+/* ------------------------------------------------------- the password eye */
+
+.auth-page .password-wrap {
+  position: relative;
+  width: 100%;
 }
 
-/* Only one step of the login or sign-up flow is on screen at a time. */
-.auth-step[hidden] {
-  display: none !important;
+.auth-page .password-wrap input {
+  padding-right: 44px;
 }
 
-.auth-step {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.auth-page .password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #5f5966;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.auth-step .auth-copy {
-  margin-bottom: 2px;
+.auth-page .password-toggle:hover {
+  background: #f1ece1;
 }
