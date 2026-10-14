@@ -140,7 +140,12 @@
     } catch (error) {
       console.error('Indoone vibe failed:', error);
       setState('Paused');
-      setTranscript('Could not reach Indoone AI.');
+      // Show the real reason. The API says whether the server refused the
+      // call or returned a status; flattening that into "could not reach"
+      // is what made this impossible to diagnose.
+      setTranscript(
+        error?.message || 'Could not reach Indoone AI.'
+      );
     }
   }
 
