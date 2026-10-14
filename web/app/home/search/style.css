@@ -1,0 +1,17 @@
+.home-search-page {
+  width: 100%;
+}
+
+.home-search-box {
+  display: grid;
+  gap: 10px;
+}
+
+.home-search-box label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.home-search-box input {
+  width: 100%;
+}
