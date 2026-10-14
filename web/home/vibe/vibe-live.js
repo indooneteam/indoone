@@ -16,13 +16,16 @@
   const PROTOCOL = 'indoone.vibe.v1';
   const INPUT_RATE = 16000;
   const OUTPUT_RATE = 24000;
-  const CAPTURE_MODULE = 'home/vibe/vibe-capture.js?v=20261027a';
+  const CAPTURE_MODULE = 'home/vibe/vibe-capture.js?v=20261028a';
 
   let socket = null;
   let captureContext = null;
   let captureNode = null;
   let captureStream = null;
+  let captureSink = null;
   let playbackContext = null;
+  let playbackGain = null;
+  let speakerAudible = true;
   let playHead = 0;
   let closing = false;
   // True while the model's voice is coming out of the speaker. The microphone
@@ -92,6 +95,10 @@
 
     captureContext = new AudioContext();
 
+    if (captureContext.state === 'suspended') {
+      await captureContext.resume();
+    }
+
     await captureContext.audioWorklet.addModule(
       CAPTURE_MODULE
     );
@@ -100,7 +107,7 @@
 
     captureNode = new AudioWorkletNode(captureContext, 'vibe-capture', {
       numberOfInputs: 1,
-      numberOfOutputs: 0
+      numberOfOutputs: 1
     });
 
     captureNode.port.onmessage = event => {
@@ -111,7 +118,19 @@
       }
     };
 
+    // The browser pulls its audio graph from the speaker, and only asks a node
+    // to process if there is a path from it to the speaker. A capture node with
+    // nothing downstream is never run at all - so no audio was ever sent, and
+    // the session sat there waiting. This gives it that path, at zero volume,
+    // so it runs without the microphone being played back at you.
+    const silence = captureContext.createGain();
+    silence.gain.value = 0;
+
     source.connect(captureNode);
+    captureNode.connect(silence);
+    silence.connect(captureContext.destination);
+
+    captureSink = silence;
   }
 
   function setSpeaking(speaking) {
@@ -124,6 +143,10 @@
     if (!playbackContext) {
       playbackContext = new AudioContext({ sampleRate: OUTPUT_RATE });
       playHead = playbackContext.currentTime;
+
+      playbackGain = playbackContext.createGain();
+      playbackGain.gain.value = speakerAudible ? 1 : 0;
+      playbackGain.connect(playbackContext.destination);
     }
 
     if (playbackContext.state === 'suspended') {
@@ -174,7 +197,10 @@
       return;
     }
 
-    const buffer = context.createBuffer(1, samples.length, OUTPUT_RATE);
+    // The browser is free to ignore the rate we asked for. Use the one it
+    // actually gave us, so the voice comes out at the right speed.
+    const rate = context.sampleRate || OUTPUT_RATE;
+    const buffer = context.createBuffer(1, samples.length, rate);
     const channel = buffer.getChannelData(0);
 
     for (let i = 0; i < samples.length; i += 1) {
@@ -183,7 +209,7 @@
 
     const source = context.createBufferSource();
     source.buffer = buffer;
-    source.connect(context.destination);
+    source.connect(playbackGain || context.destination);
 
     const now = context.currentTime;
 
@@ -198,11 +224,24 @@
     releaseMicrophoneSoon();
   }
 
+  function setSpeaker(on) {
+    speakerAudible = on !== false;
+
+    if (playbackContext) {
+      playbackGain?.gain?.setValueAtTime(
+        speakerAudible ? 1 : 0,
+        playbackContext.currentTime
+      );
+    }
+  }
+
   function stopPlayback() {
     if (playbackContext) {
       void playbackContext.close();
       playbackContext = null;
     }
+
+    playbackGain = null;
 
     playHead = 0;
     speaking = false;
@@ -365,6 +404,7 @@
     close,
     sendText,
     setSpeaking,
+    setSpeaker,
     stopPlayback,
     isOpen: () => socket?.readyState === WebSocket.OPEN,
     sessionUrl
