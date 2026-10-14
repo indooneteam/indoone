@@ -232,7 +232,7 @@
       .getElementById('settingsNav')
       ?.classList.add('active');
     document
-      .getElementById('accountsNav')
+      .getElementById('homeNav')
       ?.classList.remove('active');
     document
       .getElementById('lobbyNav')
@@ -440,7 +440,7 @@
 
     if (
       target.closest(
-        '#accountsNav, #lobbyNav, #connectNav, .drawer-item'
+        '#homeNav, #lobbyNav, #connectNav, .drawer-item'
       )
     ) {
       hideSettingsPage();

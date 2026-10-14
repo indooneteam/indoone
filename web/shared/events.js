@@ -82,7 +82,7 @@
     $('connectContent')?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
     $('searchWrap')?.setAttribute('hidden', '');
-    $('accountsNav')?.classList.add('active');
+    $('homeNav')?.classList.add('active');
     $('lobbyNav')?.classList.remove('active');
     $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
@@ -105,7 +105,7 @@
     $('connectContent')?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
     $('searchWrap')?.removeAttribute('hidden');
-    $('accountsNav')?.classList.add('active');
+    $('homeNav')?.classList.add('active');
     $('lobbyNav')?.classList.remove('active');
     $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
@@ -125,7 +125,7 @@
     $('addBtn')?.setAttribute('hidden', '');
     $('searchWrap')?.setAttribute('hidden', '');
     $('settingsNav')?.classList.add('active');
-    $('accountsNav')?.classList.remove('active');
+    $('homeNav')?.classList.remove('active');
     $('lobbyNav')?.classList.remove('active');
     $('connectNav')?.classList.remove('active');
 
@@ -272,7 +272,7 @@
   bindClick($('searchBtn'), () => window.IndooneHomeSearch?.show?.());
   bindClick($('clearSearch'), () => window.IndooneHomeSearch?.clear?.());
   bindClick($('brandBtn'), showHome);
-  bindClick($('accountsNav'), showHome);
+  bindClick($('homeNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
   bindClick(
     $('lobbyNav'),

@@ -1,28 +1,32 @@
-// Single source of truth for the four bottom-navigation SVG icons and Lobby status icon.
+// The four bottom-navigation icons, drawn to match the app.
+//
+// The app's bar is AppBottomNav in android/menu/AppPageChrome.kt and it uses
+// Icons.Filled.Home, Icons.Outlined.Groups, Icons.Outlined.Link and
+// Icons.Outlined.Settings. The web was drawing a pair of people for Home, a
+// diamond for Lobby, arrows for Connect and sliders for Settings, so none of
+// the four matched. These are the app's four.
 (() => {
-  const brandingLoader = document.createElement('script');
-  brandingLoader.src =
-    'shared/branding.js?v=20260906-logo-10';
-  brandingLoader.async = false;
-  document.head.appendChild(brandingLoader);
-
   const ICONS = {
-    accounts: [
-      '<circle cx="9" cy="8" r="3"></circle>',
-      '<path d="M4.5 19c.6-3 2.1-4.5 4.5-4.5s3.9 1.5 4.5 4.5"></path>',
-      '<circle cx="16" cy="9" r="2.5"></circle>',
-      '<path d="M13.5 18.5c.5-2.2 1.7-3.4 3.5-3.4 1.7 0 2.9 1.2 3.5 3.4"></path>'
+    home: [
+      '<path d="M12 3.2 3.6 10.3V20a1 1 0 0 0 1 1h4.9v-5.7h5V21h4.9a1 1 0 0 0 1-1v-9.7Z"',
+      ' fill="currentColor" stroke="none"></path>'
     ].join(''),
+
     lobby: [
-      '<path d="M12 3.5 20.5 12 12 20.5 3.5 12 12 3.5Z"></path>',
-      '<circle cx="12" cy="12" r="2.4"></circle>'
+      '<circle cx="9" cy="8" r="3"></circle>',
+      '<circle cx="16.5" cy="8.6" r="2.4"></circle>',
+      '<path d="M3.6 19c.5-3.1 2.4-4.6 5.4-4.6s4.9 1.5 5.4 4.6"></path>',
+      '<path d="M16.2 14.7c1.9.3 3.1 1.7 3.4 4.3"></path>'
     ].join(''),
-    connect:
-      '<path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"></path>',
+
+    connect: [
+      '<path d="M10.4 13.6a4 4 0 0 1 0-5.7l2.2-2.2a4 4 0 0 1 5.7 5.7l-1.1 1.1"></path>',
+      '<path d="M13.6 10.4a4 4 0 0 1 0 5.7l-2.2 2.2a4 4 0 0 1-5.7-5.7l1.1-1.1"></path>'
+    ].join(''),
+
     settings: [
-      '<path d="M5 7h14M5 17h14"></path>',
-      '<circle cx="10" cy="7" r="2"></circle>',
-      '<circle cx="15" cy="17" r="2"></circle>'
+      '<circle cx="12" cy="12" r="3.1"></circle>',
+      '<path d="M19.1 14.6a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2.7a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V2.7a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"></path>'
     ].join('')
   };
 
@@ -47,54 +51,46 @@
     return svg;
   }
 
+  const NAV_MAP = {
+    homeNav: 'home',
+    lobbyNav: 'lobby',
+    connectNav: 'connect',
+    settingsNav: 'settings'
+  };
+
   function apply() {
-    const navMap = {
-      accountsNav: 'accounts',
-      lobbyNav: 'lobby',
-      connectNav: 'connect',
-      settingsNav: 'settings'
-    };
-
-    Object.entries(navMap).forEach(([id, type]) => {
+    Object.entries(NAV_MAP).forEach(([id, type]) => {
       const button = document.getElementById(id);
-      if (!button) return;
 
-      const current = button.querySelector(
-        '[data-shared-nav-icon]'
+      if (!button) {
+        return;
+      }
+
+      const current = button.querySelector('[data-shared-nav-icon]');
+
+      if (current) {
+        return;
+      }
+
+      button
+        .querySelectorAll('.nav-icon, .lobby-nav-icon')
+        .forEach(node => node.remove());
+
+      button.insertBefore(
+        makeIcon(type, 'nav-icon'),
+        button.firstChild
       );
-
-      if (!current) {
-        button
-          .querySelectorAll('.nav-icon')
-          .forEach(node => node.remove());
-
-        button.insertBefore(
-          makeIcon(type, 'nav-icon'),
-          button.firstChild
-        );
-      }
-
-      if (id === 'accountsNav') {
-        const label = button.querySelector(':scope > span:last-child');
-        if (label) {
-          label.textContent = 'Home';
-        }
-      }
     });
 
     document
       .querySelectorAll('.lobby-status-icon')
-      .forEach(el => {
-        if (
-          el.querySelector(
-            '[data-shared-nav-icon="lobby"]'
-          )
-        ) {
+      .forEach(element => {
+        if (element.querySelector('[data-shared-nav-icon="lobby"]')) {
           return;
         }
 
-        el.textContent = '';
-        el.appendChild(
+        element.textContent = '';
+        element.appendChild(
           makeIcon('lobby', 'ui-svg-icon lobby-svg-icon')
         );
       });
@@ -106,11 +102,7 @@
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener(
-      'DOMContentLoaded',
-      apply,
-      { once: true }
-    );
+    document.addEventListener('DOMContentLoaded', apply, { once: true });
   } else {
     apply();
   }
@@ -119,7 +111,9 @@
     let queued = false;
 
     const observer = new MutationObserver(() => {
-      if (queued) return;
+      if (queued) {
+        return;
+      }
 
       queued = true;
       queueMicrotask(() => {
@@ -133,61 +127,4 @@
       subtree: true
     });
   }
-
-  document.addEventListener(
-    'click',
-    async event => {
-      const button = event.target.closest(
-        '#accountsNav, #lobbyNav, #connectNav, #settingsNav'
-      );
-
-      if (!button || !button.classList.contains('active')) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-
-      try {
-        switch (button.id) {
-          case 'accountsNav':
-            if (window.IndooneCloudAccounts?.load) {
-              await window.IndooneCloudAccounts.load();
-            }
-
-            if (window.refreshAccountCodes) {
-              await window.refreshAccountCodes();
-            }
-            break;
-
-          case 'lobbyNav':
-            await window.showLobby?.({
-              remember: false,
-              refresh: true
-            });
-            break;
-
-          case 'connectNav':
-            await window.showConnect?.({
-              remember: false,
-              refresh: true
-            });
-            break;
-
-          case 'settingsNav':
-            await window.showSettings?.({
-              remember: false,
-              refresh: true
-            });
-            break;
-        }
-      } catch (error) {
-        console.warn(
-          'Indoone navigation refresh failed:',
-          error
-        );
-      }
-    },
-    true
-  );
 })();

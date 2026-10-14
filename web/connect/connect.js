@@ -129,7 +129,7 @@
   }
 
   function setActive(tab) {
-    get('accountsNav')?.classList.toggle(
+    get('homeNav')?.classList.toggle(
       'active',
       tab === 'accounts'
     );
@@ -265,7 +265,7 @@
     window.showConnect();
   });
 
-  get('accountsNav')?.addEventListener('click', event => {
+  get('homeNav')?.addEventListener('click', event => {
     event.preventDefault();
     window.stopNearby?.();
     showAccounts();

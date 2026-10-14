@@ -2,12 +2,12 @@
   function isHomeAccountsVisible() {
     const content = document.getElementById('content');
     const subPage = document.getElementById('homeSubPage');
-    const accountsNav = document.getElementById('accountsNav');
+    const homeNav = document.getElementById('homeNav');
 
     return (
       !!content &&
       !content.hidden &&
-      !!accountsNav?.classList.contains('active') &&
+      !!homeNav?.classList.contains('active') &&
       !!subPage?.hidden
     );
   }
@@ -31,7 +31,7 @@
     const observer = new MutationObserver(sync);
 
     [
-      'accountsNav',
+      'homeNav',
       'lobbyNav',
       'connectNav',
       'settingsNav'
