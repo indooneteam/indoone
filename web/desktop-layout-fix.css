@@ -1,12 +1,22 @@
 @import url("app/shared/responsive-compact.css");
 @import url("app/safe-layout/safe-layout.css");
 
-/* Keep the app in its 430px mobile layout on every viewport. */
+/* This used to force a 430px phone column on every viewport, which is why a
+   desktop browser showed a narrow strip in the middle of a wide window. A page
+   on the web should use the room it has: a phone keeps the phone width, a
+   desktop fills the window. */
 .phone-shell {
-  width: min(430px, 100vw) !important;
+  width: 100% !important;
   max-width: 430px !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+@media (min-width: 760px) {
+  .phone-shell {
+    max-width: 100% !important;
+    box-shadow: none;
+  }
 }
 
 html, body { height: 100%; }
