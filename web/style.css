@@ -1239,3 +1239,34 @@ html, body { height: 100%; }
 @media (min-width: 700px) {
   .bottom-nav { bottom: 0 !important; }
 }
+
+/* On a desktop the menu is not something to open - there is room beside the
+   app, so it stays out on the left and the app sits next to it. A phone keeps
+   the hamburger, because there the panel would cover the whole screen. */
+@media (min-width: 760px) {
+  .drawer {
+    right: auto !important;
+    width: 280px !important;
+    pointer-events: auto !important;
+  }
+
+  .drawer-backdrop {
+    display: none !important;
+  }
+
+  .drawer-panel {
+    transform: none !important;
+    width: 280px !important;
+    box-shadow: 1px 0 0 #eceaf2 !important;
+  }
+
+  .menu-top-btn {
+    display: none !important;
+  }
+
+  .phone-shell {
+    margin-left: 280px !important;
+    margin-right: 0 !important;
+    max-width: calc(100% - 280px) !important;
+  }
+}
