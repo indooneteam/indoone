@@ -969,7 +969,7 @@ html, body { height: 100%; }
 .search-box { height: 40px !important; border-radius: 12px !important; padding: 0 11px !important; }
 .search-box input { font-size: 13px !important; }
 .search-box button { font-size: 20px !important; }
-.content { padding: 16px 18px 104px !important; }
+.content { padding: 16px 18px 18px !important; }
 .page-heading { margin-bottom: 11px !important; }
 .page-heading h1 { font-size: 23px !important; }
 .content .page-heading h1 { font-size: 26px !important; }
@@ -987,6 +987,7 @@ html, body { height: 100%; }
    viewport/flex behavior so the same inset is never applied twice. */
 
 #app.phone-shell > #content,
+#app.phone-shell > #homeContent,
 #app.phone-shell > #connectContent,
 #app.phone-shell > .settings-content {
   flex: 1 1 auto !important;
@@ -994,6 +995,19 @@ html, body { height: 100%; }
   height: auto !important;
   max-height: none !important;
   overflow-y: auto !important;
+}
+
+/* The chat page owns its own scrolling, so it must not scroll again here. */
+#app.phone-shell > #homeContent {
+  overflow: hidden !important;
+}
+
+/* The bar is the last row of the shell in the app, not something floating
+   over the content. Absolute positioning is what put it on top of the
+   composer and cut the buttons off. */
+.bottom-nav {
+  position: static !important;
+  flex: 0 0 auto !important;
 }
 
 /* Shared headings stay aligned; safe-area padding is handled centrally. */
@@ -1036,33 +1050,22 @@ html, body { height: 100%; }
   .bottom-nav { bottom: 0 !important; }
 }
 
-/* On a desktop the menu is not something to open - there is room beside the
-   app, so it stays out on the left and the app sits next to it. A phone keeps
-   the hamburger, because there the panel would cover the whole screen. */
+/* The three-line button stays on every screen size, and the panel slides in
+   over the app rather than pushing it sideways. On a desktop it also comes out
+   when the pointer reaches the left edge, which is what the wide screen is
+   there for. */
+.drawer-hover-zone {
+  display: none;
+}
+
 @media (min-width: 760px) {
-  .drawer {
-    right: auto !important;
-    width: 280px !important;
-    pointer-events: auto !important;
-  }
-
-  .drawer-backdrop {
-    display: none !important;
-  }
-
-  .drawer-panel {
-    transform: none !important;
-    width: 280px !important;
-    box-shadow: 1px 0 0 #eceaf2 !important;
-  }
-
-  .menu-top-btn {
-    display: none !important;
-  }
-
-  .phone-shell {
-    margin-left: 280px !important;
-    margin-right: 0 !important;
-    max-width: calc(100% - 280px) !important;
+  .drawer-hover-zone {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    z-index: 19;
   }
 }
