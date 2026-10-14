@@ -24,6 +24,9 @@
   const OPENING = 'Connecting';
   const PLACEHOLDER = 'Your live conversation will appear here.';
   let connected = false;
+  // Closing has to end the session for good: no late result, and no reply
+  // spoken after the screen is gone.
+  let closed = false;
 
   // VibeScreen.kt shows the connection state until Connected, then Listening
   // or Paused.
@@ -166,12 +169,20 @@
     recognition.onerror = () => {
       listening = false;
       paintMute();
-      setState('Paused');
+
+      if (!closed) {
+        setState('Paused');
+      }
     };
 
     recognition.onend = () => {
       listening = false;
       paintMute();
+
+      if (closed) {
+        return;
+      }
+
       setState('Paused');
 
       const said = String(heard || '').trim();
@@ -186,17 +197,34 @@
     paintMute();
     setState('Listening');
     setHint('Speak naturally');
-    recognition.start();
+
+    try {
+      recognition.start();
+    } catch (error) {
+      // Desktop Chrome can refuse: no microphone, or no permission. Saying
+      // Mute and sitting there would be a lie.
+      console.error('Indoone vibe could not start the microphone:', error);
+      connected = false;
+      listening = false;
+      paintMute();
+      setState('Paused');
+      setHint('This browser would not give the microphone.');
+    }
   }
 
   function stop() {
     listening = false;
     paintMute();
-    recognition?.stop?.();
+
+    // abort, not stop: stop still delivers whatever was heard, and that is
+    // what kept answering after the screen was closed.
+    recognition?.abort?.();
+    recognition = null;
     window.speechSynthesis?.cancel?.();
   }
 
   function open() {
+    closed = false;
     screen?.removeAttribute('hidden');
     connected = false;
     setTranscript(PLACEHOLDER);
@@ -208,8 +236,11 @@
   }
 
   function close() {
+    closed = true;
+    heard = '';
     stop();
     screen?.setAttribute('hidden', '');
+    connected = false;
     setState('Paused');
   }
 

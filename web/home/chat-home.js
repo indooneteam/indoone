@@ -14,7 +14,7 @@
     'home/plus/camera/camera.js?v=20261015a',
     'home/plus/photos/photos.js?v=20261015a',
     'home/plus/files/files.js?v=20261015a',
-    'home/vibe/vibe.js?v=20261019a'
+    'home/vibe/vibe.js?v=20261022a'
   ];
 
   // The app alternates these two, every two seconds.
@@ -178,6 +178,9 @@
       await loadModules();
     } catch (error) {
       console.error('Indoone chat home could not load:', error);
+      // Even then the composer must be in the right state: no Vibe button and
+      // no account "+" left on screen.
+      syncComposer();
       return;
     }
 
