@@ -67,27 +67,13 @@
     element.addEventListener('click', handler);
   }
 
-  function showHome({ remember = true } = {}) {
-    if (remember) {
-      window.IndoonePageState?.set('home');
-    }
-
+  // One implementation, in shared/core.js, so the tab, the brand button, the
+  // Notification Center's back button and the menu all land in the same place.
+  function showHome(options) {
     closeDrawer();
     closeModal();
     window.showConnectHome?.({ remember: false });
-
-    $('homeContent')?.removeAttribute('hidden');
-    $('content')?.setAttribute('hidden', '');
-    $('connectContent')?.setAttribute('hidden', '');
-    $('addBtn')?.setAttribute('hidden', '');
-    $('searchWrap')?.setAttribute('hidden', '');
-    $('homeNav')?.classList.add('active');
-    $('lobbyNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
-    $('settingsNav')?.classList.remove('active');
-
-    window.IndooneChatHome?.init?.();
-    window.IndooneChatHome?.refresh?.();
+    window.showHome?.(options);
   }
 
   function showAccounts({ remember = true } = {}) {
@@ -102,6 +88,10 @@
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
+    $('settingsContent')?.setAttribute('hidden', '');
+    document
+      .querySelector('[data-notifications-page]')
+      ?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
     $('searchWrap')?.removeAttribute('hidden');
     $('homeNav')?.classList.add('active');
@@ -121,6 +111,9 @@
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
+    document
+      .querySelector('[data-notifications-page]')
+      ?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
     $('searchWrap')?.setAttribute('hidden', '');
     $('settingsNav')?.classList.add('active');

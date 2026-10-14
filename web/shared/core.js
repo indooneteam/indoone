@@ -57,14 +57,30 @@ window.closeModal = function () {
   overlay?.classList.add('hidden');
 };
 
-window.showHome = function () {
+// The Home tab shows the chat page, which is #homeContent.
+//
+// This used to unhide #content and the account "+" button, because Home was
+// the accounts page before the chat moved in. So pressing Home showed the
+// accounts page, left the chat hidden, and floated the accounts "+" over the
+// composer. Every page that returns to Home went through this one.
+window.showHome = function ({ remember = true } = {}) {
+  if (remember) {
+    window.IndoonePageState?.set('home');
+  }
+
   clearHomeSubRoute();
-  window.IndoonePageState?.set('home');
   overlay?.classList.add('hidden');
+  window.closeDrawer?.();
+
+  document.getElementById('homeContent')?.removeAttribute('hidden');
+  document.getElementById('content')?.setAttribute('hidden', '');
   document.getElementById('connectContent')?.setAttribute('hidden', '');
-  document.getElementById('content')?.removeAttribute('hidden');
-  document.getElementById('addBtn')?.removeAttribute('hidden');
-  document.getElementById('searchWrap')?.removeAttribute('hidden');
+  document.getElementById('settingsContent')?.setAttribute('hidden', '');
+  document
+    .querySelector('[data-notifications-page]')
+    ?.setAttribute('hidden', '');
+  document.getElementById('addBtn')?.setAttribute('hidden', '');
+  document.getElementById('searchWrap')?.setAttribute('hidden', '');
 
   document
     .querySelectorAll('.bottom-nav button')
@@ -72,7 +88,8 @@ window.showHome = function () {
 
   document.getElementById('homeNav')?.classList.add('active');
 
-  window.IndooneHome?.restoreHome?.();
+  window.IndooneChatHome?.init?.();
+  window.IndooneChatHome?.refresh?.();
 };
 
 window.toast = function (message) {
