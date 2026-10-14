@@ -45,7 +45,6 @@ window.initMenuDeleteLocalData = function () {
     } catch (_) {}
 
     try {
-      window.IndooneBiometric?.disable?.();
     } catch (_) {}
   };
 

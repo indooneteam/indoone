@@ -40,13 +40,6 @@ function clearHomeSubRoute() {
   );
 }
 
-function appLockBlocksAccess() {
-  return Boolean(
-    window.IndoonePersistence?.hasAppLock?.() &&
-    !window.IndoonePersistence?.isUnlocked?.()
-  );
-}
-
 window.openModal = function (html) {
   if (!modal || !overlay) return;
 
@@ -56,19 +49,15 @@ window.openModal = function (html) {
 
 window.closeOverlay = function (event) {
   if (event.target === overlay) {
-    if (appLockBlocksAccess()) return;
     overlay.classList.add('hidden');
   }
 };
 
 window.closeModal = function () {
-  if (appLockBlocksAccess()) return;
   overlay?.classList.add('hidden');
 };
 
 window.showHome = function () {
-  if (appLockBlocksAccess()) return;
-
   clearHomeSubRoute();
   window.IndoonePageState?.set('home');
   overlay?.classList.add('hidden');

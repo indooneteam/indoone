@@ -54,39 +54,6 @@
       subtitle: 'Email & mobile number',
       icon: 'profile',
       action: () => window.showProfile?.()
-    },
-    {
-      id: 'app-lock',
-      title: 'App Lock',
-      subtitle: 'PIN',
-      icon: 'lock',
-      action: () => window.showAppLockSettings?.()
-    },
-    {
-      id: 'biometric',
-      title: 'Biometric Unlock',
-      subtitle: 'Fingerprint / device credential',
-      icon: 'biometric',
-      toggle: true
-    },
-    {
-      id: 'auto-lock',
-      title: 'Auto-Lock',
-      icon: 'timer',
-      subtitle: () => {
-        const value = window.IndooneAutoLock?.minutes?.() ?? 0;
-        return value
-          ? `After ${value} minute${value === 1 ? '' : 's'}`
-          : 'Never';
-      },
-      action: () => window.showAutoLock?.()
-    },
-    {
-      id: 'about',
-      title: 'About Indoone',
-      subtitle: () => `Version ${appVersion} · Updates`,
-      icon: 'info',
-      action: () => window.showAboutSettings?.()
     }
   ];
 
@@ -94,25 +61,6 @@
     profile: `
       <circle cx="12" cy="8" r="3.1"></circle>
       <path d="M5.5 19.5c.8-3.1 3.1-4.8 6.5-4.8s5.7 1.7 6.5 4.8"></path>
-    `,
-    lock: `
-      <rect x="5" y="10" width="14" height="10" rx="2"></rect>
-      <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
-    `,
-    biometric: `
-      <path d="M8 7.5A4.5 4.5 0 0 1 12.5 3 4.5 4.5 0 0 1 17 7.5"></path>
-      <path d="M6 10a6 6 0 0 1 12 0"></path>
-      <path d="M8.5 12.5a3.5 3.5 0 0 1 7 0"></path>
-      <path d="M10.5 15v1.5a1.5 1.5 0 0 1-3 0v-1.2"></path>
-      <path d="M13.5 15v3a1.5 1.5 0 0 1-3 0v-1.5"></path>
-      <path d="M16 13v4a2 2 0 0 1-4 0v-1"></path>
-    `,
-    timer: `
-      <circle cx="12" cy="13" r="7"></circle>
-      <path d="M12 13V9"></path>
-      <path d="M9.5 3.5h5"></path>
-      <path d="M12 6v-2.5"></path>
-      <path d="M18 7l1.5-1.5"></path>
     `,
     info: `
       <circle cx="12" cy="12" r="8"></circle>
@@ -144,44 +92,13 @@
     return svg;
   }
 
-  function rowMarkup(item, biometricOn) {
+  function rowMarkup(item) {
     const subtitle =
       typeof item.subtitle === 'function'
         ? item.subtitle()
         : item.subtitle;
 
     const icon = makeIcon(item.icon);
-
-    if (item.toggle) {
-      const row = document.createElement('div');
-      row.className = 'settings-row settings-row-toggle';
-      row.dataset.settingsItem = item.id;
-
-      const iconWrap = document.createElement('span');
-      iconWrap.className = 'settings-option-icon-wrap';
-      iconWrap.appendChild(icon);
-
-      const text = document.createElement('span');
-      text.className = 'settings-row-text';
-      text.innerHTML = `
-        <b>${item.title}</b>
-        <small>${subtitle}</small>
-      `;
-
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `toggle settings-toggle ${
-        biometricOn ? 'on' : ''
-      }`;
-      button.id = 'biometricToggle';
-      button.setAttribute(
-        'aria-label',
-        'Toggle biometric unlock'
-      );
-
-      row.append(iconWrap, text, button);
-      return row;
-    }
 
     const button = document.createElement('button');
     button.type = 'button';
@@ -257,9 +174,6 @@
       app?.insertBefore(page, nav || null);
     }
 
-    const biometricOn =
-      window.IndooneBiometric?.enabled?.() || false;
-
     page.innerHTML = '';
 
     const head = document.createElement('div');
@@ -275,18 +189,6 @@
       {
         label: 'Account',
         items: [SETTINGS[0]]
-      },
-      {
-        label: 'Security',
-        items: [
-          SETTINGS[1],
-          SETTINGS[2],
-          SETTINGS[3]
-        ]
-      },
-      {
-        label: 'App',
-        items: [SETTINGS[4]]
       }
     ];
 
@@ -297,7 +199,7 @@
       page.appendChild(label);
 
       section.items.forEach(item => {
-        const row = rowMarkup(item, biometricOn);
+        const row = rowMarkup(item);
         page.appendChild(row);
       });
     });
@@ -311,44 +213,6 @@
         );
       });
 
-    page
-      .querySelectorAll('[data-settings-action="app-lock"]')
-      .forEach(button => {
-        button.addEventListener(
-          'click',
-          () => window.showAppLockSettings?.()
-        );
-      });
-
-    page
-      .querySelectorAll('[data-settings-action="auto-lock"]')
-      .forEach(button => {
-        button.addEventListener(
-          'click',
-          () => window.showAutoLock?.()
-        );
-      });
-
-    page
-      .querySelectorAll('[data-settings-action="about"]')
-      .forEach(button => {
-        button.addEventListener(
-          'click',
-          () => window.showAboutSettings?.()
-        );
-      });
-
-    page
-      .querySelector('#biometricToggle')
-      ?.addEventListener(
-        'click',
-        event =>
-          toggleBiometricSetting(
-            event,
-            event.currentTarget
-          )
-      );
-
     return page;
   }
 
@@ -360,75 +224,6 @@
     closeModal?.();
     renderSettingsPage();
     showSettingsPage();
-  };
-
-  window.toggleBiometricSetting = function (
-    event,
-    button
-  ) {
-    event?.stopPropagation?.();
-
-    const enabled = button.classList.contains('on');
-
-    if (enabled) {
-      IndooneBiometric.disable();
-      button.classList.remove('on');
-      toast('Biometric unlock disabled');
-      return;
-    }
-
-    if (!window.IndooneBiometric?.supported?.()) {
-      toast(
-        'Biometric unlock is available in the Android app'
-      );
-      return;
-    }
-
-    IndooneBiometric.enableForCurrentVault(
-      () => {
-        button.classList.add('on');
-        toast('Biometric unlock enabled');
-      },
-      message =>
-        toast(
-          message ||
-            'Biometric authentication cancelled'
-        )
-    );
-  };
-
-  window.showAboutSettings = function () {
-    openModal(`
-      <div class="modal-head">
-        <h2>About Indoone</h2>
-        <button class="close-btn" data-close>×</button>
-      </div>
-
-      <div class="about-mark">I</div>
-      <h3 class="about-title">Indoone Authenticator</h3>
-      <p class="about-copy">
-        Private authenticator with cloud sync and secure device pairing.
-        Updates are checked automatically when the app opens.
-      </p>
-
-      <div class="about-meta">
-        <span>Version</span>
-        <b data-app-version>${appVersion}</b>
-      </div>
-
-      <div class="about-meta">
-        <span>Updates</span>
-        <b>Automatic</b>
-      </div>
-
-      <button class="primary" data-close>Done</button>
-    `);
-
-    loadAppVersion().then(version => {
-      document
-        .querySelector('[data-app-version]')
-        ?.replaceChildren(document.createTextNode(version));
-    });
   };
 
   document.addEventListener('click', event => {

@@ -6,7 +6,6 @@
   let authResolved = false;
   let authGateRunning = false;
   let authStateResolved = false;
-  let appBootLockChecked = false;
 
   function markAuthReady() {
     if (authResolved) return;
@@ -212,56 +211,6 @@
     }
   }
 
-  function lockForNativeResume() {
-    if (
-      typeof window.IndooneNative?.authenticateBiometric !==
-        'function'
-    ) {
-      return;
-    }
-
-    if (!window.IndoonePersistence?.hasAppLock?.()) {
-      return;
-    }
-
-    if (!window.IndoonePersistence?.isUnlocked?.()) {
-      return;
-    }
-
-    window.IndoonePersistence.lock();
-
-    if (window.IndooneBiometric?.enabled?.()) {
-      window.showBiometricUnlock?.();
-    } else {
-      window.showAppLock?.('unlock');
-    }
-  }
-
-  function requireAppBootLock() {
-    if (appBootLockChecked) return;
-
-    if (
-      typeof window.IndooneNative?.authenticateBiometric !==
-        'function'
-    ) {
-      return;
-    }
-
-    appBootLockChecked = true;
-
-    if (!window.IndoonePersistence?.hasAppLock?.()) {
-      return;
-    }
-
-    window.IndoonePersistence.lock();
-
-    if (window.IndooneBiometric?.enabled?.()) {
-      window.showBiometricUnlock?.();
-    } else {
-      window.showAppLock?.('unlock');
-    }
-  }
-
   if (!localStorage.getItem('indoone_otp_verified_uid')) {
     renderLoginNow();
   }
@@ -398,10 +347,6 @@
       return window.deleteRecoveryPdf?.();
     }
 
-    if (event.target.closest('[data-pin]')) {
-      return window.showAppLock?.('setup');
-    }
-
     if (event.target.closest('[data-backup]')) {
       return window.showBackup?.();
     }
@@ -424,11 +369,6 @@
       return window.closeModal?.();
     }
   });
-
-  window.addEventListener(
-    'indoone-native-resume',
-    lockForNativeResume
-  );
 
   async function loadFirebaseAccounts() {
     if (!window.IndooneCloudAccounts?.load) {
@@ -490,7 +430,6 @@
         persistedUid
       );
 
-      requireAppBootLock();
       await loadFirebaseAccounts();
       await restoreSavedPage();
 
