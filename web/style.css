@@ -1030,44 +1030,6 @@ html, body { height: 100%; }
   flex: 0 0 auto !important;
 }
 
-/* On a desktop the same four tabs stand up the right-hand side, top to bottom,
-   beside the page. It is the same control, the same four tabs, the same
-   colours and the same active pill - only the direction changes.
- *
-   This has to sit here, after the rule above, and has to carry the shell in
-   its selector, because the bar is pinned down by two !important rules and a
-   more specific one in the safe-layout file. A plain .bottom-nav rule loses to
-   both, which is why the first attempt at this did nothing. */
-@media (min-width: 1024px) {
-  #app.phone-shell > .bottom-nav {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: auto !important;
-    width: var(--nav-w, 92px) !important;
-    height: 100dvh !important;
-    min-height: 0 !important;
-    flex: 0 0 auto !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    gap: 6px !important;
-    padding: 16px 10px !important;
-    border-radius: 0 !important;
-    border: 0 !important;
-    border-left: 1px solid #eeeaf2 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-  }
-
-  #app.phone-shell > .bottom-nav .nav-btn {
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    height: auto !important;
-    padding: 12px 4px !important;
-    border-radius: 16px !important;
-  }
-}
 
 /* Shared headings stay aligned; safe-area padding is handled centrally. */
 #app.phone-shell > #content .page-heading,
