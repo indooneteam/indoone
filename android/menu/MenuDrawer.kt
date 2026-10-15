@@ -68,7 +68,6 @@ import com.indoone.menu.trash.TrashScreen
 import com.indoone.menu.profile.ProfileMenuScreen
 import com.indoone.menu.memory.MemoryMenuScreen
 import com.indoone.menu.plugins.PluginsMenuScreen
-import com.indoone.menu.plugins.email.EmailPluginMenuScreen
 import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.menu.chathistory.ChatHistoryMenuScreen
@@ -103,7 +102,6 @@ fun MenuDrawer(
     var showChatHistory by remember { mutableStateOf(false) }
     var showDataPrivacy by remember { mutableStateOf(false) }
     var showPlugins by remember { mutableStateOf(false) }
-    var showEmailPlugin by remember { mutableStateOf(false) }
     var showGmailPlugin by remember { mutableStateOf(false) }
     var showZohoMailPlugin by remember { mutableStateOf(false) }
 
@@ -124,22 +122,7 @@ fun MenuDrawer(
             GmailPluginMenuScreen(
                 onBack = {
                     showGmailPlugin = false
-                    showEmailPlugin = true
-                },
-            )
-        }
-        return
-    }
-    if (showEmailPlugin) {
-        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            EmailPluginMenuScreen(
-                onBack = {
-                    showEmailPlugin = false
                     showPlugins = true
-                },
-                onGmailClick = {
-                    showEmailPlugin = false
-                    showGmailPlugin = true
                 },
             )
         }
@@ -151,9 +134,9 @@ fun MenuDrawer(
                 onBack = {
                     showPlugins = false
                 },
-                onEmailClick = {
+                onGmailClick = {
                     showPlugins = false
-                    showEmailPlugin = true
+                    showGmailPlugin = true
                 },
             )
         }

@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
@@ -62,7 +61,7 @@ private val ConnectedGreen = Color(0xFF218653)
 @Composable
 fun PluginsMenuScreen(
     onBack: () -> Unit,
-    onEmailClick: () -> Unit,
+    onGmailClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -89,7 +88,7 @@ fun PluginsMenuScreen(
             }
             .onFailure {
                 gmailConnected = null
-                statusMessage = "Could not check the Email connection. Try again."
+                statusMessage = "Could not check the Gmail connection. Try again."
             }
 
         runCatching { ZohoMailPluginApi.getConnectionStatus() }
@@ -228,7 +227,7 @@ fun PluginsMenuScreen(
             statusMessage = ""
             try {
                 when (provider) {
-                    "email" -> {
+                    "gmail" -> {
                         GmailPluginApi.disconnect()
                         gmailConnected = false
                         gmailAddress = ""
@@ -246,7 +245,7 @@ fun PluginsMenuScreen(
                     }
                 }
                 statusMessage = when (provider) {
-                    "email" -> "Email disconnected."
+                    "gmail" -> "Gmail disconnected."
                     "zoho-mail" -> "Zoho Mail disconnected."
                     else -> "GitHub disconnected."
                 }
@@ -291,21 +290,21 @@ fun PluginsMenuScreen(
             }
 
             MailProviderRow(
-                title = "Email",
+                title = "Gmail",
                 accountAddress = gmailAddress,
                 connected = gmailConnected,
-                isZoho = false,
-                busy = checking || disconnectingProvider == "email",
-                onAdd = onEmailClick,
-                onReauthorize = onEmailClick,
-                onDisconnect = { pendingDisconnect = "email" },
+                logoRes = R.drawable.gmail_logo,
+                busy = checking || disconnectingProvider == "gmail",
+                onAdd = onGmailClick,
+                onReauthorize = onGmailClick,
+                onDisconnect = { pendingDisconnect = "gmail" },
             )
 
             MailProviderRow(
                 title = "Zoho Mail",
                 accountAddress = zohoAddress,
                 connected = zohoConnected,
-                isZoho = true,
+                logoRes = R.drawable.zoho_mail_logo,
                 busy = checking || zohoAuthorizing || disconnectingProvider == "zoho-mail",
                 onAdd = { startZohoAuthorization() },
                 onReauthorize = { startZohoAuthorization() },
@@ -370,7 +369,7 @@ fun PluginsMenuScreen(
 
     if (pendingDisconnect != null) {
         val disconnectTitle = when (pendingDisconnect) {
-            "email" -> "Disconnect Email?"
+            "gmail" -> "Disconnect Gmail?"
             "zoho-mail" -> "Disconnect Zoho Mail?"
             else -> "Disconnect GitHub?"
         }
@@ -415,7 +414,7 @@ private fun MailProviderRow(
     title: String,
     accountAddress: String,
     connected: Boolean?,
-    isZoho: Boolean,
+    logoRes: Int,
     busy: Boolean,
     onAdd: () -> Unit,
     onReauthorize: () -> Unit,
@@ -443,20 +442,11 @@ private fun MailProviderRow(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (isZoho) {
-                        Image(
-                            painter = painterResource(R.drawable.zoho_mail_logo),
-                            contentDescription = "Zoho Mail logo",
-                            modifier = Modifier.size(40.dp),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Outlined.Email,
-                            contentDescription = "Email",
-                            tint = AppPurple,
-                            modifier = Modifier.size(29.dp),
-                        )
-                    }
+                    Image(
+                        painter = painterResource(logoRes),
+                        contentDescription = "$title logo",
+                        modifier = Modifier.size(40.dp),
+                    )
                 }
             }
 
@@ -473,7 +463,7 @@ private fun MailProviderRow(
                 when (connected) {
                     true -> {
                         Text(
-                            text = accountAddress.ifBlank { if (isZoho) "Zoho Mail account" else "Gmail account" },
+                            text = accountAddress.ifBlank { "$title account" },
                             color = Muted,
                             fontSize = 12.sp,
                             maxLines = 1,
@@ -485,7 +475,7 @@ private fun MailProviderRow(
                         )
                     }
                     false -> Text(
-                        text = if (isZoho) "Connect your Zoho Mail account" else "Connect your Gmail account",
+                        text = "Connect your $title account",
                         color = Muted,
                         fontSize = 12.sp,
                     )
