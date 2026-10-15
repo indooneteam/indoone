@@ -8,12 +8,13 @@ import android.os.PowerManager
 import android.provider.Settings
 
 /**
- * The battery-optimisation exemption, which is what keeps a Vibe session alive
- * while the app is in another app or the screen is off.
+ * The battery-optimisation exemption is what keeps a Vibe session alive while the
+ * app is in another app or the screen is off.
  *
- * Asking for it shows a system dialog that covers the app. Asking on every launch
- * made the app look like it closed the moment it opened, so the request is
- * remembered and made at most once per install.
+ * Asking for it opens a full system screen. That request must never run on the
+ * launch path: run there, it covered the app the moment it opened, so the app
+ * looked like it closed on launch. It is offered only from a screen the user
+ * opened, and remembered so it is asked at most once.
  */
 class BatteryOptimisationStore(context: Context) {
     private val preferences = context.getSharedPreferences(
@@ -28,13 +29,19 @@ class BatteryOptimisationStore(context: Context) {
 
     fun wasRequested(): Boolean = preferences.getBoolean(KEY_REQUESTED, false)
 
-    private fun markRequested() {
-        preferences.edit().putBoolean(KEY_REQUESTED, true).apply()
+    /**
+     * commit(), not apply(): the flag must already be on disk before the system
+     * screen takes the app off the foreground, or it can be lost and asked again.
+     */
+    fun markRequested() {
+        preferences.edit().putBoolean(KEY_REQUESTED, true).commit()
     }
 
-    /** Asks once, ever, and only while the exemption is not already in place. */
-    fun requestOnce(activity: Activity) {
-        if (wasRequested() || isExempt(activity)) return
+    /** True while the user should be offered the exemption: missing and not yet asked. */
+    fun shouldOffer(context: Context): Boolean = !wasRequested() && !isExempt(context)
+
+    /** Opens the system exemption screen. Only ever called from a tap. */
+    fun openExemptionSettings(activity: Activity) {
         markRequested()
         runCatching {
             activity.startActivity(
