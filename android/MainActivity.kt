@@ -77,7 +77,6 @@ import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.update.UpdateDownloadWorker
 import com.indoone.settings.diagnostics.CrashLogStore
-import com.indoone.settings.power.BatteryOptimisationStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
@@ -118,17 +117,6 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
-    override fun onResume() {
-        super.onResume()
-
-        // Vibe keeps its voice session alive while the app is in another app or the
-        // screen is off, and Android freezes an app that is still subject to battery
-        // optimisation. The request is remembered: the system dialog it opens covers
-        // the app, so asking on every launch looked like the app closing the moment
-        // it opened.
-        BatteryOptimisationStore(this).requestOnce(this)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configureSystemBarsDirectly()

@@ -41,12 +41,15 @@ import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.MicOff
 import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material.icons.outlined.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +67,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
+import com.indoone.settings.power.BatteryOptimisationStore
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -115,6 +119,46 @@ fun VibeScreen(
         } else {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
+
+    val batteryStore = remember { BatteryOptimisationStore(context) }
+    var showBatteryOffer by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        showBatteryOffer = batteryStore.shouldOffer(context)
+    }
+
+    if (showBatteryOffer) {
+        AlertDialog(
+            onDismissRequest = { showBatteryOffer = false },
+            title = { Text("Keep Vibe running") },
+            text = {
+                Text(
+                    "Vibe keeps talking while the screen is off only if Indoone " +
+                        "is allowed to ignore battery optimisation. Allow it now?",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBatteryOffer = false
+                        activity?.let { batteryStore.openExemptionSettings(it) }
+                    },
+                ) {
+                    Text("Allow")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        batteryStore.markRequested()
+                        showBatteryOffer = false
+                    },
+                ) {
+                    Text("Not now")
+                }
+            },
+        )
     }
 
     DisposableEffect(activity) {
