@@ -388,9 +388,18 @@ body {
 
 .drawer {
   position: fixed;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
   z-index: 20;
   pointer-events: none;
+  /* The panel waits off to the left at -105%. Now that the drawer is only as
+     wide as the phone, that waiting position is over the page background
+     rather than off the window, so it has to be clipped here. */
+  overflow: hidden;
 }
 
 .drawer.open {
@@ -493,9 +502,16 @@ body {
   margin-top: auto;
 }
 
+/* Over the app, not over the window: the same width and the same centre, so
+   the dimming and the sheet land on the phone and not on the empty space. */
 .overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
   z-index: 30;
   background: #19141f55;
   display: grid;
@@ -922,22 +938,16 @@ body.auth-open {
 }
 
 
-/* This used to force a 430px phone column on every viewport, which is why a
-   desktop browser showed a narrow strip in the middle of a wide window. A page
-   on the web should use the room it has: a phone keeps the phone width, a
-   desktop fills the window. */
+/* The shell is the phone. It keeps the phone's width on every viewport and
+   sits in the middle, which is what the app looks like and what a browser on a
+   phone already shows.
+   It used to widen to the whole window at 760px and up, so on a laptop every
+   row was far wider than its contents and the whole page read as small. */
 .phone-shell {
   width: 100% !important;
   max-width: 430px !important;
   margin-left: auto !important;
   margin-right: auto !important;
-}
-
-@media (min-width: 760px) {
-  .phone-shell {
-    max-width: 100% !important;
-    box-shadow: none;
-  }
 }
 
 html, body { height: 100%; }
@@ -1075,9 +1085,10 @@ html, body { height: 100%; }
   .drawer-hover-zone {
     display: block;
     position: fixed;
-    left: 0;
     top: 0;
     bottom: 0;
+    /* the shell's left edge: half the window, less half of 430px */
+    left: max(0px, calc(50% - 215px));
     width: 14px;
     z-index: 19;
   }
