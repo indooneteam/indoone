@@ -69,7 +69,7 @@
 
       if (user) {
         const snapshot = await window.IndooneFirebase
-          .database()
+          .database
           .ref('users')
           .child(user.uid)
           .child('notifications')
@@ -154,7 +154,7 @@
 
       if (user) {
         const snapshot = await window.IndooneFirebase
-          .database()
+          .database
           .ref('users')
           .child(user.uid)
           .child('notifications')
