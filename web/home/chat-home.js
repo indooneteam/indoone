@@ -6,7 +6,7 @@
     // to send. It goes first, because the others call it.
     'home/message/chat-api.js?v=20261025a',
     'home/message/cloud-chat.js?v=20261015a',
-    'home/message/chat-store.js?v=20261015a',
+    'home/message/chat-store.js?v=20261031b',
     'home/message/message.js?v=20261015a',
     'home/send/send.js?v=20261015a',
     'home/voice/voice.js?v=20261015a',

@@ -33,7 +33,7 @@
   }
 
   function signedIn() {
-    return Boolean(window.IndooneFirebase?.auth?.().currentUser);
+    return Boolean(window.IndooneFirebase?.auth?.currentUser);
   }
 
   // Load the account's newest conversation, falling back to the cache when

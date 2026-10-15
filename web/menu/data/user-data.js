@@ -3,7 +3,7 @@
 // account shows the same data in both.
 (() => {
   function user() {
-    return window.IndooneFirebase?.auth?.().currentUser || null;
+    return window.IndooneFirebase?.auth?.currentUser || null;
   }
 
   function requireUser() {
@@ -17,7 +17,7 @@
   }
 
   function db() {
-    const database = window.IndooneFirebase?.database?.();
+    const database = window.IndooneFirebase?.database;
 
     if (!database) {
       throw new Error('Indoone storage is unavailable.');
