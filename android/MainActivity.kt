@@ -61,7 +61,6 @@ import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
 import com.indoone.menu.plugins.PluginsMenuScreen
-import com.indoone.menu.plugins.email.EmailPluginMenuScreen
 import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.notifications.NotificationPreferences
@@ -93,7 +92,6 @@ private enum class AppRoute {
     SETTINGS,
     PROFILE,
     PLUGINS,
-    EMAIL_PLUGIN,
     GMAIL_PLUGIN,
     ZOHO_MAIL_PLUGIN,
     CHANGE_MOBILE,
@@ -436,11 +434,6 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.PLUGINS -> PluginsMenuScreen(
                         onBack = { navigate(AppRoute.PROFILE) },
-                        onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
-                    )
-
-                    AppRoute.EMAIL_PLUGIN -> EmailPluginMenuScreen(
-                        onBack = { navigate(AppRoute.PLUGINS) },
                         onGmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
                     )
 
