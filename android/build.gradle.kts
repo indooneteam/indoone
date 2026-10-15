@@ -16,7 +16,7 @@ android {
         minSdk = 23
         targetSdk = 37
         versionCode = System.getenv("INDOONE_BUILD_VERSION_CODE")?.toIntOrNull() ?: 4
-        versionName = "0.1.0"
+        versionName = "2.1.16"
 
         val channel = when (System.getenv("GITHUB_REF_NAME")) {
             "develop" -> "develop"
