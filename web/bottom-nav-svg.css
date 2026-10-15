@@ -147,38 +147,23 @@
     box-shadow: none !important;
   }
 
-  /* Standing up, each tab gets its own soft surface so it reads as a button
-     rather than as a mark floating on the tray. The app draws no surface on an
-     inactive tab because in a bar the tray's edge already frames it; in a tall
-     rail there is no such frame, and the four looked washed out.
-     The active tab keeps the app's violet pill - .nav-btn.active is more
-     specific, so it still wins. */
+  /* In the app only the tab you are on carries a surface; the other three are
+     bare, and it is their switch to one that brings its background in. A first
+     attempt at this gave all four a soft white card so they would read as
+     buttons in a tall rail, and that was wrong: it put a background on the
+     three that the app leaves plain. They are bare again here.
+     .nav-btn.active, above, still paints the app's violet pill - it is more
+     specific, so it wins, and it is the only one that does. */
+  /* Only the size is set here. The surface is left alone on purpose: the base
+     .nav-btn above already draws none, and .nav-btn.active above paints the
+     app's violet pill. Writing "background: transparent !important" here to
+     say the same thing looked harmless and was not - !important beats the
+     active rule's plain background whatever its specificity, so it wiped the
+     pill off the tab you are on as well. The four measured as transparent,
+     the active one among them. */
   #app.phone-shell .bottom-nav .nav-btn {
     flex: 0 0 auto !important;
     width: 100% !important;
     height: 82px !important;
-    padding: 12px 4px !important;
-    border-radius: 16px !important;
-    background: rgba(255, 255, 255, 0.78) !important;
-    border: 1px solid #ffffff !important;
-    box-shadow: 0 3px 9px rgba(91, 63, 168, 0.1) !important;
-  }
-
-  /* the app dims an inactive tab's icon to 90%; in the rail that reads as
-     dull, so it comes back to full strength */
-  #app.phone-shell .bottom-nav .nav-btn:not(.active) .nav-icon {
-    opacity: 1 !important;
-  }
-
-  /* the app gives the icon 19dp and the label 9sp; standing up they get a
-     little more room */
-  #app.phone-shell .bottom-nav .nav-btn .nav-icon {
-    width: 22px !important;
-    height: 22px !important;
-  }
-
-  #app.phone-shell .bottom-nav .nav-btn span {
-    font-size: 10px !important;
-    font-weight: 700 !important;
   }
 }
