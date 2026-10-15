@@ -118,6 +118,11 @@ class AutoLockController(private val context: Context) {
 
         val root = android.widget.FrameLayout(currentActivity)
         val compose = ComposeView(currentActivity).apply {
+            // A dialog's window is not part of the activity's view tree, so Compose
+            // cannot find the activity's owners by walking up the tree, and throws
+            // "ViewTreeLifecycleOwner not found". Hand them over directly.
+            androidx.lifecycle.ViewTreeLifecycleOwner.set(this, currentActivity)
+            androidx.savedstate.ViewTreeSavedStateRegistryOwner.set(this, currentActivity)
             setContent {
                 MaterialTheme {
                     AutoLockUnlockScreen(
