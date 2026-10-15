@@ -1,0 +1,448 @@
+/* The chat home, matched to HomeScreen.kt. */
+
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: #fff;
+}
+
+.chat-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 18px;
+}
+
+/* ------------------------------------------------------ the welcome block */
+
+.chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 0 8px;
+  text-align: center;
+}
+
+.chat-welcome[hidden] {
+  display: none;
+}
+
+.welcome-title {
+  margin: 12px 0 0;
+  color: #703be2;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.welcome-sub {
+  margin: 4px 0 0;
+  color: #81758d;
+  font-size: 12px;
+}
+
+.welcome-card {
+  width: 100%;
+  margin-top: 18px;
+  padding: 15px 18px;
+  border-radius: 20px;
+  background: #faf8ff;
+  border: 1px solid #e9e0f7;
+  text-align: left;
+}
+
+.welcome-hi {
+  display: block;
+  color: #352742;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.welcome-line {
+  margin: 3px 0 0;
+  color: #6f6578;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* Two rows of two, each chip filling half the row. */
+.quick-row {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quick-row + .quick-row {
+  margin-top: 8px;
+}
+
+.quick-chip {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid #d9c9f2;
+  background: #fff;
+  color: #5e2dd2;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-chip:hover {
+  background: #faf7ff;
+}
+
+/* ---------------------------------------------------------- the composer */
+
+.chat-composer {
+  flex: none;
+  background: #fff;
+}
+
+.pending-attachments {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 18px 0;
+}
+
+.pending-attachments[hidden] {
+  display: none;
+}
+
+.pending-item {
+  flex: none;
+  width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.pending-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.pending-thumb img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 9px;
+  display: block;
+}
+
+.pending-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 9px;
+  background: #f0e9fb;
+  color: #5e2dd2;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.pending-remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #292431;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pending-name {
+  width: 82px;
+  color: #5e2dd2;
+  font-size: 10px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px 10px 16px;
+}
+
+.composer-round {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: #f5f2fb;
+  color: #703be2;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.composer-plus {
+  margin-right: 0;
+}
+
+.composer-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid #e5e0ed;
+  border-radius: 18px;
+  background: #faf9fc;
+  padding: 13px 15px;
+}
+
+.composer-field textarea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  resize: none;
+  font: inherit;
+  font-size: 15px;
+  color: #17151d;
+  max-height: 120px;
+  display: block;
+}
+
+.composer-field textarea::placeholder {
+  color: #8a8492;
+}
+
+.composer-mic {
+  width: 48px;
+  height: 48px;
+  font-size: 21px;
+  color: #4a4650;
+}
+
+.composer-mic.listening {
+  background: #703be2;
+  color: #fff;
+}
+
+.composer-send {
+  width: 48px;
+  height: 48px;
+  background: #703be2;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.composer-send:disabled {
+  background: #e7e3ec;
+  color: #9b95a3;
+  cursor: default;
+}
+
+.composer-send[hidden],
+.composer-vibe[hidden] {
+  display: none;
+}
+
+/* The app swaps the last button: Send when there is something to send, the
+   Vibe button when there is not. */
+.composer-vibe {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: #21143b;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.composer-vibe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* VibeButton.kt gives this gradient radius = 0.49 of the button, so 23.5px
+     on the 48px circle. */
+  background: radial-gradient(
+    circle 23.5px at 50% 50%,
+    rgba(227, 200, 255, .96) 0%,
+    rgba(154, 92, 255, .78) 33%,
+    rgba(111, 53, 218, .26) 67%,
+    transparent 100%
+  );
+}
+
+/* The white core, breathing between 0.88 and 1.08. */
+.composer-vibe::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  margin: -17% 0 0 -17%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .94);
+  animation: vibePulse 1100ms ease-in-out infinite alternate;
+}
+
+.composer-vibe .vibe-orbit {
+  position: absolute;
+  inset: 0;
+  animation: vibeOrbit 3200ms linear infinite;
+}
+
+/* The dot that goes round, with the small white one on top of it. */
+.composer-vibe .vibe-orbit i {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  width: 11%;
+  height: 11%;
+  margin: -5.5% 0 0 -5.5%;
+  border-radius: 50%;
+  background: #d6b7ff;
+}
+
+.composer-vibe .vibe-orbit i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 45%;
+  height: 45%;
+  margin: -22.5% 0 0 -22.5%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .85);
+}
+
+/* The highlight in the top left corner. */
+.composer-vibe .vibe-shine {
+  position: absolute;
+  left: 8%;
+  top: 4%;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, .24) 0%,
+    transparent 70%
+  );
+}
+
+@keyframes vibePulse {
+  from { transform: scale(.88); }
+  to   { transform: scale(1.08); }
+}
+
+@keyframes vibeOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.voice-error {
+  margin: 0;
+  padding: 2px 18px;
+  color: #b42318;
+  font-size: 11px;
+}
+
+.voice-error[hidden] {
+  display: none;
+}
+
+.listening-card {
+  display: flex;
+  align-items: center;
+  margin: 4px 18px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: #f5f2fb;
+}
+
+.listening-card[hidden] {
+  display: none;
+}
+
+.listening-mic {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #703be2;
+  color: #fff;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+}
+
+.listening-card span:last-child {
+  margin-left: 10px;
+  color: #4a4650;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* While the saved conversation is being read. */
+.chat-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.chat-loading span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.2px solid #e3d9f8;
+  border-top-color: #703be2;
+  animation: chatSpin 800ms linear infinite;
+}
+
+@keyframes chatSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* While a reply is coming the app puts a spinner inside the Send button. */
+.composer-send {
+  position: relative;
+}
+
+.composer-send .send-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.2px solid #ffffff66;
+  border-top-color: #fff;
+  animation: chatSpin 800ms linear infinite;
+}
+
+.composer-send .send-spinner[hidden],
+.composer-send .send-arrow[hidden] {
+  display: none;
+}
+
+@keyframes chatSpin {
+  to { transform: rotate(360deg); }
+}

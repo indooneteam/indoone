@@ -76,6 +76,7 @@ import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
 import com.indoone.settings.update.UpdateDownloadWorker
+import com.indoone.settings.diagnostics.CrashLogStore
 import com.indoone.settings.power.BatteryOptimisationStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
@@ -159,11 +160,12 @@ class MainActivity : ComponentActivity() {
                 val notificationPreferences = remember { NotificationPreferences(this@MainActivity) }
                 val notificationRepository = remember { NotificationRepository.getInstance(applicationContext) }
                 val unreadNotificationCount by notificationRepository.observeUnreadCount().collectAsState(initial = 0)
-                val notificationPermissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestPermission(),
-                ) { granted ->
-                    if (granted) notificationPreferences.markPermissionRequested()
-                }
+                // One prompt for everything the app needs, shown once right after
+                // sign-in. Declining is fine: the app carries on, and the screen that
+                // needs a permission asks for it again when it is used.
+                val permissionBatchLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions(),
+                ) { }
 
                 // The download is background work, so the dialog only reflects it.
                 // Closing the dialog or leaving the app does not touch the work.
@@ -248,18 +250,28 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(Unit) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val granted = ContextCompat.checkSelfPermission(
-                            this@MainActivity,
-                            Manifest.permission.POST_NOTIFICATIONS,
-                        ) == PackageManager.PERMISSION_GRANTED
-                        if (granted) {
-                            notificationPreferences.markPermissionRequested()
-                        } else if (!notificationPreferences.wasPermissionRequested()) {
-                            notificationPreferences.markPermissionRequested()
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    val wanted = buildList {
+                        add(Manifest.permission.RECORD_AUDIO)
+                        add(Manifest.permission.CAMERA)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            add(Manifest.permission.POST_NOTIFICATIONS)
                         }
                     }
+                    val missing = wanted.filter { permission ->
+                        ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            permission,
+                        ) != PackageManager.PERMISSION_GRANTED
+                    }
+
+                    if (missing.isEmpty()) {
+                        notificationPreferences.markPermissionRequested()
+                        return@LaunchedEffect
+                    }
+                    if (notificationPreferences.wasPermissionRequested()) return@LaunchedEffect
+
+                    notificationPreferences.markPermissionRequested()
+                    permissionBatchLauncher.launch(missing.toTypedArray())
                 }
 
                 fun navigate(target: AppRoute) {
@@ -843,10 +855,42 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         dismissButton = {
-                            if (!isDownloadingUpdate) {
-                                TextButton(onClick = { updateDialogHidden = true }) {
-                                    Text("Later")
-                                }
+                            // Always offered: the download is background work, so
+                            // closing this page does not stop it.
+                            TextButton(onClick = { updateDialogHidden = true }) {
+                                Text("Later")
+                            }
+                        },
+                    )
+                }
+
+                // If the app closed on its own last time, say so and show why.
+                // Without this there is nothing to look at: the app has no crash
+                // reporting, so the reason was lost every time.
+                var lastCrash by remember {
+                    mutableStateOf(CrashLogStore.last(this@MainActivity))
+                }
+                if (lastCrash != null) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            CrashLogStore.clear(this@MainActivity)
+                            lastCrash = null
+                        },
+                        title = { Text("Indoone closed unexpectedly") },
+                        text = {
+                            Text(
+                                CrashLogStore.summary(lastCrash.orEmpty()) +
+                                    "\n\nPlease screenshot this and send it.",
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    CrashLogStore.clear(this@MainActivity)
+                                    lastCrash = null
+                                },
+                            ) {
+                                Text("Close")
                             }
                         },
                     )

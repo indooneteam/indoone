@@ -1,0 +1,28 @@
+.menu-feature-intro {
+  margin: 0 0 4px;
+  color: #24212a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.menu-feature-note {
+  margin: 0 0 12px;
+  color: #7a7482;
+  font-size: 12.5px;
+}
+
+.menu-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-feature-list .settings-row {
+  width: 100%;
+  border: 1px solid #efeaf4;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}

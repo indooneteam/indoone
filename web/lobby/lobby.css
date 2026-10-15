@@ -1,0 +1,57 @@
+/*
+ * The Lobby screen, as LobbyScreen.kt lays it out.
+ *
+ * The app's column is centred, with 22dp on either side:
+ *
+ *   INDOONE LOBBY      labelSmall      primary
+ *   the title          headlineSmall   onBackground, 6dp above
+ *   the message        bodyMedium      onSurfaceVariant, 10dp above, 12dp in
+ *
+ * Nothing else lives on the screen. The top bar and the bottom navigation are
+ * the shell's, the same as every other page's - which is what the app does too,
+ * since LobbyScreen.kt draws the same AppTopBar and AppBottomNav as the rest.
+ */
+
+.lobby-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 22px;
+  overflow-y: auto;
+}
+
+.lobby-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* the app's labelSmall eyebrow, in the theme's primary colour */
+.lobby-content .lobby-eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--primary, #5e2dd2);
+}
+
+/* headlineSmall */
+.lobby-content .lobby-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text, #1d1b22);
+}
+
+/* bodyMedium, 10dp above and 12dp in on both sides */
+.lobby-content .lobby-message {
+  margin: 10px 12px 0;
+  max-width: 310px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted, #6b6577);
+}

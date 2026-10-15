@@ -1,14 +1,14 @@
 package com.indoone.authentication.login
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,7 +38,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -98,7 +96,7 @@ fun LoginScreen(
     }
 
     AuthPage(showCard = false) {
-        BookPageTurn(
+        PageSwitch(
             page = page,
             pageContent = { currentPage ->
                 AuthBrand()
@@ -159,80 +157,27 @@ fun LoginScreen(
 }
 
 @Composable
-private fun BookPageTurn(
+private fun PageSwitch(
     page: LoginPage,
     pageContent: @Composable androidx.compose.foundation.layout.ColumnScope.(LoginPage) -> Unit,
 ) {
-    var displayedPage by rememberSaveable { mutableStateOf(page) }
-    val turnProgress = remember { Animatable(1f) }
-
-    LaunchedEffect(page) {
-        if (page == displayedPage) {
-            turnProgress.snapTo(1f)
-            return@LaunchedEffect
-        }
-
-        turnProgress.snapTo(0f)
-
-        try {
-            turnProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 1100,
-                    easing = FastOutSlowInEasing,
-                ),
-            )
-            displayedPage = page
-            turnProgress.snapTo(1f)
-        } catch (_: kotlinx.coroutines.CancellationException) {
-            // A quick Back/Continue change cancels the current turn.
-            // The next effect starts from the current stable page.
-        }
-    }
-
-    val isTurning = page != displayedPage
-    val isTurningForward = page.ordinal > displayedPage.ordinal
-    val progress = turnProgress.value
-
-    // One physical page only:
-    // first half folds away, content swaps while edge-on, second half opens the new page.
-    val pageRotationY = if (!isTurning) {
-        0f
-    } else if (isTurningForward) {
-        if (progress <= 0.5f) {
-            -180f * progress
-        } else {
-            180f * progress - 180f
-        }
-    } else {
-        if (progress <= 0.5f) {
-            180f * progress
-        } else {
-            180f - 180f * progress
-        }
-    }
-
-    val visiblePage = if (!isTurning || progress < 0.5f) {
-        displayedPage
-    } else {
-        page
-    }
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Only one page/card is rendered. The content changes at the edge-on
-        // midpoint, so there is never a second full page underneath it.
+    // A plain crossfade between the login pages. This used to turn the card over in
+    // 3D like a book page, which read as the screen spinning rather than as a step
+    // forward, so it is a straight switch now.
+    Crossfade(
+        targetState = page,
+        animationSpec = tween(durationMillis = 220),
+        label = "login_page_switch",
+    ) { visiblePage ->
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
                     elevation = 14.dp,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(18.dp),
                     clip = false,
                 )
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
@@ -240,30 +185,24 @@ private fun BookPageTurn(
                             Color(0xFFF7F0E3),
                         ),
                     ),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(18.dp),
                 )
                 .border(
                     width = 1.dp,
                     color = Color(0xFFD8CBB8),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(18.dp),
                 )
-                .graphicsLayer {
-                    rotationY = pageRotationY
-                    cameraDistance = 18f * density
-                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(
-                        pivotFractionX = if (isTurningForward) 0f else 1f,
-                        pivotFractionY = 0.5f,
-                    )
-                }
                 .padding(horizontal = 22.dp, vertical = 24.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                content = { pageContent(visiblePage) },
-            )
+            ) {
+                pageContent(visiblePage)
+            }
         }
     }
 }
+
 @Composable
 private fun LoginEntryPage(
     identifier: String,

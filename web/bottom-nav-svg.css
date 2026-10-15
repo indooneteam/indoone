@@ -1,0 +1,169 @@
+/* The bottom navigation bar, built to match AppBottomNav in the app.
+ *
+ * The app draws a soft neumorphic pill: a light violet bar, an inner rounded
+ * tray with a white hairline and a wide soft shadow, and one raised, tinted
+ * pill behind whichever tab is active. The web had a flat white strip, so the
+ * bar did not read as the same control. These are the app's colours and
+ * measurements.
+ */
+
+.bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 5px;
+  border-radius: 30px;
+  background: linear-gradient(
+    to bottom,
+    #faf8ff,
+    #f5f0fa 50%,
+    #eee7f7
+  );
+  border: 1px solid #ffffff;
+  box-shadow: 0 10px 26px #5b3fa81f;
+}
+
+.nav-btn {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 56px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  color: #344157;
+  font: inherit;
+  cursor: pointer;
+  transition: background .18s, color .18s, box-shadow .18s;
+}
+
+.nav-btn span {
+  line-height: 11px;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.nav-btn.active {
+  background: linear-gradient(
+    to bottom,
+    #f0e6ff,
+    #e0ceff 50%,
+    #e9dafa
+  );
+  border: 1px solid #ffffff;
+  box-shadow: 0 5px 13px #6d35d02e;
+  color: #6d35d0;
+}
+
+.nav-btn.active span {
+  font-weight: 700;
+}
+
+.nav-icon {
+  width: 19px;
+  height: 19px;
+  display: block;
+  flex: none;
+  color: inherit;
+}
+
+.nav-btn:not(.active) .nav-icon {
+  opacity: 0.9;
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid #9a6be8;
+  outline-offset: -3px;
+  border-radius: 15px;
+}
+
+/* The Lobby status dot keeps the same family as the navigation icons. */
+.lobby-status-icon,
+.ui-svg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.lobby-svg-icon {
+  width: 19px;
+  height: 19px;
+}
+
+
+
+/* --------------------------------------------------------------------------
+   On a desktop the same four tabs stand up the right-hand side, from the top
+   of the window to the bottom, beside the page. It is the same control, the
+   same four tabs, the same colours and the same active pill - only the
+   direction and the stretch change.
+
+   This lives here, not in style.css, for two reasons: this file is loaded
+   after style.css, and it is loaded after shared/safe-layout/safe-layout.css,
+   which pins the bar's height and padding down with !important. A rule in
+   style.css is overruled by that file whatever it says, which is why the bar
+   stayed 58px tall and the four tabs bunched up at the top.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  #app.phone-shell .bottom-nav {
+    position: fixed !important;
+    /* below the top bar's line, not over it: the four start where the page
+       starts, the way they do in the app */
+    top: var(--indoone-topbar-base, 76px) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: var(--nav-w, 92px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    /* the four run the whole side: the first at the top, the last at the
+       bottom, equal room between them */
+    justify-content: space-between !important;
+    gap: 0 !important;
+    padding: 14px 8px !important;
+    /* the tray's own shape is a pill 30dp across; standing up it is a rail,
+       so the corners come off and the left edge carries the line instead */
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-left: 1px solid #eeeaf2 !important;
+    /* the app's background, not a flat white one. This is the tray gradient
+       from AppBottomNav: Color(0xFFFAF8FF), 0xFFF5F0FA, 0xFFEEE7F7. Painting
+       it white here is what made the four look washed out. */
+    background: linear-gradient(
+      to bottom,
+      #faf8ff,
+      #f5f0fa 50%,
+      #eee7f7
+    ) !important;
+    box-shadow: none !important;
+  }
+
+  /* In the app only the tab you are on carries a surface; the other three are
+     bare, and it is their switch to one that brings its background in. A first
+     attempt at this gave all four a soft white card so they would read as
+     buttons in a tall rail, and that was wrong: it put a background on the
+     three that the app leaves plain. They are bare again here.
+     .nav-btn.active, above, still paints the app's violet pill - it is more
+     specific, so it wins, and it is the only one that does. */
+  /* Only the size is set here. The surface is left alone on purpose: the base
+     .nav-btn above already draws none, and .nav-btn.active above paints the
+     app's violet pill. Writing "background: transparent !important" here to
+     say the same thing looked harmless and was not - !important beats the
+     active rule's plain background whatever its specificity, so it wiped the
+     pill off the tab you are on as well. The four measured as transparent,
+     the active one among them. */
+  #app.phone-shell .bottom-nav .nav-btn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 82px !important;
+  }
+}

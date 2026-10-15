@@ -1,0 +1,82 @@
+<section
+  class="menu-feature-shell plugins-shell"
+  data-menu-feature
+  data-menu-section="plugins"
+>
+  <!-- PluginsMenuScreen.kt: a back arrow in 0xFF5E2DD2 and the title at 21sp
+       Bold, then one card per provider. The web had a "Connected services"
+       intro and a flat list of Connect buttons instead. -->
+  <header class="plugins-head">
+    <button
+      type="button"
+      class="plugins-back"
+      data-close
+      aria-label="Back"
+    >
+      <span data-app-icon="arrowBack"></span>
+    </button>
+    <h2 class="plugins-title">Plugins</h2>
+  </header>
+
+  <div
+    class="plugins-providers"
+    id="menuPluginsProviders"
+  ></div>
+
+  <p
+    class="plugins-github-status"
+    id="menuPluginsGithubStatus"
+    hidden
+  ></p>
+
+  <p
+    class="plugins-checking"
+    id="menuPluginsChecking"
+  >
+    <span
+      class="plugins-spinner"
+      aria-hidden="true"
+    ></span>
+    <span>Checking connections…</span>
+  </p>
+
+  <p
+    class="plugins-status"
+    id="menuPluginsStatus"
+  ></p>
+
+  <!-- The app confirms a disconnect before it does it. -->
+  <div
+    class="plugins-dialog-backdrop"
+    id="menuPluginsDialog"
+    hidden
+  >
+    <div
+      class="plugins-dialog"
+      role="dialog"
+      aria-modal="true"
+    >
+      <h3 id="menuPluginsDialogTitle">Disconnect</h3>
+      <p>
+        Indoone AI will no longer be able to use this account until you
+        connect it again.
+      </p>
+      <div class="plugins-dialog-actions">
+        <button
+          type="button"
+          class="plugins-dialog-cancel"
+          id="menuPluginsDialogCancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="plugins-dialog-confirm"
+          id="menuPluginsDialogConfirm"
+        >
+          Disconnect
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,162 @@
+// The web counterpart of android/home/message/CloudChatRepository.kt.
+//
+// Same shape: the conversation and its messages live in Firestore, and the
+// Realtime Database keeps a light index at users/<uid>/chats/<id>. Without this
+// the web kept the thread in the browser only, so it never reached another
+// device and the Chat History page had nothing to list.
+(() => {
+  const COLLECTION = 'conversations';
+
+  function firebase() {
+    return window.IndooneFirebase;
+  }
+
+  function uid() {
+    const user = firebase()?.auth?.currentUser;
+
+    if (!user) {
+      throw new Error('Please sign in again.');
+    }
+
+    return user.uid;
+  }
+
+  function firestore() {
+    const db = firebase()?.firestore;
+
+    if (!db) {
+      throw new Error('Indoone storage is unavailable.');
+    }
+
+    return db;
+  }
+
+  function indexRef(conversationId) {
+    return firebase().database.ref('users').child(uid()).child('chats')
+      .child(conversationId);
+  }
+
+  // The app writes the parent with a merge so it never resets messageCount.
+  async function appendMessage(conversationId, role, content) {
+    const text = String(content || '').trim();
+
+    if (!conversationId || !text) {
+      return;
+    }
+
+    const db = firestore();
+    const user = uid();
+    const conversation = db.collection(COLLECTION).doc(conversationId);
+    const now = firebase().fieldValue.serverTimestamp();
+
+    const parent = {
+      userId: user,
+      updatedAt: now
+    };
+
+    if (role === 'user') {
+      parent.title = text.slice(0, 60);
+    }
+
+    await conversation.set(parent, { merge: true });
+
+    const snapshot = await conversation.get();
+    const existing = snapshot.exists ? snapshot.data() || {} : {};
+    const title = String(existing.title || '').trim() ||
+      (role === 'user' ? text.slice(0, 60) : 'New chat');
+    const messageCount = Number(existing.messageCount || 0) + 1;
+
+    const messageRef = conversation.collection('messages').doc();
+    const batch = db.batch();
+
+    batch.set(messageRef, { role, content: text, createdAt: now });
+    batch.set(conversation, {
+      userId: user,
+      title,
+      updatedAt: now,
+      messageCount,
+      closed: false,
+      closedAt: null
+    }, { merge: true });
+
+    await batch.commit();
+
+    // The index is only a pointer; a failure here must not fail the save.
+    try {
+      await indexRef(conversationId).set(true);
+    } catch (error) {
+      console.warn('Indoone chat index update failed:', error);
+    }
+  }
+
+  async function loadConversation(conversationId) {
+    const db = firestore();
+    const snapshot = await db.collection(COLLECTION).doc(conversationId).get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    const messages = await snapshot.ref
+      .collection('messages')
+      .orderBy('createdAt', 'asc')
+      .get();
+
+    return {
+      id: conversationId,
+      title: snapshot.data()?.title || 'Conversation',
+      messages: messages.docs
+        .map(doc => ({
+          role: doc.data()?.role || 'assistant',
+          content: doc.data()?.content || ''
+        }))
+        .filter(item => item.content)
+    };
+  }
+
+  async function loadLatest() {
+    const db = firestore();
+    const snapshot = await db.collection(COLLECTION)
+      .where('userId', '==', uid())
+      .limit(50)
+      .get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const latest = snapshot.docs
+      .map(doc => ({ id: doc.id, data: doc.data() || {} }))
+      .sort((a, b) => {
+        const at = a.data.updatedAt?.toMillis?.() || 0;
+        const bt = b.data.updatedAt?.toMillis?.() || 0;
+        return bt - at;
+      })[0];
+
+    return loadConversation(latest.id);
+  }
+
+  async function deleteConversation(conversationId) {
+    const db = firestore();
+    const conversation = db.collection(COLLECTION).doc(conversationId);
+    const messages = await conversation.collection('messages').get();
+    const batch = db.batch();
+
+    messages.docs.forEach(doc => batch.delete(doc.ref));
+    batch.delete(conversation);
+    await batch.commit();
+
+    try {
+      await indexRef(conversationId).remove();
+    } catch (error) {
+      console.warn('Indoone chat index remove failed:', error);
+    }
+  }
+
+  window.IndooneCloudChat = {
+    appendMessage,
+    loadConversation,
+    loadLatest,
+    deleteConversation
+  };
+})();
