@@ -84,14 +84,22 @@
 
   async function call(path, options = {}) {
     const idToken = await token();
+    const body = options.body;
+    const headers = {
+      'Authorization': `Bearer ${idToken}`,
+      ...(options.headers || {})
+    };
+
+    // A GET carries no body, so asking the browser to announce a JSON
+    // content-type on it only adds a header to the cross-origin preflight for
+    // no reason. It is sent when there is something to send.
+    if (body) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     const response = await fetch(`${BACKEND_URL}/${path}`, {
       ...options,
-      headers: {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      }
+      headers
     });
 
     if (!response.ok) {
