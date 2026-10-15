@@ -383,7 +383,6 @@ fun PluginsMenuScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                         contentDescription = "Back",
-                        tint = AppPurple,
                     )
                 }
                 Text(

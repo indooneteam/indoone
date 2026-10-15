@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,7 +77,11 @@ fun MenuAboutScreen(
                             .padding(horizontal = 11.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("×", color = Color(0xFF5D5666), fontSize = 22.sp, lineHeight = 22.sp)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF5D5666),
+                        )
                     }
                 }
                 Spacer(Modifier.height(10.dp))

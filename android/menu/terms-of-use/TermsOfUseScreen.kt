@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,7 +58,13 @@ fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyCli
             Column(Modifier.fillMaxSize().padding(23.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Terms of Use", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
-                    IconButton(onClick = onBack, modifier = Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))) { Text("×", fontSize = 21.sp, color = Color(0xFF2C2733)) }
+                    IconButton(onClick = onBack, modifier = Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF2C2733),
+                        )
+                    }
                 }
                 Text("Last Updated: 08/09/2026", Modifier.padding(top = 1.dp, bottom = 14.dp), color = Color(0xFF8A8492), fontSize = 11.sp)
                 LazyColumn(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
