@@ -1,9 +1,6 @@
 package com.indoone.menu.about
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,11 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,66 +44,54 @@ fun MenuAboutScreen(
         MenuAboutSection("Licenses", "Open Source Licenses"),
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0x5519141F))
-            .clickable(onClick = onBack),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Surface(
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 14.dp)
-                .clickable(onClick = {}),
-            color = Color.White,
-            shadowElevation = 14.dp,
-            shape = RoundedCornerShape(25.dp),
+                .fillMaxSize()
+                .padding(horizontal = 18.dp, vertical = 10.dp),
         ) {
-            Column(Modifier.padding(horizontal = 23.dp, vertical = 21.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "About Indoone",
-                        modifier = Modifier.weight(1f),
-                        color = Color(0xFF201C25),
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
                     )
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))
-                            .clickable(onClick = onBack)
-                            .padding(horizontal = 11.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF5D5666),
-                        )
-                    }
                 }
-                Spacer(Modifier.height(10.dp))
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    sections.forEach { section ->
-                        Column(Modifier.fillMaxWidth()) {
-                            HorizontalDivider(color = Color(0xFFEEE8F4))
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(section.title, color = Color(0xFF24202A), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        section.description,
-                                        modifier = Modifier.padding(top = 3.dp),
-                                        color = Color(0xFF756F7F),
-                                        fontSize = 11.sp,
-                                        lineHeight = 16.sp,
-                                    )
-                                }
+                Text(
+                    "About Indoone",
+                    modifier = Modifier.padding(start = 4.dp),
+                    color = Color(0xFF2C2733),
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                sections.forEach { section ->
+                    Column(Modifier.fillMaxWidth()) {
+                        HorizontalDivider(color = Color(0xFFEEE8F4))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(section.title, color = Color(0xFF24202A), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    section.description,
+                                    modifier = Modifier.padding(top = 3.dp),
+                                    color = Color(0xFF756F7F),
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                )
                             }
                         }
                     }
