@@ -103,7 +103,7 @@ window.initMenuTrash = async function () {
               .filter(item => Number(item?.id) !== Number(id));
 
             window.renderAccounts?.();
-            document.getElementById('overlay')?.classList.add('hidden');
+            window.closeMenuPage?.();
             toast('Account restored successfully');
           } catch (error) {
             restoreButton.disabled = false;

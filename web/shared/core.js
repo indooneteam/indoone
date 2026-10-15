@@ -55,6 +55,9 @@ window.closeOverlay = function (event) {
 
 window.closeModal = function () {
   overlay?.classList.add('hidden');
+  // a menu feature is a page of the shell now, so leaving one is part of
+  // closing up, not only hiding the dimming layer
+  window.closeMenuPage?.();
 };
 
 // The Home tab shows the chat page, which is #homeContent.

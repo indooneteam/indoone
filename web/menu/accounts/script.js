@@ -2,7 +2,9 @@
   function goToAccounts() {
     window.closeModal?.();
     window.closeDrawer?.();
-    document.getElementById('homeNav')?.click();
+    // the accounts page, not the Home tab: Home is the chat page now, so
+    // clicking it put this row on the wrong screen
+    window.showAccounts?.({ remember: true });
     return false;
   }
 

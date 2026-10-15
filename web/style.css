@@ -636,6 +636,29 @@ body {
   display: none;
 }
 
+/* The menu's pages. MenuDrawer.kt swaps the whole screen for Profile, Memory,
+   Plugins and the rest, so this is a page of the shell: the same width and the
+   same padding as the accounts page, no card, no dimming, no rise-in. */
+.menu-content {
+  display: block;
+  width: 100%;
+  padding: 16px 18px 18px;
+  overflow-y: auto;
+}
+
+.menu-content[hidden] {
+  display: none;
+}
+
+.menu-content .menu-feature-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* The account detail view is still a dialog - it opens over the accounts page
+   rather than replacing it - so it keeps the card the menu's pages gave up. */
 .modal {
   width: min(430px, 100%);
   max-height: min(88vh, calc(100dvh - 28px));

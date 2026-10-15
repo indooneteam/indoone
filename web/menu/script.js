@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261014a';
+  const ASSET_VERSION = '20261031a';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
@@ -100,13 +100,86 @@
     }
   }
 
-  function showOverlay() {
-    document.getElementById('overlay')?.classList.remove('hidden');
+  // A menu feature is a page. MenuDrawer.kt replaces the whole screen, and the
+  // web was putting each one into a 430px card over a dimmed page. The card
+  // and the dimming are gone; the feature takes the shell's page area, and the
+  // four tabs keep their place on the right.
+  const PAGE_IDS = [
+    'homeContent',
+    'content',
+    'connectContent',
+    'lobbyContent',
+    'settingsContent'
+  ];
+
+  // which page to come back to, remembered when the first feature is opened
+  let pageBeforeMenu = null;
+
+  function visiblePage() {
+    return PAGE_IDS.find(id => {
+      const element = document.getElementById(id);
+      return element && !element.hasAttribute('hidden');
+    }) || 'homeContent';
   }
 
-  function hideOverlay() {
-    document.getElementById('overlay')?.classList.add('hidden');
+  function showMenuPage() {
+    const page = document.getElementById('modal');
+    if (!page) return;
+
+    if (pageBeforeMenu === null) pageBeforeMenu = visiblePage();
+
+    PAGE_IDS.forEach(id => {
+      document.getElementById(id)?.setAttribute('hidden', '');
+    });
+    document.querySelector('[data-notifications-page]')?.setAttribute('hidden', '');
+    document.getElementById('addBtn')?.setAttribute('hidden', '');
+    document.getElementById('searchWrap')?.setAttribute('hidden', '');
+
+    page.removeAttribute('hidden');
+    page.scrollTop = 0;
   }
+
+  // Going back puts the page that was there before, exactly as it was. Nothing
+  // about that page is rebuilt, so nothing about it can be disturbed.
+  function closeMenuPage() {
+    const page = document.getElementById('modal');
+    if (!page || page.hasAttribute('hidden')) return;
+
+    const back = pageBeforeMenu || 'homeContent';
+    pageBeforeMenu = null;
+
+    page.setAttribute('hidden', '');
+    document.getElementById(back)?.removeAttribute('hidden');
+
+    const tab = back === 'content' ? 'homeNav'
+      : back === 'lobbyContent' ? 'lobbyNav'
+      : back === 'connectContent' ? 'connectNav'
+      : back === 'settingsContent' ? 'settingsNav'
+      : 'homeNav';
+
+    ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+      document.getElementById(id)?.classList.toggle('active', id === tab);
+    });
+
+    if (back === 'content') {
+      document.getElementById('addBtn')?.removeAttribute('hidden');
+      document.getElementById('searchWrap')?.removeAttribute('hidden');
+    } else {
+      document.getElementById('addBtn')?.setAttribute('hidden', '');
+      document.getElementById('searchWrap')?.setAttribute('hidden', '');
+    }
+  }
+
+  window.closeMenuPage = closeMenuPage;
+
+  // The features' own close buttons carry data-close. shared/events.js watches
+  // for those on the overlay, which is where a feature used to live; now that
+  // it is a page, the page has to watch for them itself.
+  document.getElementById('modal')?.addEventListener('click', event => {
+    if (event.target.closest('[data-close]')) {
+      closeMenuPage();
+    }
+  });
 
   function getFeatureBase(path) {
     return featurePaths[path] || `menu/${path}`;
@@ -152,10 +225,10 @@
       const initializer = window[initializerName];
       if (typeof initializer !== 'function') throw new Error('Menu feature initializer is unavailable.');
       const result = await initializer();
-      if (result === false) hideOverlay();
-      else showOverlay();
+      if (result === false) closeMenuPage();
+      else showMenuPage();
     } catch (error) {
-      hideOverlay();
+      closeMenuPage();
       window.toast?.(error?.message || 'Could not open menu item');
     }
   }
@@ -185,6 +258,12 @@
     drawer?.classList.remove('open');
     drawer?.setAttribute('aria-hidden', 'true');
   };
+
+  // The four tabs and the brand leave a menu page behind when they are used.
+  ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', closeMenuPage);
+  });
+  document.getElementById('brandBtn')?.addEventListener('click', closeMenuPage);
 
   window.openMenuFeature = function (feature) {
     const initializerName = featureInitializers[feature];

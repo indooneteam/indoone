@@ -42,7 +42,7 @@
   }
 
   function fillAccount(account) {
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('accountDialog');
 
     if (!modal || !account) {
       return false;
@@ -130,7 +130,7 @@
 
   async function open(id) {
     const account = findAccount(id);
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('accountDialog');
     const overlay = document.getElementById('overlay');
 
     if (!account || !modal || !overlay) {
@@ -192,7 +192,7 @@
   }
 
   async function deleteCurrent() {
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('accountDialog');
     const id = Number(
       modal?.dataset.accountId || 0
     );
@@ -222,7 +222,7 @@
   }
 
   function editCurrent() {
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('accountDialog');
     const id = Number(
       modal?.dataset.accountId || 0
     );
@@ -239,7 +239,7 @@
   }
 
   async function copyCurrentCode() {
-    const modal = document.getElementById('modal');
+    const modal = document.getElementById('accountDialog');
     const id = Number(
       modal?.dataset.accountId || 0
     );
