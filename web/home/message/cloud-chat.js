@@ -12,7 +12,7 @@
   }
 
   function uid() {
-    const user = firebase()?.auth?.().currentUser;
+    const user = firebase()?.auth?.currentUser;
 
     if (!user) {
       throw new Error('Please sign in again.');
@@ -22,7 +22,7 @@
   }
 
   function firestore() {
-    const db = firebase()?.firestore?.();
+    const db = firebase()?.firestore;
 
     if (!db) {
       throw new Error('Indoone storage is unavailable.');
@@ -32,7 +32,7 @@
   }
 
   function indexRef(conversationId) {
-    return firebase().database().ref('users').child(uid()).child('chats')
+    return firebase().database.ref('users').child(uid()).child('chats')
       .child(conversationId);
   }
 

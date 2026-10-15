@@ -5,7 +5,7 @@
     // was undefined and both the composer and Vibe threw the moment they tried
     // to send. It goes first, because the others call it.
     'home/message/chat-api.js?v=20261025a',
-    'home/message/cloud-chat.js?v=20261015a',
+    'home/message/cloud-chat.js?v=20261031e',
     'home/message/chat-store.js?v=20261031b',
     'home/message/message.js?v=20261015a',
     'home/send/send.js?v=20261015a',
@@ -166,6 +166,11 @@
     input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
   }
 
+  // home/home.js loads first and publishes IndooneHome with its own init, and
+  // events.js calls that one. This file's init - the one that loads chat-api,
+  // cloud-chat, chat-store and the rest of the chat - was never published and
+  // never called, so none of those modules ever loaded. Nothing could send, and
+  // nothing reached the history. It runs itself now.
   async function init() {
     const page = document.getElementById('homeContent');
 
@@ -264,4 +269,10 @@
   }
 
   window.IndooneChatHome = { init, refresh, syncComposer, scrollToBottom };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { void init(); }, { once: true });
+  } else {
+    void init();
+  }
 })();
