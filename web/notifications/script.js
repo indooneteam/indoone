@@ -65,7 +65,7 @@
     let items = [];
 
     try {
-      const user = window.IndooneFirebase?.auth?.().currentUser;
+      const user = window.IndooneFirebase?.auth?.currentUser;
 
       if (user) {
         const snapshot = await window.IndooneFirebase
@@ -90,7 +90,7 @@
 
   async function markAllRead() {
     try {
-      const user = window.IndooneFirebase?.auth?.().currentUser;
+      const user = window.IndooneFirebase?.auth?.currentUser;
 
       if (!user) return;
 
@@ -150,7 +150,7 @@
     let unread = false;
 
     try {
-      const user = window.IndooneFirebase?.auth?.().currentUser;
+      const user = window.IndooneFirebase?.auth?.currentUser;
 
       if (user) {
         const snapshot = await window.IndooneFirebase

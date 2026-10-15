@@ -31,7 +31,7 @@
   const BACKEND_URL = 'https://indooneai.duckdns.org';
 
   async function token() {
-    const user = window.IndooneFirebase?.auth?.().currentUser;
+    const user = window.IndooneFirebase?.auth?.currentUser;
 
     if (!user) {
       throw new Error('Please sign in again.');
@@ -59,7 +59,7 @@
   }
 
   async function statusOf(provider) {
-    const user = window.IndooneFirebase?.auth?.().currentUser;
+    const user = window.IndooneFirebase?.auth?.currentUser;
     const id = encodeURIComponent(user?.uid || '');
     return call(`${provider.status}?user_id=${id}`);
   }
