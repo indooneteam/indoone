@@ -22,7 +22,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -75,15 +78,13 @@ fun AccountsScreen(
                 },
             )
 
-            TextButton(
+            IconButton(
                 onClick = onBack,
                 modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 0.dp),
             ) {
-                Text(
-                    "← Back to Menu",
-                    color = Color(0xFF6B34DF),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Back",
                 )
             }
 

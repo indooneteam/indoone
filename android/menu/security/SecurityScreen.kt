@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,10 +72,10 @@ fun SecurityScreen(
                             .size(35.dp)
                             .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))
                     ) {
-                        Text(
-                            text = "Close",
-                            color = Color(0xFF5D5666),
-                            fontSize = 12.sp
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF5D5666),
                         )
                     }
                 }
