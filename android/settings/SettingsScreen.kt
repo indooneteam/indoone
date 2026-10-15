@@ -53,7 +53,6 @@ import com.indoone.authentication.AuthActivity
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
-import com.indoone.settings.about.AboutScreen
 import com.indoone.settings.applock.AppLockScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.applock.AppLockViewModel
@@ -97,10 +96,10 @@ fun SettingsScreen(
     val autoLockStore = remember { AutoLockStore(context) }
     val biometricAuthenticator = remember { activity?.let(::BiometricAuthenticator) }
     val flow = remember { AppLockViewModel() }
+    val versionName = remember { installedVersionName(context) }
 
     var appLockPage by remember { mutableStateOf(false) }
     var autoLockPage by remember { mutableStateOf(false) }
-    var aboutPage by remember { mutableStateOf(false) }
     var dangerZonePage by remember { mutableStateOf(false) }
     var logoutPage by remember { mutableStateOf(false) }
     var biometricOn by remember { mutableStateOf(biometricStore.isEnabled()) }
@@ -197,7 +196,13 @@ fun SettingsScreen(
                 SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
                 SettingsMenuItem(NotificationsIcon, "Notifications", onClick = onNotificationsClick)
-                SettingsMenuItem(InfoIcon, "About Indoone") { aboutPage = true }
+                SettingsMenuAction(
+                    icon = InfoIcon,
+                    title = "Version",
+                    subtitle = versionName,
+                    action = "Check for updates",
+                    onClick = onCheckForUpdates,
+                )
 
                 SettingsMenuItem(DangerZoneIcon, "Danger Zone") { dangerZonePage = true }
                 SettingsMenuItem(LogoutIcon, "Log out") { logoutPage = true }
@@ -312,17 +317,6 @@ fun SettingsScreen(
         )
     }
 
-    if (aboutPage) {
-        AboutScreen(
-            onBack = { aboutPage = false },
-            onAccountsClick = onAccountsClick,
-            onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
-            onSettingsClick = onSettingsClick,
-            onCheckForUpdates = onCheckForUpdates,
-        )
-    }
-
     if (dangerZonePage) {
         DangerZoneScreen(
             onBack = { dangerZonePage = false },
@@ -428,6 +422,24 @@ private fun SettingsMenuItem(
 }
 
 @Composable
+private fun SettingsMenuAction(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    action: String,
+    onClick: () -> Unit,
+) {
+    SettingsMenuRow(
+        icon = icon,
+        title = title,
+        modifier = Modifier.clickable(onClick = onClick),
+        subtitle = subtitle,
+    ) {
+        Text(action, color = Color(0xFF6330DB), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
 private fun SettingsMenuToggle(
     icon: ImageVector,
     title: String,
@@ -438,3 +450,8 @@ private fun SettingsMenuToggle(
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
+
+/** The real installed version, so this row never shows a build number. */
+private fun installedVersionName(context: android.content.Context): String = runCatching {
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName
+}.getOrNull().orEmpty()
