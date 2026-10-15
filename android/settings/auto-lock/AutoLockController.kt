@@ -1,10 +1,11 @@
 package com.indoone.settings.autolock
 
-import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
@@ -22,7 +23,7 @@ class AutoLockController(private val context: Context) {
     private val appLockStore = AppLockStore(context)
     private val biometricStore = BiometricUnlockStore(context)
     private var activity: ComponentActivity? = null
-    private var dialog: Dialog? = null
+    private var lockOverlay: View? = null
     private var pendingBackgroundDurationMs: Long? = null
     private var watchingInactivity = false
     private val inactivityRunnable = Runnable { showLock() }
@@ -76,8 +77,7 @@ class AutoLockController(private val context: Context) {
     fun onDestroyed() {
         watchingInactivity = false
         handler.removeCallbacksAndMessages(null)
-        dialog?.dismiss()
-        dialog = null
+        removeLockOverlay()
         activity = null
         pendingBackgroundDurationMs = null
     }
@@ -103,21 +103,17 @@ class AutoLockController(private val context: Context) {
         }
     }
 
+    /**
+     * The lock is a view added over the activity, not a dialog. A dialog has its own
+     * window, which is not part of the activity's view tree, so Compose cannot find
+     * the activity's owners from there and throws "ViewTreeLifecycleOwner not found".
+     * Added to the activity's own content, everything Compose needs is already there.
+     */
     private fun showLock() {
         val currentActivity = activity ?: return
-        if (dialog != null || !shouldLock()) return
+        if (lockOverlay != null || !shouldLock()) return
 
-        val lockDialog = Dialog(currentActivity)
-        lockDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
-        lockDialog.setCancelable(false)
-        lockDialog.setCanceledOnTouchOutside(false)
-        lockDialog.window?.let { dialogWindow ->
-            dialogWindow.statusBarColor = Color.WHITE
-            dialogWindow.navigationBarColor = Color.WHITE
-        }
-
-        val root = android.widget.FrameLayout(currentActivity)
-        val compose = ComposeView(currentActivity).apply {
+        val overlay = ComposeView(currentActivity).apply {
             setContent {
                 MaterialTheme {
                     AutoLockUnlockScreen(
@@ -145,32 +141,26 @@ class AutoLockController(private val context: Context) {
             }
         }
 
-        root.addView(compose, android.widget.FrameLayout.LayoutParams(-1, -1))
-        lockDialog.setContentView(root)
-        lockDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        lockDialog.setOnDismissListener { dialog = null }
-        dialog = lockDialog
-        runCatching { lockDialog.show() }
-            .onFailure {
-                dialog = null
-                lockDialog.dismiss()
-                return
-            }
-        lockDialog.window?.let { dialogWindow ->
-            dialogWindow.statusBarColor = Color.WHITE
-            dialogWindow.navigationBarColor = Color.WHITE
-            WindowCompat.setDecorFitsSystemWindows(dialogWindow, true)
-            WindowInsetsControllerCompat(dialogWindow, dialogWindow.decorView).apply {
-                isAppearanceLightStatusBars = true
-                isAppearanceLightNavigationBars = true
-            }
-            dialogWindow.setLayout(-1, -1)
+        lockOverlay = overlay
+        currentActivity.addContentView(
+            overlay,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ),
+        )
+    }
+
+    private fun removeLockOverlay() {
+        val overlay = lockOverlay
+        lockOverlay = null
+        if (overlay != null) {
+            (overlay.parent as? ViewGroup)?.removeView(overlay)
         }
     }
 
     private fun dismissLock() {
-        dialog?.dismiss()
-        dialog = null
+        removeLockOverlay()
         pendingBackgroundDurationMs = null
         armInactivityWatch()
     }
