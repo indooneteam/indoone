@@ -96,3 +96,49 @@
   height: 19px;
 }
 
+
+
+/* --------------------------------------------------------------------------
+   On a desktop the same four tabs stand up the right-hand side, from the top
+   of the window to the bottom, beside the page. It is the same control, the
+   same four tabs, the same colours and the same active pill - only the
+   direction and the stretch change.
+
+   This lives here, not in style.css, for two reasons: this file is loaded
+   after style.css, and it is loaded after shared/safe-layout/safe-layout.css,
+   which pins the bar's height and padding down with !important. A rule in
+   style.css is overruled by that file whatever it says, which is why the bar
+   stayed 58px tall and the four tabs bunched up at the top.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  #app.phone-shell .bottom-nav {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: var(--nav-w, 92px) !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    /* the four run the whole side: the first at the top, the last at the
+       bottom, equal room between them */
+    justify-content: space-between !important;
+    gap: 0 !important;
+    padding: 22px 10px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-left: 1px solid #eeeaf2 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  #app.phone-shell .bottom-nav .nav-btn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 84px !important;
+    padding: 12px 4px !important;
+    border-radius: 16px !important;
+  }
+}
