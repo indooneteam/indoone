@@ -24,6 +24,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -88,6 +89,8 @@ fun SettingsScreen(
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
+    startAtAppLock: Boolean = false,
+    onStartAtAppLockHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -106,6 +109,16 @@ fun SettingsScreen(
     var showAppLockRequired by remember { mutableStateOf(false) }
     var showBiometricUnavailable by remember { mutableStateOf(false) }
     var biometricError by remember { mutableStateOf<String?>(null) }
+
+    // "Lock App" in the menu sends you here when no App PIN is set yet, so you land
+    // straight on the App Lock setup rather than on the top of Settings.
+    LaunchedEffect(startAtAppLock) {
+        if (startAtAppLock) {
+            flow.sync(appLockStore.isEnabled())
+            appLockPage = true
+            onStartAtAppLockHandled()
+        }
+    }
 
     fun resetToSettings() {
         flow.sync(appLockStore.isEnabled())

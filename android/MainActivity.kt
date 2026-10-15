@@ -137,6 +137,7 @@ class MainActivity : ComponentActivity() {
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
+                var settingsOpenAppLock by remember { mutableStateOf(false) }
                 var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
                 var isCheckingUpdate by remember { mutableStateOf(false) }
                 var updateDialogHidden by remember { mutableStateOf(false) }
@@ -404,6 +405,8 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
                         onCheckForUpdates = { checkForUpdates(showUpToDateMessage = true) },
+                        startAtAppLock = settingsOpenAppLock,
+                        onStartAtAppLockHandled = { settingsOpenAppLock = false },
                     )
 
                     AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
@@ -875,7 +878,10 @@ class MainActivity : ComponentActivity() {
                         onTerms = { menuToast("Terms of Use is coming next") },
                         onPrivacy = { navigate(AppRoute.PRIVACY_POLICY) },
                         onAbout = { navigate(AppRoute.SETTINGS) },
-                        onLock = { navigate(AppRoute.SETTINGS) },
+                        onLock = {
+                            settingsOpenAppLock = true
+                            navigate(AppRoute.SETTINGS)
+                        },
                         onDangerZone = { menuToast("Danger Zone is coming next") },
                         onLogout = { menuToast("Log out is coming next") },
                     )

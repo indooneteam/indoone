@@ -1,20 +1,15 @@
 package com.indoone.menu.termsofuse
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
@@ -53,29 +48,29 @@ private val TERMS_SECTIONS = listOf(
 
 @Composable
 fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onConnectClick: () -> Unit, onSettingsClick: () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color(0x5519141F)).clickable(onClick = onBack), contentAlignment = Alignment.BottomCenter) {
-        Surface(Modifier.fillMaxWidth().fillMaxHeight(0.88f).padding(start = 14.dp, end = 14.dp, bottom = 14.dp).clickable(onClick = {}), shape = RoundedCornerShape(25.dp), color = Color.White, shadowElevation = 14.dp) {
-            Column(Modifier.fillMaxSize().padding(23.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Terms of Use", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
-                    IconButton(onClick = onBack, modifier = Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF2C2733),
-                        )
-                    }
+    Surface(Modifier.fillMaxSize(), color = Color.White) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                    )
                 }
-                Text("Last Updated: 08/09/2026", Modifier.padding(top = 1.dp, bottom = 14.dp), color = Color(0xFF8A8492), fontSize = 11.sp)
-                LazyColumn(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(TERMS_SECTIONS) { section ->
-                        Column(Modifier.fillMaxWidth()) {
-                            Text(section.title, Modifier.padding(top = 4.dp), fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold, color = Color(0xFF211D27))
-                            Text(section.body, Modifier.padding(top = 2.dp), fontSize = 12.sp, lineHeight = 19.sp, color = Color(0xFF8A8492))
-                        }
+                Text("Terms of Use", Modifier.padding(start = 4.dp), fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
+            }
+            Text("Last Updated: 08/09/2026", Modifier.padding(start = 4.dp, top = 2.dp, bottom = 12.dp), color = Color(0xFF8A8492), fontSize = 11.sp)
+            LazyColumn(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(TERMS_SECTIONS) { section ->
+                    Column(Modifier.fillMaxWidth()) {
+                        Text(section.title, Modifier.padding(top = 4.dp), fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold, color = Color(0xFF211D27))
+                        Text(section.body, Modifier.padding(top = 2.dp), fontSize = 12.sp, lineHeight = 19.sp, color = Color(0xFF8A8492))
                     }
                 }
             }
         }
     }
+
+    @Suppress("UNUSED_VARIABLE")
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
 }
