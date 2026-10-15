@@ -17,7 +17,11 @@
       status: 'api/integrations/gmail/status',
       connect: 'api/integrations/gmail/auth-config',
       disconnect: 'api/integrations/gmail/disconnect',
-      addressField: 'emailAddress'
+      // the app reads the address from a probe, not from the status answer:
+      // GmailPluginApi.probeEmailAddress posts to gmail/probe and takes
+      // summary.email_address
+      probe: 'api/integrations/gmail/probe',
+      addressPath: ['summary', 'email_address']
     },
     {
       id: 'zoho-mail',
@@ -27,7 +31,10 @@
       status: 'api/integrations/zoho-mail/connection',
       connect: 'api/integrations/zoho-mail/start',
       disconnect: 'api/integrations/zoho-mail/disconnect',
-      addressField: 'emailAddress'
+      // the app lists the mailboxes through zoho-mail/accounts and takes the
+      // first one's address - ZohoMailPluginApi.listAccounts
+      accounts: 'api/integrations/zoho-mail/accounts',
+      addressPath: ['data', 0, 'primaryEmailAddress']
     },
     {
       id: 'github',
@@ -37,7 +44,12 @@
       status: 'api/integrations/github/status',
       connect: 'api/integrations/github/connect',
       disconnect: 'api/integrations/github/disconnect',
-      addressField: 'login',
+      // the app probes for the login and the provider's health:
+      // GitHubPluginApi.getConnectionStatus posts to github/probe and takes
+      // summary.login and provider_ok
+      probe: 'api/integrations/github/probe',
+      addressPath: ['summary', 'login'],
+      healthPath: ['provider_ok'],
       browse: true
     }
   ];
@@ -311,20 +323,58 @@ window.initMenuPlugins = function () {
     window.IndooneIcons?.redraw?.();
   }
 
+  // read a value out of an answer by the path the app reads it by, so a nested
+  // summary.login or a first element of data[] is written the same way here
+  function at(answer, path) {
+    if (!path) return '';
+
+    return path.reduce((value, step) => {
+      if (value === null || value === undefined) return undefined;
+      return value[step];
+    }, answer);
+  }
+
   async function refresh() {
     loading = true;
     if (checking) checking.hidden = false;
 
+    const user = window.IndooneFirebase?.auth?.currentUser;
+
     await Promise.all(window.IndoonePlugins.PROVIDERS.map(async provider => {
+      const entry = state[provider.id];
+
       try {
         const answer = await window.IndoonePlugins.statusOf(provider);
-        const entry = state[provider.id];
         entry.connected = Boolean(answer?.connected || answer?.authorized);
-        entry.healthy = answer?.providerHealthy !== false;
-        entry.account = String(answer?.[provider.addressField] || '');
+        entry.healthy = true;
+        entry.account = '';
+
+        if (!entry.connected) {
+          return;
+        }
+
+        // The app asks a second question once it knows the provider is
+        // connected: what is the account called, and is it still healthy.
+        // The status answer carries neither.
+        if (provider.probe) {
+          const probe = await window.IndoonePlugins.call(provider.probe, {
+            method: 'POST',
+            body: JSON.stringify({ user_id: user?.uid || '' })
+          });
+
+          entry.account = String(at(probe, provider.addressPath) || '');
+          entry.healthy = at(probe, provider.healthPath) !== false;
+        } else if (provider.accounts) {
+          const list = await window.IndoonePlugins.call(provider.accounts, {
+            method: 'POST',
+            body: JSON.stringify({ user_id: user?.uid || '' })
+          });
+
+          entry.account = String(at(list, provider.addressPath) || '');
+        }
       } catch (_) {
         // the app leaves the row saying the status is unavailable
-        state[provider.id].connected = null;
+        entry.connected = null;
       }
     }));
 
