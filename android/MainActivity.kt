@@ -117,6 +117,12 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
+    /** Feeds Auto-Lock's inactivity timer: any touch or key counts as activity. */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        (application as? IndooneApplication)?.onUserInteraction(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configureSystemBarsDirectly()

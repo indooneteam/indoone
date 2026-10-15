@@ -24,6 +24,8 @@ class AutoLockController(private val context: Context) {
     private var activity: ComponentActivity? = null
     private var dialog: Dialog? = null
     private var pendingBackgroundDurationMs: Long? = null
+    private var watchingInactivity = false
+    private val inactivityRunnable = Runnable { showLock() }
 
     fun onResumed(activity: ComponentActivity, backgroundDurationMs: Long? = null) {
         this.activity = activity
@@ -49,17 +51,43 @@ class AutoLockController(private val context: Context) {
         }
     }
 
+    /**
+     * The Auto-Lock setting promises "after a period of inactivity", so a timer runs
+     * on the screen the user is actually using and resets on every touch or key.
+     * Background time is a separate check, made once on resume.
+     */
+    fun startInactivityWatch() {
+        watchingInactivity = true
+        armInactivityWatch()
+    }
+
+    fun onUserInteraction() {
+        if (watchingInactivity) armInactivityWatch()
+    }
+
     fun onPaused() {
-        // Activity pauses during normal in-app navigation and when another
-        // Indoone activity is displayed. Auto-Lock is based on app background time.
+        // The activity pauses during normal in-app navigation and when another
+        // Indoone screen is shown. The watch is re-armed on the next resume, and the
+        // background-time check covers the app being left.
+        watchingInactivity = false
+        handler.removeCallbacks(inactivityRunnable)
     }
 
     fun onDestroyed() {
+        watchingInactivity = false
         handler.removeCallbacksAndMessages(null)
         dialog?.dismiss()
         dialog = null
         activity = null
         pendingBackgroundDurationMs = null
+    }
+
+    private fun armInactivityWatch() {
+        handler.removeCallbacks(inactivityRunnable)
+        if (!watchingInactivity || !shouldLock()) return
+        val current = activity ?: return
+        if (!current.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+        handler.postDelayed(inactivityRunnable, autoLockStore.minutes() * 60_000L)
     }
 
     private fun shouldLock(): Boolean = appLockStore.isEnabled() || biometricStore.isEnabled()
@@ -144,5 +172,6 @@ class AutoLockController(private val context: Context) {
         dialog?.dismiss()
         dialog = null
         pendingBackgroundDurationMs = null
+        armInactivityWatch()
     }
 }
