@@ -174,6 +174,8 @@
     get('content')?.setAttribute('hidden', '');
     get('addBtn')?.setAttribute('hidden', '');
     get('searchWrap')?.setAttribute('hidden', '');
+    get('homeContent')?.setAttribute('hidden', '');
+    get('lobbyContent')?.setAttribute('hidden', '');
     get('connectContent')?.removeAttribute('hidden');
     installConnectIcons();
   }

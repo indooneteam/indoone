@@ -89,6 +89,7 @@
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
     $('settingsContent')?.setAttribute('hidden', '');
+    $('lobbyContent')?.setAttribute('hidden', '');
     document
       .querySelector('[data-notifications-page]')
       ?.setAttribute('hidden', '');
@@ -111,6 +112,7 @@
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('connectContent')?.setAttribute('hidden', '');
+    $('lobbyContent')?.setAttribute('hidden', '');
     document
       .querySelector('[data-notifications-page]')
       ?.setAttribute('hidden', '');
@@ -122,6 +124,36 @@
     $('connectNav')?.classList.remove('active');
 
     window.showSettings?.({ remember: false });
+  }
+
+  // LobbyScreen.kt is a screen of its own: the top bar, the centred column,
+  // and the bottom navigation with Lobby active. It used to open as a pop-up
+  // here, with a Done button, which is not what the app does at all.
+  function showLobbyPanel({ remember = true } = {}) {
+    if (remember) {
+      window.IndoonePageState?.set('lobby');
+    }
+
+    closeDrawer();
+    closeModal();
+    window.showConnectHome?.({ remember: false });
+
+    $('homeContent')?.setAttribute('hidden', '');
+    $('content')?.setAttribute('hidden', '');
+    $('connectContent')?.setAttribute('hidden', '');
+    document
+      .querySelector('[data-notifications-page]')
+      ?.setAttribute('hidden', '');
+    $('lobbyContent')?.removeAttribute('hidden');
+    $('addBtn')?.setAttribute('hidden', '');
+    $('searchWrap')?.setAttribute('hidden', '');
+
+    $('lobbyNav')?.classList.add('active');
+    $('homeNav')?.classList.remove('active');
+    $('connectNav')?.classList.remove('active');
+    $('settingsNav')?.classList.remove('active');
+
+    window.IndooneLobby?.paint?.();
   }
 
   function clearStaleAddAccountRoute() {
@@ -216,10 +248,7 @@
   bindClick($('brandBtn'), showHome);
   bindClick($('homeNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
-  bindClick(
-    $('lobbyNav'),
-    () => window.showLobby?.() || toast('Lobby is planned next')
-  );
+  bindClick($('lobbyNav'), showLobbyPanel);
   bindClick($('connectNav'), () => window.showConnect?.());
   bindClick(
     $('sortBtn'),
