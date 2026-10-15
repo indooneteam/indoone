@@ -15,7 +15,11 @@
       offNote: 'Connect your Gmail account',
       defaultAccount: 'Gmail account',
       status: 'api/integrations/gmail/status',
-      connect: 'api/integrations/gmail/auth-config',
+      // GmailPluginApi.getGoogleServerClientId reads auth-config with a GET -
+      // it is not a connect endpoint, and posting to it is a 405. The rest of
+      // the Gmail flow is Google Sign-In on the device, which then posts a
+      // server auth code to gmail/server-auth-code.
+      config: 'api/integrations/gmail/auth-config',
       disconnect: 'api/integrations/gmail/disconnect',
       // the app reads the address from a probe, not from the status answer:
       // GmailPluginApi.probeEmailAddress posts to gmail/probe and takes
@@ -42,7 +46,10 @@
       offNote: 'Connect your GitHub account',
       defaultAccount: 'GitHub account',
       status: 'api/integrations/github/status',
+      // GitHubPluginApi.startConnection posts user_id and redirect_uri, the
+      // backend's own callback. user_id alone is a 422.
       connect: 'api/integrations/github/connect',
+      callbackPath: '/api/integrations/github/callback',
       disconnect: 'api/integrations/github/disconnect',
       // the app probes for the login and the provider's health:
       // GitHubPluginApi.getConnectionStatus posts to github/probe and takes
@@ -54,14 +61,25 @@
     }
   ];
 
-  async function token() {
+  // The backend rejects an empty user_id with a 422, so the id is read once
+  // here and the page says plainly when there is no session rather than
+  // sending nothing.
+  function currentUser() {
     const user = window.IndooneFirebase?.auth?.currentUser;
 
-    if (!user) {
+    if (!user?.uid) {
       throw new Error('Please sign in again.');
     }
 
-    return user.getIdToken(false);
+    return user;
+  }
+
+  function userId() {
+    return currentUser().uid;
+  }
+
+  async function token() {
+    return currentUser().getIdToken(false);
   }
 
   async function call(path, options = {}) {
@@ -84,12 +102,11 @@
   }
 
   async function statusOf(provider) {
-    const user = window.IndooneFirebase?.auth?.currentUser;
-    const id = encodeURIComponent(user?.uid || '');
+    const id = encodeURIComponent(currentUser().uid);
     return call(`${provider.status}?user_id=${id}`);
   }
 
-  window.IndoonePlugins = { PROVIDERS, call, statusOf };
+  window.IndoonePlugins = { PROVIDERS, call, statusOf, userId, baseUrl: BACKEND_URL };
 })();
 
 // The providers' own marks. GitHub and Zoho Mail are brand marks with their own
@@ -338,7 +355,7 @@ window.initMenuPlugins = function () {
     loading = true;
     if (checking) checking.hidden = false;
 
-    const user = window.IndooneFirebase?.auth?.currentUser;
+    let firstProblem = '';
 
     await Promise.all(window.IndoonePlugins.PROVIDERS.map(async provider => {
       const entry = state[provider.id];
@@ -359,7 +376,7 @@ window.initMenuPlugins = function () {
         if (provider.probe) {
           const probe = await window.IndoonePlugins.call(provider.probe, {
             method: 'POST',
-            body: JSON.stringify({ user_id: user?.uid || '' })
+            body: JSON.stringify({ user_id: window.IndoonePlugins.userId() })
           });
 
           entry.account = String(at(probe, provider.addressPath) || '');
@@ -367,16 +384,20 @@ window.initMenuPlugins = function () {
         } else if (provider.accounts) {
           const list = await window.IndoonePlugins.call(provider.accounts, {
             method: 'POST',
-            body: JSON.stringify({ user_id: user?.uid || '' })
+            body: JSON.stringify({ user_id: window.IndoonePlugins.userId() })
           });
 
           entry.account = String(at(list, provider.addressPath) || '');
         }
-      } catch (_) {
-        // the app leaves the row saying the status is unavailable
+      } catch (error) {
+        // the app leaves the row saying the status is unavailable, but the
+        // page says why, so a failure is not mistaken for an empty account
         entry.connected = null;
+        if (!firstProblem) firstProblem = error?.message || 'Could not reach the backend.';
       }
     }));
+
+    if (firstProblem && !statusMessage) setStatus(firstProblem);
 
     loading = false;
     draw();
@@ -419,8 +440,31 @@ window.initMenuPlugins = function () {
     draw();
 
     try {
-      const answer = await window.IndoonePlugins.call(provider.connect, { method: 'POST', body: JSON.stringify({}) });
-      const url = answer?.url || answer?.authorizationUrl || answer?.authorization_url;
+      if (provider.config) {
+        // Gmail: the app reads the Google client id with a GET and then signs
+        // in with Google on the device, which a browser page cannot do.
+        const config = await window.IndoonePlugins.call(provider.config, { method: 'GET' });
+        const clientId = String(config?.server_client_id || '');
+
+        setStatus(clientId
+          ? 'Gmail connects through Google Sign-In, which this page cannot open. Connect it in the Indoone app.'
+          : 'Google sign-in is not configured on the Indoone backend.');
+        return;
+      }
+
+      const body = { user_id: window.IndoonePlugins.userId() };
+
+      // GitHubPluginApi.startConnection sends the backend's own callback too,
+      // and the route refuses the call without it
+      if (provider.callbackPath) {
+        body.redirect_uri = `${window.IndoonePlugins.baseUrl}${provider.callbackPath}`;
+      }
+
+      const answer = await window.IndoonePlugins.call(provider.connect, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      const url = answer?.authorization_url || answer?.url || answer?.authorizationUrl;
 
       if (url) {
         window.open(url, '_blank', 'noopener');
