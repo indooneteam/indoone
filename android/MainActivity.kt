@@ -352,7 +352,13 @@ class MainActivity : ComponentActivity() {
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onConnectClick = { navigate(AppRoute.CONNECT) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                            onMenuClick = ::openMenu,
+                            // Accounts is opened from the drawer, so its menu button
+                            // returns to the menu instead of re-opening it. Re-opening
+                            // would record Accounts as the drawer's own background, and
+                            // closing the drawer would land back on Accounts rather than
+                            // on the chat. Favorites, Security and Privacy already do
+                            // this; Accounts was the one that was missed.
+                            onMenuClick = ::backToMenu,
                         )
                     }
 
