@@ -27,7 +27,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.work.WorkInfo
 import com.indoone.accounts.AccountItem
 import com.indoone.accounts.AccountRecord
 import com.indoone.accounts.AccountsScreen
@@ -75,14 +74,15 @@ import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
-import com.indoone.settings.update.UpdateDownloadWorker
 import com.indoone.settings.diagnostics.CrashLogStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
 import com.indoone.settings.profile.change_mobile_number.ChangeMobileNumberScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private enum class AppRoute {
     HOME,
@@ -155,54 +155,15 @@ class MainActivity : ComponentActivity() {
                     ActivityResultContracts.RequestMultiplePermissions(),
                 ) { }
 
-                // The download is background work, so the dialog only reflects it.
-                // Closing the dialog or leaving the app does not touch the work.
-                val installedVersionCode = remember {
-                    AppUpdateManager.currentVersionCode(this@MainActivity)
-                }
-                val updateWorkInfos by UpdateDownloadWorker
-                    .observe(this@MainActivity)
-                    .collectAsState(initial = emptyList())
-                val updateWork = updateWorkInfos.firstOrNull()
-                val isDownloadingUpdate =
-                    updateWork?.state == WorkInfo.State.ENQUEUED ||
-                        updateWork?.state == WorkInfo.State.RUNNING
-                val downloadedBytes = updateWork?.progress
-                    ?.getLong(UpdateDownloadWorker.KEY_DOWNLOADED_BYTES, 0L) ?: 0L
-                val progressTotalBytes = updateWork?.progress
-                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
-                val outputTotalBytes = updateWork?.outputData
-                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
-                val totalBytes = when {
-                    progressTotalBytes > 0L -> progressTotalBytes
-                    outputTotalBytes > 0L -> outputTotalBytes
-                    else -> availableUpdate?.sizeBytes ?: 0L
-                }
-                val readyVersionCode = updateWork?.outputData
-                    ?.getLong(UpdateDownloadWorker.KEY_VERSION_CODE, 0L) ?: 0L
-                val updateReady =
-                    updateWork?.state == WorkInfo.State.SUCCEEDED &&
-                        readyVersionCode > installedVersionCode &&
-                        AppUpdateManager.apkFile(this@MainActivity).exists()
-
-                // Show the dialog again when the download starts or finishes, and
-                // report a failure once instead of leaving the user guessing.
-                LaunchedEffect(updateWork?.state) {
-                    when (updateWork?.state) {
-                        WorkInfo.State.ENQUEUED,
-                        WorkInfo.State.RUNNING,
-                        WorkInfo.State.SUCCEEDED -> updateDialogHidden = false
-
-                        WorkInfo.State.FAILED -> {
-                            val message = updateWork?.outputData
-                                ?.getString(UpdateDownloadWorker.KEY_ERROR)
-                                ?: "Could not download the update."
-                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
-                        }
-
-                        else -> Unit
-                    }
-                }
+                // The download runs here, inside the dialog, on the screen's own
+                // coroutine. It is deliberately not a foreground service: Android 14
+                // and later refuse to start one without a declared type, and that is
+                // what was closing the app the moment an update was started. Running
+                // it here costs only that leaving the app stops the download.
+                var isDownloadingUpdate by remember { mutableStateOf(false) }
+                var downloadedBytes by remember { mutableStateOf(0L) }
+                var totalBytes by remember { mutableStateOf(0L) }
+                var updateReady by remember { mutableStateOf(false) }
 
                 fun checkForUpdates(showUpToDateMessage: Boolean) {
                     if (isCheckingUpdate || isDownloadingUpdate) return
@@ -230,6 +191,35 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         isCheckingUpdate = false
+                    }
+                }
+
+                fun startUpdateDownload(update: AppUpdateManager.UpdateInfo) {
+                    if (isDownloadingUpdate) return
+                    isDownloadingUpdate = true
+                    updateReady = false
+                    downloadedBytes = 0L
+                    totalBytes = update.sizeBytes
+                    updateDialogHidden = false
+                    availableUpdate = null
+                    coroutineScope.launch {
+                        runCatching {
+                            AppUpdateManager.downloadApk(this@MainActivity, update) { copied, total ->
+                                withContext(Dispatchers.Main.immediate) {
+                                    downloadedBytes = copied
+                                    if (total > 0L) totalBytes = total
+                                }
+                            }
+                        }.onSuccess {
+                            updateReady = true
+                        }.onFailure { error ->
+                            Toast.makeText(
+                                this@MainActivity,
+                                error.message ?: "Could not download the update.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        isDownloadingUpdate = false
                     }
                 }
 
@@ -779,8 +769,8 @@ class MainActivity : ComponentActivity() {
 
                     AlertDialog(
                         // The download page stays put while it runs: it is the only
-                        // place the progress is shown. The download itself is
-                        // background work, so leaving the app does not stop it.
+                        // place the progress is shown. The download stops if the app
+                        // is closed, so the page is not dismissable while it runs.
                         onDismissRequest = { if (!isDownloadingUpdate) updateDialogHidden = true },
                         title = {
                             Text(
@@ -833,20 +823,19 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 !isDownloadingUpdate && update != null -> TextButton(
-                                    onClick = {
-                                        UpdateDownloadWorker.enqueue(this@MainActivity, update)
-                                        availableUpdate = null
-                                    },
+                                    onClick = { startUpdateDownload(update) },
                                 ) {
                                     Text("Update")
                                 }
                             }
                         },
                         dismissButton = {
-                            // Always offered: the download is background work, so
-                            // closing this page does not stop it.
-                            TextButton(onClick = { updateDialogHidden = true }) {
-                                Text("Later")
+                            // Hidden while the download runs: this page is where the
+                            // progress lives, and this download stops with the app.
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { updateDialogHidden = true }) {
+                                    Text("Later")
+                                }
                             }
                         },
                     )
