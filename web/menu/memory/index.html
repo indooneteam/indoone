@@ -1,0 +1,62 @@
+<section
+  class="menu-feature-shell"
+  data-menu-feature
+  data-menu-section="memory"
+>
+  <div class="modal-head">
+    <h2>Memory</h2>
+    <button
+      type="button"
+      class="close-btn"
+      data-close
+      aria-label="Close Memory"
+    >
+      ×
+    </button>
+  </div>
+
+  <p class="menu-feature-intro">Saved memories</p>
+  <p class="menu-feature-note">
+    Manage the information you want Indoone to remember.
+  </p>
+
+  <form
+    class="menu-feature-form memory-add"
+    id="menuMemoryForm"
+  >
+    <label>
+      <span>Key</span>
+      <input
+        type="text"
+        id="menuMemoryKey"
+        placeholder="favourite_colour"
+      />
+    </label>
+
+    <label>
+      <span>Value</span>
+      <input
+        type="text"
+        id="menuMemoryValue"
+        placeholder="Blue"
+      />
+    </label>
+
+    <button
+      type="submit"
+      class="primary"
+    >
+      Add memory
+    </button>
+  </form>
+
+  <div
+    class="menu-feature-list"
+    id="menuMemoryList"
+  ></div>
+
+  <p
+    class="menu-feature-status"
+    id="menuMemoryStatus"
+  ></p>
+</section>

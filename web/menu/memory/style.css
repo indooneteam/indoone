@@ -1,0 +1,96 @@
+.menu-feature-intro {
+  margin: 0 0 4px;
+  color: #24212a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.menu-feature-note {
+  margin: 0 0 12px;
+  color: #7a7482;
+  font-size: 12.5px;
+}
+
+.menu-feature-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memory-add {
+  border: 1px solid #efeaf4;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fbfaff;
+}
+
+.menu-feature-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: #6f6b77;
+  font-weight: 600;
+}
+
+.menu-feature-form input {
+  border: 1px solid #e9e4ef;
+  border-radius: 11px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: #17151d;
+  background: #fff;
+  outline: none;
+}
+
+.menu-feature-form input:focus {
+  border-color: #cdb8f5;
+}
+
+.menu-feature-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #efeaf4;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.memory-row b {
+  display: block;
+  color: #24212a;
+  font-size: 13px;
+}
+
+.memory-row small {
+  display: block;
+  color: #7a7482;
+  font-size: 11.5px;
+  word-break: break-word;
+}
+
+.memory-row button {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: #b3261e;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.menu-feature-status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #7a7482;
+}

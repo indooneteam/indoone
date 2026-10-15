@@ -1,0 +1,17 @@
+.app-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex: none;
+  color: inherit;
+}
+
+.app-icon-sm {
+  width: 18px;
+  height: 18px;
+}
+
+.app-icon-lg {
+  width: 24px;
+  height: 24px;
+}
