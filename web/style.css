@@ -938,11 +938,8 @@ body.auth-open {
 }
 
 
-/* The shell is the phone. It keeps the phone's width on every viewport and
-   sits in the middle, which is what the app looks like and what a browser on a
-   phone already shows.
-   It used to widen to the whole window at 760px and up, so on a laptop every
-   row was far wider than its contents and the whole page read as small. */
+/* On a phone the shell is the whole screen. On a desktop it sits beside the
+   menu, which is always open there. */
 .phone-shell {
   width: 100% !important;
   max-width: 430px !important;
@@ -1033,6 +1030,45 @@ html, body { height: 100%; }
   flex: 0 0 auto !important;
 }
 
+/* On a desktop the same four tabs stand up the right-hand side, top to bottom,
+   beside the page. It is the same control, the same four tabs, the same
+   colours and the same active pill - only the direction changes.
+ *
+   This has to sit here, after the rule above, and has to carry the shell in
+   its selector, because the bar is pinned down by two !important rules and a
+   more specific one in the safe-layout file. A plain .bottom-nav rule loses to
+   both, which is why the first attempt at this did nothing. */
+@media (min-width: 1024px) {
+  #app.phone-shell > .bottom-nav {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: var(--nav-w, 92px) !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 16px 10px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-left: 1px solid #eeeaf2 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  #app.phone-shell > .bottom-nav .nav-btn {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 12px 4px !important;
+    border-radius: 16px !important;
+  }
+}
+
 /* Shared headings stay aligned; safe-area padding is handled centrally. */
 #app.phone-shell > #content .page-heading,
 #app.phone-shell > #connectContent .connect-hero,
@@ -1091,5 +1127,100 @@ html, body { height: 100%; }
     left: max(0px, calc(50% - 215px));
     width: 14px;
     z-index: 19;
+  }
+}
+
+
+/* ==========================================================================
+   The desktop layout
+   ==========================================================================
+
+   A phone gets the app as it is: one column, the menu in a drawer that slides
+   in, the tabs along the bottom.
+
+   A desktop gets room to work in:
+
+     +----------------+---------------------------+---------------+
+     |                |  top bar                  |               |
+     |   the menu     |---------------------------|   Home        |
+     |   always open  |                           |   Lobby       |
+     |                |  the page                 |   Connect     |
+     |                |                           |   Settings    |
+     |                |---------------------------|               |
+     +----------------+---------------------------+---------------+
+
+   The menu is always there, so the hamburger and the drawer's close button
+   have nothing to do and are put away. The tabs stay where the app keeps them,
+   along the bottom, now across the part of the window the page is in.
+   Nothing else changes: every option, every button, every animation.
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+  :root {
+    --menu-w: 264px;
+    --nav-w: 92px;
+  }
+
+  /* the menu, standing open on the left */
+  .drawer {
+    left: 0;
+    transform: none;
+    width: var(--menu-w);
+    max-width: var(--menu-w);
+    overflow: visible;
+    pointer-events: auto;
+    z-index: 20;
+  }
+
+  .drawer-panel {
+    width: 100%;
+    transform: none;
+    border-right: 1px solid #f0eef5;
+    box-shadow: none;
+  }
+
+  /* nothing to dim, and nothing to hover for */
+  .drawer-backdrop,
+  .drawer-hover-zone {
+    display: none !important;
+  }
+
+  /* the menu is open, so these have no work to do */
+  .menu-top-btn,
+  .drawer-close {
+    display: none !important;
+  }
+
+  /* the app takes what is left between the menu and the tabs.
+     width has to be the remainder, not 100%: 100% plus a margin is wider than
+     the window and the right-hand end falls off the edge. */
+  .phone-shell {
+    width: calc(100% - var(--menu-w) - var(--nav-w)) !important;
+    max-width: none !important;
+    margin-left: var(--menu-w) !important;
+    margin-right: var(--nav-w) !important;
+    box-shadow: none;
+    border-left: 1px solid #f0eef5;
+  }
+
+  /* the page is the full width of the window minus the menu; keep the reading
+     column in the middle of it so a wide window does not stretch every line */
+  .chat-page,
+  .accounts-content,
+  #content,
+  #connectContent,
+  #lobbyContent,
+  .settings-content,
+  [data-notifications-page] {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  /* the top bar's contents keep to the same column as the page */
+  .topbar {
+    padding-left: 34px;
+    padding-right: 34px;
   }
 }
