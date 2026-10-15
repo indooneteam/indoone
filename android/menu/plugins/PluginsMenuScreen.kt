@@ -2,6 +2,9 @@ package com.indoone.menu.plugins
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +47,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.AuthorizationResult
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.indoone.R
 import com.indoone.menu.plugins.email.gmail.GmailPluginApi
 import com.indoone.menu.plugins.github.GitHubConnectionStatus
@@ -61,13 +69,13 @@ private val ConnectedGreen = Color(0xFF218653)
 @Composable
 fun PluginsMenuScreen(
     onBack: () -> Unit,
-    onGmailClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var checking by remember { mutableStateOf(true) }
     var gmailConnected by remember { mutableStateOf<Boolean?>(null) }
     var gmailAddress by remember { mutableStateOf("") }
+    var gmailConnecting by remember { mutableStateOf(false) }
     var zohoConnected by remember { mutableStateOf<Boolean?>(null) }
     var zohoAddress by remember { mutableStateOf("") }
     var zohoUpdatedAt by remember { mutableStateOf<String?>(null) }
@@ -220,6 +228,103 @@ fun PluginsMenuScreen(
         }
     }
 
+    fun finishGmailAuthorization(result: AuthorizationResult) {
+        val serverAuthCode = result.serverAuthCode?.trim().orEmpty()
+        if (serverAuthCode.isBlank()) {
+            gmailConnecting = false
+            statusMessage = "Google did not return a server authorization code. Reconnect Gmail and approve offline access."
+            return
+        }
+        val grantedScope = result.grantedScopes.orEmpty().joinToString(" ")
+        scope.launch {
+            runCatching {
+                GmailPluginApi.storeServerAuthCode(
+                    serverAuthCode = serverAuthCode,
+                    grantedScope = grantedScope,
+                )
+            }.onSuccess { saved ->
+                gmailConnected = saved.connected
+                gmailAddress = saved.emailAddress.orEmpty()
+                statusMessage = if (saved.connected) {
+                    "Gmail connected and verified" +
+                        saved.emailAddress?.takeIf { it.isNotBlank() }?.let { " as $it." }.orEmpty()
+                } else {
+                    "Gmail authorization completed, but the connection was not saved everywhere."
+                }
+            }.onFailure { error ->
+                statusMessage = error.message?.takeIf { it.isNotBlank() }
+                    ?: "Could not save Gmail authorization."
+            }
+            gmailConnecting = false
+        }
+    }
+
+    // Google answers through an intent sender rather than a browser, so Gmail needs
+    // its own launcher. The row's + starts it directly, with no page in between,
+    // exactly like Zoho Mail and GitHub.
+    val gmailAuthorizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { activityResult ->
+        try {
+            val result = Identity
+                .getAuthorizationClient(context)
+                .getAuthorizationResultFromIntent(activityResult.data)
+            finishGmailAuthorization(result)
+        } catch (error: ApiException) {
+            gmailConnecting = false
+            statusMessage = "Google authorization failed (${error.statusCode}): " +
+                (error.message ?: "unknown Google authorization error.")
+        } catch (error: Exception) {
+            gmailConnecting = false
+            statusMessage = error.message ?: "Google authorization failed."
+        }
+    }
+
+    fun startGmailAuthorization() {
+        if (checking || gmailConnecting || disconnectingProvider == "gmail") return
+        gmailConnecting = true
+        statusMessage = if (gmailConnected == true) {
+            "Opening Gmail reauthorization…"
+        } else {
+            "Opening Gmail authorization…"
+        }
+        scope.launch {
+            try {
+                val serverClientId = GmailPluginApi.getGoogleServerClientId()
+                val authorizationRequest = AuthorizationRequest.builder()
+                    .setRequestedScopes(listOf(Scope(GmailPluginApi.GMAIL_SCOPE)))
+                    .requestOfflineAccess(serverClientId)
+                    .setPrompt(AuthorizationRequest.Prompt.CONSENT)
+                    .build()
+
+                Identity.getAuthorizationClient(context)
+                    .authorize(authorizationRequest)
+                    .addOnSuccessListener { authorizationResult ->
+                        if (authorizationResult.hasResolution()) {
+                            val pendingIntent = authorizationResult.pendingIntent
+                            if (pendingIntent == null) {
+                                gmailConnecting = false
+                                statusMessage = "Google authorization could not start."
+                            } else {
+                                gmailAuthorizationLauncher.launch(
+                                    IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                                )
+                            }
+                        } else {
+                            finishGmailAuthorization(authorizationResult)
+                        }
+                    }
+                    .addOnFailureListener { error ->
+                        gmailConnecting = false
+                        statusMessage = error.message ?: "Could not start Google authorization."
+                    }
+            } catch (error: Exception) {
+                gmailConnecting = false
+                statusMessage = error.message ?: "Could not prepare secure Gmail authorization."
+            }
+        }
+    }
+
     fun disconnect(provider: String) {
         if (disconnectingProvider != null) return
         scope.launch {
@@ -294,9 +399,9 @@ fun PluginsMenuScreen(
                 accountAddress = gmailAddress,
                 connected = gmailConnected,
                 logoRes = R.drawable.gmail_logo,
-                busy = checking || disconnectingProvider == "gmail",
-                onAdd = onGmailClick,
-                onReauthorize = onGmailClick,
+                busy = checking || gmailConnecting || disconnectingProvider == "gmail",
+                onAdd = { startGmailAuthorization() },
+                onReauthorize = { startGmailAuthorization() },
                 onDisconnect = { pendingDisconnect = "gmail" },
             )
 
