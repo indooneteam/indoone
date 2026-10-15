@@ -73,27 +73,162 @@
     // Icons.AutoMirrored.Outlined.ArrowBack
     arrowBack: [
       '<path d="M19 11H7.8l4.6-4.6L11 5l-7 7 7 7 1.4-1.4L7.8 13H19Z"></path>'
+    ].join(''),
+    // ---------------------------------------------------------------------
+    // The menu. AppPageChrome.kt and MenuDrawer.kt name every one of these,
+    // and the drawer used to draw a keyboard character in its place - a clock
+    // face for Profile, and the same diamond for both Data & Privacy and
+    // Security, the same sheet for both Memory and Terms of Use. These are
+    // the app's own fourteen, plus the menu button and the chevron.
+    // ---------------------------------------------------------------------
+
+    // MenuIcon, drawn by hand in AppPageChrome.kt as three lines
+    menu: [
+      '<path d="M4 7h16"></path>',
+      '<path d="M4 12h16"></path>',
+      '<path d="M4 17h16"></path>'
+    ].join(''),
+
+    // Icons.Outlined.AddComment - the app's highlighted New Chat row
+    addComment: [
+      '<path d="M5 4.4h14a1.2 1.2 0 0 1 1.2 1.2v9.8a1.2 1.2 0 0 1-1.2 1.2H9.2L4.4 20.4a.5.5 0 0 1-.8-.4V5.6A1.2 1.2 0 0 1 5 4.4Z"></path>',
+      '<path d="M12 7.4v5"></path>',
+      '<path d="M9.5 9.9h5"></path>'
+    ].join(''),
+
+    // Icons.Outlined.PersonOutline
+    personOutline: [
+      '<circle cx="12" cy="8" r="3.6"></circle>',
+      '<path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Memory
+    memory: [
+      '<rect x="6.6" y="6.6" width="10.8" height="10.8" rx="2"></rect>',
+      '<rect x="9.8" y="9.8" width="4.4" height="4.4" rx="0.9"></rect>',
+      '<path d="M9.4 3.4v3.2"></path>',
+      '<path d="M14.6 3.4v3.2"></path>',
+      '<path d="M9.4 17.4v3.2"></path>',
+      '<path d="M14.6 17.4v3.2"></path>',
+      '<path d="M3.4 9.4h3.2"></path>',
+      '<path d="M3.4 14.6h3.2"></path>',
+      '<path d="M17.4 9.4h3.2"></path>',
+      '<path d="M17.4 14.6h3.2"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Apps - the nine-dot grid, drawn solid like the app's
+    apps: [
+      '<circle cx="6" cy="6" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="18" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="6" cy="18" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="18" cy="18" r="1.5" fill="currentColor" stroke="none"></circle>'
+    ].join(''),
+
+    // Icons.Outlined.History - a clock with the hand turned back
+    history: [
+      '<path d="M3.7 12a8.3 8.3 0 1 0 2.5-6"></path>',
+      '<path d="M3.5 4.4v4.2h4.2"></path>',
+      '<path d="M12 7.6V12l3 1.8"></path>'
+    ].join(''),
+
+    // Icons.Outlined.PrivacyTip - a shield with a person in it
+    privacyTip: [
+      '<path d="M12 3.2 5 6v5.4c0 4.2 2.9 7.3 7 8.4 4.1-1.1 7-4.2 7-8.4V6Z"></path>',
+      '<circle cx="12" cy="10.2" r="1.8"></circle>',
+      '<path d="M8.9 15.8a3.4 3.4 0 0 1 6.2 0"></path>'
+    ].join(''),
+
+    // Icons.Outlined.GridView
+    gridView: [
+      '<rect x="4.4" y="4.4" width="6.2" height="6.2" rx="1.4"></rect>',
+      '<rect x="13.4" y="4.4" width="6.2" height="6.2" rx="1.4"></rect>',
+      '<rect x="4.4" y="13.4" width="6.2" height="6.2" rx="1.4"></rect>',
+      '<rect x="13.4" y="13.4" width="6.2" height="6.2" rx="1.4"></rect>'
+    ].join(''),
+
+    // Icons.Outlined.StarBorder
+    starBorder: [
+      '<path d="m12 4.2 2.5 5 5.5.8-4 3.9.95 5.5L12 16.8 7.05 19.4 8 13.9 4 10l5.5-.8Z"></path>'
+    ].join(''),
+
+    // Icons.Outlined.DeleteOutline
+    deleteOutline: [
+      '<path d="M4.8 6.9h14.4"></path>',
+      '<path d="M9.4 6.9V5.3a1 1 0 0 1 1-1h3.2a1 1 0 0 1 1 1v1.6"></path>',
+      '<path d="M6.7 6.9 7.6 19a1 1 0 0 0 1 .9h6.8a1 1 0 0 0 1-.9l.9-12.1"></path>',
+      '<path d="M10.4 10.4v5.6"></path>',
+      '<path d="M13.6 10.4v5.6"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Security - a shield with a tick
+    security: [
+      '<path d="M12 3.2 5 6v5.4c0 4.2 2.9 7.3 7 8.4 4.1-1.1 7-4.2 7-8.4V6Z"></path>',
+      '<path d="m9.3 11.8 2 2 3.5-3.6"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Description - a sheet with lines on it
+    description: [
+      '<path d="M6.2 3.6h7.4L18 8v12.4H6.2Z"></path>',
+      '<path d="M13.4 3.6V8H18"></path>',
+      '<path d="M9 12.2h6"></path>',
+      '<path d="M9 15.4h6"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Visibility
+    visibility: [
+      '<path d="M2.7 12S6.1 6.7 12 6.7 21.3 12 21.3 12 17.9 17.3 12 17.3 2.7 12 2.7 12Z"></path>',
+      '<circle cx="12" cy="12" r="2.8"></circle>'
+    ].join(''),
+
+    // Icons.Outlined.Info
+    info: [
+      '<circle cx="12" cy="12" r="8.4"></circle>',
+      '<path d="M12 11.2v5"></path>',
+      '<circle cx="12" cy="8.3" r="0.95" fill="currentColor" stroke="none"></circle>'
+    ].join(''),
+
+    // Icons.Outlined.Lock
+    lock: [
+      '<rect x="5.4" y="10.4" width="13.2" height="9.6" rx="2"></rect>',
+      '<path d="M8.6 10.4V7.8a3.4 3.4 0 0 1 6.8 0v2.6"></path>'
+    ].join(''),
+
+    // Icons.Outlined.ChevronRight, the marker on the Plugins row
+    chevronRight: [
+      '<path d="m9.6 6 6 6-6 6"></path>'
     ].join('')
   };
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
 
   function make(name, className = 'app-icon') {
+    const entry = ICONS[name];
+    const spec = typeof entry === 'string' ? { body: entry } : entry || { body: '' };
+
     const svg = document.createElementNS(SVG_NS, 'svg');
 
     svg.setAttribute('class', className);
     // NOT data-app-icon: that is what apply() looks for, and the made svg must
     // never look like something still waiting to be drawn.
     svg.setAttribute('data-app-icon-drawn', name);
-    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('viewBox', spec.viewBox || '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
     svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '1.7');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-    svg.innerHTML = ICONS[name] || '';
+
+    if (!spec.filled) {
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '1.7');
+      svg.setAttribute('stroke-linecap', 'round');
+      svg.setAttribute('stroke-linejoin', 'round');
+    }
+
+    svg.innerHTML = spec.body || '';
 
     return svg;
   }

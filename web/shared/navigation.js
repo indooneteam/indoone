@@ -104,76 +104,16 @@ function applyTopbarBrandSpacing() {
   }
 }
 
-// Replace drawer Unicode glyphs with one consistent SVG icon family.
-const DRAWER_ICONS = {
-  accounts:
-    '<rect x="4" y="4" width="6" height="6" rx="1.5"></rect>' +
-    '<rect x="14" y="4" width="6" height="6" rx="1.5"></rect>' +
-    '<rect x="4" y="14" width="6" height="6" rx="1.5"></rect>' +
-    '<rect x="14" y="14" width="6" height="6" rx="1.5"></rect>',
-  favorites:
-    '<path d="m12 4 2.5 5.1 5.6.8-4 4 1 5.6-5.1-2.7-5.1 2.7 1-5.6-4-4 5.6-.8L12 4Z"></path>',
-  trash:
-    '<path d="M5 7h14M9 7V5h6v2M8 10v7M12 10v7M16 10v7M7 7l1 13h8l1-13"></path>',
-  security:
-    '<path d="M12 3.5 19 6v5.2c0 4.4-2.8 7.5-7 9.3-4.2-1.8-7-4.9-7-9.3V6l7-2.5Z"></path>' +
-    '<path d="m9 12 2 2 4-4"></path>',
-  about:
-    '<circle cx="12" cy="12" r="8"></circle><path d="M12 10.5v5M12 7.5h.01"></path>',
-  lock:
-    '<rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>',
-  'danger-zone':
-    '<path d="m12 4 9 16H3L12 4Z"></path><path d="M12 9v5M12 17h.01"></path>',
-  logout:
-    '<path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M18 12H9"></path>'
-};
-
-function applyDrawerIcons() {
-  document
-    .querySelectorAll('.drawer-item[data-action]')
-    .forEach(item => {
-      if (item.querySelector('.drawer-icon')) return;
-
-      const action = item.dataset.action;
-      const paths = DRAWER_ICONS[action];
-      if (!paths) return;
-
-      const icon = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg'
-      );
-
-      icon.setAttribute('class', 'drawer-icon');
-      icon.setAttribute('viewBox', '0 0 24 24');
-      icon.setAttribute('aria-hidden', 'true');
-      icon.setAttribute('focusable', 'false');
-      icon.setAttribute('width', '22');
-      icon.setAttribute('height', '22');
-      icon.setAttribute('fill', 'none');
-      icon.setAttribute('stroke', 'currentColor');
-      icon.setAttribute('stroke-width', '1.8');
-      icon.setAttribute('stroke-linecap', 'round');
-      icon.setAttribute('stroke-linejoin', 'round');
-      icon.style.cssText =
-        'width:22px;height:22px;display:block;flex:none;';
-      icon.innerHTML = paths;
-
-      item.insertBefore(icon, item.firstChild);
-
-      const firstText = Array.from(item.childNodes).find(
-        node =>
-          node.nodeType === Node.TEXT_NODE &&
-          node.textContent.trim()
-      );
-
-      if (firstText) firstText.remove();
-    });
-}
+// The drawer's icons used to be built here, from a second map of eight paths,
+// inserted as the first child of each row. The menu now carries the app's own
+// icons through data-app-icon and shared/app-icons.js - all fourteen of them,
+// the same shapes MenuDrawer.kt names - so this map and its inserter are gone.
+// Leaving them in put a second icon beside every row they knew about, which is
+// what the menu showed: two grids on Accounts, two stars on Favorites, two
+// bins on Trash, two shields on Security, two marks on About and two on Lock.
 
 // Main UI glyphs: keep their existing meaning and position, but render them as SVGs.
 const MAIN_SVG_ICONS = {
-  menu:
-    '<path d="M4 7h16M4 12h16M4 17h16"></path>',
   search:
     '<circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path>',
   close:
@@ -258,20 +198,6 @@ function replaceTextNodeIcon(element, iconType) {
 }
 
 function applyMainSvgIcons() {
-  const menu = document.getElementById('menuBtn');
-
-  if (
-    menu &&
-    !menu.querySelector('.ui-svg-icon')
-  ) {
-    const icon = makeMainSvg(
-      'menu',
-      'ui-svg-icon topbar-svg-icon'
-    );
-    menu.textContent = '';
-    menu.appendChild(icon);
-  }
-
   const search = document.getElementById('searchBtn');
 
   if (
@@ -487,7 +413,6 @@ function applySvgIconStyles() {
 
 function applyAllSvgIcons() {
   applyTopbarBrandSpacing();
-  applyDrawerIcons();
   applySvgIconStyles();
   applyMainSvgIcons();
 }

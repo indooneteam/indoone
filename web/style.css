@@ -69,17 +69,20 @@ body {
   text-align: left;
 }
 
+/* IndooneTopBarLogo draws its own 48x48 picture - a rounded square turned 45
+   degrees, a three-stop gradient over it and two stars - so the box here only
+   has to give it room. It used to hold the letter "I" on a purple square. */
 .brand-mark {
   width: 34px;
   height: 34px;
-  border-radius: 11px;
+  flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(145deg, #5e2ce2, #9b51f1);
-  color: #fff;
-  font-size: 19px;
-  font-weight: 900;
-  box-shadow: 0 6px 15px #703be333;
+}
+
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
 }
 
 .brand strong {
@@ -418,36 +421,60 @@ body {
   opacity: 1;
 }
 
+/* --------------------------------------------------------------------------
+   The menu, to MenuDrawer.kt.
+
+   The app's drawer is a 320dp sheet of soft violet with a 26dp round on its
+   two right corners and a 22dp shadow, holding rows of 48dp whose icons sit in
+   a 32dp tile. The web had a 310px white sheet, 25px of padding, rows with no
+   tile at all, and a keyboard character where each icon should be.
+   -------------------------------------------------------------------------- */
 .drawer-panel {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: min(310px, 84vw);
-  padding: 25px 14px;
-  background: #fff;
-  box-shadow: 15px 0 45px #0002;
+  width: min(320px, 86vw);
+  padding: 19px 15px;
+  background: linear-gradient(
+    to bottom,
+    #faf8ff,
+    #f2ecfa 55%,
+    #f8f4fc
+  );
+  border-radius: 0 26px 26px 0;
+  box-shadow: 0 0 22px rgba(52, 30, 96, 0.22);
   transform: translateX(-105%);
   transition: .23s;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .drawer.open .drawer-panel {
   transform: translateX(0);
 }
 
+/* the logo 36dp, then the wordmark, then the close button */
 .drawer-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px 24px;
+  padding: 3px 0 13px 5px;
 }
 
+.drawer-brand .brand-mark {
+  width: 36px;
+  height: 36px;
+}
+
+/* 0xFF263753, 19sp, Bold, 9dp in from the logo */
 .drawer-brand strong {
   display: block;
-  color: #5e2dd2;
+  flex: 1;
+  padding-left: 9px;
+  color: #263753;
   font-size: 19px;
+  font-weight: 700;
 }
 
 .drawer-brand small {
@@ -456,46 +483,132 @@ body {
   font-weight: 700;
 }
 
+/* a 38dp button holding a 20dp Close, tinted 0xFF59677D */
+.drawer-close {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #59677d;
+  cursor: pointer;
+}
+
+.drawer-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 0xFFE8DDF4, 1dp, 5dp above and below */
+.drawer-divider {
+  height: 1px;
+  background: #e8ddf4;
+  margin: 5px 4px;
+}
+
+/* 0xFF8592A8, 10sp, lineHeight 13sp, Bold, letterSpacing 1sp */
+.drawer-section-label {
+  margin: 0;
+  padding: 15px 0 5px 9px;
+  color: #8592a8;
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* a 48dp row, 15dp corners, 2dp above and below, 10dp in at each side */
 .drawer-item {
   width: 100%;
   height: 48px;
+  flex: none;
+  margin: 2px 0;
   border: 0;
   background: transparent;
-  border-radius: 13px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 0 12px;
-  color: #413c48;
-  font-size: 19px;
+  padding: 0 10px;
+  color: #34445f;
+  font-family: inherit;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
 }
 
-.drawer-item span {
-  font-size: 13px;
-  font-weight: 700;
-  flex: 1;
+/* the icon sits in a 32dp tile of its own, 10dp corners, faintly lit from the
+   top left; the icon inside is 18dp and tinted 0xFF51627D */
+.drawer-item > [data-app-icon] {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #ffffff, #f8f4fc);
+  color: #51627d;
 }
 
+.drawer-item > [data-app-icon] svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* 13sp, lineHeight 17sp, SemiBold, 0xFF34445F, 11dp in from the tile */
+.drawer-item span {
+  flex: 1;
+  padding-left: 11px;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 600;
+}
+
+/* the count badge: 0xFFECE2F7, 8dp corners, 11sp Bold 0xFF6B3FA5 */
 .drawer-item b {
   font-size: 11px;
-  background: #f0ebfa;
-  color: #7041ce;
-  border-radius: 10px;
+  font-weight: 700;
+  background: #ece2f7;
+  color: #6b3fa5;
+  border-radius: 8px;
   padding: 3px 7px;
 }
 
-.drawer-item:hover,
-.drawer-item.active {
-  background: #f4efff;
-  color: #6230d6;
+/* the Plugins chevron is an icon, not a badge: 18dp, 0xFF8B9AB0 */
+.drawer-item b[data-app-icon] {
+  background: none;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: #8b9ab0;
 }
 
-.drawer-divider {
-  height: 1px;
-  background: #eeeaf2;
-  margin: 10px 8px;
+.drawer-item b[data-app-icon] svg {
+  width: 18px;
+  height: 18px;
+}
+
+.drawer-item:hover {
+  background: #f4efff;
+}
+
+/* New Chat is the one highlighted row: 0xFFEDE3FA behind it, a violet tile
+   with a white icon, and a bold 0xFF6E35C8 label */
+.drawer-item-new {
+  background: #ede3fa;
+}
+
+.drawer-item-new > [data-app-icon] {
+  background: linear-gradient(160deg, #9a68e8, #6f35c5);
+  color: #fff;
+  box-shadow: 0 3px 7px rgba(111, 53, 197, 0.28);
+}
+
+.drawer-item-new span {
+  color: #6e35c8;
+  font-weight: 700;
 }
 
 .lock-item {
