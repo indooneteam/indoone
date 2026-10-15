@@ -1,42 +1,57 @@
-.lobby-status-page {
+/*
+ * The Lobby screen, as LobbyScreen.kt lays it out.
+ *
+ * The app's column is centred, with 22dp on either side:
+ *
+ *   INDOONE LOBBY      labelSmall      primary
+ *   the title          headlineSmall   onBackground, 6dp above
+ *   the message        bodyMedium      onSurfaceVariant, 10dp above, 12dp in
+ *
+ * Nothing else lives on the screen. The top bar and the bottom navigation are
+ * the shell's, the same as every other page's - which is what the app does too,
+ * since LobbyScreen.kt draws the same AppTopBar and AppBottomNav as the rest.
+ */
+
+.lobby-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 22px;
+  overflow-y: auto;
+}
+
+.lobby-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 20px 4px 4px;
 }
 
-.lobby-status-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 14px;
-  border-radius: 20px;
-  display: grid;
-  place-items: center;
-  background: #f3edff;
-  color: #703be2;
-  font-size: 30px;
-  font-weight: 800;
-  -webkit-mask: none;
-  mask: none;
-}
-
-.lobby-status-icon-source {
-  width: 32px;
-  height: 32px;
-  display: block;
-  background: currentColor;
-  -webkit-mask: url('icon.svg') center/contain no-repeat;
-  mask: url('icon.svg') center/contain no-repeat;
-}
-
-.lobby-status-page .eyebrow {
-  margin-bottom: 6px;
-}
-
-.lobby-status-page h2 {
+/* the app's labelSmall eyebrow, in the theme's primary colour */
+.lobby-content .lobby-eyebrow {
   margin: 0;
-  font-size: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--primary, #5e2dd2);
 }
 
-.lobby-status-page p:not(.eyebrow) {
+/* headlineSmall */
+.lobby-content .lobby-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text, #1d1b22);
+}
+
+/* bodyMedium, 10dp above and 12dp in on both sides */
+.lobby-content .lobby-message {
+  margin: 10px 12px 0;
   max-width: 310px;
-  margin: 10px auto 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted, #6b6577);
 }
