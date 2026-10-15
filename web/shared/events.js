@@ -103,6 +103,10 @@
     window.IndooneHome?.restoreHome?.();
   }
 
+  // The menu's Accounts row means the accounts page. It used to click the Home
+  // tab, which shows the chat page, so the row landed on the wrong screen.
+  window.showAccounts = showAccounts;
+
   function showSettingsPanel({ remember = true } = {}) {
     if (remember) {
       window.IndoonePageState?.set('settings');

@@ -16,25 +16,25 @@
   />
   <title>Indoone Authenticator</title>
 
-  <link rel="stylesheet" href="style.css?v=20261030c" />
+  <link rel="stylesheet" href="style.css?v=20261031a" />
   <link rel="stylesheet" href="home/home.css?v=20261024a" />
   <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
   <link rel="stylesheet" href="home/plus/plus.css?v=20261015c" />
   <link rel="stylesheet" href="home/vibe/vibe.css?v=20261024a" />
-  <link rel="stylesheet" href="notifications/style.css?v=20261030c" />
+  <link rel="stylesheet" href="notifications/style.css?v=20261031a" />
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
   <link rel="stylesheet" href="shared/app-icons.css?v=20261030c" />
   <link rel="stylesheet" href="connect/connect.css?v=20261030b" />
-  <link rel="stylesheet" href="connect/connect-device/style.css?v=20261030c" />
-  <link rel="stylesheet" href="connect/devices/style.css?v=20261030c" />
-  <link rel="stylesheet" href="menu/style.css?v=20261030c" />
+  <link rel="stylesheet" href="connect/connect-device/style.css?v=20261031a" />
+  <link rel="stylesheet" href="connect/devices/style.css?v=20261031a" />
+  <link rel="stylesheet" href="menu/style.css?v=20261031a" />
   <link rel="stylesheet" href="settings/settings.css?v=20260922b" />
-  <link rel="stylesheet" href="settings/profile/style.css?v=20261030c" />
-  <link rel="stylesheet" href="settings/profile/email/style.css?v=20261030c" />
-  <link rel="stylesheet" href="settings/profile/mobile/style.css?v=20261030c" />
+  <link rel="stylesheet" href="settings/profile/style.css?v=20261031a" />
+  <link rel="stylesheet" href="settings/profile/email/style.css?v=20261031a" />
+  <link rel="stylesheet" href="settings/profile/mobile/style.css?v=20261031a" />
   <link rel="stylesheet" href="authentication/auth.css?v=20261015a" />
-  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261030c" />
+  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261031a" />
   <link rel="stylesheet" href="lobby/lobby.css?v=20261030a" />
 </head>
 
@@ -468,6 +468,16 @@
       </div>
     </section>
 
+    <!-- A menu feature is a page, not a pop-up. MenuDrawer.kt replaces the
+         whole screen, and the web was opening each item as a 430px card over a
+         dimmed page instead. The container keeps the id "modal" because the
+         feature scripts reach for it by that name. -->
+    <section
+      class="menu-content"
+      id="modal"
+      hidden
+    ></section>
+
     <button
       type="button"
       class="fab"
@@ -855,7 +865,7 @@
   >
     <section
       class="modal"
-      id="modal"
+      id="accountDialog"
       role="dialog"
       aria-modal="true"
     ></section>
@@ -887,7 +897,7 @@
   <script src="notifications/script.js?v=20261015b"></script>
   <script src="shared/branding.js?v=20261015a"></script>
   <script src="shared/app-icons.js?v=20261030c"></script>
-  <script src="shared/core.js?v=20261014a"></script>
+  <script src="shared/core.js?v=20261031a"></script>
   <script src="shared/state.js?v=20261030c"></script>
   <script src="shared/cloud-accounts.js?v=20260922a"></script>
   <script src="menu/accounts/totp.js?v=20260914a"></script>
@@ -923,7 +933,7 @@
 
   <script src="lobby/lobby-status.js?v=20261030a"></script>
 
-  <script src="shared/events.js?v=20261015a"></script>
+  <script src="shared/events.js?v=20261031a"></script>
   <script src="shared/safe-layout/safe-layout.js?v=20260925a"></script>
 </body>
 </html>
