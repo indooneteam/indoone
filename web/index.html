@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
   <link rel="stylesheet" href="shared/app-icons.css?v=20261016a" />
-  <link rel="stylesheet" href="connect/connect.css?v=20260918a" />
+  <link rel="stylesheet" href="connect/connect.css?v=20261030b" />
   <link rel="stylesheet" href="connect/connect-device/style.css?v=20261017a" />
   <link rel="stylesheet" href="connect/devices/style.css?v=20261017a" />
   <link rel="stylesheet" href="menu/style.css?v=20261017a" />
@@ -333,122 +333,121 @@
     >
       <div id="connectHomePage">
         <div class="connect-hero">
-          <p class="eyebrow">NEARBY DEVICE SHARING</p>
-          <h1>Connect</h1>
-          <p>
-            Pair nearby devices, share files and control exactly what each
-            device can access.
-          </p>
+          <p class="eyebrow">BUSINESS INTEGRATIONS</p>
+          <h1>Connect a Platform</h1>
+          <p>Bring your customer conversations to Indoone. Connect once and automate replies across your business channels.</p>
         </div>
 
-        <div class="connect-actions">
-          <button
-            type="button"
-            class="connect-action"
-            data-connect-action="pair"
-          >
-            <strong>⌁</strong>
-            <span>Pair</span>
-            <small>Pair another Indoone device</small>
-          </button>
-
-          <button
-            type="button"
-            class="connect-action"
-            data-connect-action="connect"
-          >
-            <strong>↔</strong>
-            <span>Connect</span>
-            <small>Choose a nearby device</small>
-          </button>
-
-          <button
-            type="button"
-            class="connect-action"
-            data-connect-action="devices"
-          >
-            <span data-app-icon="photo" data-app-icon-class="app-icon app-icon-sm"></span>
-            <span>Devices</span>
-            <small>Manage connected devices</small>
-          </button>
-        </div>
-
-        <div class="connect-section-title">
-          <h2>Connection status</h2>
-        </div>
-
-        <div class="connect-status">
-          <div class="connect-status-icon">⌁</div>
-          <div>
-            <b>Nearby connection</b>
-            <small>Ready for secure device pairing</small>
+        <div class="connect-balance">
+          <div class="connect-balance-top">
+            <div class="connect-balance-left">
+              <p class="connect-balance-label">INDOONE BALANCE</p>
+              <p
+                class="connect-balance-value"
+                id="connectBalance"
+              ></p>
+              <p class="connect-balance-note">Prepaid balance for your Indoone usage</p>
+            </div>
+            <span class="connect-balance-pill">CREDITS</span>
           </div>
-          <span
-            class="connect-online-dot"
-            aria-label="Ready"
-          ></span>
+
+          <div class="connect-balance-bottom">
+            <div class="connect-balance-left">
+              <p class="connect-usage-label">Usage</p>
+              <p
+                class="connect-usage-value"
+                id="connectUsage"
+              ></p>
+            </div>
+            <button
+              type="button"
+              class="connect-add-credits"
+              data-connect-action="credits"
+            >
+              ADD CREDITS
+            </button>
+          </div>
         </div>
 
-        <div class="connect-section-title">
-          <h2>How it works</h2>
+        <div class="connect-cards">
           <button
             type="button"
-            data-connect-action="connect"
+            class="connect-card"
+            style="--accent: #25d366; --accent-soft: rgba(37, 211, 102, 0.12)"
+            data-connect-action="whatsapp"
           >
-            Start
+            <span class="connect-card-top">
+              <span class="connect-card-chip">WA</span>
+              <span class="connect-card-arrow" aria-hidden="true">›</span>
+            </span>
+            <span class="connect-card-title">WhatsApp</span>
+            <span class="connect-card-desc">Connect your WhatsApp Business</span>
+            <span class="connect-card-action">CONNECT</span>
           </button>
-        </div>
-
-        <div class="connect-empty">
-          Connect two nearby Indoone devices first. File access and transfer
-          will always follow the permissions you approve.
+          <button
+            type="button"
+            class="connect-card"
+            style="--accent: #e1306c; --accent-soft: rgba(225, 48, 108, 0.12)"
+            data-connect-action="instagram"
+          >
+            <span class="connect-card-top">
+              <span class="connect-card-chip">IG</span>
+              <span class="connect-card-arrow" aria-hidden="true">›</span>
+            </span>
+            <span class="connect-card-title">Instagram</span>
+            <span class="connect-card-desc">Automate comments & DMs</span>
+            <span class="connect-card-action">CONNECT</span>
+          </button>
+          <button
+            type="button"
+            class="connect-card"
+            style="--accent: #6d3de4; --accent-soft: rgba(109, 61, 228, 0.12)"
+            data-connect-action="app"
+          >
+            <span class="connect-card-top">
+              <span class="connect-card-chip">AP</span>
+              <span class="connect-card-arrow" aria-hidden="true">›</span>
+            </span>
+            <span class="connect-card-title">App</span>
+            <span class="connect-card-desc">Connect your own app backend</span>
+            <span class="connect-card-action">CONNECT</span>
+          </button>
+          <button
+            type="button"
+            class="connect-card"
+            style="--accent: #2f80ed; --accent-soft: rgba(47, 128, 237, 0.12)"
+            data-connect-action="website"
+          >
+            <span class="connect-card-top">
+              <span class="connect-card-chip connect-card-chip-sm">WEB</span>
+              <span class="connect-card-arrow" aria-hidden="true">›</span>
+            </span>
+            <span class="connect-card-title">Website</span>
+            <span class="connect-card-desc">AI support for your website</span>
+            <span class="connect-card-action">CONNECT</span>
+          </button>
+          <button
+            type="button"
+            class="connect-card connect-card-wide"
+            style="--accent: #229ed9; --accent-soft: rgba(34, 158, 217, 0.12)"
+            data-connect-action="telegram"
+          >
+            <span class="connect-card-top">
+              <span class="connect-card-chip">TG</span>
+              <span class="connect-card-arrow" aria-hidden="true">›</span>
+            </span>
+            <span class="connect-card-title">Telegram</span>
+            <span class="connect-card-desc">Connect your Telegram bot and automate support.</span>
+            <span class="connect-card-action">CONNECT</span>
+          </button>
         </div>
       </div>
 
       <div
-        class="connect-choice-page"
-        id="connectChoicePage"
+        class="connect-setup"
+        id="connectSetupPage"
         hidden
-      >
-        <button
-          type="button"
-          class="connect-back"
-          data-connect-action="home"
-        >
-          ‹ Back
-        </button>
-
-        <p class="eyebrow">NEW CONNECTION</p>
-        <h2>Connect a device</h2>
-        <p>Choose what you want to connect nearby.</p>
-
-        <div class="connect-choice">
-          <button type="button">
-            <span class="choice-icon">📱</span>
-            <span>
-              <b>Connect another phone</b>
-              <small>Phone-to-phone nearby connection</small>
-            </span>
-            <span class="arrow">›</span>
-          </button>
-
-          <button type="button">
-            <span class="choice-icon">💻</span>
-            <span>
-              <b>Connect laptop / PC</b>
-              <small>Phone-to-computer nearby connection</small>
-            </span>
-            <span class="arrow">›</span>
-          </button>
-        </div>
-
-        <div
-          class="connect-empty"
-          style="margin-top: 18px"
-        >
-          Keep both devices nearby and keep Indoone open while pairing.
-        </div>
-      </div>
+      ></div>
     </section>
 
     <section
@@ -911,7 +910,9 @@
   <script src="shared/navigation.js?v=20261014a"></script>
   <script src="shared/navigation-icons.js?v=20261014a"></script>
 
-  <script src="connect/connect.js?v=20260921b"></script>
+  <script src="connect/integrations/platforms.js?v=20261030b"></script>
+  <script src="connect/integrations/setup.js?v=20261030b"></script>
+  <script src="connect/connect.js?v=20261030b"></script>
   <script src="connect/connect-native.js?v=20260921a"></script>
   <script src="connect/permissions/permission-connection-flow.js?v=20260921a"></script>
   <script src="connect/pair/script.js?v=20260904c"></script>
