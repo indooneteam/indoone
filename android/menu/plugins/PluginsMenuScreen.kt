@@ -63,7 +63,6 @@ private val ConnectedGreen = Color(0xFF218653)
 fun PluginsMenuScreen(
     onBack: () -> Unit,
     onEmailClick: () -> Unit,
-    onGitHubClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -321,7 +320,6 @@ fun PluginsMenuScreen(
                 onAdd = { startGitHubAuthorization() },
                 onReauthorize = { startGitHubAuthorization() },
                 onDisconnect = { pendingDisconnect = "github" },
-                onBrowse = onGitHubClick,
             )
 
             if (githubStatusMessage.isNotBlank()) {
@@ -579,7 +577,6 @@ private fun GitHubProviderRow(
     onAdd: () -> Unit,
     onReauthorize: () -> Unit,
     onDisconnect: () -> Unit,
-    onBrowse: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -633,13 +630,6 @@ private fun GitHubProviderRow(
                     false -> Text("Connect your GitHub account", color = Muted, fontSize = 12.sp)
                     null -> Text("Connection status unavailable", color = Muted, fontSize = 11.sp)
                 }
-            }
-
-            TextButton(
-                enabled = !busy,
-                onClick = onBrowse,
-            ) {
-                Text("Browse", color = AppPurple, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
 
             if (connected == true) {
