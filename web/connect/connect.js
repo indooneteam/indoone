@@ -1,173 +1,108 @@
+// The Connect screen, as android/connect/ConnectScreen.kt draws it.
+//
+// The app's screen is BUSINESS INTEGRATIONS: a heading, a balance card, and
+// five platform cards. WhatsApp and Instagram open a setup screen of their own;
+// App, Website and Telegram open a dialog. The balance card's ADD CREDITS opens
+// the credits dialog.
+//
+// What was here before was a different feature entirely - nearby device
+// sharing, with Pair / Connect / Devices. The app has no such thing.
+
 (() => {
   const get = id => document.getElementById(id);
 
-  // Match the app-wide icon language used by navigation-icons.js:
-  // outline icons, 1.8px stroke, round caps/joins, currentColor.
-  const svgIcons = {
-    pair:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<path d="M10.2 13.8 13.8 10.2a3.7 3.7 0 0 1 5.1.1 3.7 3.7 0 0 1 0 5.2l-2.2 2.2a3.7 3.7 0 0 1-5.2 0"/>' +
-      '<path d="M13.8 10.2 10.2 13.8a3.7 3.7 0 0 1-5.1-.1 3.7 3.7 0 0 1 0-5.2l2.2-2.2a3.7 3.7 0 0 1 5.2 0"/>' +
-      '</svg>',
-    connect:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"/>' +
-      '</svg>',
-    devices:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<rect x="4" y="4" width="11" height="16" rx="2"/>' +
-      '<rect x="9" y="8" width="11" height="11" rx="2"/>' +
-      '<path d="M7 17h2"/>' +
-      '</svg>',
-    nearby:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<path d="M4 10.5a11 11 0 0 1 16 0M7.2 13.5a6.7 6.7 0 0 1 9.6 0M10.5 16.5a2.2 2.2 0 0 1 3 0"/>' +
-      '<circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/>' +
-      '</svg>',
-    phone:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<rect x="7" y="3" width="10" height="18" rx="2"/>' +
-      '<path d="M10 18h4"/>' +
-      '</svg>',
-    laptop:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<rect x="5" y="4" width="14" height="11" rx="1.5"/>' +
-      '<path d="M3.5 18h17M9.5 18 10 20h4l.5-2"/>' +
-      '</svg>',
-    chevron:
-      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-      '<path d="m9 5 7 7-7 7"/>' +
-      '</svg>'
+  // ConnectState.kt
+  const STATE = {
+    balance: '₹0.00',
+    usage: '0',
+    usageLimit: '10,000'
   };
 
-  const setComingSoonState = button => {
-    if (!button) return;
+  // The app names the three that open a dialog, and the two that open a screen.
+  const SCREENS = { whatsapp: 'whatsapp', instagram: 'instagram' };
 
-    button.disabled = true;
-    button.setAttribute('aria-disabled', 'true');
-    button.dataset.connectAvailability = 'coming-soon';
+  const DIALOG_LINE =
+    'Connect this service to Indoone AI to automate customer conversations and keep replies on the same channel.';
 
-    if (!button.querySelector('.connect-coming-soon')) {
-      const badge = document.createElement('small');
-      badge.className = 'connect-coming-soon';
-      badge.textContent = 'Coming soon';
-      button.appendChild(badge);
-    }
-  };
+  const CREDIT_PACKAGES = [
+    { text: '₹99  •  1,000 credits', highlighted: false },
+    { text: '₹499 •  5,500 credits', highlighted: true },
+    { text: '₹999 •  12,000 credits', highlighted: false }
+  ];
 
-  function putIcon(node, name, size = 23) {
-    if (!node || !svgIcons[name]) return;
-    node.innerHTML = svgIcons[name];
+  const CREDIT_NOTE =
+    'Prepaid balance for automation and AI usage. Choose a package to continue.';
 
-    const svg = node.firstElementChild;
-    if (!svg) return;
+  function paintBalance() {
+    const value = get('connectBalance');
+    const usage = get('connectUsage');
 
-    svg.style.width = `${size}px`;
-    svg.style.height = `${size}px`;
-    svg.style.display = 'block';
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '1.8');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-  }
-
-  function installConnectIcons() {
-    document
-      .querySelectorAll('.connect-action')
-      .forEach((button, index) => {
-        const icon = button.querySelector('strong');
-
-        if (index === 0) putIcon(icon, 'pair');
-        if (index === 1) putIcon(icon, 'connect');
-        if (index === 2) putIcon(icon, 'devices');
-
-        setComingSoonState(button);
-      });
-
-    putIcon(
-      document.querySelector('.connect-status-icon'),
-      'nearby',
-      22
-    );
-
-    document
-      .querySelectorAll('.connect-choice .choice-icon')
-      .forEach((icon, index) => {
-        putIcon(icon, index === 0 ? 'phone' : 'laptop');
-      });
-
-    document
-      .querySelectorAll('.connect-choice .arrow')
-      .forEach(arrow => {
-        putIcon(arrow, 'chevron', 18);
-      });
-
-    document
-      .querySelectorAll('.connect-choice button')
-      .forEach(button => {
-        setComingSoonState(button);
-      });
-
-    document
-      .querySelectorAll('.connect-section-title button[data-connect-action]')
-      .forEach(button => {
-        setComingSoonState(button);
-      });
-
-    const status = document.querySelector('.connect-status');
-    const statusTitle = status?.querySelector('b');
-    const statusText = status?.querySelector('small');
-
-    if (statusTitle) {
-      statusTitle.textContent = 'Remote & nearby connection';
+    if (value) {
+      value.textContent = STATE.balance;
     }
 
-    if (statusText) {
-      statusText.textContent = 'Connect features are under development.';
+    if (usage) {
+      usage.textContent = `${STATE.usage} / ${STATE.usageLimit}`;
     }
   }
 
   function setActive(tab) {
-    get('homeNav')?.classList.toggle(
-      'active',
-      tab === 'accounts'
-    );
-    get('lobbyNav')?.classList.toggle(
-      'active',
-      tab === 'lobby'
-    );
-    get('connectNav')?.classList.toggle(
-      'active',
-      tab === 'connect'
-    );
-    get('settingsNav')?.classList.toggle(
-      'active',
-      tab === 'settings'
-    );
+    get('homeNav')?.classList.toggle('active', tab === 'accounts');
+    get('lobbyNav')?.classList.toggle('active', tab === 'lobby');
+    get('connectNav')?.classList.toggle('active', tab === 'connect');
+    get('settingsNav')?.classList.toggle('active', tab === 'settings');
   }
+
+  // -------------------------------------------------------------- the dialogs
+
+  function openIntegrationDialog(name) {
+    window.openModal?.(`
+      <section class="connect-dialog" aria-label="${name}">
+        <h2 class="connect-dialog-title">${name}</h2>
+        <p class="connect-dialog-text">${DIALOG_LINE}</p>
+        <div class="connect-dialog-actions">
+          <button type="button" class="connect-dialog-plain" data-close>
+            CANCEL
+          </button>
+          <button type="button" class="connect-dialog-plain" data-close>
+            SETUP
+          </button>
+        </div>
+      </section>
+    `);
+  }
+
+  function openCreditsDialog() {
+    const options = CREDIT_PACKAGES.map(
+      pkg => `
+        <div class="connect-credit${pkg.highlighted ? ' connect-credit-on' : ''}">
+          ${pkg.text}
+        </div>
+      `
+    ).join('');
+
+    window.openModal?.(`
+      <section class="connect-dialog" aria-label="Add Indoone Credits">
+        <h2 class="connect-dialog-title">Add Indoone Credits</h2>
+        <p class="connect-dialog-note">${CREDIT_NOTE}</p>
+        <div class="connect-credit-list">${options}</div>
+        <div class="connect-dialog-actions">
+          <button type="button" class="connect-dialog-plain" data-close>
+            CANCEL
+          </button>
+          <button type="button" class="connect-dialog-solid" data-close>
+            CONTINUE TO PAYMENT
+          </button>
+        </div>
+      </section>
+    `);
+  }
+
+  // ------------------------------------------------------------- the switching
 
   function setConnectPage(page) {
-    get('connectHomePage')?.toggleAttribute(
-      'hidden',
-      page !== 'home'
-    );
-    get('connectChoicePage')?.toggleAttribute(
-      'hidden',
-      page !== 'choice'
-    );
-
-    get('connectContent')
-      ?.querySelectorAll('.connect-pair-page')
-      .forEach(node => node.remove());
-  }
-
-  function showAccounts() {
-    get('connectContent')?.setAttribute('hidden', '');
-    get('content')?.removeAttribute('hidden');
-    get('addBtn')?.removeAttribute('hidden');
-    get('searchWrap')?.removeAttribute('hidden');
-    setActive('accounts');
+    get('connectHomePage')?.toggleAttribute('hidden', page !== 'home');
+    get('connectSetupPage')?.toggleAttribute('hidden', page !== 'setup');
   }
 
   function showConnectContent() {
@@ -177,7 +112,7 @@
     get('homeContent')?.setAttribute('hidden', '');
     get('lobbyContent')?.setAttribute('hidden', '');
     get('connectContent')?.removeAttribute('hidden');
-    installConnectIcons();
+    paintBalance();
   }
 
   function showConnectHome({ remember = true } = {}) {
@@ -186,7 +121,31 @@
     }
 
     setConnectPage('home');
-    installConnectIcons();
+    paintBalance();
+  }
+
+  function openConnect() {
+    window.closeModal?.();
+    window.closeDrawer?.();
+    showConnectContent();
+    showConnectHome({ remember: false });
+    setActive('connect');
+  }
+
+  // ----------------------------------------------------------- what each card does
+
+  function openSetup(key) {
+    const platform = window.IndooneIntegrations?.platforms?.[key];
+
+    if (!platform) {
+      return;
+    }
+
+    window.closeModal?.();
+    showConnectContent();
+    setConnectPage('setup');
+    setActive('connect');
+    window.IndooneIntegrations?.render?.(key);
   }
 
   window.showConnect = function ({ remember = true } = {}) {
@@ -194,11 +153,7 @@
       window.IndoonePageState?.set('connect');
     }
 
-    window.closeModal?.();
-    window.closeDrawer?.();
-    showConnectContent();
-    showConnectHome({ remember: false });
-    setActive('connect');
+    openConnect();
   };
 
   window.showConnectHome = function ({ remember = true } = {}) {
@@ -206,59 +161,41 @@
       window.IndoonePageState?.set('connect');
     }
 
-    window.closeModal?.();
-    window.closeDrawer?.();
-    showConnectContent();
-    showConnectHome({ remember: false });
-    setActive('connect');
-  };
-
-  window.showConnectChoice = function ({ remember = true } = {}) {
-    if (remember) {
-      window.IndoonePageState?.set('connect-choice');
-    }
-
-    window.closeModal?.();
-    showConnectContent();
-    setConnectPage('choice');
-    setActive('connect');
-    installConnectIcons();
+    openConnect();
   };
 
   document.addEventListener('click', event => {
     const action = event.target.closest('[data-connect-action]');
-    if (!action || action.disabled) return;
+
+    if (!action) {
+      return;
+    }
 
     const name = action.dataset.connectAction;
 
-    if (name === 'pair') {
+    if (SCREENS[name]) {
       event.preventDefault();
-      return window.showConnectPair?.();
+      openSetup(SCREENS[name]);
+      return;
     }
 
-    if (name === 'qr') {
+    if (name === 'credits') {
       event.preventDefault();
-      return window.showConnectQr?.();
-    }
-
-    if (name === 'scanner') {
-      event.preventDefault();
-      return window.showConnectScanner?.();
-    }
-
-    if (name === 'connect') {
-      event.preventDefault();
-      return window.showConnectChoice?.();
-    }
-
-    if (name === 'devices') {
-      event.preventDefault();
-      return window.showConnectDevices?.();
+      openCreditsDialog();
+      return;
     }
 
     if (name === 'home') {
       event.preventDefault();
       window.showConnectHome?.();
+      return;
+    }
+
+    if (name === 'app' || name === 'website' || name === 'telegram') {
+      event.preventDefault();
+      openIntegrationDialog(
+        action.querySelector('.connect-card-title')?.textContent || name
+      );
     }
   });
 
@@ -267,11 +204,5 @@
     window.showConnect();
   });
 
-  get('homeNav')?.addEventListener('click', event => {
-    event.preventDefault();
-    window.stopNearby?.();
-    showAccounts();
-  });
-
-  installConnectIcons();
+  paintBalance();
 })();
