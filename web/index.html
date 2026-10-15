@@ -16,25 +16,25 @@
   />
   <title>Indoone Authenticator</title>
 
-  <link rel="stylesheet" href="style.css?v=20261017a" />
+  <link rel="stylesheet" href="style.css?v=20261030c" />
   <link rel="stylesheet" href="home/home.css?v=20261024a" />
   <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
   <link rel="stylesheet" href="home/plus/plus.css?v=20261015c" />
   <link rel="stylesheet" href="home/vibe/vibe.css?v=20261024a" />
-  <link rel="stylesheet" href="notifications/style.css?v=20261017a" />
+  <link rel="stylesheet" href="notifications/style.css?v=20261030c" />
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
-  <link rel="stylesheet" href="shared/app-icons.css?v=20261016a" />
+  <link rel="stylesheet" href="shared/app-icons.css?v=20261030c" />
   <link rel="stylesheet" href="connect/connect.css?v=20261030b" />
-  <link rel="stylesheet" href="connect/connect-device/style.css?v=20261017a" />
-  <link rel="stylesheet" href="connect/devices/style.css?v=20261017a" />
-  <link rel="stylesheet" href="menu/style.css?v=20261017a" />
+  <link rel="stylesheet" href="connect/connect-device/style.css?v=20261030c" />
+  <link rel="stylesheet" href="connect/devices/style.css?v=20261030c" />
+  <link rel="stylesheet" href="menu/style.css?v=20261030c" />
   <link rel="stylesheet" href="settings/settings.css?v=20260922b" />
-  <link rel="stylesheet" href="settings/profile/style.css?v=20261017a" />
-  <link rel="stylesheet" href="settings/profile/email/style.css?v=20261017a" />
-  <link rel="stylesheet" href="settings/profile/mobile/style.css?v=20261017a" />
+  <link rel="stylesheet" href="settings/profile/style.css?v=20261030c" />
+  <link rel="stylesheet" href="settings/profile/email/style.css?v=20261030c" />
+  <link rel="stylesheet" href="settings/profile/mobile/style.css?v=20261030c" />
   <link rel="stylesheet" href="authentication/auth.css?v=20261015a" />
-  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261017a" />
+  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261030c" />
   <link rel="stylesheet" href="lobby/lobby.css?v=20261030a" />
 </head>
 
@@ -51,7 +51,7 @@
           id="brandBtn"
           aria-label="Go to accounts"
         >
-          <span class="brand-mark">I</span>
+          <span class="brand-mark"></span>
           <span>
             <strong>Indoone</strong>
           </span>
@@ -63,7 +63,7 @@
           id="menuBtn"
           aria-label="Open menu"
         >
-          ☰
+          <span data-app-icon="menu"></span>
         </button>
       </div>
 
@@ -553,7 +553,7 @@
 
     <section class="drawer-panel">
       <div class="drawer-brand">
-        <span class="brand-mark">I</span>
+        <span class="brand-mark"></span>
         <strong class="drawer-brand-name">Indoone</strong>
         <button
           type="button"
@@ -561,7 +561,7 @@
           id="drawerClose"
           aria-label="Close menu"
         >
-          ×
+          <span data-app-icon="close"></span>
         </button>
       </div>
 
@@ -572,7 +572,7 @@
         class="drawer-item drawer-item-new"
         data-action="new-chat"
       >
-        ✎
+        <span data-app-icon="addComment"></span>
         <span>New Chat</span>
       </button>
 
@@ -583,7 +583,7 @@
         class="drawer-item"
         data-action="profile"
       >
-        ◔
+        <span data-app-icon="personOutline"></span>
         <span>Profile</span>
       </button>
 
@@ -592,7 +592,7 @@
         class="drawer-item"
         data-action="memory"
       >
-        ▤
+        <span data-app-icon="memory"></span>
         <span>Memory</span>
       </button>
 
@@ -601,9 +601,9 @@
         class="drawer-item"
         data-action="plugins"
       >
-        ⌘
+        <span data-app-icon="apps"></span>
         <span>Plugins</span>
-        <b>›</b>
+        <b data-app-icon="chevronRight"></b>
       </button>
 
       <button
@@ -611,7 +611,7 @@
         class="drawer-item"
         data-action="chat-history"
       >
-        ↺
+        <span data-app-icon="history"></span>
         <span>Chat History</span>
       </button>
 
@@ -620,7 +620,7 @@
         class="drawer-item"
         data-action="data-privacy"
       >
-        ◈
+        <span data-app-icon="privacyTip"></span>
         <span>Data &amp; Privacy</span>
       </button>
 
@@ -631,9 +631,9 @@
         class="drawer-item active"
         data-action="accounts"
       >
-        ▦
+        <span data-app-icon="gridView"></span>
         <span>Accounts</span>
-        <b id="drawerCount">0</b>
+        <b id="drawerCount" hidden>0</b>
       </button>
 
       <button
@@ -641,7 +641,7 @@
         class="drawer-item"
         data-action="favorites"
       >
-        ☆
+        <span data-app-icon="starBorder"></span>
         <span>Favorites</span>
       </button>
 
@@ -650,7 +650,7 @@
         class="drawer-item"
         data-action="trash"
       >
-        ♙
+        <span data-app-icon="deleteOutline"></span>
         <span>Trash</span>
       </button>
 
@@ -661,7 +661,7 @@
         class="drawer-item"
         data-action="security"
       >
-        ◈
+        <span data-app-icon="security"></span>
         <span>Security</span>
       </button>
 
@@ -670,7 +670,7 @@
         class="drawer-item"
         data-action="terms-of-use"
       >
-        ▤
+        <span data-app-icon="description"></span>
         <span>Terms of Use</span>
       </button>
 
@@ -679,7 +679,7 @@
         class="drawer-item"
         data-action="privacy-policy"
       >
-        ◉
+        <span data-app-icon="visibility"></span>
         <span>Privacy Policy</span>
       </button>
 
@@ -688,7 +688,7 @@
         class="drawer-item"
         data-action="about"
       >
-        ⓘ
+        <span data-app-icon="info"></span>
         <span>About Indoone</span>
       </button>
 
@@ -697,7 +697,7 @@
         class="drawer-item lock-item"
         data-action="lock"
       >
-        ▣
+        <span data-app-icon="lock"></span>
         <span>Lock App</span>
       </button>
     </section>
@@ -886,9 +886,9 @@
   <script src="home/chat-home.js?v=20261030a"></script>
   <script src="notifications/script.js?v=20261015b"></script>
   <script src="shared/branding.js?v=20261015a"></script>
-  <script src="shared/app-icons.js?v=20261016a"></script>
+  <script src="shared/app-icons.js?v=20261030c"></script>
   <script src="shared/core.js?v=20261014a"></script>
-  <script src="shared/state.js?v=20260922c"></script>
+  <script src="shared/state.js?v=20261030c"></script>
   <script src="shared/cloud-accounts.js?v=20260922a"></script>
   <script src="menu/accounts/totp.js?v=20260914a"></script>
   <script src="authentication/secure-session.js?v=20260914a"></script>
@@ -908,7 +908,7 @@
   <script src="settings/settings.js?v=20260922c"></script>
 
   <script src="shared/navigation.js?v=20261014a"></script>
-  <script src="shared/navigation-icons.js?v=20261014a"></script>
+  <script src="shared/navigation-icons.js?v=20261030c"></script>
 
   <script src="connect/integrations/platforms.js?v=20261030b"></script>
   <script src="connect/integrations/setup.js?v=20261030b"></script>
