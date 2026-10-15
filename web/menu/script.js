@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261031b';
+  const ASSET_VERSION = '20261031d';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
@@ -37,7 +37,12 @@
     'danger-zone/delete-local-data': 'initMenuDeleteLocalData',
     'danger-zone/delete-account': 'initMenuDeleteAccount',
     'logout/this-device': 'initMenuLogoutThisDevice',
-    'logout/all-devices': 'initMenuLogoutAllDevices'
+    'logout/all-devices': 'initMenuLogoutAllDevices',
+    // the plugin screens sit under Plugins, as they do in the app: GitHub's
+    // Browse, and each provider's own screen
+    'plugins/github': 'initMenuPluginGitHub',
+    'plugins/zoho-mail': 'initMenuPluginZohoMail',
+    'plugins/email': 'initMenuPluginEmail'
   };
 
   const createSvg = paths => {
@@ -115,6 +120,10 @@
   // which page to come back to, remembered when the first feature is opened
   let pageBeforeMenu = null;
 
+  // and which menu page, when one menu page opened another. GitHub's Browse
+  // opens GitHub from Plugins, and the app's back returns to Plugins.
+  let menuStack = [];
+
   function visiblePage() {
     return PAGE_IDS.find(id => {
       const element = document.getElementById(id);
@@ -127,6 +136,7 @@
     if (!page) return;
 
     if (pageBeforeMenu === null) pageBeforeMenu = visiblePage();
+    else menuStack = [];
 
     PAGE_IDS.forEach(id => {
       document.getElementById(id)?.setAttribute('hidden', '');
@@ -144,6 +154,14 @@
   function closeMenuPage() {
     const page = document.getElementById('modal');
     if (!page || page.hasAttribute('hidden')) return;
+
+    // one menu page opening another: back goes to the one underneath
+    const under = menuStack.pop();
+
+    if (under) {
+      void openPath(under.path, under.initializer);
+      return;
+    }
 
     const back = pageBeforeMenu || 'homeContent';
     pageBeforeMenu = null;
@@ -217,6 +235,13 @@
 
   async function openPath(path, initializerName) {
     closeDrawer();
+
+    // a menu page opening another keeps the one underneath, so back returns to it
+    const open = document.getElementById('modal');
+    if (open && !open.hasAttribute('hidden') && open.dataset.menuPath) {
+      menuStack.push({ path: open.dataset.menuPath, initializer: open.dataset.menuInitializer });
+    }
+
     try {
       const base = getFeatureBase(path);
       await loadFeatureMarkup(base);
@@ -226,7 +251,14 @@
       if (typeof initializer !== 'function') throw new Error('Menu feature initializer is unavailable.');
       const result = await initializer();
       if (result === false) closeMenuPage();
-      else showMenuPage();
+      else {
+        const shown = document.getElementById('modal');
+        if (shown) {
+          shown.dataset.menuPath = path;
+          shown.dataset.menuInitializer = initializerName;
+        }
+        showMenuPage();
+      }
     } catch (error) {
       closeMenuPage();
       window.toast?.(error?.message || 'Could not open menu item');

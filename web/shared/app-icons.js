@@ -192,15 +192,36 @@
       '<circle cx="12" cy="8.3" r="0.95" fill="currentColor" stroke="none"></circle>'
     ].join(''),
 
+    // Icons.Outlined.Add - the violet circle that starts a connection
+    add: [
+      '<path d="M12 5.6v12.8"></path>',
+      '<path d="M5.6 12h12.8"></path>'
+    ].join(''),
+
+    // Icons.Outlined.MoreVert
+    moreVert: [
+      '<circle cx="12" cy="5.6" r="1.6" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>',
+      '<circle cx="12" cy="18.4" r="1.6" fill="currentColor" stroke="none"></circle>'
+    ].join(''),
+
+    // Icons.Outlined.Refresh
+    refresh: [
+      '<path d="M19.4 12a7.4 7.4 0 1 1-2.2-5.2"></path>',
+      '<path d="M19.6 4.2v4h-4"></path>'
+    ].join(''),
+
+    // Icons.Outlined.LinkOff - a chain with its middle struck through
+    linkOff: [
+      '<path d="M8.6 8.6 6.7 10.5a4 4 0 0 0 5.7 5.7l1.9-1.9"></path>',
+      '<path d="m15.4 15.4 1.9-1.9a4 4 0 0 0-5.7-5.7l-1.9 1.9"></path>',
+      '<path d="M4.4 4.4 19.6 19.6"></path>'
+    ].join(''),
+
     // Icons.Outlined.Lock
     lock: [
       '<rect x="5.4" y="10.4" width="13.2" height="9.6" rx="2"></rect>',
       '<path d="M8.6 10.4V7.8a3.4 3.4 0 0 1 6.8 0v2.6"></path>'
-    ].join(''),
-
-    // Icons.Outlined.ChevronRight, the marker on the Plugins row
-    chevronRight: [
-      '<path d="m9.6 6 6 6-6 6"></path>'
     ].join('')
   };
 

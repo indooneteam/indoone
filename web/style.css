@@ -576,20 +576,6 @@ body {
   padding: 3px 7px;
 }
 
-/* the Plugins chevron is an icon, not a badge: 18dp, 0xFF8B9AB0 */
-.drawer-item b[data-app-icon] {
-  background: none;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  color: #8b9ab0;
-}
-
-.drawer-item b[data-app-icon] svg {
-  width: 18px;
-  height: 18px;
-}
-
 .drawer-item:hover {
   background: #f4efff;
 }
