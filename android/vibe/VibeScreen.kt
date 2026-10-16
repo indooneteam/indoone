@@ -63,16 +63,21 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
+import com.indoone.R
 import kotlin.math.cos
 import kotlin.math.sin
 
-private val WordmarkPurple = Color(0xFF9A82FF)
+// Brush script for the wordmark. Yellowtail is the closest free (SIL Open Font
+// License) match to Brush Script MT, which is a paid Monotype font and cannot be
+// shipped in the app.
+private val WordmarkFont = FontFamily(Font(R.font.wordmark_brush))
 
 @Composable
 fun VibeScreen(
@@ -196,14 +201,14 @@ fun VibeScreen(
             // ragged. Pieces of one Text share a baseline, so it sits straight.
             Text(
                 text = buildAnnotatedString {
-                    withStyle(SpanStyle(color = WordmarkPurple, fontSize = 25.sp, fontWeight = FontWeight.Bold)) {
+                    withStyle(SpanStyle(fontFamily = WordmarkFont, color = Color.White, fontSize = 25.sp)) {
                         append("I")
                     }
-                    withStyle(SpanStyle(color = WordmarkPurple, fontSize = 17.sp)) {
+                    withStyle(SpanStyle(fontFamily = WordmarkFont, color = Color.White, fontSize = 17.sp)) {
                         append("ndoone")
                     }
                     append(" ")
-                    withStyle(SpanStyle(color = Color.White, fontSize = 24.sp)) {
+                    withStyle(SpanStyle(fontFamily = WordmarkFont, color = Color.White, fontSize = 24.sp)) {
                         append("Vibe")
                     }
                 },
