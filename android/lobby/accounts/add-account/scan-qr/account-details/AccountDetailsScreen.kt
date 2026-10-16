@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.indoone.menu.AppBackButton
 
 @Composable
 fun AccountDetailsScreen(
@@ -53,19 +54,9 @@ fun AccountDetailsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
-        TextButton(onClick = onBack) {
-            Text(
-                text = "‹  Back",
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        AppBackButton(onClick = onBack)
 
         Spacer(modifier = Modifier.padding(top = 8.dp))
-
-        Text(
-            text = "ACCOUNT DETAILS",
-            fontWeight = FontWeight.ExtraBold,
-        )
 
         Text(
             text = "Enter Setup Key",

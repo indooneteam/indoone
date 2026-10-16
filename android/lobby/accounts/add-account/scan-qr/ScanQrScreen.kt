@@ -50,6 +50,7 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import com.indoone.menu.AppBackButton
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -92,17 +93,7 @@ fun ScanQrScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 110.dp),
         ) {
-            OutlinedButton(
-                onClick = onCancelScan,
-                modifier = Modifier.height(42.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFE6E1EA)),
-                contentPadding = PaddingValues(horizontal = 14.dp),
-            ) {
-                Text("‹", color = Color(0xFF242129), fontSize = 20.sp)
-                Spacer(Modifier.padding(horizontal = 4.dp))
-                Text("Back", color = Color(0xFF242129), fontWeight = FontWeight.Bold)
-            }
+            AppBackButton(onClick = onCancelScan)
 
             Column(modifier = Modifier.padding(top = 22.dp)) {
                 Text(

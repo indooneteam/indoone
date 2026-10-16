@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppBackButton
 import com.indoone.menu.IndooneTopBarLogo
 import com.indoone.lobby.accounts.AccountItem
 import com.indoone.lobby.accounts.AccountRecord
@@ -134,14 +135,7 @@ fun AccountDetailsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp)),
-                    ) {
-                        Icon(Icons.Outlined.KeyboardArrowLeft, contentDescription = "Back", tint = Color(0xFF242129))
-                    }
+                    AppBackButton(onClick = onBack)
                     Text(
                         text = account.name,
                         modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
