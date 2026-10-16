@@ -469,7 +469,8 @@ private fun ProfileActionRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 14.dp),
+                .height(64.dp)
+                .padding(horizontal = 15.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {

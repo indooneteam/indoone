@@ -85,7 +85,13 @@ private fun LogoutRow(title: String, subtitle: String, onClick: () -> Unit) {
         border = BorderStroke(1.dp, Color(0xFFECE9F0)),
         shadowElevation = 2.dp,
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 15.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Surface(Modifier.size(42.dp), color = Color(0xFFF4F1F8), shape = RoundedCornerShape(13.dp)) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Canvas(Modifier.size(24.dp)) {
