@@ -49,7 +49,7 @@ private val TERMS_SECTIONS = listOf(
 )
 
 @Composable
-fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onConnectClick: () -> Unit, onSettingsClick: () -> Unit) {
+fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onVibeClick: () -> Unit, onSettingsClick: () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color(0x5519141F)).clickable(onClick = onBack), contentAlignment = Alignment.BottomCenter) {
         Surface(Modifier.fillMaxWidth().fillMaxHeight(0.88f).padding(start = 14.dp, end = 14.dp, bottom = 14.dp).clickable(onClick = {}), shape = RoundedCornerShape(25.dp), color = Color.White, shadowElevation = 14.dp) {
             Column(Modifier.fillMaxSize().padding(23.dp)) {
