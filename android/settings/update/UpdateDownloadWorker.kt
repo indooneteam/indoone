@@ -5,9 +5,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -159,6 +161,13 @@ class UpdateDownloadWorker(
                         KEY_VERSION_CODE to update.versionCode,
                         KEY_SIZE_BYTES to update.sizeBytes,
                     ),
+                )
+                // A download with no connection fails on its first read. Waiting for one
+                // is cheaper than failing and having the user start it again.
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build(),
                 )
                 .addTag(UNIQUE_NAME)
                 .build()
