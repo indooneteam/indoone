@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import com.indoone.menu.AppBackButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -176,12 +177,7 @@ fun GmailPluginMenuScreen(
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            text = "Back",
-            color = Color(0xFF5E2DD2),
-            fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 2.dp).clickable(onClick = onBack),
-        )
+        AppBackButton(onClick = onBack)
 
         Text(
             text = "Gmail",

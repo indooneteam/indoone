@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppBackButton
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -71,26 +72,9 @@ fun EnterSetupKeyScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 110.dp),
         ) {
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier.height(42.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFE6E1EA)),
-                contentPadding = PaddingValues(horizontal = 14.dp),
-            ) {
-                Text("‹", color = Color(0xFF242129), fontSize = 20.sp)
-                Spacer(Modifier.padding(horizontal = 4.dp))
-                Text("Back", color = Color(0xFF242129), fontWeight = FontWeight.Bold)
-            }
+            AppBackButton(onClick = onBack)
 
             Column(modifier = Modifier.padding(top = 22.dp)) {
-                Text(
-                    "ACCOUNT DETAILS",
-                    color = Color(0xFF7650D8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.3.sp,
-                )
                 Text(
                     "Enter Setup Key",
                     modifier = Modifier.padding(top = 3.dp),

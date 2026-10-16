@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppBackButton
 import com.indoone.menu.AppTopBar
 
 @Composable
@@ -63,9 +64,8 @@ fun EditAccountScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp, vertical = 10.dp),
         ) {
-            TextButton(onClick = onBack) { Text("‹  Back", fontWeight = FontWeight.Bold) }
+            AppBackButton(onClick = onBack)
             Spacer(Modifier.height(10.dp))
-            Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp)
             Text("Edit Account", modifier = Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text("Update the details used to generate your one-time codes.", modifier = Modifier.padding(top = 10.dp), color = Color(0xFF77717F))
 
