@@ -74,10 +74,9 @@ import com.indoone.R
 import kotlin.math.cos
 import kotlin.math.sin
 
-// Brush script for the wordmark. Yellowtail is the closest free (SIL Open Font
-// License) match to Brush Script MT, which is a paid Monotype font and cannot be
-// shipped in the app.
-private val WordmarkFont = FontFamily(Font(R.font.wordmark_brush))
+// Courier Prime for the wordmark: the closest free (SIL Open Font License) match
+// to Courier New, which is a paid Monotype font and cannot be shipped in the app.
+private val WordmarkFont = FontFamily(Font(R.font.wordmark_courier))
 
 @Composable
 fun VibeScreen(
