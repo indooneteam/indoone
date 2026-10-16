@@ -49,7 +49,6 @@ private val LockPurple = Color(0xFF6330DB)
 private val LockPurpleLight = Color(0xFF9147ED)
 private val LockPurpleDark = Color(0xFF5E2DD2)
 private val LockText = Color(0xFF17151D)
-private val LockMuted = Color(0xFF77717F)
 private val LockBorder = Color(0xFFE3DFE8)
 private val LockBackground = Color(0xFFF8F4FF)
 private val LockDotEmpty = Color(0xFFE1D8F2)
@@ -106,13 +105,6 @@ fun AutoLockUnlockScreen(
                 color = LockText,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Enter your App PIN to continue." +
-                    if (biometricEnabled) " You can also use biometric unlock." else "",
-                color = LockMuted,
-                fontSize = 13.sp,
             )
             Spacer(Modifier.height(20.dp))
 
