@@ -21,7 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,31 +35,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.indoone.menu.AppChevron
 import com.indoone.menu.plugins.email.gmail.GmailPluginApi
 import com.indoone.settings.SettingsScreen
-
-private fun profileIcon(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
-    ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
-        path(
-            fill = null,
-            stroke = SolidColor(Color.Black),
-            strokeLineWidth = 1.8f,
-            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-            pathBuilder = content,
-        )
-    }.build()
-
-private val ProfileChevron = profileIcon("ProfileChevron") {
-    moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
-}
 
 private enum class ProfileSheet {
     NONE,
@@ -474,12 +458,18 @@ private fun ProfileActionRow(
     description: String,
     onClick: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        color = Color.White,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, Color(0xFFECE9F0)),
+        shadowElevation = 2.dp,
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(vertical = 14.dp),
+                .padding(horizontal = 15.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -499,13 +489,7 @@ private fun ProfileActionRow(
                     lineHeight = 16.sp,
                 )
             }
-            androidx.compose.material3.Icon(
-                ProfileChevron,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp),
-                tint = Color(0xFF9A92A1),
-            )
+            AppChevron()
         }
-        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
     }
 }
