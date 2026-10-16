@@ -171,7 +171,7 @@ class ProfileViewModel : ViewModel() {
                         }
                         profile.updateChildren(updates).addOnCompleteListener {
                             user.sendEmailVerification().addOnCompleteListener {
-                                _state.value = _state.value.copy(busy = false, email = value, message = "Email changed in Firebase. A verification email was sent.")
+                                _state.value = _state.value.copy(busy = false, email = value, message = "Email changed. A verification email was sent.")
                                 onFinished()
                             }
                         }

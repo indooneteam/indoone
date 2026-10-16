@@ -123,7 +123,7 @@ object GitHubPluginApi {
         )
         val authorizationUrl = result.optString("authorization_url").trim()
         if (authorizationUrl.isBlank()) {
-            throw GitHubPluginException("Indoone backend returned no GitHub authorization URL.")
+            throw GitHubPluginException("No authorization URL was returned. Please try again.")
         }
         GitHubConnectResult(authorizationUrl)
     }

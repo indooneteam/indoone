@@ -35,7 +35,7 @@ object GmailPluginApi {
             val body = execute(connection, null)
             JSONObject(body).optString("server_client_id").trim()
                 .takeIf { it.isNotBlank() }
-                ?: throw GmailPluginException("Google server OAuth client is not configured on Indoone backend.")
+                ?: throw GmailPluginException("Email connection is not configured yet. Please try again later.")
         } finally {
             connection.disconnect()
         }
@@ -50,7 +50,7 @@ object GmailPluginApi {
         val authToken = requireAuthToken()
         val code = serverAuthCode.trim()
         if (code.isBlank()) {
-            throw GmailPluginException("Google did not return a server authorization code.")
+            throw GmailPluginException("The email service did not return an authorization code.")
         }
         val payload = JSONObject().apply {
             put("user_id", userId)
@@ -93,7 +93,7 @@ object GmailPluginApi {
         val authToken = requireAuthToken()
         val token = accessToken.trim()
         if (token.isBlank()) {
-            throw GmailPluginException("Google did not return an access token.")
+            throw GmailPluginException("The email service did not return an access token.")
         }
         val payload = JSONObject().apply {
             put("user_id", userId)

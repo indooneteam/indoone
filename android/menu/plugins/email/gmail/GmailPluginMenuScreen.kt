@@ -71,7 +71,7 @@ fun GmailPluginMenuScreen(
         if (serverAuthCode.isBlank()) {
             connecting = false
             checking = false
-            message = "Google did not return a server authorization code. Reconnect Gmail and approve offline access."
+            message = "The email service did not return an authorization code. Reconnect and approve access."
             return
         }
         val grantedScope = result.grantedScopes.orEmpty().joinToString(" ")
@@ -110,12 +110,12 @@ fun GmailPluginMenuScreen(
         } catch (error: ApiException) {
             connecting = false
             checking = false
-            message = "Google authorization failed (${error.statusCode}): " +
-                (error.message ?: "unknown Google authorization error.")
+            message = "Authorization failed (${error.statusCode}): " +
+                (error.message ?: "unknown authorization error.")
         } catch (error: Exception) {
             connecting = false
             checking = false
-            message = error.message ?: "Google authorization failed."
+            message = error.message ?: "Authorization failed."
         }
     }
 
@@ -141,7 +141,7 @@ fun GmailPluginMenuScreen(
                             if (pendingIntent == null) {
                                 connecting = false
                                 checking = false
-                                message = "Google authorization could not start."
+                                message = "Authorization could not start."
                             } else {
                                 authorizationLauncher.launch(
                                     IntentSenderRequest.Builder(pendingIntent.intentSender).build()
@@ -154,7 +154,7 @@ fun GmailPluginMenuScreen(
                     .addOnFailureListener { error ->
                         connecting = false
                         checking = false
-                        message = error.message ?: "Could not start Google authorization."
+                        message = error.message ?: "Could not start authorization."
                     }
             } catch (error: Exception) {
                 connecting = false
@@ -219,7 +219,7 @@ fun GmailPluginMenuScreen(
         )
 
         Text(
-            text = "Google will ask you to approve Gmail permissions. Indoone sends a one-time server authorization code over HTTPS; the backend exchanges it and stores the access and refresh tokens in encrypted form. Tokens are not stored in your Firebase profile or on the phone.",
+            text = "You will be asked to approve email permissions. Indoone sends a one-time server authorization code over HTTPS; the backend exchanges it and stores the access and refresh tokens in encrypted form. Tokens are not stored on the phone or in your profile.",
             color = Color(0xFF77707F),
             fontSize = 11.sp,
             lineHeight = 17.sp,

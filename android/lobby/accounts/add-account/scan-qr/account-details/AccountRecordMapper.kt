@@ -35,7 +35,7 @@ object AccountRecordMapper {
                 "binance" -> "Binance"
                 "dropbox" -> "Dropbox"
                 "zoho" -> "Zoho"
-                else -> "Google"
+                else -> "Account"
             },
             service = name,
             favorite = false,

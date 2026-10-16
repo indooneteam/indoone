@@ -89,7 +89,7 @@ class CloudChatRepository(
 
         val snapshot = Tasks.await(conversation.get())
         if (!snapshot.exists()) {
-            throw IllegalStateException("Conversation could not be created in Firestore.")
+            throw IllegalStateException("The conversation could not be created.")
         }
         if (snapshot.getString("userId").orEmpty() != userId) {
             throw SecurityException("Conversation does not belong to this account.")
