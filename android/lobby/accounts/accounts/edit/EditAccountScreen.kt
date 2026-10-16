@@ -76,7 +76,7 @@ fun EditAccountScreen(
                 border = BorderStroke(1.dp, Color(0xFFE8E3EC)),
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    OutlinedTextField(value = state.name, onValueChange = onNameChanged, modifier = Modifier.fillMaxWidth(), label = { Text("ACCOUNT NAME") }, placeholder = { Text("e.g. Google") }, singleLine = true)
+                    OutlinedTextField(value = state.name, onValueChange = onNameChanged, modifier = Modifier.fillMaxWidth(), label = { Text("ACCOUNT NAME") }, placeholder = { Text("e.g. Work account") }, singleLine = true)
                     OutlinedTextField(value = state.email, onValueChange = onEmailChanged, modifier = Modifier.fillMaxWidth(), label = { Text("EMAIL / USERNAME") }, placeholder = { Text("you@example.com") }, singleLine = true)
                     OutlinedTextField(value = state.secret, onValueChange = onSecretChanged, modifier = Modifier.fillMaxWidth(), label = { Text("SECRET KEY") }, placeholder = { Text("Base32 secret key") }, singleLine = true)
 
