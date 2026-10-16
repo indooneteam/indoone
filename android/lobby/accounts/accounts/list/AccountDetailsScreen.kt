@@ -33,13 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.IndooneTopBarLogo
 import com.indoone.lobby.accounts.AccountItem
 import com.indoone.lobby.accounts.AccountRecord
 import com.indoone.lobby.accounts.AccountsScreen
@@ -173,20 +173,10 @@ fun AccountDetailsScreen(
                             .background(Color(0xFFF2ECFF)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .rotate(45f)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFF5E2CE2), Color(0xFF9346ED), Color(0xFF39A9FF)),
-                                    ),
-                                    RoundedCornerShape(9.dp),
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text("✦", modifier = Modifier.rotate(-45f), color = Color.Black, fontSize = 17.sp, fontWeight = FontWeight.Black)
-                        }
+                        // The real Indoone mark. This tile used to build its own
+                        // approximation out of a "✦" character, which did not match the
+                        // logo the rest of the app shows.
+                        IndooneTopBarLogo(modifier = Modifier.size(34.dp))
                     }
 
                     Text(

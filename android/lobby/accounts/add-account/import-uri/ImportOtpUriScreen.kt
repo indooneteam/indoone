@@ -1,6 +1,7 @@
 package com.indoone.lobby.accounts.addaccount.importuri
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,9 +37,12 @@ fun ImportOtpUriScreen(
     onBack: () -> Unit,
     onContinue: () -> Unit,
 ) {
+    // Painted white like the other screens: without it the black window behind the
+    // app showed through.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
