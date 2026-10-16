@@ -38,8 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.accounts.AccountRecord
-import com.indoone.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.lobby.accounts.AccountRecord
+import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
 import kotlinx.coroutines.delay
 
 @Composable

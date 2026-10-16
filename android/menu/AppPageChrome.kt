@@ -320,7 +320,7 @@ fun AppBottomNav(
                 NeumorphicNavItem(
                     icon = Icons.Filled.Home,
                     label = "Home",
-                    active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
+                    active = activeTab == AppTab.HOME,
                     onClick = onAccountsClick,
                 )
                 NeumorphicNavItem(
@@ -347,7 +347,7 @@ fun AppBottomNav(
     }
 }
 
-enum class AppTab { HOME, ACCOUNTS, LOBBY, SETTINGS }
+enum class AppTab { HOME, LOBBY, SETTINGS }
 
 @Composable
 private fun RowScope.NeumorphicNavItem(

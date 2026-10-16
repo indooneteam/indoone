@@ -45,8 +45,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.accounts.AccountRepository
-import com.indoone.accounts.TrashRecord
+import com.indoone.lobby.accounts.AccountRepository
+import com.indoone.lobby.accounts.TrashRecord
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max

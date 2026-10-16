@@ -27,35 +27,34 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.indoone.accounts.AccountItem
-import com.indoone.accounts.AccountRecord
-import com.indoone.accounts.AccountsScreen
-import com.indoone.accounts.AccountsViewModel
-import com.indoone.accounts.accounts.AccountDetailActions
-import com.indoone.accounts.accounts.AccountRemovalService
-import com.indoone.accounts.accounts.edit.EditAccountScreen
-import com.indoone.accounts.accounts.edit.EditAccountViewModel
-import com.indoone.accounts.accounts.list.AccountDetailsScreen
-import com.indoone.accounts.accounts.list.AccountTotpGenerator
-import com.indoone.accounts.addaccount.AddAccountScreen
-import com.indoone.accounts.addaccount.AddAccountViewModel
-import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyScreen
-import com.indoone.accounts.addaccount.entersetupkey.EnterSetupKeyViewModel
-import com.indoone.accounts.addaccount.importuri.ImportOtpUriScreen
-import com.indoone.accounts.addaccount.importuri.ImportOtpUriViewModel
-import com.indoone.accounts.addaccount.scanqr.QrManualPrefill
-import com.indoone.accounts.addaccount.scanqr.QrScanResultHandler
-import com.indoone.accounts.addaccount.scanqr.ScanQrScreen
-import com.indoone.accounts.addaccount.scanqr.ScanQrViewModel
-import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
-import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
-import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
-import com.indoone.accounts.search.SearchViewModel
-import com.indoone.accounts.storage.AccountRepositoryProvider
+import androidx.work.WorkInfo
+import com.indoone.lobby.accounts.AccountItem
+import com.indoone.lobby.accounts.AccountRecord
+import com.indoone.lobby.accounts.AccountsScreen
+import com.indoone.lobby.accounts.AccountsViewModel
+import com.indoone.lobby.accounts.accounts.AccountDetailActions
+import com.indoone.lobby.accounts.accounts.AccountRemovalService
+import com.indoone.lobby.accounts.accounts.edit.EditAccountScreen
+import com.indoone.lobby.accounts.accounts.edit.EditAccountViewModel
+import com.indoone.lobby.accounts.accounts.list.AccountDetailsScreen
+import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.lobby.accounts.addaccount.AddAccountScreen
+import com.indoone.lobby.accounts.addaccount.AddAccountViewModel
+import com.indoone.lobby.accounts.addaccount.entersetupkey.EnterSetupKeyScreen
+import com.indoone.lobby.accounts.addaccount.entersetupkey.EnterSetupKeyViewModel
+import com.indoone.lobby.accounts.addaccount.importuri.ImportOtpUriScreen
+import com.indoone.lobby.accounts.addaccount.importuri.ImportOtpUriViewModel
+import com.indoone.lobby.accounts.addaccount.scanqr.QrManualPrefill
+import com.indoone.lobby.accounts.addaccount.scanqr.QrScanResultHandler
+import com.indoone.lobby.accounts.addaccount.scanqr.ScanQrScreen
+import com.indoone.lobby.accounts.addaccount.scanqr.ScanQrViewModel
+import com.indoone.lobby.accounts.addaccount.scanqr.accountdetails.AccountDetailsScreen
+import com.indoone.lobby.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewModel
+import com.indoone.lobby.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
+import com.indoone.lobby.accounts.search.SearchViewModel
+import com.indoone.lobby.accounts.storage.AccountRepositoryProvider
 import com.indoone.home.HomeScreen
 import com.indoone.vibe.VibeScreen
-import com.indoone.lobby.LobbyScreen
-import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
 import com.indoone.menu.plugins.PluginsMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
@@ -80,7 +79,6 @@ import kotlinx.coroutines.withContext
 
 private enum class AppRoute {
     HOME,
-    ACCOUNTS,
     LOBBY,
     SETTINGS,
     PROFILE,
@@ -126,7 +124,6 @@ class MainActivity : ComponentActivity() {
                 val enterSetupKeyViewModel: EnterSetupKeyViewModel = viewModel()
                 val importOtpUriViewModel: ImportOtpUriViewModel = viewModel()
                 val searchViewModel: SearchViewModel = viewModel()
-                val lobbyViewModel: LobbyViewModel = viewModel()
                 val profileViewModel: ProfileViewModel = viewModel()
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
@@ -136,7 +133,7 @@ class MainActivity : ComponentActivity() {
                 var isCheckingUpdate by remember { mutableStateOf(false) }
                 var updateDialogHidden by remember { mutableStateOf(false) }
                 var selectedAccount by remember { mutableStateOf<AccountRecord?>(null) }
-                var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.ACCOUNTS) }
+                var accountDetailReturnRoute by remember { mutableStateOf(AppRoute.LOBBY) }
                 var qrAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var importAccountDetailsViewModel by remember { mutableStateOf<AccountDetailsViewModel?>(null) }
                 var editAccountViewModel by remember { mutableStateOf<EditAccountViewModel?>(null) }
@@ -314,7 +311,7 @@ class MainActivity : ComponentActivity() {
                         onClose = { navigate(AppRoute.HOME) },
                     )
 
-                    AppRoute.ACCOUNTS -> {
+                    AppRoute.LOBBY -> {
                         val state by accountsViewModel.state.collectAsState()
                         AccountsScreen(
                             state = state,
@@ -333,7 +330,7 @@ class MainActivity : ComponentActivity() {
                                 coroutineScope.launch {
                                     selectedAccount = repository.getAll().firstOrNull { it.id == item.id }
                                     if (selectedAccount != null) {
-                                        accountDetailReturnRoute = AppRoute.ACCOUNTS
+                                        accountDetailReturnRoute = AppRoute.LOBBY
                                         route = AppRoute.ACCOUNT_DETAILS
                                     }
                                 }
@@ -343,23 +340,6 @@ class MainActivity : ComponentActivity() {
                                 route = AppRoute.ADD_ACCOUNT
                             },
                             onSearchClick = {},
-                            onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onVibeClick = { navigate(AppRoute.VIBE) },
-                            onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                            // Accounts is opened from the drawer, so its menu button
-                            // returns to the menu instead of re-opening it. Re-opening
-                            // would record Accounts as the drawer's own background, and
-                            // closing the drawer would land back on Accounts rather than
-                            // on the chat. Favorites, Security and Privacy already do
-                            // this; Accounts was the one that was missed.
-                            onMenuClick = ::backToMenu,
-                        )
-                    }
-
-                    AppRoute.LOBBY -> {
-                        val state by lobbyViewModel.state.collectAsState()
-                        LobbyScreen(
-                            state = state,
                             onMenuClick = ::openMenu,
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
@@ -585,7 +565,7 @@ class MainActivity : ComponentActivity() {
                         AddAccountScreen(
                             state = state,
                             onOtpUriChanged = addAccountViewModel::updateOtpUri,
-                            onBack = { route = AppRoute.ACCOUNTS },
+                            onBack = { route = AppRoute.LOBBY },
                             onScanQr = { route = AppRoute.SCAN_QR },
                             onEnterSetupKey = { route = AppRoute.ENTER_SETUP_KEY },
                             onImportOtpUri = { uri ->
@@ -634,7 +614,7 @@ class MainActivity : ComponentActivity() {
                                 onSave = {
                                     saveQrLikeAccount(vm, state, repository, coroutineScope) {
                                         loadAccounts()
-                                        route = AppRoute.ACCOUNTS
+                                        route = AppRoute.LOBBY
                                     }
                                 },
                             )
@@ -684,7 +664,7 @@ class MainActivity : ComponentActivity() {
                                 onSave = {
                                     saveQrLikeAccount(vm, state, repository, coroutineScope) {
                                         loadAccounts()
-                                        route = AppRoute.ACCOUNTS
+                                        route = AppRoute.LOBBY
                                     }
                                 },
                             )
@@ -712,7 +692,7 @@ class MainActivity : ComponentActivity() {
                                                 .onSuccess {
                                                     enterSetupKeyViewModel.onSaveCompleted()
                                                     loadAccounts()
-                                                    route = AppRoute.ACCOUNTS
+                                                    route = AppRoute.LOBBY
                                                 }
                                                 .onFailure { e ->
                                                     enterSetupKeyViewModel.onSaveFailed(e.message ?: "Could not save account.")
@@ -844,9 +824,8 @@ class MainActivity : ComponentActivity() {
 
                 if (menuOpen) {
                     MenuDrawer(
-                        accountCount = accountsViewModel.state.value.accounts.size,
                         onDismiss = { menuOpen = false },
-                        onAccounts = { navigate(AppRoute.ACCOUNTS) },
+                        onAccounts = { navigate(AppRoute.LOBBY) },
                         onFavorites = { navigate(AppRoute.FAVORITES) },
                         onTrash = { menuToast("Trash is coming next") },
                         onSecurity = { navigate(AppRoute.SECURITY) },
@@ -879,7 +858,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun FavoritesRoute(
-    repository: com.indoone.accounts.AccountRepository,
+    repository: com.indoone.lobby.accounts.AccountRepository,
     onBack: () -> Unit,
     onAccountClick: (AccountRecord) -> Unit,
     onToggleFavorite: (AccountRecord) -> Unit,
@@ -906,8 +885,8 @@ private fun FavoritesRoute(
 
 private fun saveQrLikeAccount(
     viewModel: AccountDetailsViewModel,
-    state: com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsState,
-    repository: com.indoone.accounts.AccountRepository,
+    state: com.indoone.lobby.accounts.addaccount.scanqr.accountdetails.AccountDetailsState,
+    repository: com.indoone.lobby.accounts.AccountRepository,
     scope: kotlinx.coroutines.CoroutineScope,
     onSuccess: () -> Unit,
 ) {
@@ -926,8 +905,8 @@ private fun saveQrLikeAccount(
         }
 }
 
-private fun QrManualPrefill.toQrAccountResult(): com.indoone.accounts.addaccount.scanqr.QrAccountResult =
-    com.indoone.accounts.addaccount.scanqr.QrAccountResult(
+private fun QrManualPrefill.toQrAccountResult(): com.indoone.lobby.accounts.addaccount.scanqr.QrAccountResult =
+    com.indoone.lobby.accounts.addaccount.scanqr.QrAccountResult(
         name = name,
         email = email,
         secret = secret,

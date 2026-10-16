@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Security
@@ -61,7 +60,7 @@ import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.AddComment
 import androidx.compose.material.icons.outlined.Apps
 import com.indoone.MainActivity
-import com.indoone.accounts.storage.AccountRepositoryProvider
+import com.indoone.lobby.accounts.storage.AccountRepositoryProvider
 import com.indoone.menu.about.MenuAboutScreen
 import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
@@ -78,7 +77,6 @@ import com.indoone.settings.unlock.UnlockAppActivity
 
 @Composable
 fun MenuDrawer(
-    accountCount: Int,
     onDismiss: () -> Unit,
     onAccounts: () -> Unit,
     onFavorites: () -> Unit,
@@ -279,7 +277,6 @@ fun MenuDrawer(
                 DrawerItem(Icons.Outlined.PrivacyTip, "Data & Privacy", null) { showDataPrivacy = true }
 
                 DrawerSectionLabel("ACCOUNTS")
-                DrawerItem(Icons.Outlined.GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null, onClick = onAccounts)
                 DrawerItem(Icons.Outlined.StarBorder, "Favorites", null, onClick = onFavorites)
                 DrawerItem(Icons.Outlined.DeleteOutline, "Trash", null) { showTrash = true }
 
