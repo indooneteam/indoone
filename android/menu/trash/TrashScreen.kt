@@ -48,10 +48,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.accounts.AccountRecord
-import com.indoone.accounts.AccountRepository
-import com.indoone.accounts.TrashRecord
-import com.indoone.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.lobby.accounts.AccountRecord
+import com.indoone.lobby.accounts.AccountRepository
+import com.indoone.lobby.accounts.TrashRecord
+import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -194,7 +194,7 @@ private fun TrashAccountsBackdrop(accounts: List<AccountRecord>) {
                 Column(verticalArrangement = Arrangement.spacedBy(11.dp)) { accounts.take(4).forEach { TrashBackdropAccountRow(it, nowMillis) } }
             }
         }
-        AppBottomNav(activeTab = AppTab.ACCOUNTS, onAccountsClick = {}, onLobbyClick = {}, onVibeClick = {}, onSettingsClick = {}, modifier = Modifier.align(Alignment.BottomCenter))
+        AppBottomNav(activeTab = AppTab.LOBBY, onAccountsClick = {}, onLobbyClick = {}, onVibeClick = {}, onSettingsClick = {}, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
