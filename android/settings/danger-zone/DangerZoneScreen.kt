@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,7 +98,6 @@ private fun DangerRow(title: String, subtitle: String, onClick: () -> Unit) {
 @Composable
 private fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val auth = remember { FirebaseAuth.getInstance() }
     val db = remember { FirebaseDatabase.getInstance().reference }
     val user = auth.currentUser
@@ -133,7 +131,7 @@ private fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
                 val email = user.email
                 if (email.isNullOrBlank()) { status = "This account cannot be re-authenticated here."; return@Button }
                 working = true; status = "Verifying your account…"
-                deleteAccount(context, auth, db, password, scope, { status = it }, { working = false; onDeleted() }, { working = false; status = it })
+                deleteAccount(context, auth, db, password, { status = it }, { working = false; onDeleted() }, { working = false; status = it })
             },
             enabled = !working,
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -226,34 +224,109 @@ private fun clearLocalData(context: Context) {
     runCatching { context.cacheDir.resolve("camera").deleteRecursively() }
 }
 
-private fun deleteAccount(context: Context, auth: FirebaseAuth, db: com.google.firebase.database.DatabaseReference, password: String, scope: kotlinx.coroutines.CoroutineScope, onStatus: (String) -> Unit, onSuccess: () -> Unit, onError: (String) -> Unit) {
+private fun deleteAccount(
+    context: Context,
+    auth: FirebaseAuth,
+    db: com.google.firebase.database.DatabaseReference,
+    password: String,
+    onStatus: (String) -> Unit,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit,
+) {
     val user = auth.currentUser ?: run { onError("Login session expired. Please login again."); return }
     val email = user.email ?: run { onError("This account cannot be re-authenticated here."); return }
-    user.reauthenticate(EmailAuthProvider.getCredential(email, password)).addOnSuccessListener {
-        user.reload().addOnSuccessListener {
-            onStatus("Removing your Indoone cloud data…")
-            db.child("users").child(user.uid).child("profile").get().addOnSuccessListener { profileSnapshot ->
-                val profile = profileSnapshot.value as? Map<*, *> ?: emptyMap<Any, Any>()
-                val mobile = profile["mobile"]?.toString()?.trim().orEmpty()
-                val updates = hashMapOf<String, Any?>()
-                updates["users/${user.uid}"] = null
-                db.child("users").orderByChild("profile/email").equalTo(email.trim().lowercase()).get().addOnSuccessListener { matches ->
-                    val mobiles = linkedSetOf<String>()
-                    if (mobile.isNotBlank()) mobiles += mobile
-                    matches.children.forEach { child ->
-                        val matchedMobile = child.child("profile/mobile").value?.toString()?.trim().orEmpty()
-                        if (matchedMobile.isNotBlank()) mobiles += matchedMobile
-                        updates["users/${child.key}"] = null
+
+    user.reauthenticate(EmailAuthProvider.getCredential(email, password))
+        .addOnSuccessListener {
+            user.reload().addOnSuccessListener {
+                onStatus("Removing your Indoone cloud data…")
+                val uid = user.uid
+                db.child("users").child(uid).child("profile").get()
+                    .addOnCompleteListener { profileTask ->
+                        // The mobile is only needed to clear the shared mobile index, so a
+                        // failed read is not fatal.
+                        val mobile = if (profileTask.isSuccessful) {
+                            profileTask.result?.child("mobile")?.getValue(String::class.java)?.trim().orEmpty()
+                        } else {
+                            ""
+                        }
+                        // Fire and forget. This is cleanup of other nodes and must never
+                        // hold up the deletion itself.
+                        sweepDuplicateAccounts(db, uid, email)
+                        removeOwnCloudData(context, auth, db, uid, mobile, onStatus, onSuccess, onError)
                     }
-                    mobiles.forEach { value -> updates["mobileIndex/${java.net.URLEncoder.encode(value, Charsets.UTF_8.name())}"] = null }
-                    db.updateChildren(updates).addOnSuccessListener {
-                        onStatus("Deleting your Firebase account…")
-                        user.delete().addOnSuccessListener { clearLocalData(context); onSuccess() }.addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account deletion failed.")) }
-                    }.addOnFailureListener { e -> onError(e.message ?: "Firebase denied cloud-data deletion. Check Firebase database rules.") }
-                }.addOnFailureListener { e -> onError(e.message ?: "Could not find your account data.") }
-            }.addOnFailureListener { e -> onError(e.message ?: "Could not read your account profile.") }
+            }.addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account verification failed.")) }
         }
-    }.addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account verification failed.")) }
+        .addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account verification failed.")) }
+}
+
+/**
+ * Removes the signed-in user's own cloud data, then the Firebase account, then the
+ * local files. The order matters: once the account is gone the client has no
+ * permission to write anything, so the data has to go first.
+ *
+ * Only paths this user is allowed to write are in the update — their own users node
+ * and their own mobile-index entry. Other users' nodes used to be mixed into the same
+ * atomic update, which made the whole thing fail with a permission error, and the
+ * deletion never ran.
+ */
+private fun removeOwnCloudData(
+    context: Context,
+    auth: FirebaseAuth,
+    db: com.google.firebase.database.DatabaseReference,
+    uid: String,
+    mobile: String,
+    onStatus: (String) -> Unit,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit,
+) {
+    val updates = hashMapOf<String, Any?>()
+    updates["users/$uid"] = null
+    if (mobile.isNotBlank()) {
+        updates["mobileIndex/${java.net.URLEncoder.encode(mobile, Charsets.UTF_8.name())}"] = null
+    }
+    db.updateChildren(updates)
+        .addOnSuccessListener {
+            onStatus("Deleting your Firebase account…")
+            val current = auth.currentUser
+            if (current == null) {
+                clearLocalData(context)
+                onSuccess()
+            } else {
+                current.delete()
+                    .addOnSuccessListener { clearLocalData(context); onSuccess() }
+                    .addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account deletion failed.")) }
+            }
+        }
+        .addOnFailureListener { e -> onError(e.message ?: "Firebase denied cloud-data deletion. Check Firebase database rules.") }
+}
+
+/**
+ * Best effort: clears any other users node that carries the same email. That needs a
+ * query on users ordered by profile/email, so the rules must carry
+ * ".indexOn": "profile/email" — without it the query is refused outright. Either way
+ * the outcome is ignored: this is cleanup, and it must not be able to block a
+ * deletion the way it used to.
+ */
+private fun sweepDuplicateAccounts(
+    db: com.google.firebase.database.DatabaseReference,
+    uid: String,
+    email: String,
+) {
+    runCatching {
+        db.child("users")
+            .orderByChild("profile/email")
+            .equalTo(email.trim().lowercase())
+            .get()
+            .addOnSuccessListener { matches ->
+                val updates = hashMapOf<String, Any?>()
+                matches.children.forEach { child ->
+                    val key = child.key
+                    if (key != null && key != uid) updates["users/$key"] = null
+                }
+                if (updates.isNotEmpty()) db.updateChildren(updates)
+            }
+    }
 }
 
 private fun formatAuthError(code: String, fallback: String): String = when (code) {
