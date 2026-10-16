@@ -48,7 +48,14 @@ class ProfileViewModel : ViewModel() {
 
     fun clearFeedback() { _state.value = _state.value.copy(error = null, message = null) }
 
-    fun updateMobile(rawValue: String, onFinished: () -> Unit = {}) {
+    /**
+     * Changes the mobile number, but only after the current password is verified.
+     *
+     * The number is now a separate value from the one on the account: the screen shows
+     * the number already saved and this takes the new one. Nothing is written until
+     * reauthentication succeeds.
+     */
+    fun updateMobile(rawValue: String, password: String, onFinished: () -> Unit = {}) {
         val user = auth.currentUser ?: run {
             _state.value = _state.value.copy(error = "Please sign in again before changing your mobile number.")
             return
@@ -58,35 +65,47 @@ class ProfileViewModel : ViewModel() {
             _state.value = _state.value.copy(error = "Enter a valid 10-digit Indian mobile number.")
             return
         }
+        if (password.isBlank()) {
+            _state.value = _state.value.copy(error = "Enter your current password")
+            return
+        }
         val oldMobile = normalizeMobile(_state.value.mobile.takeIf { !it.contains("not set", true) }.orEmpty())
         if (value == oldMobile) {
             _state.value = _state.value.copy(error = "Enter a different mobile number.")
             return
         }
         _state.value = _state.value.copy(busy = true, error = null, message = null)
-        val candidates = listOf(value, value.filter(Char::isDigit), value.removePrefix("+"), value.removePrefix("+91")).distinct()
-        checkMobileCandidates(candidates, user.uid, 0) { error ->
-            if (error != null) {
-                _state.value = _state.value.copy(busy = false, error = error)
+        val credential = EmailAuthProvider.getCredential(user.email ?: "", password)
+        user.reauthenticate(credential).addOnCompleteListener { reauth ->
+            if (!reauth.isSuccessful) {
+                _state.value = _state.value.copy(busy = false, error = mapAuthError(reauth.exception, "Could not verify your password."))
                 onFinished()
-                return@checkMobileCandidates
+                return@addOnCompleteListener
             }
-            val now = ServerValue.TIMESTAMP
-            val updates = hashMapOf<String, Any?>(
-                "users/${user.uid}/profile/mobile" to value,
-                "users/${user.uid}/profile/uid" to user.uid,
-                "users/${user.uid}/profile/email" to (user.email ?: ""),
-                "users/${user.uid}/profile/updatedAt" to now,
-                "mobileIndex/${encode(value)}" to mapOf("uid" to user.uid, "email" to (user.email ?: ""), "updatedAt" to now),
-            )
-            if (oldMobile.isNotBlank() && oldMobile != value) updates["mobileIndex/${encode(oldMobile)}"] = null
-            database.updateChildren(updates).addOnCompleteListener { task ->
-                _state.value = if (task.isSuccessful) {
-                    _state.value.copy(busy = false, mobile = value, message = "Mobile number updated.")
-                } else {
-                    _state.value.copy(busy = false, error = task.exception?.message ?: "Could not change mobile number.")
+            val candidates = listOf(value, value.filter(Char::isDigit), value.removePrefix("+"), value.removePrefix("+91")).distinct()
+            checkMobileCandidates(candidates, user.uid, 0) { error ->
+                if (error != null) {
+                    _state.value = _state.value.copy(busy = false, error = error)
+                    onFinished()
+                    return@checkMobileCandidates
                 }
-                onFinished()
+                val now = ServerValue.TIMESTAMP
+                val updates = hashMapOf<String, Any?>(
+                    "users/${user.uid}/profile/mobile" to value,
+                    "users/${user.uid}/profile/uid" to user.uid,
+                    "users/${user.uid}/profile/email" to (user.email ?: ""),
+                    "users/${user.uid}/profile/updatedAt" to now,
+                    "mobileIndex/${encode(value)}" to mapOf("uid" to user.uid, "email" to (user.email ?: ""), "updatedAt" to now),
+                )
+                if (oldMobile.isNotBlank() && oldMobile != value) updates["mobileIndex/${encode(oldMobile)}"] = null
+                database.updateChildren(updates).addOnCompleteListener { task ->
+                    _state.value = if (task.isSuccessful) {
+                        _state.value.copy(busy = false, mobile = value, message = "Mobile number updated.")
+                    } else {
+                        _state.value.copy(busy = false, error = task.exception?.message ?: "Could not change mobile number.")
+                    }
+                    onFinished()
+                }
             }
         }
     }
@@ -129,12 +148,12 @@ class ProfileViewModel : ViewModel() {
         val credential = EmailAuthProvider.getCredential(user.email ?: "", password)
         user.reauthenticate(credential).addOnCompleteListener { reauth ->
             if (!reauth.isSuccessful) {
-                finishEmail(false, mapAuthError(reauth.exception), onFinished)
+                finishEmail(false, mapAuthError(reauth.exception, "Could not change email"), onFinished)
                 return@addOnCompleteListener
             }
             user.updateEmail(value).addOnCompleteListener { update ->
                 if (!update.isSuccessful) {
-                    finishEmail(false, mapAuthError(update.exception), onFinished)
+                    finishEmail(false, mapAuthError(update.exception, "Could not change email"), onFinished)
                     return@addOnCompleteListener
                 }
                 val profile = database.child("users").child(user.uid).child("profile")
@@ -168,12 +187,12 @@ class ProfileViewModel : ViewModel() {
         done()
     }
 
-    private fun mapAuthError(error: Exception?): String = when ((error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode) {
+    private fun mapAuthError(error: Exception?, fallback: String): String = when ((error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode) {
         "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL" -> "Current password is incorrect."
-        "ERROR_REQUIRES_RECENT_LOGIN" -> "Please sign in again, then change your email."
+        "ERROR_REQUIRES_RECENT_LOGIN" -> "Please sign in again, then try this change."
         "ERROR_EMAIL_ALREADY_IN_USE" -> "An account already exists with this email."
         "ERROR_INVALID_EMAIL" -> "Enter a valid email address."
-        else -> error?.message ?: "Could not change email"
+        else -> error?.message ?: fallback
     }
 
     private fun encode(value: String): String = java.net.URLEncoder.encode(value, "UTF-8")
