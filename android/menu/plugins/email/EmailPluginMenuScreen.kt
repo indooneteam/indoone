@@ -1,5 +1,6 @@
 package com.indoone.menu.plugins.email
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,9 +25,12 @@ fun EmailPluginMenuScreen(
     onBack: () -> Unit,
     onGmailClick: () -> Unit,
 ) {
+    // Painted white like the other screens: without it the black window behind the
+    // app showed through.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -3,6 +3,7 @@ package com.indoone.menu.plugins.email.gmail
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -166,9 +167,12 @@ fun GmailPluginMenuScreen(
         checkStatus()
     }
 
+    // Painted white like the other screens: without it the black window behind the
+    // app showed through.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {

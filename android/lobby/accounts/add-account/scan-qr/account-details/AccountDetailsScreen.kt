@@ -1,5 +1,6 @@
 package com.indoone.lobby.accounts.addaccount.scanqr.accountdetails
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -41,9 +43,12 @@ fun AccountDetailsScreen(
     onBack: () -> Unit,
     onSave: () -> Unit,
 ) {
+    // Painted white like the other screens: without it the black window behind the
+    // app showed through.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
