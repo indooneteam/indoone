@@ -82,7 +82,6 @@ fun NotificationSettingsScreen(
         }
 
         Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
-            Text("NOTIFICATIONS", color = Color(0xFF5E2DD2), fontSize = 9.sp)
             Text(
                 "Notifications",
                 modifier = Modifier.padding(top = 3.dp),
