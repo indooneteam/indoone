@@ -1,6 +1,7 @@
 package com.indoone.lobby.accounts.accounts.edit
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,9 +47,13 @@ fun EditAccountScreen(
     onSave: () -> Unit,
     onMenuClick: () -> Unit = onBack,
 ) {
+    // Every other screen paints its own white background. Without one this screen
+    // showed the window behind it, which is black, and the dark title on it could
+    // not be read.
     Column(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(Color.White),
     ) {
         AppTopBar(onMenuClick = onMenuClick)
         Column(
@@ -61,7 +66,7 @@ fun EditAccountScreen(
             TextButton(onClick = onBack) { Text("‹  Back", fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(10.dp))
             Text("ACCOUNT DETAILS", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp)
-            Text("Edit Account", modifier = Modifier.padding(top = 3.dp), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Edit Account", modifier = Modifier.padding(top = 3.dp), color = Color(0xFF1F1B24), fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text("Update the details used to generate your one-time codes.", modifier = Modifier.padding(top = 10.dp), color = Color(0xFF77717F))
 
             Card(
