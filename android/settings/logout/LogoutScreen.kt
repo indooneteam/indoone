@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.authentication.AuthSessionStore
+import com.indoone.menu.AppChevron
 import kotlinx.coroutines.launch
 
 @Composable
@@ -75,8 +77,15 @@ private fun LogoutRoot(onBack: () -> Unit, onThisDevice: () -> Unit) {
 
 @Composable
 private fun LogoutRow(title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(Modifier.fillMaxWidth().clickable(onClick = onClick), color = Color.White, shape = RoundedCornerShape(16.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        color = Color.White,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, Color(0xFFECE9F0)),
+        shadowElevation = 2.dp,
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(Modifier.size(42.dp), color = Color(0xFFF4F1F8), shape = RoundedCornerShape(13.dp)) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Canvas(Modifier.size(24.dp)) {
@@ -109,7 +118,7 @@ private fun LogoutRow(title: String, subtitle: String, onClick: () -> Unit) {
                 Spacer(Modifier.height(3.dp))
                 Text(subtitle, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF8A8492))
             }
-            Text("›", fontSize = 24.sp, color = Color(0xFF8A8492), modifier = Modifier.padding(start = 10.dp))
+            AppChevron()
         }
     }
 }

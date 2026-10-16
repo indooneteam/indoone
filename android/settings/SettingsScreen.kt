@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +38,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.authentication.AuthActivity
 import com.indoone.menu.AppBottomNav
+import com.indoone.menu.AppChevron
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.settings.about.AboutScreen
@@ -76,7 +77,6 @@ private val InfoIcon = Icons.Outlined.Info
 private val NotificationsIcon = Icons.Outlined.NotificationsNone
 private val DangerZoneIcon = Icons.Outlined.WarningAmber
 private val LogoutIcon = Icons.Outlined.Logout
-private val ChevronIcon = Icons.Outlined.ChevronRight
 
 private val ItemTitleColor = Color(0xFF2C2733)
 
@@ -375,39 +375,66 @@ private fun SettingsMenuRow(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    onClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp)
-            .clip(RoundedCornerShape(15.dp))
-            .heightIn(min = 52.dp)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SettingsMenuIcon(icon)
-        Column(
-            modifier = Modifier.weight(1f).padding(start = 11.dp),
+    // The same card the accounts use in the Lobby and the notification toggles use:
+    // a rounded white box, a light border and a small shadow.
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .padding(vertical = 5.dp)
+    val cardShape = RoundedCornerShape(18.dp)
+    val cardBorder = BorderStroke(1.dp, Color(0xFFECE9F0))
+    val card: @Composable () -> Unit = {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = title,
-                color = ItemTitleColor,
-                fontSize = 13.sp,
-                lineHeight = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (subtitle != null) {
+            SettingsMenuIcon(icon)
+            Column(
+                modifier = Modifier.weight(1f).padding(start = 12.dp),
+            ) {
                 Text(
-                    text = subtitle,
-                    modifier = Modifier.padding(top = 2.dp),
-                    color = Color(0xFF77717F),
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
+                    text = title,
+                    color = ItemTitleColor,
+                    fontSize = 13.sp,
+                    lineHeight = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        modifier = Modifier.padding(top = 2.dp),
+                        color = Color(0xFF77717F),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                    )
+                }
             }
+            trailing?.invoke()
         }
-        trailing?.invoke()
+    }
+
+    if (onClick != null) {
+        Surface(
+            onClick = onClick,
+            modifier = cardModifier,
+            shape = cardShape,
+            color = Color.White,
+            border = cardBorder,
+            shadowElevation = 2.dp,
+        ) { card() }
+    } else {
+        Surface(
+            modifier = cardModifier,
+            shape = cardShape,
+            color = Color.White,
+            border = cardBorder,
+            shadowElevation = 2.dp,
+        ) { card() }
     }
 }
 
@@ -421,10 +448,10 @@ private fun SettingsMenuItem(
     SettingsMenuRow(
         icon = icon,
         title = title,
-        modifier = Modifier.clickable(onClick = onClick),
         subtitle = subtitle,
+        onClick = onClick,
     ) {
-        Icon(ChevronIcon, "Open $title", Modifier.size(18.dp), tint = Color(0xFF8B9AB0))
+        AppChevron(contentDescription = "Open $title")
     }
 }
 

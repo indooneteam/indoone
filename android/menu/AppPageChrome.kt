@@ -1,8 +1,6 @@
 package com.indoone.menu
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
@@ -25,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.IconButton
@@ -37,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.SolidColor
@@ -413,98 +411,22 @@ private fun RowScope.NeumorphicNavItem(
     }
 }
 
-private val FlowerDividerLineColor = Color(0xFF2E9E5B)
-private val FlowerOuterPetalColor = Color(0xFFF5A623)
-private val FlowerInnerPetalColor = Color(0xFFFBBC04)
-private val FlowerCenterColor = Color(0xFFE08A00)
+private val AppChevronTint = Color(0xFF7A6F8C)
 
 /**
- * A full-width green line with a flower in the middle, used to separate blocks of
- * content. Only the line uses these colours; everything else in the app stays on
- * the brand purple.
- *
- * The padding is deliberately small: the line should read as touching the block
- * above and the block below, not as a band of empty space between them.
+ * The one arrow used by every row that opens something. Some rows drew a "›"
+ * text glyph and others used an icon at a different size and tint, which read as
+ * missing or wrong. Rows call this instead.
  */
 @Composable
-fun AppFlowerDivider(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(2.dp)
-                .background(FlowerDividerLineColor, RoundedCornerShape(1.dp)),
-        )
-        Canvas(
-            modifier = Modifier
-                .padding(horizontal = 9.dp)
-                .size(22.dp),
-        ) {
-            drawFlower()
-        }
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(2.dp)
-                .background(FlowerDividerLineColor, RoundedCornerShape(1.dp)),
-        )
-    }
-}
-
-/**
- * A two-layer flower: six amber petals, six yellow petals turned half a step so
- * they sit in the gaps, and a darker centre. Drawing one ring of same-coloured
- * circles just gave a yellow blob.
- */
-private fun DrawScope.drawFlower() {
-    val center = Offset(size.width / 2f, size.height / 2f)
-
-    drawPetalRing(
-        center = center,
-        petalCount = 6,
-        petalRadius = size.minDimension * 0.135f,
-        petalDistance = size.minDimension * 0.29f,
-        startAngleDegrees = 0.0,
-        color = FlowerOuterPetalColor,
-    )
-
-    drawPetalRing(
-        center = center,
-        petalCount = 6,
-        petalRadius = size.minDimension * 0.105f,
-        petalDistance = size.minDimension * 0.17f,
-        startAngleDegrees = 30.0,
-        color = FlowerInnerPetalColor,
-    )
-
-    drawCircle(
-        color = FlowerCenterColor,
-        radius = size.minDimension * 0.095f,
-        center = center,
-    )
-}
-
-private fun DrawScope.drawPetalRing(
-    center: Offset,
-    petalCount: Int,
-    petalRadius: Float,
-    petalDistance: Float,
-    startAngleDegrees: Double,
-    color: Color,
+fun AppChevron(
+    contentDescription: String? = null,
+    modifier: Modifier = Modifier,
 ) {
-    val step = 360.0 / petalCount
-
-    for (index in 0 until petalCount) {
-        val angle = Math.toRadians(startAngleDegrees + (index * step))
-        val petalCenter = Offset(
-            center.x + (petalDistance * kotlin.math.cos(angle)).toFloat(),
-            center.y + (petalDistance * kotlin.math.sin(angle)).toFloat(),
-        )
-        drawCircle(color = color, radius = petalRadius, center = petalCenter)
-    }
+    Icon(
+        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+        contentDescription = contentDescription,
+        modifier = modifier.size(22.dp),
+        tint = AppChevronTint,
+    )
 }

@@ -1,6 +1,7 @@
 package com.indoone.settings.dangerzone
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.menu.AppFlowerDivider
+import com.indoone.menu.AppChevron
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -66,24 +67,28 @@ private fun DangerZoneRoot(onBack: () -> Unit, onDeleteLocal: () -> Unit, onDele
     DangerModalShell(onBack) {
         Text("These actions can permanently remove Indoone data. Continue only when you are sure.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(12.dp))
-        AppFlowerDivider()
         DangerRow("Delete local data", "Remove data stored on this device", onDeleteLocal)
-        AppFlowerDivider()
         DangerRow("Delete Indoone account", "Permanently delete your Indoone account and cloud data", onDeleteAccount)
-        AppFlowerDivider()
     }
 }
 
 @Composable
 private fun DangerRow(title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(Modifier.fillMaxWidth().clickable(onClick = onClick), color = Color.White, shape = RoundedCornerShape(16.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        color = Color.White,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, Color(0xFFECE9F0)),
+        shadowElevation = 2.dp,
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3A3442))
                 Spacer(Modifier.height(3.dp))
                 Text(subtitle, fontSize = 11.sp, lineHeight = 16.sp, color = Color(0xFF8A8492))
             }
-            Text("›", fontSize = 24.sp, color = Color(0xFF8A8492), modifier = Modifier.padding(start = 10.dp))
+            AppChevron()
         }
     }
 }
