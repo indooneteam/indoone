@@ -414,19 +414,24 @@ private fun RowScope.NeumorphicNavItem(
 }
 
 private val FlowerDividerLineColor = Color(0xFF2E9E5B)
-private val FlowerDividerPetalColor = Color(0xFFFBBC04)
+private val FlowerOuterPetalColor = Color(0xFFF5A623)
+private val FlowerInnerPetalColor = Color(0xFFFBBC04)
+private val FlowerCenterColor = Color(0xFFE08A00)
 
 /**
- * A full-width green line with a yellow flower in the middle, used to separate
- * blocks of content. Only the line uses these colours; everything else in the app
- * stays on the brand purple.
+ * A full-width green line with a flower in the middle, used to separate blocks of
+ * content. Only the line uses these colours; everything else in the app stays on
+ * the brand purple.
+ *
+ * The padding is deliberately small: the line should read as touching the block
+ * above and the block below, not as a band of empty space between them.
  */
 @Composable
 fun AppFlowerDivider(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -437,8 +442,8 @@ fun AppFlowerDivider(modifier: Modifier = Modifier) {
         )
         Canvas(
             modifier = Modifier
-                .padding(horizontal = 10.dp)
-                .size(20.dp),
+                .padding(horizontal = 9.dp)
+                .size(22.dp),
         ) {
             drawFlower()
         }
@@ -451,19 +456,55 @@ fun AppFlowerDivider(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A two-layer flower: six amber petals, six yellow petals turned half a step so
+ * they sit in the gaps, and a darker centre. Drawing one ring of same-coloured
+ * circles just gave a yellow blob.
+ */
 private fun DrawScope.drawFlower() {
     val center = Offset(size.width / 2f, size.height / 2f)
-    val petalRadius = size.minDimension * 0.20f
-    val petalDistance = size.minDimension * 0.26f
 
-    for (index in 0 until 5) {
-        val angle = Math.toRadians((index * 72).toDouble())
+    drawPetalRing(
+        center = center,
+        petalCount = 6,
+        petalRadius = size.minDimension * 0.135f,
+        petalDistance = size.minDimension * 0.29f,
+        startAngleDegrees = 0.0,
+        color = FlowerOuterPetalColor,
+    )
+
+    drawPetalRing(
+        center = center,
+        petalCount = 6,
+        petalRadius = size.minDimension * 0.105f,
+        petalDistance = size.minDimension * 0.17f,
+        startAngleDegrees = 30.0,
+        color = FlowerInnerPetalColor,
+    )
+
+    drawCircle(
+        color = FlowerCenterColor,
+        radius = size.minDimension * 0.095f,
+        center = center,
+    )
+}
+
+private fun DrawScope.drawPetalRing(
+    center: Offset,
+    petalCount: Int,
+    petalRadius: Float,
+    petalDistance: Float,
+    startAngleDegrees: Double,
+    color: Color,
+) {
+    val step = 360.0 / petalCount
+
+    for (index in 0 until petalCount) {
+        val angle = Math.toRadians(startAngleDegrees + (index * step))
         val petalCenter = Offset(
             center.x + (petalDistance * kotlin.math.cos(angle)).toFloat(),
             center.y + (petalDistance * kotlin.math.sin(angle)).toFloat(),
         )
-        drawCircle(color = FlowerDividerPetalColor, radius = petalRadius, center = petalCenter)
+        drawCircle(color = color, radius = petalRadius, center = petalCenter)
     }
-
-    drawCircle(color = FlowerDividerPetalColor, radius = petalRadius * 0.9f, center = center)
 }
