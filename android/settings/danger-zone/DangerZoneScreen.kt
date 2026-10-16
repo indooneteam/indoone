@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,13 +35,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.authentication.AuthSessionStore
 import com.indoone.menu.AppChevron
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import kotlinx.coroutines.launch
 
-private enum class DangerView { ROOT, LOCAL_DATA, ACCOUNT_DELETE }
+private enum class DangerView { ROOT, ACCOUNT_DELETE }
 
 @Composable
 fun DangerZoneScreen(
@@ -54,8 +53,7 @@ fun DangerZoneScreen(
 ) {
     var view by remember { mutableStateOf(DangerView.ROOT) }
     when (view) {
-        DangerView.ROOT -> DangerZoneRoot(onBack, { view = DangerView.LOCAL_DATA }, { view = DangerView.ACCOUNT_DELETE })
-        DangerView.LOCAL_DATA -> DeleteLocalDataScreen({ view = DangerView.ROOT }, onAccountsClick)
+        DangerView.ROOT -> DangerZoneRoot(onBack, { view = DangerView.ACCOUNT_DELETE })
         DangerView.ACCOUNT_DELETE -> DeleteAccountScreen({ view = DangerView.ROOT }, onAccountsClick)
     }
     @Suppress("UNUSED_VARIABLE")
@@ -63,12 +61,11 @@ fun DangerZoneScreen(
 }
 
 @Composable
-private fun DangerZoneRoot(onBack: () -> Unit, onDeleteLocal: () -> Unit, onDeleteAccount: () -> Unit) {
+private fun DangerZoneRoot(onBack: () -> Unit, onDeleteAccount: () -> Unit) {
     DangerModalShell(onBack) {
-        Text("These actions can permanently remove Indoone data. Continue only when you are sure.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 18.sp)
+        Text("This permanently removes your Indoone account, your cloud data, and everything Indoone keeps on this device. Continue only when you are sure.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(12.dp))
-        DangerRow("Delete local data", "Remove data stored on this device", onDeleteLocal)
-        DangerRow("Delete Indoone account", "Permanently delete your Indoone account and cloud data", onDeleteAccount)
+        DangerRow("Delete Indoone account", "Permanently delete your Indoone account, cloud data and local files", onDeleteAccount)
     }
 }
 
@@ -96,37 +93,6 @@ private fun DangerRow(title: String, subtitle: String, onClick: () -> Unit) {
             }
             AppChevron()
         }
-    }
-}
-
-@Composable
-private fun DeleteLocalDataScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
-    val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
-    val scope = rememberCoroutineScope()
-    var working by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    DangerModalShell(onBack, "Delete local data?") {
-        Text("This removes Indoone data stored on this device, including the encrypted vault and local sign-in markers. Your Indoone account and cloud data will not be deleted.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 19.sp)
-        error?.let { Spacer(Modifier.height(10.dp)); Text(it, color = Color(0xFFB42318), fontSize = 12.sp, lineHeight = 18.sp) }
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                if (working) return@Button
-                working = true; error = null
-                scope.launch {
-                    runCatching { clearLocalData(context); auth.signOut() }
-                        .onSuccess { onDeleted() }
-                        .onFailure { working = false; error = it.message ?: "Could not delete local data" }
-                }
-            },
-            enabled = !working,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB42318)),
-        ) { Text("Delete local data", fontWeight = FontWeight.Bold) }
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = onBack, enabled = !working, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text("Cancel", fontWeight = FontWeight.Bold, color = Color(0xFF6330DB)) }
     }
 }
 
@@ -230,11 +196,34 @@ private fun DangerModalShell(onBack: () -> Unit, title: String? = null, content:
     }
 }
 
+/**
+ * Wipes everything Indoone keeps on this device, permanently — nothing goes to the
+ * Trash on the way out. The file and database names mirror the stores that own
+ * them: accounts.enc and trash.enc in EncryptedAccountRepository, last-crash.txt in
+ * CrashLogStore, indoone_notification_history.db in NotificationRepository.
+ */
 private fun clearLocalData(context: Context) {
+    // The account vault, and the trash that holds accounts deleted earlier.
     context.filesDir.resolve("accounts.enc").delete()
-    context.getSharedPreferences("indoone_app_lock", Context.MODE_PRIVATE).edit().clear().apply()
-    context.getSharedPreferences("indoone_biometric_unlock", Context.MODE_PRIVATE).edit().clear().apply()
-    context.getSharedPreferences("indoone_auto_lock", Context.MODE_PRIVATE).edit().clear().apply()
+    context.filesDir.resolve("trash.enc").delete()
+    // The crash log.
+    context.filesDir.resolve("last-crash.txt").delete()
+    // Every preference file the app writes.
+    listOf(
+        "indoone_app_lock",
+        "indoone_biometric_unlock",
+        "indoone_auto_lock",
+        "indoone_notifications",
+        "indoone_auth_session",
+    ).forEach { name ->
+        context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply()
+    }
+    runCatching { AuthSessionStore(context).clear() }
+    // The notification history database.
+    context.deleteDatabase("indoone_notification_history.db")
+    // Caches: a downloaded app update, and photos taken for chat.
+    runCatching { context.cacheDir.resolve("updates").deleteRecursively() }
+    runCatching { context.cacheDir.resolve("camera").deleteRecursively() }
 }
 
 private fun deleteAccount(context: Context, auth: FirebaseAuth, db: com.google.firebase.database.DatabaseReference, password: String, scope: kotlinx.coroutines.CoroutineScope, onStatus: (String) -> Unit, onSuccess: () -> Unit, onError: (String) -> Unit) {
