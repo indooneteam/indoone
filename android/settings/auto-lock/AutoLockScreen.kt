@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppChevron
 
 @Composable
 fun AutoLockScreen(
@@ -109,12 +113,16 @@ fun AutoLockScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (currentMinutes == minutes) Color(0xFF5C2AC7) else Color(0xFF2C2733),
                                 )
-                                Text(
-                                    if (currentMinutes == minutes) "✓" else "›",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (currentMinutes == minutes) Color(0xFF5C2AC7) else Color(0xFF9B93A5),
-                                )
+                                if (currentMinutes == minutes) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = Color(0xFF5C2AC7),
+                                    )
+                                } else {
+                                    AppChevron()
+                                }
                             }
                         }
                     }
