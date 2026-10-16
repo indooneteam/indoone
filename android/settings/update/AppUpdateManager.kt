@@ -9,10 +9,12 @@ import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import org.json.JSONArray
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 object AppUpdateManager {
     data class UpdateInfo(
@@ -27,8 +29,31 @@ object AppUpdateManager {
     private const val APK_ASSET_NAME = "indoone-terminal.apk"
     private const val UPDATE_DIR = "updates"
     private const val PROGRESS_BUFFER_BYTES = 64 * 1024
+    private const val PROGRESS_INTERVAL_MS = 250L
 
     private val httpClient = OkHttpClient()
+
+    /**
+     * The APK download gets its own client, pinned to HTTP/1.1.
+     *
+     * On HTTP/2 one stream is paced by the connection's flow-control window, so the
+     * throughput settles at roughly window / round-trip time. That window is 64 KB, so
+     * on a mobile link whose round trip is a few hundred milliseconds the download
+     * crawls at a couple of hundred KB/s — which is exactly the speed reported on
+     * mobile data. Over Wi-Fi the same code looks fast because the round trip there is
+     * a few milliseconds, so the same 64 KB refills almost instantly.
+     *
+     * HTTP/1.1 hands pacing back to TCP window scaling, which the platform sizes far
+     * more generously than 64 KB. That is why a plain browser download is fast on the
+     * same phone and the same network.
+     */
+    private val downloadClient = OkHttpClient.Builder()
+        .protocols(listOf(Protocol.HTTP_1_1))
+        .retryOnConnectionFailure(true)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     /**
      * One place formats sizes, so the dialog and the notification cannot disagree
@@ -158,6 +183,12 @@ object AppUpdateManager {
      *
      * This is called from the worker, not from a screen, so the download belongs to
      * the work rather than to the dialog. Leaving the app does not stop it.
+     *
+     * Progress is throttled by time rather than by percentage. Each report writes to
+     * the work database and updates a notification from the same coroutine that is
+     * draining the socket, and every pause lets the receive window close; on a mobile
+     * link reopening it costs a full round trip. Reporting on every percent meant
+     * around a hundred such pauses per download.
      */
     suspend fun downloadApk(
         context: Context,
@@ -173,7 +204,7 @@ object AppUpdateManager {
             .header("User-Agent", "Indoone-Android-Updater")
             .build()
 
-        httpClient.newCall(request).execute().use { response ->
+        downloadClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 error("APK download failed: HTTP ${response.code}")
             }
@@ -186,7 +217,7 @@ object AppUpdateManager {
                 apkFile.outputStream().use { output ->
                     val buffer = ByteArray(PROGRESS_BUFFER_BYTES)
                     var copied = 0L
-                    var lastReported = 0L
+                    var lastReportedAt = 0L
 
                     while (true) {
                         val read = input.read(buffer)
@@ -195,11 +226,11 @@ object AppUpdateManager {
                         output.write(buffer, 0, read)
                         copied += read
 
-                        // Report about every percent, so the figure the user reads
-                        // moves steadily without flooding the work database.
-                        val step = (totalBytes / 100L).coerceAtLeast(1L)
-                        if (copied - lastReported >= step) {
-                            lastReported = copied
+                        // A few reports a second is plenty for the figure the user
+                        // reads, and it keeps the read loop moving.
+                        val now = System.currentTimeMillis()
+                        if (now - lastReportedAt >= PROGRESS_INTERVAL_MS) {
+                            lastReportedAt = now
                             onProgress(copied, totalBytes)
                         }
                     }
