@@ -319,10 +319,17 @@ class MainActivity : ComponentActivity() {
                             onClearSearch = accountsViewModel::clearSearch,
                             onSort = accountsViewModel::toggleSort,
                             onToggleFavorite = { id ->
-                                coroutineScope.launch {
-                                    repository.getAll().firstOrNull { it.id == id }?.let {
-                                        detailActions.setFavorite(it, !it.favorite)
-                                        loadAccounts()
+                                // Flip the star straight away. Waiting for the write
+                                // and a full reload made the tap feel slow.
+                                val item = accountsViewModel.state.value.accounts.firstOrNull { it.id == id }
+                                if (item != null) {
+                                    val nextFavorite = !item.favorite
+                                    accountsViewModel.toggleFavorite(id)
+                                    coroutineScope.launch {
+                                        repository.getAll().firstOrNull { it.id == id }?.let { record ->
+                                            detailActions.setFavorite(record, nextFavorite)
+                                                .onFailure { loadAccounts() }
+                                        }
                                     }
                                 }
                             },

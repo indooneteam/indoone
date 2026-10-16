@@ -33,13 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.lobby.accounts.AccountRecord
 import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.menu.IndooneTopBarLogo
 import kotlinx.coroutines.delay
 
 @Composable
@@ -214,20 +214,9 @@ private fun EmptyFavoritesState() {
                 .background(Color(0xFFF0EAFF), RoundedCornerShape(18.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.size(28.dp)) {
-                val path = Path().apply {
-                    moveTo(size.width / 2f, 2f)
-                    lineTo(size.width * 0.62f, size.height * 0.36f)
-                    lineTo(size.width - 2f, size.height * 0.5f)
-                    lineTo(size.width * 0.62f, size.height * 0.64f)
-                    lineTo(size.width / 2f, size.height - 2f)
-                    lineTo(size.width * 0.38f, size.height * 0.64f)
-                    lineTo(2f, size.height * 0.5f)
-                    lineTo(size.width * 0.38f, size.height * 0.36f)
-                    close()
-                }
-                drawPath(path, color = Color(0xFF7140DA))
-            }
+            IndooneTopBarLogo(
+                modifier = Modifier.size(28.dp),
+            )
         }
         Text(
             "No favorite accounts",

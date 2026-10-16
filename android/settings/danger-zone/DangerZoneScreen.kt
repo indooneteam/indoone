@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppFlowerDivider
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -65,9 +66,11 @@ private fun DangerZoneRoot(onBack: () -> Unit, onDeleteLocal: () -> Unit, onDele
     DangerModalShell(onBack) {
         Text("These actions can permanently remove Indoone data. Continue only when you are sure.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(12.dp))
+        AppFlowerDivider()
         DangerRow("Delete local data", "Remove data stored on this device", onDeleteLocal)
-        Spacer(Modifier.height(8.dp))
+        AppFlowerDivider()
         DangerRow("Delete Indoone account", "Permanently delete your Indoone account and cloud data", onDeleteAccount)
+        AppFlowerDivider()
     }
 }
 

@@ -1,6 +1,8 @@
 package com.indoone.menu
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
@@ -35,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.SolidColor
@@ -149,7 +152,7 @@ private val MenuIcon = iconBuilder("Menu") {
 }
 
 @Composable
-private fun IndooneTopBarLogo(modifier: Modifier = Modifier) {
+internal fun IndooneTopBarLogo(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val scaleFactor = size.minDimension / 48f
         scale(scaleFactor) {
@@ -408,4 +411,59 @@ private fun RowScope.NeumorphicNavItem(
             maxLines = 1,
         )
     }
+}
+
+private val FlowerDividerLineColor = Color(0xFF2E9E5B)
+private val FlowerDividerPetalColor = Color(0xFFFBBC04)
+
+/**
+ * A full-width green line with a yellow flower in the middle, used to separate
+ * blocks of content. Only the line uses these colours; everything else in the app
+ * stays on the brand purple.
+ */
+@Composable
+fun AppFlowerDivider(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(2.dp)
+                .background(FlowerDividerLineColor, RoundedCornerShape(1.dp)),
+        )
+        Canvas(
+            modifier = Modifier
+                .padding(horizontal = 10.dp)
+                .size(20.dp),
+        ) {
+            drawFlower()
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(2.dp)
+                .background(FlowerDividerLineColor, RoundedCornerShape(1.dp)),
+        )
+    }
+}
+
+private fun DrawScope.drawFlower() {
+    val center = Offset(size.width / 2f, size.height / 2f)
+    val petalRadius = size.minDimension * 0.20f
+    val petalDistance = size.minDimension * 0.26f
+
+    for (index in 0 until 5) {
+        val angle = Math.toRadians((index * 72).toDouble())
+        val petalCenter = Offset(
+            center.x + (petalDistance * kotlin.math.cos(angle)).toFloat(),
+            center.y + (petalDistance * kotlin.math.sin(angle)).toFloat(),
+        )
+        drawCircle(color = FlowerDividerPetalColor, radius = petalRadius, center = petalCenter)
+    }
+
+    drawCircle(color = FlowerDividerPetalColor, radius = petalRadius * 0.9f, center = center)
 }
