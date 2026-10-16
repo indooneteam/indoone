@@ -21,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -435,6 +436,14 @@ private fun SettingsMenuToggle(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     SettingsMenuRow(icon = icon, title = title) {
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF5E2DD2),
+                checkedBorderColor = Color(0xFF5E2DD2),
+            ),
+        )
     }
 }

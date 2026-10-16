@@ -20,7 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
@@ -40,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.indoone.menu.AppFlowerDivider
 
 @Composable
 fun NotificationSettingsScreen(
@@ -82,7 +82,7 @@ fun NotificationSettingsScreen(
         }
 
         Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
-            Text("NOTIFICATIONS", color = Color(0xFF2877E8), fontSize = 9.sp)
+            Text("NOTIFICATIONS", color = Color(0xFF5E2DD2), fontSize = 9.sp)
             Text(
                 "Notifications",
                 modifier = Modifier.padding(top = 3.dp),
@@ -180,15 +180,15 @@ private fun NotificationToggle(
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF2877E8),
-                    checkedBorderColor = Color(0xFF2877E8),
+                    checkedTrackColor = Color(0xFF5E2DD2),
+                    checkedBorderColor = Color(0xFF5E2DD2),
                     uncheckedThumbColor = Color.White,
                     uncheckedTrackColor = Color(0xFFE9E6EC),
                     uncheckedBorderColor = Color(0xFFB8B2BE),
                 ),
             )
         }
-        HorizontalDivider(color = Color(0xFFEEE8F4), thickness = 1.dp)
+        AppFlowerDivider()
     }
 }
 
@@ -200,10 +200,24 @@ private fun hasPermission(context: Context): Boolean =
         ) == PackageManager.PERMISSION_GRANTED
 
 private fun openSystemNotificationSettings(context: Context) {
-    context.startActivity(
-        Intent(
-            Settings.ACTION_APP_NOTIFICATION_SETTINGS,
-            Uri.parse("package:" + context.packageName),
-        ),
+    val notificationSettings = Intent(
+        Settings.ACTION_APP_NOTIFICATION_SETTINGS,
+        Uri.parse("package:" + context.packageName),
     )
+    val appSettings = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.parse("package:" + context.packageName),
+    )
+
+    // A screen opened from inside the app is not an Activity, and Android refuses
+    // to start an Activity from a non-Activity context without this flag.
+    if (context !is android.app.Activity) {
+        notificationSettings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        appSettings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    // Some builds have no handler for the per-app notification page. Without the
+    // fallback the launch threw and the app looked like it had closed itself.
+    runCatching { context.startActivity(notificationSettings) }
+        .recoverCatching { context.startActivity(appSettings) }
 }
