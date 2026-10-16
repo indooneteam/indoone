@@ -97,7 +97,7 @@ fun EnterSetupKeyScreen(
                     .padding(top = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SetupTextField("ACCOUNT NAME", "e.g. Google", state.name, onNameChanged)
+                SetupTextField("ACCOUNT NAME", "e.g. Work account", state.name, onNameChanged)
                 SetupTextField("EMAIL / USERNAME", "you@example.com", state.email, onEmailChanged)
                 SetupTextField("SECRET KEY", "Base32 secret key", state.secret, onSecretChanged)
 

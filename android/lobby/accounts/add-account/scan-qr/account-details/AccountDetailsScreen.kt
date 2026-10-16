@@ -85,7 +85,7 @@ fun AccountDetailsScreen(
                     onValueChange = onNameChanged,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("ACCOUNT NAME") },
-                    placeholder = { Text("e.g. Google") },
+                    placeholder = { Text("e.g. Work account") },
                     singleLine = true,
                 )
 
