@@ -50,7 +50,7 @@ fun FavoritesScreen(
     onToggleFavorite: (AccountRecord) -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -112,7 +112,7 @@ fun FavoritesScreen(
     }
 
     @Suppress("UNUSED_VARIABLE")
-    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onVibeClick to onSettingsClick
 }
 
 @Composable

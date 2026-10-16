@@ -164,23 +164,23 @@ fun MenuDrawer(
         return
     }
     if (showAbout) {
-        MenuAboutScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onConnectClick = onDismiss, onSettingsClick = onDismiss)
+        MenuAboutScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
     }
     if (showTerms) {
-        TermsOfUseScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onConnectClick = onDismiss, onSettingsClick = onDismiss)
+        TermsOfUseScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
     }
     if (showTrash) {
-        TrashScreen(repository = repository, onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onConnectClick = onDismiss, onSettingsClick = onDismiss)
+        TrashScreen(repository = repository, onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
     }
     if (showSecurity) {
-        SecurityScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onConnectClick = onDismiss, onSettingsClick = onDismiss)
+        SecurityScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
     }
     if (showPrivacy) {
-        PrivacyPolicyScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onConnectClick = onDismiss, onSettingsClick = onDismiss)
+        PrivacyPolicyScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
     }
 

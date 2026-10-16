@@ -78,7 +78,7 @@ fun ProfileScreen(
     onPluginsClick: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var sheet by remember { mutableStateOf(ProfileSheet.NONE) }
@@ -112,7 +112,7 @@ fun ProfileScreen(
             onProfileClick = {},
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
+            onVibeClick = onVibeClick,
             onSettingsClick = onSettingsClick,
         )
 

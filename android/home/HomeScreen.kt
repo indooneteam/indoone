@@ -91,7 +91,6 @@ import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatRepository
 import com.indoone.home.plus.PlusAttachmentSheet
-import com.indoone.home.vibe.VibeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -523,7 +522,6 @@ private fun IndooneHomeLogo(modifier: Modifier = Modifier) {
 fun HomeScreen(
     onMenuClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
     onSettingsClick: () -> Unit,
     startNewChat: Boolean = false,
     openConversationId: String? = null,
@@ -1403,14 +1401,6 @@ fun HomeScreen(
                             )
                         }
                     }
-                } else if (!isListening) {
-                    VibeButton(
-                        modifier = Modifier.padding(start = 8.dp),
-                        onClick = {
-                            isPlusMenuOpen = false
-                            onVibeClick()
-                        },
-                    )
                 }
             }
 
@@ -1466,7 +1456,7 @@ fun HomeScreen(
                 }
             }
 
-            AppBottomNav(activeTab = AppTab.HOME, onAccountsClick = {}, onLobbyClick = onLobbyClick, onConnectClick = onConnectClick, onSettingsClick = onSettingsClick)
+            AppBottomNav(activeTab = AppTab.HOME, onAccountsClick = {}, onLobbyClick = onLobbyClick, onVibeClick = onVibeClick, onSettingsClick = onSettingsClick)
         }
     }
 }

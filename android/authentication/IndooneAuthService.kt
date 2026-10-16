@@ -29,11 +29,13 @@ class IndooneAuthService(
 
         return withContext(Dispatchers.IO) {
             try {
-                val email = resolveLoginEmail(raw)
+                val mobileIdentity = if (raw.contains('@')) null else resolveMobile(raw)
+                val email = mobileIdentity?.email ?: raw.lowercase()
                 val user = await(auth.signInWithEmailAndPassword(email, password)).user
                     ?: throw AuthException("Login session expired. Please login again.")
-                validateLoginProfile(user.uid, email, raw)
-                syncProfile(user.uid, email, null)
+                if (mobileIdentity != null && mobileIdentity.uid.isNotBlank() && mobileIdentity.uid != user.uid) {
+                    throw AuthException("This mobile number is not linked to this Indoone account.")
+                }
                 user.uid
             } catch (error: Throwable) {
                 auth.signOut()
@@ -97,8 +99,6 @@ class IndooneAuthService(
                         )
                 }
 
-                validateLoginProfile(user.uid, pending.email, pending.email)
-                syncProfile(user.uid, pending.email, null)
                 loginPending = null
             } catch (error: Throwable) {
                 auth.signOut()
@@ -110,30 +110,9 @@ class IndooneAuthService(
 
     private suspend fun resolveLoginEmail(raw: String): String {
         if (raw.contains('@')) {
-            val email = raw.lowercase()
-            val methods = await(auth.fetchSignInMethodsForEmail(email))
-            if (methods.signInMethods.isNullOrEmpty()) {
-                throw AuthException("No Indoone account was found.")
-            }
-            return email
+            return raw.lowercase()
         }
         return resolveMobile(raw).email
-    }
-
-    private suspend fun validateLoginProfile(uid: String, email: String, rawIdentifier: String) {
-        val profileSnapshot = await(database.reference.child("users").child(uid).child("profile").get())
-        val profile = profileSnapshot.value as? Map<*, *>
-        val savedEmail = profile?.get("email")?.toString()?.trim()?.lowercase().orEmpty()
-        if (savedEmail.isNotBlank() && savedEmail != email) {
-            throw AuthException("The account profile does not match this email address.")
-        }
-        if (!rawIdentifier.contains('@')) {
-            val expectedMobile = normalizeMobile(rawIdentifier)
-            val savedMobile = normalizeMobile(profile?.get("mobile")?.toString().orEmpty())
-            if (savedMobile.isNotBlank() && savedMobile != expectedMobile) {
-                throw AuthException("This mobile number is not linked to this Indoone account.")
-            }
-        }
     }
 
     suspend fun resendLoginOtp(): String {
@@ -336,6 +315,9 @@ class IndooneAuthService(
             message.contains("WRONG_PASSWORD", true) || message.contains("INVALID_CREDENTIAL", true) -> AuthException("Email or password is incorrect.")
             message.contains("TOO_MANY_REQUESTS", true) -> AuthException("Too many attempts. Please try again later.")
             message.contains("NETWORK_REQUEST_FAILED", true) -> AuthException("Network error. Check your connection and try again.")
+            message.contains("PERMISSION_DENIED", true) || message.contains("Permission denied", true) ->
+                AuthException("Indoone account data is temporarily unavailable. Please try again or use your email address.")
+            message.contains("INVALID_LOGIN_CREDENTIALS", true) -> AuthException("Email or password is incorrect.")
             message.contains("EMAIL_ALREADY_IN_USE", true) -> AuthException("An account already exists with this email.")
             message.contains("WEAK_PASSWORD", true) -> AuthException("Password should be at least 6 characters.")
             error is java.net.SocketTimeoutException -> AuthException("OTP service request timed out. Please try again.")

@@ -58,7 +58,7 @@ private val TERMS_SECTIONS = listOf(
 )
 
 @Composable
-fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onConnectClick: () -> Unit, onSettingsClick: () -> Unit) {
+fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onVibeClick: () -> Unit, onSettingsClick: () -> Unit) {
     Surface(Modifier.fillMaxSize(), color = Color.White) {
         Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -104,7 +104,7 @@ fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyCli
     }
 
     @Suppress("UNUSED_VARIABLE")
-    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onVibeClick to onSettingsClick
 }
 
 @Composable

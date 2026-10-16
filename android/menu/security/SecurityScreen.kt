@@ -47,7 +47,7 @@ fun SecurityScreen(
     onBack: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     val points = listOf(
@@ -111,7 +111,7 @@ fun SecurityScreen(
     }
 
     @Suppress("UNUSED_VARIABLE")
-    val keepNavigationContract = onAccountsClick to onLobbyClick to onConnectClick to onSettingsClick
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onVibeClick to onSettingsClick
 }
 
 @Composable

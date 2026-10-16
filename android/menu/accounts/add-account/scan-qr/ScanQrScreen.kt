@@ -67,7 +67,7 @@ fun ScanQrScreen(
     onSearchClick: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
-    onConnectClick: () -> Unit = {},
+    onVibeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -167,7 +167,7 @@ fun ScanQrScreen(
             activeTab = AppTab.ACCOUNTS,
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
+            onVibeClick = onVibeClick,
             onSettingsClick = onSettingsClick,
         )
     }

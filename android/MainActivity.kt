@@ -52,11 +52,8 @@ import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountDetailsViewM
 import com.indoone.accounts.addaccount.scanqr.accountdetails.AccountSaveCoordinator
 import com.indoone.accounts.search.SearchViewModel
 import com.indoone.accounts.storage.AccountRepositoryProvider
-import com.indoone.connect.ConnectScreen
-import com.indoone.connect.integrations.instagram.InstagramConnectScreen
-import com.indoone.connect.integrations.whatsapp.WhatsAppConnectScreen
 import com.indoone.home.HomeScreen
-import com.indoone.home.vibe.VibeScreen
+import com.indoone.vibe.VibeScreen
 import com.indoone.lobby.LobbyScreen
 import com.indoone.lobby.LobbyViewModel
 import com.indoone.menu.MenuDrawer
@@ -85,9 +82,6 @@ private enum class AppRoute {
     HOME,
     ACCOUNTS,
     LOBBY,
-    CONNECT,
-    CONNECT_INSTAGRAM,
-    CONNECT_WHATSAPP,
     SETTINGS,
     PROFILE,
     PLUGINS,
@@ -308,7 +302,6 @@ class MainActivity : ComponentActivity() {
                     AppRoute.HOME -> HomeScreen(
                         onMenuClick = ::openMenu,
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
-                        onConnectClick = { navigate(AppRoute.CONNECT) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         startNewChat = intent.getBooleanExtra("start_new_chat", false),
                         openConversationId = intent.getStringExtra("open_conversation_id"),
@@ -351,7 +344,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onSearchClick = {},
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                             // Accounts is opened from the drawer, so its menu button
                             // returns to the menu instead of re-opening it. Re-opening
@@ -370,28 +363,10 @@ class MainActivity : ComponentActivity() {
                             onMenuClick = ::openMenu,
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
-
-                    AppRoute.CONNECT -> ConnectScreen(
-                        onMenuClick = ::openMenu,
-                        onAccountsClick = { navigate(AppRoute.HOME) },
-                        onLobbyClick = { navigate(AppRoute.LOBBY) },
-                        onConnectClick = { navigate(AppRoute.CONNECT) },
-                        onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                        onWhatsAppClick = { navigate(AppRoute.CONNECT_WHATSAPP) },
-                        onInstagramClick = { navigate(AppRoute.CONNECT_INSTAGRAM) },
-                    )
-
-                    AppRoute.CONNECT_INSTAGRAM -> InstagramConnectScreen(
-                        onBack = { navigate(AppRoute.CONNECT) },
-                    )
-
-                    AppRoute.CONNECT_WHATSAPP -> WhatsAppConnectScreen(
-                        onBack = { navigate(AppRoute.CONNECT) },
-                    )
 
                     AppRoute.SETTINGS -> SettingsScreen(
                         onMenuClick = ::openMenu,
@@ -401,7 +376,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
-                        onConnectClick = { navigate(AppRoute.CONNECT) },
+                        onVibeClick = { navigate(AppRoute.VIBE) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
                         onCheckForUpdates = { checkForUpdates(showUpToDateMessage = true) },
@@ -434,7 +409,7 @@ class MainActivity : ComponentActivity() {
                             onPluginsClick = { navigate(AppRoute.PLUGINS) },
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
@@ -458,7 +433,7 @@ class MainActivity : ComponentActivity() {
                             onSave = profileViewModel::updateMobile,
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
@@ -474,7 +449,7 @@ class MainActivity : ComponentActivity() {
                             onSave = profileViewModel::updateEmail,
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
@@ -497,7 +472,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
@@ -506,7 +481,7 @@ class MainActivity : ComponentActivity() {
                         onBack = ::backToMenu,
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
-                        onConnectClick = { navigate(AppRoute.CONNECT) },
+                        onVibeClick = { navigate(AppRoute.VIBE) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                     )
 
@@ -514,7 +489,7 @@ class MainActivity : ComponentActivity() {
                         onBack = ::backToMenu,
                         onAccountsClick = { navigate(AppRoute.HOME) },
                         onLobbyClick = { navigate(AppRoute.LOBBY) },
-                        onConnectClick = { navigate(AppRoute.CONNECT) },
+                        onVibeClick = { navigate(AppRoute.VIBE) },
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                     )
 
@@ -621,7 +596,7 @@ class MainActivity : ComponentActivity() {
                             onSearchClick = {},
                             onAccountsClick = { navigate(AppRoute.HOME) },
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
-                            onConnectClick = { navigate(AppRoute.CONNECT) },
+                            onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         )
                     }
@@ -910,7 +885,7 @@ private fun FavoritesRoute(
     onToggleFavorite: (AccountRecord) -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var accounts by remember { mutableStateOf<List<AccountRecord>>(emptyList()) }
@@ -924,7 +899,7 @@ private fun FavoritesRoute(
         onToggleFavorite = onToggleFavorite,
         onAccountsClick = onAccountsClick,
         onLobbyClick = onLobbyClick,
-        onConnectClick = onConnectClick,
+        onVibeClick = onVibeClick,
         onSettingsClick = onSettingsClick,
     )
 }
