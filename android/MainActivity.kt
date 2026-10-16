@@ -132,7 +132,6 @@ class MainActivity : ComponentActivity() {
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
                 var settingsOpenAppLock by remember { mutableStateOf(false) }
-                var pluginsReturnRoute by remember { mutableStateOf(AppRoute.PROFILE) }
                 var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
                 var isCheckingUpdate by remember { mutableStateOf(false) }
                 var updateDialogHidden by remember { mutableStateOf(false) }
@@ -366,16 +365,6 @@ class MainActivity : ComponentActivity() {
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
-                            onPluginsClick = {
-                                pluginsReturnRoute = AppRoute.LOBBY
-                                navigate(AppRoute.PLUGINS)
-                            },
-                            onPluginOpen = { pluginKey ->
-                                when (pluginKey) {
-                                    "zoho_mail" -> navigate(AppRoute.ZOHO_MAIL_PLUGIN)
-                                    else -> navigate(AppRoute.PLUGINS)
-                                }
-                            },
                         )
                     }
 
@@ -426,7 +415,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     AppRoute.PLUGINS -> PluginsMenuScreen(
-                        onBack = { navigate(pluginsReturnRoute) },
+                        onBack = { navigate(AppRoute.PROFILE) },
                     )
 
                     AppRoute.ZOHO_MAIL_PLUGIN -> ZohoMailPluginMenuScreen(
