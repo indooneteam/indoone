@@ -21,7 +21,7 @@ fun LobbyScreen(
     onMenuClick: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
-    onConnectClick: () -> Unit = {},
+    onVibeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     Surface(
@@ -57,7 +57,7 @@ fun LobbyScreen(
                 activeTab = AppTab.LOBBY,
                 onAccountsClick = onAccountsClick,
                 onLobbyClick = onLobbyClick,
-                onConnectClick = onConnectClick,
+                onVibeClick = onVibeClick,
                 onSettingsClick = onSettingsClick,
             )
         }

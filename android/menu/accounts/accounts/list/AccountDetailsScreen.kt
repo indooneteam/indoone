@@ -105,7 +105,7 @@ fun AccountDetailsScreen(
             onMenuClick = {},
             onSearchClick = {},
             onLobbyClick = {},
-            onConnectClick = {},
+            onVibeClick = {},
             onSettingsClick = {},
         )
 

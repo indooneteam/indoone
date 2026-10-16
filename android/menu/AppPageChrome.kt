@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +43,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.indoone.vibe.VibeButton
 
 private fun iconBuilder(name: String, content: androidx.compose.ui.graphics.vector.PathBuilder.() -> Unit): ImageVector =
     ImageVector.Builder(
@@ -276,7 +276,7 @@ fun AppBottomNav(
     activeTab: AppTab,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -285,70 +285,69 @@ fun AppBottomNav(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFF5F0FA),
-                        Color(0xFFECE6F5),
-                        Color(0xFFF8F4FC),
-                    ),
-                ),
-            )
             .navigationBarsPadding()
             .padding(horizontal = 10.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(elevation = 13.dp, shape = barShape, clip = false)
-                .clip(barShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFFFAF8FF),
-                            Color(0xFFF5F0FA),
-                            Color(0xFFEEE7F7),
-                        ),
-                    ),
-                )
-                .border(
-                    BorderStroke(1.dp, Color.White.copy(alpha = 0.98f)),
-                    shape = barShape,
-                )
-                .padding(horizontal = 5.dp, vertical = 5.dp)
-                .height(62.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NeumorphicNavItem(
-                icon = Icons.Filled.Home,
-                label = "Home",
-                active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
-                onClick = onAccountsClick,
-            )
-            NeumorphicNavItem(
-                icon = Icons.Outlined.Groups,
-                label = "Lobby",
-                active = activeTab == AppTab.LOBBY,
-                onClick = onLobbyClick,
-            )
-            NeumorphicNavItem(
-                icon = Icons.Outlined.Link,
-                label = "Connect",
-                active = activeTab == AppTab.CONNECT,
-                onClick = onConnectClick,
-            )
-            NeumorphicNavItem(
-                icon = Icons.Outlined.Settings,
-                label = "Settings",
-                active = activeTab == AppTab.SETTINGS,
-                onClick = onSettingsClick,
+            // Home, Lobby and Settings keep the navigation bar's own design: the
+            // rounded, shadowed bar and the neumorphic items belong to these three.
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .shadow(elevation = 13.dp, shape = barShape, clip = false)
+                    .clip(barShape)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFAF8FF),
+                                Color(0xFFF5F0FA),
+                                Color(0xFFEEE7F7),
+                            ),
+                        ),
+                    )
+                    .border(
+                        BorderStroke(1.dp, Color.White.copy(alpha = 0.98f)),
+                        shape = barShape,
+                    )
+                    .padding(horizontal = 5.dp, vertical = 5.dp)
+                    .height(62.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                NeumorphicNavItem(
+                    icon = Icons.Filled.Home,
+                    label = "Home",
+                    active = activeTab == AppTab.HOME || activeTab == AppTab.ACCOUNTS,
+                    onClick = onAccountsClick,
+                )
+                NeumorphicNavItem(
+                    icon = Icons.Outlined.Groups,
+                    label = "Lobby",
+                    active = activeTab == AppTab.LOBBY,
+                    onClick = onLobbyClick,
+                )
+                NeumorphicNavItem(
+                    icon = Icons.Outlined.Settings,
+                    label = "Settings",
+                    active = activeTab == AppTab.SETTINGS,
+                    onClick = onSettingsClick,
+                )
+            }
+
+            // Vibe stands apart from the navigation: it keeps the exact button it
+            // had on Home, with none of the navigation bar's background or styling.
+            VibeButton(
+                modifier = Modifier.padding(start = 8.dp),
+                onClick = onVibeClick,
             )
         }
     }
 }
 
-enum class AppTab { HOME, ACCOUNTS, LOBBY, CONNECT, SETTINGS }
+enum class AppTab { HOME, ACCOUNTS, LOBBY, SETTINGS }
 
 @Composable
 private fun RowScope.NeumorphicNavItem(

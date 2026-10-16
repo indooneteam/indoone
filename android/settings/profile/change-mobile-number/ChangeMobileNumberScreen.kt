@@ -36,7 +36,7 @@ fun ChangeMobileNumberScreen(
     onSave: (String) -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var mobile by remember(state.mobile) { mutableStateOf(state.mobile.takeUnless { it.contains("not set", true) }.orEmpty()) }
@@ -62,7 +62,7 @@ fun ChangeMobileNumberScreen(
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
                 Spacer(Modifier.navigationBarsPadding())
             }
-            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
+            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onVibeClick, onSettingsClick)
         }
     }
 }

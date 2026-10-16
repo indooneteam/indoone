@@ -66,7 +66,7 @@ fun TrashScreen(
     onBack: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -194,7 +194,7 @@ private fun TrashAccountsBackdrop(accounts: List<AccountRecord>) {
                 Column(verticalArrangement = Arrangement.spacedBy(11.dp)) { accounts.take(4).forEach { TrashBackdropAccountRow(it, nowMillis) } }
             }
         }
-        AppBottomNav(activeTab = AppTab.ACCOUNTS, onAccountsClick = {}, onLobbyClick = {}, onConnectClick = {}, onSettingsClick = {}, modifier = Modifier.align(Alignment.BottomCenter))
+        AppBottomNav(activeTab = AppTab.ACCOUNTS, onAccountsClick = {}, onLobbyClick = {}, onVibeClick = {}, onSettingsClick = {}, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
