@@ -183,8 +183,7 @@ private fun TrashAccountsBackdrop(accounts: List<AccountRecord>) {
             Column(Modifier.fillMaxWidth().weight(1f).padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 104.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                     Column {
-                        Text("SECURE & PRIVATE", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
-                        Text("Your accounts", Modifier.padding(top = 1.dp), color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                        Text("Your accounts", color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     }
                     Surface(shape = RoundedCornerShape(10.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0ED))) {
                         Text("Sort ↕", Modifier.padding(horizontal = 11.dp, vertical = 8.dp), color = Color(0xFF5F566B), fontSize = 11.sp, fontWeight = FontWeight.Bold)
