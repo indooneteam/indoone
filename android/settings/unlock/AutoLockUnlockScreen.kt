@@ -61,11 +61,6 @@ fun AutoLockUnlockScreen(
             Text("Indoone", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             Spacer(Modifier.size(12.dp))
             Text("Unlock Indoone", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(
-                "Enter your App PIN to continue.${if (biometricEnabled) " You can also use biometric unlock." else ""}",
-                modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.bodyMedium,
-            )
             Spacer(Modifier.size(20.dp))
             Row(
                 modifier = Modifier.padding(vertical = 4.dp),
