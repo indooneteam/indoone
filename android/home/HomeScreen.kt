@@ -560,11 +560,13 @@ fun HomeScreen(
         }
     }
 
+    // Land on the newest message when a conversation opens, and stay there as replies
+    // arrive. Three passes over three frames, because the list is measured in stages:
+    // the first frame knows the item count, the next ones know the real heights.
     LaunchedEffect(isLoadingHistory, messages.size, chatActivityState, startNewChat, openConversationId) {
         if (!isLoadingHistory && (messages.isNotEmpty() || chatActivityState != ChatActivityState.IDLE)) {
-            // Wait for Compose to measure the newest content. Use a large positive
-            // scroll offset on the final item so the viewport is clamped to the
-            // actual list bottom, not merely the top of a long final message.
+            // A large positive scroll offset on the final item clamps the viewport to the
+            // real list bottom, rather than to the top of a long final message.
             repeat(3) {
                 withFrameNanos { }
                 val lastItemIndex = chatListState.layoutInfo.totalItemsCount - 1
@@ -1046,6 +1048,10 @@ fun HomeScreen(
                     )
                 }
             } else LazyColumn(
+                // The scroll effect above drives this state. Without it the list ran on its
+                // own internal state, so every conversation opened at the first message
+                // and the scroll to the bottom went nowhere.
+                state = chatListState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = if (messages.isEmpty()) Arrangement.Center else Arrangement.spacedBy(10.dp),
