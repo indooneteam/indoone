@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -389,8 +388,11 @@ private fun SettingsMenuRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                // One height for every row. The row with the switch was taller than the
+                // rest, because a switch insists on a 48dp touch target; the others were
+                // a minimum of 56dp. 64dp leaves exactly that 48dp inside the padding.
+                .height(64.dp)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SettingsMenuIcon(icon)
