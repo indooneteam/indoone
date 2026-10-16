@@ -36,8 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.indoone.accounts.AccountRecord
-import com.indoone.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.lobby.accounts.AccountRecord
+import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
@@ -210,7 +210,7 @@ private fun FavoritesAccountsBackdrop(
         }
 
         AppBottomNav(
-            activeTab = AppTab.ACCOUNTS,
+            activeTab = AppTab.LOBBY,
             onAccountsClick = {},
             onLobbyClick = {},
             onVibeClick = {},
