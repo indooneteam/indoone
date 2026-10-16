@@ -143,6 +143,7 @@ class MainActivity : ComponentActivity() {
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
+                var pluginsReturnRoute by remember { mutableStateOf(AppRoute.PROFILE) }
                 var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
                 var isCheckingUpdate by remember { mutableStateOf(false) }
                 var updateDialogHidden by remember { mutableStateOf(false) }
@@ -380,6 +381,18 @@ class MainActivity : ComponentActivity() {
                             onLobbyClick = { navigate(AppRoute.LOBBY) },
                             onVibeClick = { navigate(AppRoute.VIBE) },
                             onSettingsClick = { navigate(AppRoute.SETTINGS) },
+                            onPluginsClick = {
+                                pluginsReturnRoute = AppRoute.LOBBY
+                                navigate(AppRoute.PLUGINS)
+                            },
+                            onPluginOpen = { pluginKey ->
+                                when (pluginKey) {
+                                    "gmail" -> navigate(AppRoute.GMAIL_PLUGIN)
+                                    "zoho_mail" -> navigate(AppRoute.ZOHO_MAIL_PLUGIN)
+                                    "github" -> navigate(AppRoute.GITHUB_PLUGIN)
+                                    else -> Unit
+                                }
+                            },
                         )
                     }
 
@@ -428,7 +441,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     AppRoute.PLUGINS -> PluginsMenuScreen(
-                        onBack = { navigate(AppRoute.PROFILE) },
+                        onBack = { navigate(pluginsReturnRoute) },
                         onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
                         onGitHubClick = { navigate(AppRoute.GITHUB_PLUGIN) },
                     )
