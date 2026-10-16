@@ -708,9 +708,9 @@ fun HomeScreen(
                 if (userSave.isFailure) {
                     val reason = userSave.exceptionOrNull()?.message
                         ?.takeIf { it.isNotBlank() }
-                        ?: "Unknown Firebase error."
+                        ?: "Unknown cloud error."
                     messages = messages + ChatMessage(
-                        "Chat reply received, but Firebase could not save this message: $reason",
+                        "Chat reply received, but this message could not be saved to the cloud: $reason",
                         false,
                     )
                 } else {
@@ -726,9 +726,9 @@ fun HomeScreen(
                     if (assistantSave.isFailure) {
                         val reason = assistantSave.exceptionOrNull()?.message
                             ?.takeIf { it.isNotBlank() }
-                            ?: "Unknown Firebase error."
+                            ?: "Unknown cloud error."
                         messages = messages + ChatMessage(
-                            "Chat reply received, but Firebase could not save the AI reply: $reason",
+                            "Chat reply received, but the reply could not be saved to the cloud: $reason",
                             false,
                         )
                     }
@@ -740,9 +740,9 @@ fun HomeScreen(
                 if (userSave.isFailure) {
                     val reason = userSave.exceptionOrNull()?.message
                         ?.takeIf { it.isNotBlank() }
-                        ?: "Unknown Firebase error."
+                        ?: "Unknown cloud error."
                     messages = messages + ChatMessage(
-                        "Message could not be saved to Firebase: $reason",
+                        "Message could not be saved to the cloud: $reason",
                         false,
                     )
                 }

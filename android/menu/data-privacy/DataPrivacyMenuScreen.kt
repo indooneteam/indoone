@@ -102,7 +102,7 @@ fun DataPrivacyMenuScreen(onBack: () -> Unit) {
             PrivacyCard(
                 icon = Icons.Outlined.PersonOutline,
                 title = "Profile",
-                body = "Name and other profile fields are user-controlled. Account email/mobile and existing authentication data stay in the existing Firebase structure.",
+                body = "Name and other profile fields are user-controlled. Account email/mobile and existing authentication data stay in the existing account structure.",
             )
             PrivacyCard(
                 icon = Icons.Outlined.Memory,
@@ -117,7 +117,7 @@ fun DataPrivacyMenuScreen(onBack: () -> Unit) {
             PrivacyCard(
                 icon = Icons.Outlined.Storage,
                 title = "Storage",
-                body = "Realtime Database stores small user/profile/memory data. Firestore stores chat conversations and messages. Large files can be added later through object storage without changing the account identity model.",
+                body = "Account, profile and memory data are stored separately from chat conversations and messages. Large files can be added later through object storage without changing the account identity model.",
             )
             PrivacyCard(
                 icon = Icons.Outlined.Security,

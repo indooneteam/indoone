@@ -116,7 +116,7 @@ private fun DeleteAccountScreen(onBack: () -> Unit, onDeleted: () -> Unit) {
     }
 
     DangerModalShell(onBack, "Delete Indoone account?") {
-        Text("This permanently deletes your Indoone cloud data and Firebase account. This action cannot be undone.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 19.sp)
+        Text("This permanently deletes your Indoone account, your cloud data and everything stored on this device. This action cannot be undone.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 19.sp)
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(password, { password = it }, label = { Text("ACCOUNT PASSWORD") }, placeholder = { Text("Enter your password") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, enabled = !working, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp))
         Spacer(Modifier.height(10.dp))
@@ -287,7 +287,7 @@ private fun removeOwnCloudData(
     }
     db.updateChildren(updates)
         .addOnSuccessListener {
-            onStatus("Deleting your Firebase account…")
+            onStatus("Deleting your Indoone account…")
             val current = auth.currentUser
             if (current == null) {
                 clearLocalData(context)
@@ -298,7 +298,7 @@ private fun removeOwnCloudData(
                     .addOnFailureListener { e -> onError(formatAuthError(e.code, e.message ?: "Account deletion failed.")) }
             }
         }
-        .addOnFailureListener { e -> onError(e.message ?: "Firebase denied cloud-data deletion. Check Firebase database rules.") }
+        .addOnFailureListener { e -> onError(e.message ?: "The cloud refused the deletion. Please try again, or contact support.") }
 }
 
 /**

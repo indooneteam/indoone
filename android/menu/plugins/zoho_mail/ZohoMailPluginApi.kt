@@ -69,7 +69,7 @@ object ZohoMailPluginApi {
             val body = execute(connection, payload)
             JSONObject(body).optString("authorization_url").trim()
                 .takeIf { it.startsWith("https://") }
-                ?: throw ZohoMailPluginException("Zoho Mail backend returned no valid authorization URL.")
+                ?: throw ZohoMailPluginException("The mail service returned no valid authorization URL.")
         } finally {
             connection.disconnect()
         }
