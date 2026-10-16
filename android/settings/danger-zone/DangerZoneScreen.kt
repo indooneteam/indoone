@@ -82,7 +82,13 @@ private fun DangerRow(title: String, subtitle: String, onClick: () -> Unit) {
         border = BorderStroke(1.dp, Color(0xFFECE9F0)),
         shadowElevation = 2.dp,
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 15.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Column(Modifier.weight(1f)) {
                 Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3A3442))
                 Spacer(Modifier.height(3.dp))
