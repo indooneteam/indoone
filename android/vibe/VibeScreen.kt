@@ -61,11 +61,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
 import kotlin.math.cos
 import kotlin.math.sin
+
+private val WordmarkPurple = Color(0xFF9A82FF)
 
 @Composable
 fun VibeScreen(
@@ -183,31 +190,28 @@ fun VibeScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
+            // One Text with styled pieces, not three separate Texts. Three Texts in a
+            // Row are centre-aligned against each other, so the large "I" and the
+            // smaller "ndoone" ended up on different baselines and the name looked
+            // ragged. Pieces of one Text share a baseline, so it sits straight.
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = WordmarkPurple, fontSize = 25.sp, fontWeight = FontWeight.Bold)) {
+                        append("I")
+                    }
+                    withStyle(SpanStyle(color = WordmarkPurple, fontSize = 17.sp)) {
+                        append("ndoone")
+                    }
+                    append(" ")
+                    withStyle(SpanStyle(color = Color.White, fontSize = 24.sp)) {
+                        append("Vibe")
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "I",
-                    color = Color(0xFF9A82FF),
-                    fontSize = 25.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                )
-                Text(
-                    "ndoone",
-                    color = Color(0xFF9A82FF),
-                    fontSize = 17.sp,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    "Vibe",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                )
-            }
+                textAlign = TextAlign.Center,
+            )
 
             Spacer(Modifier.weight(0.45f))
 
