@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indoone.lobby.accounts.AccountRecord
 import com.indoone.lobby.accounts.accounts.list.AccountTotpGenerator
+import com.indoone.menu.AppChevron
 import com.indoone.menu.IndooneTopBarLogo
 import kotlinx.coroutines.delay
 
@@ -194,7 +195,11 @@ private fun FavoriteAccountRow(
                         letterSpacing = 1.sp,
                     )
                 }
-                Text("›", modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 4.dp), color = Color(0xFFAAA2B4), fontSize = 22.sp)
+                AppChevron(
+                    modifier = Modifier
+                        .clickable(onClick = onClick)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
             }
         }
     }
