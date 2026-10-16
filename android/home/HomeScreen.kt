@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -15,6 +17,7 @@ import java.io.File
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
@@ -48,6 +51,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -1188,12 +1192,27 @@ fun HomeScreen(
                                 ),
                                 color = Color(0xFFF5F2FB),
                             ) {
-                                Text(
-                                    message.text,
-                                    Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
-                                    color = Color(0xFF292331),
-                                    fontSize = 15.sp,
-                                )
+                                Column(Modifier.padding(horizontal = 15.dp, vertical = 12.dp)) {
+                                    // A reply that carries links reads better as its prose and
+                                    // then one row per link, each with a copy button, than as
+                                    // one run of text with the URLs buried inside it.
+                                    val parts = remember(message.text) { splitReplyIntoParts(message.text) }
+                                    parts.forEachIndexed { index, part ->
+                                        val gap = if (index == 0) 0.dp else 8.dp
+                                        when (part) {
+                                            is ReplyPart.Prose -> Text(
+                                                part.text,
+                                                Modifier.padding(top = gap),
+                                                color = Color(0xFF292331),
+                                                fontSize = 15.sp,
+                                            )
+                                            is ReplyPart.Link -> ReplyLinkRow(
+                                                url = part.url,
+                                                modifier = Modifier.padding(top = gap),
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1460,6 +1479,85 @@ fun HomeScreen(
             }
 
             AppBottomNav(activeTab = AppTab.HOME, onAccountsClick = {}, onLobbyClick = onLobbyClick, onVibeClick = onVibeClick, onSettingsClick = onSettingsClick)
+        }
+    }
+}
+
+private sealed interface ReplyPart {
+    data class Prose(val text: String) : ReplyPart
+    data class Link(val url: String) : ReplyPart
+}
+
+private val REPLY_LINK_PATTERN = Regex("""https?://\S+""")
+
+/**
+ * Splits a reply into prose and links, so each link can be given a row of its own.
+ *
+ * Blank prose is dropped: a reply that is nothing but a link should not leave an empty
+ * line above it, and prose that was only the whitespace around a link should not become
+ * a line of its own.
+ */
+private fun splitReplyIntoParts(text: String): List<ReplyPart> {
+    val parts = mutableListOf<ReplyPart>()
+    var cursor = 0
+    REPLY_LINK_PATTERN.findAll(text).forEach { match ->
+        val prose = text.substring(cursor, match.range.first).trim()
+        if (prose.isNotEmpty()) parts += ReplyPart.Prose(prose)
+        parts += ReplyPart.Link(match.value)
+        cursor = match.range.last + 1
+    }
+    val tail = text.substring(cursor).trim()
+    if (tail.isNotEmpty()) parts += ReplyPart.Prose(tail)
+    return parts
+}
+
+/**
+ * One link on its own row, with a copy button at the end of that row. The button puts
+ * the whole URL on the clipboard and says so, because a tap with no visible result
+ * reads as though it did nothing.
+ */
+@Composable
+private fun ReplyLinkRow(url: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Surface(
+        modifier = modifier.widthIn(max = 250.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, Color(0xFFE6DEF4)),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 12.dp, end = 5.dp, top = 5.dp, bottom = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                url,
+                modifier = Modifier.weight(1f, fill = false),
+                color = Color(0xFF6330DB),
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Box(
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(Color(0xFFF3EEFC))
+                    .clickable {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Indoone link", url))
+                        Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = "Copy link",
+                    tint = Color(0xFF6330DB),
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
     }
 }
