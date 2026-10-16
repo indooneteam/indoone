@@ -66,12 +66,11 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
 ) {
     var sheet by remember { mutableStateOf(ProfileSheet.NONE) }
-    var mobile by remember(state.mobile, sheet) {
-        mutableStateOf(state.mobile.takeUnless { it.contains("not set", true) }.orEmpty())
-    }
-    var email by remember(state.email, sheet) {
-        mutableStateOf(state.email.takeUnless { it.contains("not available", true) }.orEmpty())
-    }
+    // These hold the NEW values the person types, not the ones on the account. The
+    // saved values stay in state and are only shown, read-only. Keying on the sheet
+    // clears both fields every time a sheet is opened.
+    var mobile by remember(sheet) { mutableStateOf("") }
+    var email by remember(sheet) { mutableStateOf("") }
     var password by remember(sheet) { mutableStateOf("") }
     var gmailConnectionSummary by remember { mutableStateOf("Checking saved connections…") }
 
@@ -205,20 +204,13 @@ fun ProfileScreen(
                         ProfileActionRow(
                             title = "Change mobile number",
                             description = "Update your verified phone number",
-                            onClick = {
-                                mobile = state.mobile.takeUnless { it.contains("not set", true) }.orEmpty()
-                                sheet = ProfileSheet.MOBILE
-                            },
+                            onClick = { sheet = ProfileSheet.MOBILE },
                         )
                         Spacer(Modifier.height(10.dp))
                         ProfileActionRow(
                             title = "Change email",
                             description = "Update your account email address",
-                            onClick = {
-                                email = state.email.takeUnless { it.contains("not available", true) }.orEmpty()
-                                password = ""
-                                sheet = ProfileSheet.EMAIL
-                            },
+                            onClick = { sheet = ProfileSheet.EMAIL },
                         )
                         Spacer(Modifier.height(10.dp))
                         ProfileActionRow(
@@ -249,32 +241,36 @@ fun ProfileScreen(
                 }
             } else {
                 when (sheet) {
-                    ProfileSheet.MOBILE -> {
-                        ChangeMobileSheet(
-                            value = mobile,
-                            busy = state.busy,
-                            error = state.error,
-                            message = state.message,
-                            onValueChange = { mobile = it },
-                            onClose = { sheet = ProfileSheet.NONE },
-                            onSave = { profileViewModel.updateMobile(mobile) },
-                        )
-                    }
-                    ProfileSheet.EMAIL -> {
-                        ChangeEmailSheet(
-                            email = email,
-                            password = password,
-                            busy = state.busy,
-                            error = state.error,
-                            message = state.message,
-                            onEmailChange = { email = it },
-                            onPasswordChange = { password = it },
-                            onClose = { sheet = ProfileSheet.NONE },
-                            onSave = { profileViewModel.updateEmail(email, password) },
-                        )
-                    }
-                    ProfileSheet.NONE -> Unit
+                ProfileSheet.MOBILE -> {
+                    ChangeMobileSheet(
+                        currentMobile = state.mobile,
+                        newMobile = mobile,
+                        password = password,
+                        busy = state.busy,
+                        error = state.error,
+                        message = state.message,
+                        onNewMobileChange = { mobile = it },
+                        onPasswordChange = { password = it },
+                        onClose = { sheet = ProfileSheet.NONE },
+                        onSave = { profileViewModel.updateMobile(mobile, password) },
+                    )
                 }
+                ProfileSheet.EMAIL -> {
+                    ChangeEmailSheet(
+                        currentEmail = state.email,
+                        newEmail = email,
+                        password = password,
+                        busy = state.busy,
+                        error = state.error,
+                        message = state.message,
+                        onNewEmailChange = { email = it },
+                        onPasswordChange = { password = it },
+                        onClose = { sheet = ProfileSheet.NONE },
+                        onSave = { profileViewModel.updateEmail(email, password) },
+                    )
+                }
+                ProfileSheet.NONE -> Unit
+            }
             }
         }
     }
@@ -282,21 +278,29 @@ fun ProfileScreen(
 
 @Composable
 private fun ChangeMobileSheet(
-    value: String,
+    currentMobile: String,
+    newMobile: String,
+    password: String,
     busy: Boolean,
     error: String?,
     message: String?,
-    onValueChange: (String) -> Unit,
+    onNewMobileChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
     onClose: () -> Unit,
     onSave: () -> Unit,
 ) {
     ProfileFormSheet(
         title = "Change mobile number",
-        description = "Update the mobile number saved to your Indoone account.",
+        description = "The number on your Indoone account is shown below. Enter the new number and your current password to confirm.",
         onClose = onClose,
     ) {
-        SheetFieldLabel("Mobile number")
-        SheetTextField(value, onValueChange)
+        SheetReadOnlyValue("CURRENT MOBILE NUMBER", currentMobile)
+        Spacer(Modifier.height(12.dp))
+        SheetFieldLabel("ENTER YOUR NEW MOBILE NUMBER")
+        SheetTextField(newMobile, onNewMobileChange, placeholder = "+91 98765 43210")
+        Spacer(Modifier.height(12.dp))
+        SheetFieldLabel("CURRENT PASSWORD")
+        SheetTextField(password, onPasswordChange, placeholder = "Enter your current password", password = true)
         Spacer(Modifier.height(24.dp))
         SheetGradientButton(if (busy) "Updating…" else "Update mobile number", enabled = !busy, onClick = onSave)
         FormFeedback(error, message)
@@ -305,29 +309,58 @@ private fun ChangeMobileSheet(
 
 @Composable
 private fun ChangeEmailSheet(
-    email: String,
+    currentEmail: String,
+    newEmail: String,
     password: String,
     busy: Boolean,
     error: String?,
     message: String?,
-    onEmailChange: (String) -> Unit,
+    onNewEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onClose: () -> Unit,
     onSave: () -> Unit,
 ) {
     ProfileFormSheet(
         title = "Change email",
-        description = "Change the email used for your Indoone account. Enter your current password to confirm.",
+        description = "The email on your Indoone account is shown below. Enter the new email and your current password to confirm.",
         onClose = onClose,
     ) {
-        SheetFieldLabel("Email address")
-        SheetTextField(email, onEmailChange)
+        SheetReadOnlyValue("CURRENT EMAIL", currentEmail)
         Spacer(Modifier.height(12.dp))
-        SheetFieldLabel("Current password")
+        SheetFieldLabel("ENTER YOUR NEW EMAIL")
+        SheetTextField(newEmail, onNewEmailChange, placeholder = "you@example.com")
+        Spacer(Modifier.height(12.dp))
+        SheetFieldLabel("CURRENT PASSWORD")
         SheetTextField(password, onPasswordChange, placeholder = "Enter your current password", password = true)
         Spacer(Modifier.height(24.dp))
         SheetGradientButton(if (busy) "Changing…" else "Change email", enabled = !busy, onClick = onSave)
         FormFeedback(error, message)
+    }
+}
+
+/**
+ * A value that is only shown, never edited. The saved mobile number and email used to
+ * be typed straight into the input, which read as though they were up for editing.
+ */
+@Composable
+private fun SheetReadOnlyValue(label: String, value: String) {
+    SheetFieldLabel(label)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(41.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF1EEF6))
+            .border(1.dp, Color(0xFFE4DDEA), RoundedCornerShape(12.dp))
+            .padding(horizontal = 11.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            value.ifBlank { "Not set" },
+            color = Color(0xFF625D68),
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+        )
     }
 }
 
