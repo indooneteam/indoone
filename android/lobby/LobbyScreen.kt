@@ -50,9 +50,7 @@ import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginApi
 private val LobbyInk = Color(0xFF211D27)
 private val LobbyMuted = Color(0xFF77707F)
 private val LobbyPurple = Color(0xFF5E2DD2)
-private val LobbyGreen = Color(0xFF2E9E5B)
 private val LobbyCardBorder = Color(0xFFECE7F8)
-private val LobbyFlowerCenter = Color(0xFFFBBC04)
 
 /**
  * One plugin as the Lobby shows it: the plugin's own logo, its name, and what it
@@ -266,7 +264,7 @@ private fun PluginBox(
                     Box(
                         modifier = Modifier
                             .size(9.dp)
-                            .background(LobbyGreen, CircleShape),
+                            .background(LobbyPurple, CircleShape),
                     )
                 }
             }
@@ -280,7 +278,7 @@ private fun PluginBox(
                 Text(
                     text = if (connected) "Connected" else "Not connected",
                     modifier = Modifier.padding(top = 2.dp),
-                    color = if (connected) LobbyGreen else LobbyMuted,
+                    color = if (connected) LobbyPurple else LobbyMuted,
                     fontSize = 11.sp,
                 )
             }
@@ -304,20 +302,20 @@ private fun FlowerDivider() {
             modifier = Modifier
                 .weight(1f)
                 .height(2.dp)
-                .background(LobbyGreen, RoundedCornerShape(1.dp)),
+                .background(LobbyPurple, RoundedCornerShape(1.dp)),
         )
         Canvas(
             modifier = Modifier
                 .padding(horizontal = 10.dp)
                 .size(22.dp),
         ) {
-            drawFlower(LobbyGreen)
+            drawFlower(LobbyPurple)
         }
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(2.dp)
-                .background(LobbyGreen, RoundedCornerShape(1.dp)),
+                .background(LobbyPurple, RoundedCornerShape(1.dp)),
         )
     }
 }
@@ -336,5 +334,5 @@ private fun DrawScope.drawFlower(color: Color) {
         drawCircle(color = color, radius = petalRadius, center = petalCenter)
     }
 
-    drawCircle(color = LobbyFlowerCenter, radius = petalRadius * 0.85f, center = center)
+    drawCircle(color = Color.White, radius = petalRadius * 0.85f, center = center)
 }
