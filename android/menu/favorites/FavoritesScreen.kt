@@ -189,8 +189,7 @@ private fun FavoritesAccountsBackdrop(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Column {
-                        Text("SECURE & PRIVATE", color = Color(0xFF7650D8), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
-                        Text("Your accounts", modifier = Modifier.padding(top = 1.dp), color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                        Text("Your accounts", color = Color(0xFF17151D), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     }
                     Surface(
                         shape = RoundedCornerShape(10.dp),
