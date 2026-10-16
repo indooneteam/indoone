@@ -53,14 +53,6 @@ fun ImportOtpUriScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "ADD ACCOUNT",
-            color = Color(0xFF7650D8),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.2.sp,
-        )
-
-        Text(
             text = "Import OTPAUTH",
             modifier = Modifier.padding(top = 3.dp),
             color = Color(0xFF242129),

@@ -97,13 +97,6 @@ fun ScanQrScreen(
 
             Column(modifier = Modifier.padding(top = 22.dp)) {
                 Text(
-                    "ADD ACCOUNT",
-                    color = Color(0xFF7650D8),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.3.sp,
-                )
-                Text(
                     "Scan QR Code",
                     modifier = Modifier.padding(top = 3.dp),
                     color = Color(0xFF17151D),
