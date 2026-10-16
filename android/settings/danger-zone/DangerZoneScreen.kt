@@ -63,8 +63,6 @@ fun DangerZoneScreen(
 @Composable
 private fun DangerZoneRoot(onBack: () -> Unit, onDeleteLocal: () -> Unit, onDeleteAccount: () -> Unit) {
     DangerModalShell(onBack) {
-        Text("Danger Zone", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E1A22))
-        Spacer(Modifier.height(8.dp))
         Text("These actions can permanently remove Indoone data. Continue only when you are sure.", color = Color(0xFF8A8492), fontSize = 12.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(12.dp))
         DangerRow("Delete local data", "Remove data stored on this device", onDeleteLocal)
