@@ -67,7 +67,7 @@
         </service>
 
         <service
-            android:name=".home.vibe.VibeSessionService"
+            android:name=".vibe.VibeSessionService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 

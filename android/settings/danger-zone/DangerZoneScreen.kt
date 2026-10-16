@@ -47,7 +47,7 @@ fun DangerZoneScreen(
     onBack: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var view by remember { mutableStateOf(DangerView.ROOT) }
@@ -57,7 +57,7 @@ fun DangerZoneScreen(
         DangerView.ACCOUNT_DELETE -> DeleteAccountScreen({ view = DangerView.ROOT }, onAccountsClick)
     }
     @Suppress("UNUSED_VARIABLE")
-    val keepNavigationContract = onLobbyClick to onConnectClick to onSettingsClick
+    val keepNavigationContract = onLobbyClick to onVibeClick to onSettingsClick
 }
 
 @Composable

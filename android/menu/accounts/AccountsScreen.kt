@@ -58,7 +58,7 @@ fun AccountsScreen(
     onBack: () -> Unit = onMenuClick,
     onSearchClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
-    onConnectClick: () -> Unit = {},
+    onVibeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     var searchVisible by remember { mutableStateOf(false) }

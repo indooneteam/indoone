@@ -34,7 +34,7 @@ fun PrivacyPolicyScreen(
     onBack: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     val sections = listOf(

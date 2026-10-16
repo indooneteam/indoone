@@ -28,7 +28,7 @@ fun SecurityScreen(
     onBack: () -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Box(

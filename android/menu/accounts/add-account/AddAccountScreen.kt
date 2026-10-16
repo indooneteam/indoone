@@ -47,7 +47,7 @@ fun AddAccountScreen(
     onSearchClick: () -> Unit = {},
     onAccountsClick: () -> Unit = onBack,
     onLobbyClick: () -> Unit = {},
-    onConnectClick: () -> Unit = {},
+    onVibeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     Column(
@@ -185,7 +185,7 @@ fun AddAccountScreen(
             activeTab = AppTab.ACCOUNTS,
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
+            onVibeClick = onVibeClick,
             onSettingsClick = onSettingsClick,
         )
     }

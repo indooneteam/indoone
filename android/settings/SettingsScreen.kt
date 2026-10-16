@@ -85,7 +85,7 @@ fun SettingsScreen(
     onProfileClick: () -> Unit = {},
     onAccountsClick: () -> Unit = {},
     onLobbyClick: () -> Unit = {},
-    onConnectClick: () -> Unit = {},
+    onVibeClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
@@ -204,7 +204,7 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(8.dp))
             }
-            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
+            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onVibeClick, onSettingsClick)
         }
     }
 
@@ -317,7 +317,7 @@ fun SettingsScreen(
             onBack = { aboutPage = false },
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
+            onVibeClick = onVibeClick,
             onSettingsClick = onSettingsClick,
             onCheckForUpdates = onCheckForUpdates,
         )
@@ -328,7 +328,7 @@ fun SettingsScreen(
             onBack = { dangerZonePage = false },
             onAccountsClick = onAccountsClick,
             onLobbyClick = onLobbyClick,
-            onConnectClick = onConnectClick,
+            onVibeClick = onVibeClick,
             onSettingsClick = onSettingsClick,
         )
     }

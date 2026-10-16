@@ -37,7 +37,7 @@ fun ChangeEmailScreen(
     onSave: (String, String) -> Unit,
     onAccountsClick: () -> Unit,
     onLobbyClick: () -> Unit,
-    onConnectClick: () -> Unit,
+    onVibeClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     var email by remember(state.email) { mutableStateOf(state.email.takeUnless { it.contains("not available", true) }.orEmpty()) }
@@ -73,7 +73,7 @@ fun ChangeEmailScreen(
                 state.message?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
                 Spacer(Modifier.navigationBarsPadding())
             }
-            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onConnectClick, onSettingsClick)
+            AppBottomNav(AppTab.SETTINGS, onAccountsClick, onLobbyClick, onVibeClick, onSettingsClick)
         }
     }
 }

@@ -79,7 +79,7 @@ android {
             "menu",
             "home",
             "lobby",
-            "connect",
+            "vibe",
             "settings",
             "notifications"
         )
