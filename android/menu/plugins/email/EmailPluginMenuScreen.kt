@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import com.indoone.menu.AppBackButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.Email
@@ -34,12 +35,7 @@ fun EmailPluginMenuScreen(
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = "Back",
-            color = Color(0xFF5E2DD2),
-            fontSize = 14.sp,
-            modifier = Modifier.clickable(onClick = onBack),
-        )
+        AppBackButton(onClick = onBack)
 
         Text(
             text = "Email",

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indoone.menu.AppBackButton
 
 /**
  * OTPAuth import screen based on the current main add-account import flow.
@@ -47,13 +48,7 @@ fun ImportOtpUriScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
-        TextButton(onClick = onBack) {
-            Text(
-                text = "‹  Back",
-                color = Color(0xFF242129),
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        AppBackButton(onClick = onBack)
 
         Spacer(modifier = Modifier.height(8.dp))
 

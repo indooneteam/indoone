@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -412,6 +413,34 @@ private fun RowScope.NeumorphicNavItem(
 }
 
 private val AppChevronTint = Color(0xFF7A6F8C)
+private val AppBackButtonTint = Color(0xFF242129)
+private val AppBackButtonBackground = Color(0xFFF5F2F8)
+
+/**
+ * The one back control. Some screens spelled out "‹  Back" as text, at one size,
+ * and others used a glyph at another; this is the arrow mark on its own, and it is
+ * the same everywhere.
+ */
+@Composable
+fun AppBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentDescription: String = "Back",
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+            .size(35.dp)
+            .background(AppBackButtonBackground, RoundedCornerShape(11.dp)),
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = AppBackButtonTint,
+        )
+    }
+}
 
 /**
  * The one arrow used by every row that opens something. Some rows drew a "›"
