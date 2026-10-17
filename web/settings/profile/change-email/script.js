@@ -8,7 +8,7 @@ window.showChangeEmail = function ({ remember = true } = {}) {
   }
 
   fetch(
-    'settings/profile/email/index.html?v=20260904b',
+    'settings/profile/change-email/index.html?v=20260904b',
     { cache: 'no-store' }
   )
     .then(r =>

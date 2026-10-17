@@ -31,7 +31,7 @@ window.IndoonePageState = window.IndoonePageState || {
 function clearHomeSubRoute() {
   const hash = window.location.hash || '';
 
-  if (!hash.startsWith('#menu/accounts/add-account')) return;
+  if (!hash.startsWith('#lobby/accounts/add-account')) return;
 
   history.replaceState(
     {},

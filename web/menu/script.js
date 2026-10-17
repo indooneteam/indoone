@@ -28,7 +28,6 @@
   // Two sections moved out of the menu and into settings, and one was renamed
   // to match the app, so the action name and the folder are no longer the same.
   const featurePaths = {
-    lock: 'menu/lock-app',
     'danger-zone': 'settings/danger-zone',
     logout: 'settings/logout'
   };

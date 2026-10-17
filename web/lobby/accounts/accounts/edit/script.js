@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'menu/accounts/account/index.html?v=20260903e';
+    'lobby/accounts/accounts/edit/index.html?v=20260903e';
   const STYLE_URL =
-    'menu/accounts/account/style.css?v=20260903e';
+    'lobby/accounts/accounts/edit/style.css?v=20260903e';
 
   async function loadMarkup() {
     const response = await fetch(MARKUP_URL, {
