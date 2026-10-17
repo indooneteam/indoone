@@ -367,44 +367,60 @@
       class="bottom-nav"
       aria-label="Main navigation"
     >
-      <button
-        type="button"
-        class="nav-btn active"
-        id="homeNav"
-        aria-label="Home"
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-        ></span>
-        <span>Home</span>
-      </button>
+      <!-- The app's AppBottomNav draws three tabs in one neumorphic pill and
+           keeps Vibe apart: it keeps the exact button it has on Home, with
+           none of the navigation bar's background or styling. -->
+      <div class="nav-pill">
+        <button
+          type="button"
+          class="nav-btn active"
+          id="homeNav"
+          aria-label="Home"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Home</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-btn"
+          id="lobbyNav"
+          aria-label="Lobby"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Lobby</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-btn"
+          id="settingsNav"
+          aria-label="Settings"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Settings</span>
+        </button>
+      </div>
 
       <button
         type="button"
-        class="nav-btn"
-        id="lobbyNav"
-        aria-label="Lobby"
+        class="nav-vibe"
+        id="vibeNav"
+        aria-label="Vibe"
       >
         <span
-          class="nav-icon"
+          class="nav-vibe-core"
           aria-hidden="true"
         ></span>
-        <span>Lobby</span>
-      </button>
-
-
-      <button
-        type="button"
-        class="nav-btn"
-        id="settingsNav"
-        aria-label="Settings"
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-        ></span>
-        <span>Settings</span>
       </button>
     </nav>
   </main>
