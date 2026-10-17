@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
@@ -452,11 +451,10 @@ private fun MailProviderRow(
                             modifier = Modifier.size(40.dp),
                         )
                     } else {
-                        Icon(
-                            imageVector = Icons.Outlined.Email,
-                            contentDescription = "Email",
-                            tint = AppPurple,
-                            modifier = Modifier.size(29.dp),
+                        Image(
+                            painter = painterResource(R.drawable.gmail_logo),
+                            contentDescription = "Gmail logo",
+                            modifier = Modifier.size(40.dp),
                         )
                     }
                 }
