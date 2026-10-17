@@ -72,7 +72,6 @@
   function showHome(options) {
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
     window.showHome?.(options);
   }
 
@@ -83,11 +82,9 @@
 
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
 
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
-    $('connectContent')?.setAttribute('hidden', '');
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
     document
@@ -97,7 +94,6 @@
     $('searchWrap')?.removeAttribute('hidden');
     $('homeNav')?.classList.add('active');
     $('lobbyNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
 
     window.IndooneHome?.restoreHome?.();
@@ -115,7 +111,6 @@
     closeDrawer();
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
-    $('connectContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
     document
       .querySelector('[data-notifications-page]')
@@ -125,7 +120,6 @@
     $('settingsNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
     $('lobbyNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
 
     window.showSettings?.({ remember: false });
   }
@@ -140,11 +134,9 @@
 
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
 
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.setAttribute('hidden', '');
-    $('connectContent')?.setAttribute('hidden', '');
     document
       .querySelector('[data-notifications-page]')
       ?.setAttribute('hidden', '');
@@ -154,7 +146,6 @@
 
     $('lobbyNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
 
     window.IndooneLobby?.paint?.();
@@ -214,18 +205,8 @@
         window.showChangeEmail?.({ remember: false });
         break;
 
-      case 'connect':
-        window.showConnect?.({ remember: false });
-        break;
 
-      case 'connect-choice':
-        window.showConnectChoice?.({ remember: false });
-        break;
 
-      case 'pair':
-        window.showConnect?.({ remember: false });
-        await window.showConnectPair?.({ remember: false });
-        break;
 
       case 'add-account':
         await window.IndooneHome?.showAddAccount?.({
@@ -253,7 +234,6 @@
   bindClick($('homeNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
   bindClick($('lobbyNav'), showLobbyPanel);
-  bindClick($('connectNav'), () => window.showConnect?.());
   bindClick(
     $('sortBtn'),
     () => window.handleSortAccounts?.()

@@ -9,7 +9,6 @@ body,
 
 .phone-shell,
 .content,
-.connect-content,
 .settings-content,
 .overlay,
 .modal,
@@ -70,17 +69,12 @@ button {
 
   .search-wrap,
   .content,
-  .connect-content {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
 
   .page-heading {
     gap: 8px;
   }
 
   .page-heading h1,
-  .connect-hero h1,
   .settings-page-head h1 {
     font-size: 22px;
   }
@@ -171,8 +165,6 @@ button {
     height: 43px;
   }
 
-  .connect-actions,
-  .connect-choice,
   .settings-option-row,
   .settings-row-toggle {
     min-width: 0;
@@ -206,10 +198,6 @@ button {
 
   .search-wrap,
   .content,
-  .connect-content {
-    padding-left: 9px !important;
-    padding-right: 9px !important;
-  }
 
   .account {
     gap: 6px;
