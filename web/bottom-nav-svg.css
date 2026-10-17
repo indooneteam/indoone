@@ -99,34 +99,86 @@
   border-radius: 15px;
 }
 
-/* Vibe, apart from the tray. The app's VibeButton is a 48dp circle on
-   #21143B with a glowing core that slowly orbits and breathes. The web cannot
-   run the Canvas animation, so it keeps the circle, the colour and a soft
-   glow at the same size and place. */
+/* Vibe, apart from the tray, drawn as the app's VibeButton draws it: a 48dp
+   circle on #21143B carrying four layers from its Canvas.
+
+     1  the glow       a radial gradient reaching 49% of the circle, running
+                       #E3C8FF at 96% alpha out through #9A5CFF at 78% and
+                       #6F35DA at 26% to nothing
+     2  the highlight  a white wash at the top left, centred at 28% by 24%
+     3  the core       white at 94%, 17% of the circle across, breathing
+                       between 0.88 and 1.08 every 1100ms
+     4  the orbit      a #D6B7FF dot at 5.5% riding 25% out from the centre,
+                       a full turn every 3200ms, with a white pip inside it
+
+   The app animates this on a Canvas; the web does the same work in CSS. */
 .nav-vibe {
+  position: relative;
   flex: 0 0 auto;
   width: 48px;
   height: 48px;
-  display: grid;
-  place-items: center;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: #21143b;
   cursor: pointer;
+  overflow: hidden;
+}
+
+.nav-vibe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 28% 24%,
+      #ffffff3d 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      #e3c8fff5 0%,
+      #9a5cffc7 16%,
+      #6f35da42 32%,
+      transparent 49%
+    );
+}
+
+.nav-vibe::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -14.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: #d6b7ff;
+  box-shadow: inset 0 0 0 1.2px #ffffffd9;
+  transform-origin: 2.5px 14.5px;
+  animation: nav-vibe-orbit 3.2s linear infinite;
 }
 
 .nav-vibe-core {
-  width: 16px;
-  height: 16px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    #e3c8ff 0%,
-    #9a5cff 60%,
-    #21143b 100%
-  );
-  box-shadow: 0 0 10px #9a5cffcc;
+  background: #fffffff0;
+  animation: nav-vibe-pulse 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes nav-vibe-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nav-vibe-pulse {
+  from { transform: scale(0.88); }
+  to { transform: scale(1.08); }
 }
 
 .nav-vibe:focus-visible {
@@ -190,14 +242,14 @@
     box-shadow: none !important;
   }
 
-  /* The tray stands up: the three sit one above the other at the top of the
-     rail, and the Vibe button takes the bottom because the row above spreads
-     its two children apart. */
+  /* The tray stands up and runs the rail's full height, the way it did before,
+     with the three tabs spread down it rather than bunched at the top. The
+     Vibe button keeps its own place at the bottom, outside the tray. */
   #app.phone-shell .bottom-nav .nav-pill {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     /* the tray's own shape is a pill 30dp across; standing up it is a rail,
        so the corners come off and the left edge carries the line instead */
     border-radius: 0 !important;
