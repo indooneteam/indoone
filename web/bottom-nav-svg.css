@@ -162,7 +162,9 @@
    style.css is overruled by that file whatever it says, which is why the bar
    stayed 58px tall and the tabs bunched up at the top.
    -------------------------------------------------------------------------- */
-@media (min-width: 1024px) {
+/* Standing the tabs up the side is for a pointer, not for a narrow screen
+   pretending to be wide. A phone in desktop mode gets the bottom bar. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   /* The row becomes the rail. It carries no surface: the tray keeps its own
      gradient below, and the Vibe button keeps its circle. */
   #app.phone-shell .bottom-nav {

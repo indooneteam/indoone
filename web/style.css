@@ -1236,7 +1236,12 @@ html, body { height: 100%; }
    Nothing else changes: every option, every button, every animation.
    ========================================================================== */
 
-@media (min-width: 1024px) {
+/* The desktop shell: the menu standing open on the left, the tabs standing up
+   on the right, and the page between them. It needs a wide window AND a real
+   pointer. Width alone is not enough: a phone whose browser asks for the
+   desktop site reports a wide viewport while still being a phone, and that is
+   how the rail and the 264px margin ended up on a handset. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   :root {
     --menu-w: 264px;
     --nav-w: 92px;
