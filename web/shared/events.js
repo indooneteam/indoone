@@ -234,6 +234,8 @@
   bindClick($('homeNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
   bindClick($('lobbyNav'), showLobbyPanel);
+  // Vibe keeps the button it has on Home: same call, same screen.
+  bindClick($('vibeNav'), () => window.IndooneVibe?.open?.());
   bindClick(
     $('sortBtn'),
     () => window.handleSortAccounts?.()
