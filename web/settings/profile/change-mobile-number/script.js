@@ -8,7 +8,7 @@ window.showChangeMobile = function ({ remember = true } = {}) {
   }
 
   fetch(
-    'settings/profile/mobile/index.html?v=20260904c',
+    'settings/profile/change-mobile-number/index.html?v=20260904c',
     { cache: 'no-store' }
   )
     .then(response =>
