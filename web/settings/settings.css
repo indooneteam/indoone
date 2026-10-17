@@ -258,7 +258,7 @@
 }
 
 /* Settings is a real route inside the fixed app shell. Keep it isolated from
-   Accounts/Connect and let only the route body own vertical scrolling. */
+   Accounts and let only the route body own vertical scrolling. */
 #app.phone-shell > .settings-content {
   flex:1 1 auto !important;
   min-height:0 !important;
@@ -271,7 +271,6 @@
 }
 
 #app.phone-shell > #content[hidden],
-#app.phone-shell > #connectContent[hidden],
 #app.phone-shell > #settingsContent[hidden],
 #app.phone-shell > #searchWrap[hidden],
 #app.phone-shell > #addBtn[hidden] {

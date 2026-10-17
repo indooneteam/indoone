@@ -3,7 +3,7 @@
 // The app's bar is AppBottomNav in android/menu/AppPageChrome.kt and it uses
 // Icons.Filled.Home, Icons.Outlined.Groups, Icons.Outlined.Link and
 // Icons.Outlined.Settings. The web was drawing a pair of people for Home, a
-// diamond for Lobby, arrows for Connect and sliders for Settings, so none of
+// diamond for Lobby and sliders for Settings, so none of
 // the four matched. These are the app's four.
 (() => {
   const ICONS = {
@@ -54,7 +54,6 @@
   const NAV_MAP = {
     homeNav: 'home',
     lobbyNav: 'lobby',
-    connectNav: 'connect',
     settingsNav: 'settings'
   };
 

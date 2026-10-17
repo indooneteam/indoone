@@ -124,7 +124,6 @@
 
     document.getElementById('homeContent')?.setAttribute('hidden', '');
     document.getElementById('content')?.setAttribute('hidden', '');
-    document.getElementById('connectContent')?.setAttribute('hidden', '');
     document.getElementById('lobbyContent')?.setAttribute('hidden', '');
     document.getElementById('addBtn')?.setAttribute('hidden', '');
     host.hidden = false;
