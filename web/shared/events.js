@@ -1,7 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const overlay = $('overlay');
-  const ADD_ROUTE_PREFIX = '#menu/accounts/add-account';
+  const ADD_ROUTE_PREFIX = '#lobby/accounts/add-account';
 
   let authResolved = false;
   let authGateRunning = false;

@@ -1,23 +1,23 @@
 (() => {
   const MENU_MARKUP_URL =
-    'menu/accounts/add-account/index.html?v=20260903d';
+    'lobby/accounts/add-account/index.html?v=20260903d';
   const MENU_STYLE_URL =
-    'menu/accounts/add-account/style.css?v=20260903d';
+    'lobby/accounts/add-account/style.css?v=20260903d';
 
   const FEATURES = {
     qr: {
       script:
-        'menu/accounts/add-account/qr/script.js?v=20260903f',
+        'lobby/accounts/add-account/scan-qr/account-details/script.js?v=20260903f',
       globalName: 'IndooneAddAccountQr'
     },
     manual: {
       script:
-        'menu/accounts/add-account/manual/script.js?v=20260903d',
+        'lobby/accounts/add-account/enter-setup-key/script.js?v=20260903d',
       globalName: 'IndooneAddAccountManual'
     },
     import: {
       script:
-        'menu/accounts/add-account/import/script.js?v=20260903d',
+        'lobby/accounts/add-account/import-uri/script.js?v=20260903d',
       globalName: 'IndooneAddAccountImport'
     }
   };
@@ -105,7 +105,7 @@
   }
 
   function baseHash() {
-    return '#menu/accounts/add-account';
+    return '#lobby/accounts/add-account';
   }
 
   function featureHash(name) {
