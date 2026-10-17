@@ -945,20 +945,34 @@ fun HomeScreen(
             // This list is what the recogniser may detect and switch between, so a
             // missing entry means that language cannot be spoken to the app at all.
             if (Build.VERSION.SDK_INT >= 34) {
+                // Every language India recognises, plus English. The Vibe model is a
+                // Gemini 3.8 Live model, which supports well over seventy languages, so
+                // the limit here is the list, not the model. A language missing from it
+                // cannot be detected or switched to, which is how this started with four.
                 val supportedVoiceLanguages = arrayListOf(
                     "en-IN",
                     "en-US",
-                    "hi-IN",
-                    "bn-IN",
-                    "mr-IN",
-                    "te-IN",
-                    "ta-IN",
-                    "gu-IN",
-                    "kn-IN",
-                    "ml-IN",
-                    "pa-IN",
-                    "or-IN",
                     "as-IN",
+                    "bn-IN",
+                    "brx-IN",
+                    "doi-IN",
+                    "gu-IN",
+                    "hi-IN",
+                    "kn-IN",
+                    "kok-IN",
+                    "ks-IN",
+                    "mai-IN",
+                    "ml-IN",
+                    "mni-IN",
+                    "mr-IN",
+                    "ne-IN",
+                    "or-IN",
+                    "pa-IN",
+                    "sa-IN",
+                    "sat-IN",
+                    "sd-IN",
+                    "ta-IN",
+                    "te-IN",
                     "ur-IN",
                 )
                 putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true)
