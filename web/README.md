@@ -1,4 +1,4 @@
-# Indoone Authenticator
+# Indoone
 
 Indoone is a Firebase-backed TOTP authenticator prototype.
 

@@ -86,7 +86,7 @@ window.showAbout = function () {
   openModal(`
     <h2>About Indoone</h2>
     <p>
-      Indoone Authenticator — a login-based cloud-synced TOTP authenticator.
+      Indoone — a login-based, cloud-synced AI assistant.
     </p>
     <button class="primary" data-close>Done</button>
   `);

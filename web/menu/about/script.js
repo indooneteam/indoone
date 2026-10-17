@@ -27,7 +27,7 @@ window.initMenuAbout = function () {
       <h3
         style="margin:8px 0 2px"
       >
-        Indoone Authenticator
+        Indoone
       </h3>
       <p
         style="margin:0;color:#8a8492;font-size:12px"

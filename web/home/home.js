@@ -1,8 +1,8 @@
 (() => {
   const CONTENT_ID = 'content';
   const ADD_HASH = '#lobby/accounts/add-account';
-  const ADD_SCRIPT = 'lobby/accounts/add-account/script.js?v=20260916a';
-  const SCREENSHOT_SCRIPT = 'home/screenshot-protection.js?v=20260904b';
+  const ADD_SCRIPT = 'lobby/accounts/add-account/script.js?v=20261018b';
+  const SCREENSHOT_SCRIPT = 'home/screenshot-protection.js?v=20261018b';
 
   let homeView = null;
   let subPage = null;

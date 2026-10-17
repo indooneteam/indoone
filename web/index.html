@@ -12,28 +12,28 @@
   />
   <meta
     name="description"
-    content="Indoone Authenticator — private, cloud-synced authenticator demo."
+    content="Indoone — private, cloud-synced AI assistant."
   />
-  <title>Indoone Authenticator</title>
+  <title>Indoone</title>
 
-  <link rel="stylesheet" href="style.css?v=20261031c" />
-  <link rel="stylesheet" href="home/home.css?v=20261024a" />
-  <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
-  <link rel="stylesheet" href="home/plus/plus.css?v=20261015c" />
-  <link rel="stylesheet" href="vibe/vibe.css?v=20261024a" />
-  <link rel="stylesheet" href="notifications/style.css?v=20261031c" />
-  <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
-  <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
-  <link rel="stylesheet" href="shared/app-icons.css?v=20261031c" />
-  <link rel="stylesheet" href="menu/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/settings.css?v=20260922b" />
-  <link rel="stylesheet" href="settings/profile/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/about/style.css?v=20261018a" />
-  <link rel="stylesheet" href="settings/profile/change-email/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/profile/change-mobile-number/style.css?v=20261031c" />
-  <link rel="stylesheet" href="authentication/auth.css?v=20261015a" />
-  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261031c" />
-  <link rel="stylesheet" href="lobby/lobby.css?v=20261030a" />
+  <link rel="stylesheet" href="style.css?v=20261018b" />
+  <link rel="stylesheet" href="home/home.css?v=20261018b" />
+  <link rel="stylesheet" href="home/message/message.css?v=20261018b" />
+  <link rel="stylesheet" href="home/plus/plus.css?v=20261018b" />
+  <link rel="stylesheet" href="vibe/vibe.css?v=20261018b" />
+  <link rel="stylesheet" href="notifications/style.css?v=20261018b" />
+  <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20261018b" />
+  <link rel="stylesheet" href="bottom-nav-svg.css?v=20261018b" />
+  <link rel="stylesheet" href="shared/app-icons.css?v=20261018b" />
+  <link rel="stylesheet" href="menu/style.css?v=20261018b" />
+  <link rel="stylesheet" href="settings/settings.css?v=20261018b" />
+  <link rel="stylesheet" href="settings/profile/style.css?v=20261018b" />
+  <link rel="stylesheet" href="settings/about/style.css?v=20261018b" />
+  <link rel="stylesheet" href="settings/profile/change-email/style.css?v=20261018b" />
+  <link rel="stylesheet" href="settings/profile/change-mobile-number/style.css?v=20261018b" />
+  <link rel="stylesheet" href="authentication/auth.css?v=20261018b" />
+  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261018b" />
+  <link rel="stylesheet" href="lobby/lobby.css?v=20261018b" />
 </head>
 
 <body>
@@ -760,56 +760,56 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="authentication/firebase-config.js?v=20261015a"></script>
-  <script src="authentication/firebase-auth.js?v=20260914a"></script>
-  <script src="authentication/indoverification.js?v=20260904c"></script>
-  <script src="authentication/firebase-auth-otp.js?v=20261014a"></script>
-  <script src="authentication/auth-session-persistence.js?v=20260914a"></script>
-  <script src="authentication/forgot-password/script.js?v=20260904c"></script>
-  <script src="authentication/auth-page.js?v=20261015a"></script>
-  <script src="authentication/login/login.js?v=20261015a"></script>
-  <script src="authentication/sign-up/signup.js?v=20261015a"></script>
+  <script src="authentication/firebase-config.js?v=20261018b"></script>
+  <script src="authentication/firebase-auth.js?v=20261018b"></script>
+  <script src="authentication/indoverification.js?v=20261018b"></script>
+  <script src="authentication/firebase-auth-otp.js?v=20261018b"></script>
+  <script src="authentication/auth-session-persistence.js?v=20261018b"></script>
+  <script src="authentication/forgot-password/script.js?v=20261018b"></script>
+  <script src="authentication/auth-page.js?v=20261018b"></script>
+  <script src="authentication/login/login.js?v=20261018b"></script>
+  <script src="authentication/sign-up/signup.js?v=20261018b"></script>
 
-  <script src="home/home.js?v=20261014a"></script>
-  <script src="home/chat-home.js?v=20261031e"></script>
-  <script src="notifications/script.js?v=20261031e"></script>
-  <script src="shared/branding.js?v=20261015a"></script>
-  <script src="shared/app-icons.js?v=20261031c"></script>
-  <script src="shared/core.js?v=20261031a"></script>
-  <script src="shared/state.js?v=20261030c"></script>
+  <script src="home/home.js?v=20261018b"></script>
+  <script src="home/chat-home.js?v=20261018b"></script>
+  <script src="notifications/script.js?v=20261018b"></script>
+  <script src="shared/branding.js?v=20261018b"></script>
+  <script src="shared/app-icons.js?v=20261018b"></script>
+  <script src="shared/core.js?v=20261018b"></script>
+  <script src="shared/state.js?v=20261018b"></script>
 
   <!-- The web counterpart of android/menu/data/UserDataRepository.kt. Profile
        and Memory read and write through it, and Chat History lists through it.
        It was written and then never loaded by anything, so all three reported
        "Cannot read properties of undefined (reading 'readProfile')" instead of
        showing their data. -->
-  <script src="menu/data/user-data.js?v=20261031b"></script>
-  <script src="shared/cloud-accounts.js?v=20260922a"></script>
-  <script src="lobby/accounts/totp.js?v=20260914a"></script>
-  <script src="authentication/secure-session.js?v=20260914a"></script>
-  <script src="shared/persistence.js?v=20260914a"></script>
-  <script src="lobby/accounts/recovery-pdf.js?v=20260914a"></script>
+  <script src="menu/data/user-data.js?v=20261018b"></script>
+  <script src="shared/cloud-accounts.js?v=20261018b"></script>
+  <script src="lobby/accounts/totp.js?v=20261018b"></script>
+  <script src="authentication/secure-session.js?v=20261018b"></script>
+  <script src="shared/persistence.js?v=20261018b"></script>
+  <script src="lobby/accounts/recovery-pdf.js?v=20261018b"></script>
 
-  <script src="menu/script.js?v=20261015c"></script>
-  <script src="lobby/accounts/search/script.js?v=20260903e"></script>
-  <script src="lobby/accounts/accounts/edit/script.js?v=20260904a"></script>
-  <script src="lobby/accounts/accounts/edit/edit.js?v=20260904a"></script>
-  <script src="lobby/accounts/totp-controller.js?v=20260914a"></script>
-  <script src="shared/favorite.js?v=20260914a"></script>
+  <script src="menu/script.js?v=20261018b"></script>
+  <script src="lobby/accounts/search/script.js?v=20261018b"></script>
+  <script src="lobby/accounts/accounts/edit/script.js?v=20261018b"></script>
+  <script src="lobby/accounts/accounts/edit/edit.js?v=20261018b"></script>
+  <script src="lobby/accounts/totp-controller.js?v=20261018b"></script>
+  <script src="shared/favorite.js?v=20261018b"></script>
 
-  <script src="settings/profile/script.js?v=20260904d"></script>
-  <script src="settings/about/script.js?v=20261018a"></script>
-  <script src="settings/profile/change-mobile-number/script.js?v=20260904d"></script>
-  <script src="settings/profile/change-email/script.js?v=20260904c"></script>
-  <script src="settings/settings.js?v=20260922c"></script>
+  <script src="settings/profile/script.js?v=20261018b"></script>
+  <script src="settings/about/script.js?v=20261018b"></script>
+  <script src="settings/profile/change-mobile-number/script.js?v=20261018b"></script>
+  <script src="settings/profile/change-email/script.js?v=20261018b"></script>
+  <script src="settings/settings.js?v=20261018b"></script>
 
-  <script src="shared/navigation.js?v=20261014a"></script>
-  <script src="shared/navigation-icons.js?v=20261030c"></script>
+  <script src="shared/navigation.js?v=20261018b"></script>
+  <script src="shared/navigation-icons.js?v=20261018b"></script>
 
 
-  <script src="lobby/lobby-status.js?v=20261030a"></script>
+  <script src="lobby/lobby-status.js?v=20261018b"></script>
 
-  <script src="shared/events.js?v=20261031a"></script>
-  <script src="shared/safe-layout/safe-layout.js?v=20260925a"></script>
+  <script src="shared/events.js?v=20261018b"></script>
+  <script src="shared/safe-layout/safe-layout.js?v=20261018b"></script>
 </body>
 </html>
