@@ -17,7 +17,7 @@
   const OUTPUT_RATE = 24000;
   // How far ahead the reply is scheduled, so a late chunk does not leave a gap.
   const PLAYBACK_LEAD_SECONDS = 0.12;
-  const CAPTURE_MODULE = 'vibe/vibe-capture.js?v=20261029a';
+  const CAPTURE_MODULE = 'vibe/vibe-capture.js?v=20261018b';
 
   let socket = null;
   let captureContext = null;

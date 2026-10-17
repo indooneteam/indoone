@@ -1,5 +1,5 @@
 window.IndooneForgotPassword = (() => {
-  const MARKUP_URL = 'authentication/forgot-password/index.html?v=20260904c';
+  const MARKUP_URL = 'authentication/forgot-password/index.html?v=20261018b';
   let state = {
     email: '',
     challengeId: '',

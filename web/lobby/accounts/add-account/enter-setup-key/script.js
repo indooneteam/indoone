@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'lobby/accounts/add-account/enter-setup-key/index.html?v=20260903b';
+    'lobby/accounts/add-account/enter-setup-key/index.html?v=20261018b';
   const STYLE_URL =
-    'lobby/accounts/add-account/enter-setup-key/style.css?v=20260903b';
+    'lobby/accounts/add-account/enter-setup-key/style.css?v=20261018b';
 
   function loadStyle() {
     const baseUrl = STYLE_URL.split('?')[0];
