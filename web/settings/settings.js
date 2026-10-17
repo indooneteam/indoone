@@ -1,59 +1,35 @@
 (() => {
-  let appVersion = 'Loading…';
-  let appVersionLoaded = false;
-
-  async function loadAppVersion() {
-    if (appVersionLoaded) return appVersion;
-
-    appVersionLoaded = true;
-
-    try {
-      const response = await fetch(
-        'update.json',
-        { cache: 'no-store' }
-      );
-
-      if (!response.ok) {
-        throw new Error('Version metadata unavailable');
-      }
-
-      const metadata = await response.json();
-      const version = String(metadata.versionName || '').trim();
-
-      if (version) {
-        appVersion = version;
-      }
-    } catch (error) {
-      console.warn(
-        'Indoone version metadata load failed:',
-        error
-      );
-    }
-
-    return appVersion;
-  }
-
-  loadAppVersion().then(version => {
-    document
-      .querySelectorAll('[data-app-version]')
-      .forEach(node => {
-        node.textContent = version;
-      });
-
-    document
-      .querySelectorAll('[data-settings-action="about"] .settings-row-text small')
-      .forEach(node => {
-        node.textContent = `Version ${version} · Updates`;
-      });
-  });
 
   const SETTINGS = [
     {
       id: 'profile',
       title: 'Profile',
-      subtitle: 'Email & mobile number',
       icon: 'profile',
       action: () => window.showProfile?.()
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      icon: 'info',
+      action: () => window.IndooneNotifications?.show?.()
+    },
+    {
+      id: 'about',
+      title: 'About Indoone',
+      icon: 'info',
+      action: () => window.showAbout?.()
+    },
+    {
+      id: 'danger-zone',
+      title: 'Danger Zone',
+      icon: 'info',
+      action: () => window.showDangerZone?.()
+    },
+    {
+      id: 'logout',
+      title: 'Log out',
+      icon: 'info',
+      action: () => window.showLogout?.()
     }
   ];
 
@@ -112,9 +88,15 @@
 
     const text = document.createElement('span');
     text.className = 'settings-row-text';
-    text.innerHTML = `
+    // The app's SettingsMenuItem takes subtitle: String? = null and every
+    // call leaves it out, so a row with no subtitle shows only its title.
+    text.innerHTML = subtitle
+      ? `
       <b>${item.title}</b>
       <small>${subtitle}</small>
+    `
+      : `
+      <b>${item.title}</b>
     `;
 
     const arrow = document.createElement('span');
