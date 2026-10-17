@@ -940,9 +940,26 @@ fun HomeScreen(
             }
 
             // Android 14+ supports automatic spoken-language detection and switching.
-            // Keep English, Kannada, and Telugu available as recognition choices.
+            // Keep every language Indoone supports available as a recognition choice.
+            // This list is what the recogniser may detect and switch between, so a
+            // missing entry means that language cannot be spoken to the app at all.
             if (Build.VERSION.SDK_INT >= 34) {
-                val supportedVoiceLanguages = arrayListOf("en-IN", "en-US", "kn-IN", "te-IN")
+                val supportedVoiceLanguages = arrayListOf(
+                    "en-IN",
+                    "en-US",
+                    "hi-IN",
+                    "bn-IN",
+                    "mr-IN",
+                    "te-IN",
+                    "ta-IN",
+                    "gu-IN",
+                    "kn-IN",
+                    "ml-IN",
+                    "pa-IN",
+                    "or-IN",
+                    "as-IN",
+                    "ur-IN",
+                )
                 putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true)
                 putStringArrayListExtra(
                     RecognizerIntent.EXTRA_LANGUAGE_DETECTION_ALLOWED_LANGUAGES,
