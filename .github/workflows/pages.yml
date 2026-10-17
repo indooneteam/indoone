@@ -1,9 +1,12 @@
 name: Deploy Indoone Web
 
 on:
+  # The web lives on main; terminal carries the app's test builds and its copy
+  # of web/ is the old one. Deploying from terminal is why the live site kept
+  # showing a navigation bar with Connect in it long after main had lost it.
   push:
     branches:
-      - terminal
+      - main
     paths:
       - "web/**"
   workflow_dispatch:
