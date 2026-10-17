@@ -548,7 +548,6 @@ fun HomeScreen(
     var isAddingAttachments by remember { mutableStateOf(false) }
     var isListening by remember { mutableStateOf(false) }
     var voiceInputBase by remember { mutableStateOf("") }
-    var voicePreview by remember { mutableStateOf("") }
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     var welcomeMessageIndex by remember { mutableStateOf(0) }
@@ -565,6 +564,9 @@ fun HomeScreen(
         }
     }
 
+    // Land on the newest message when a conversation opens, and stay there as replies
+    // arrive. Three passes over three frames, because the list is measured in stages:
+    // the first frame knows the item count, the next ones know the real heights.
     LaunchedEffect(isLoadingHistory, messages.size, chatActivityState, startNewChat, openConversationId) {
         if (!isLoadingHistory && (messages.isNotEmpty() || chatActivityState != ChatActivityState.IDLE)) {
             // A large positive scroll offset on the final item clamps the viewport to the
@@ -924,7 +926,6 @@ fun HomeScreen(
 
         voiceError = null
         voiceInputBase = input.trimEnd()
-        voicePreview = ""
         isListening = true
         speechRecognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -944,20 +945,34 @@ fun HomeScreen(
             // This list is what the recogniser may detect and switch between, so a
             // missing entry means that language cannot be spoken to the app at all.
             if (Build.VERSION.SDK_INT >= 34) {
+                // Every language India recognises, plus English. The Vibe model is a
+                // Gemini 3.8 Live model, which supports well over seventy languages, so
+                // the limit here is the list, not the model. A language missing from it
+                // cannot be detected or switched to, which is how this started with four.
                 val supportedVoiceLanguages = arrayListOf(
                     "en-IN",
                     "en-US",
-                    "hi-IN",
-                    "bn-IN",
-                    "mr-IN",
-                    "te-IN",
-                    "ta-IN",
-                    "gu-IN",
-                    "kn-IN",
-                    "ml-IN",
-                    "pa-IN",
-                    "or-IN",
                     "as-IN",
+                    "bn-IN",
+                    "brx-IN",
+                    "doi-IN",
+                    "gu-IN",
+                    "hi-IN",
+                    "kn-IN",
+                    "kok-IN",
+                    "ks-IN",
+                    "mai-IN",
+                    "ml-IN",
+                    "mni-IN",
+                    "mr-IN",
+                    "ne-IN",
+                    "or-IN",
+                    "pa-IN",
+                    "sa-IN",
+                    "sat-IN",
+                    "sd-IN",
+                    "ta-IN",
+                    "te-IN",
                     "ur-IN",
                 )
                 putExtra(RecognizerIntent.EXTRA_ENABLE_LANGUAGE_DETECTION, true)
@@ -1005,7 +1020,6 @@ fun HomeScreen(
 
                 override fun onError(error: Int) {
                     isListening = false
-                    voicePreview = ""
                     voiceError = when (error) {
                         SpeechRecognizer.ERROR_NO_MATCH -> "I could not hear that clearly. Try again."
                         SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected. Try again."
@@ -1015,20 +1029,14 @@ fun HomeScreen(
                 }
 
                 override fun onResults(results: Bundle?) {
-                    // The one and only time the message box is written: the final text,
-                    // once, after you have finished speaking.
                     isListening = false
-                    voicePreview = ""
                     val spoken = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
                     if (!spoken.isNullOrBlank()) input = appendVoiceTranscript(voiceInputBase, spoken)
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {
-                    // Partial speech goes to the preview chip only. The message box is
-                    // left exactly as it was, so nothing is typed or rewritten while
-                    // you are still talking.
                     val spoken = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                    voicePreview = spoken.orEmpty()
+                    if (!spoken.isNullOrBlank()) input = appendVoiceTranscript(voiceInputBase, spoken)
                 }
 
                 override fun onEvent(eventType: Int, params: Bundle?) = Unit
@@ -1473,24 +1481,13 @@ fun HomeScreen(
                                 modifier = Modifier.size(18.dp),
                             )
                         }
-                        Column(Modifier.padding(start = 10.dp)) {
-                            Text(
-                                "Listening… tap mic to stop",
-                                color = Color(0xFF4A4650),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            if (voicePreview.isNotBlank()) {
-                                Text(
-                                    voicePreview,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                    color = Color(0xFF7A7482),
-                                    fontSize = 12.sp,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+                        Text(
+                            "Listening… tap mic to stop",
+                            modifier = Modifier.padding(start = 10.dp),
+                            color = Color(0xFF4A4650),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
                     }
                 }
             }
