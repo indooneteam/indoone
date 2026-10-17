@@ -1129,7 +1129,6 @@ html, body { height: 100%; }
 
 #app.phone-shell > #content,
 #app.phone-shell > #homeContent,
-#app.phone-shell > #connectContent,
 #app.phone-shell > .notifications-page,
 #app.phone-shell > .settings-content,
 #app.phone-shell > #modal {
@@ -1156,7 +1155,6 @@ html, body { height: 100%; }
 
 /* Shared headings stay aligned; safe-area padding is handled centrally. */
 #app.phone-shell > #content .page-heading,
-#app.phone-shell > #connectContent .connect-hero,
 #app.phone-shell > .settings-content .settings-page-head {
   margin-top: 0 !important;
   padding-top: 0 !important;
@@ -1166,7 +1164,6 @@ html, body { height: 100%; }
    safe-area contract as mobile WebView layouts. */
 @media (min-width: 700px) {
   #app.phone-shell > #content,
-  #app.phone-shell > #connectContent,
   #app.phone-shell > .settings-content {
     padding-right: calc(18px + var(--indoone-safe-right)) !important;
     padding-left: calc(18px + var(--indoone-safe-left)) !important;
@@ -1229,7 +1226,6 @@ html, body { height: 100%; }
      |                |  top bar                  |               |
      |   the menu     |---------------------------|   Home        |
      |   always open  |                           |   Lobby       |
-     |                |  the page                 |   Connect     |
      |                |                           |   Settings    |
      |                |---------------------------|               |
      +----------------+---------------------------+---------------+
@@ -1293,7 +1289,6 @@ html, body { height: 100%; }
   .chat-page,
   .accounts-content,
   #content,
-  #connectContent,
   #lobbyContent,
   .settings-content,
   [data-notifications-page] {

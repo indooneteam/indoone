@@ -112,7 +112,6 @@
 /* Shared content region: reserves the app navigation plus measured system
    safe area so scrolling content never hides behind either region. */
 #app.phone-shell > #content,
-#app.phone-shell > #connectContent,
 #app.phone-shell > .settings-content {
   flex: 1 1 auto !important;
   min-height: 0 !important;
@@ -136,7 +135,6 @@
 }
 
 #app.phone-shell > #content .page-heading,
-#app.phone-shell > #connectContent .connect-hero,
 #app.phone-shell > .settings-content .settings-page-head {
   margin-top: 0 !important;
   padding-top: 0 !important;
@@ -154,7 +152,6 @@
 
 @media (min-width: 700px) {
   #app.phone-shell > #content,
-  #app.phone-shell > #connectContent,
   #app.phone-shell > .settings-content {
     padding-right: calc(18px + var(--indoone-safe-right)) !important;
     padding-left: calc(18px + var(--indoone-safe-left)) !important;

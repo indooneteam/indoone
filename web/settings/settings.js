@@ -117,12 +117,10 @@
   function showSettingsPage() {
     const page = document.getElementById('settingsContent');
     const content = document.getElementById('content');
-    const connect = document.getElementById('connectContent');
     const search = document.getElementById('searchWrap');
     const add = document.getElementById('addBtn');
 
     content?.setAttribute('hidden', '');
-    connect?.setAttribute('hidden', '');
     search?.setAttribute('hidden', '');
     add?.setAttribute('hidden', '');
     page?.removeAttribute('hidden');
@@ -135,9 +133,6 @@
       ?.classList.remove('active');
     document
       .getElementById('lobbyNav')
-      ?.classList.remove('active');
-    document
-      .getElementById('connectNav')
       ?.classList.remove('active');
   }
 
@@ -217,7 +212,7 @@
 
     if (
       target.closest(
-        '#homeNav, #lobbyNav, #connectNav, .drawer-item'
+        '#homeNav, #lobbyNav, .drawer-item'
       )
     ) {
       hideSettingsPage();

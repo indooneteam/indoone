@@ -112,7 +112,6 @@
   const PAGE_IDS = [
     'homeContent',
     'content',
-    'connectContent',
     'lobbyContent',
     'settingsContent'
   ];
@@ -171,11 +170,10 @@
 
     const tab = back === 'content' ? 'homeNav'
       : back === 'lobbyContent' ? 'lobbyNav'
-      : back === 'connectContent' ? 'connectNav'
       : back === 'settingsContent' ? 'settingsNav'
       : 'homeNav';
 
-    ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+    ['homeNav', 'lobbyNav', 'settingsNav'].forEach(id => {
       document.getElementById(id)?.classList.toggle('active', id === tab);
     });
 
@@ -292,7 +290,7 @@
   };
 
   // The four tabs and the brand leave a menu page behind when they are used.
-  ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+  ['homeNav', 'lobbyNav', 'settingsNav'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', closeMenuPage);
   });
   document.getElementById('brandBtn')?.addEventListener('click', closeMenuPage);
