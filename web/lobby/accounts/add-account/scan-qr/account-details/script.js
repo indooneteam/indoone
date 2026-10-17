@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'lobby/accounts/add-account/scan-qr/account-details/index.html?v=20260903g';
+    'lobby/accounts/add-account/scan-qr/account-details/index.html?v=20261018b';
   const STYLE_URL =
-    'lobby/accounts/add-account/scan-qr/account-details/style.css?v=20260903g';
+    'lobby/accounts/add-account/scan-qr/account-details/style.css?v=20261018b';
   const FALLBACK_SCRIPT_URL =
     'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
 

@@ -56,7 +56,7 @@
     }
 
     void fetch(
-      'settings/profile/index.html?v=20260904a',
+      'settings/profile/index.html?v=20261018b',
       { cache: 'no-store' }
     )
       .then(response =>
