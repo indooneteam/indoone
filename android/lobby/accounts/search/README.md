@@ -1,3 +1,0 @@
-# Search
-
-Accounts feature subfeature.

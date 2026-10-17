@@ -1,3 +1,0 @@
-# Accounts
-
-Accounts feature subfeature.
