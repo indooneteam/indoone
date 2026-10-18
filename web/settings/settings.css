@@ -1,12 +1,9 @@
-.settings-section-label
-{
-  margin:16px 0 7px;
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:#8a8392
-}
+/* Every Settings row is the card the app draws in SettingsMenuRow:
+   RoundedCornerShape(18.dp), a 1dp #ECE9F0 border, white, shadowElevation 2.dp,
+   padding(vertical = 5.dp) between rows, height(64.dp), padding(horizontal =
+   14.dp, vertical = 8.dp), and a 32dp gradient tile holding an 18dp icon
+   tinted #51627D. There is no section heading and no eyebrow above the title,
+   so the rules for those are gone. */
 .settings-row-button
 {
   border:0;
@@ -20,7 +17,6 @@
   justify-content:space-between;
   gap:14px;
   padding:14px 0;
-  border-bottom:1px solid #eee8f4;
   color:#2c2733;
   text-align:left
 }
@@ -31,9 +27,10 @@
 .settings-row small
 {
   display:block;
-  margin-top:3px;
-  color:#8a8392;
-  font-size:12px
+  margin-top:2px;
+  color:#77717f;
+  font-size:11px;
+  line-height:15px
 }
 .settings-arrow
 {
@@ -127,12 +124,6 @@
 {
   padding:6px 0 16px
 }
-.settings-page-head .eyebrow
-{
-  margin:0 0 3px;
-  font-size:9px;
-  color:#2877e8
-}
 .settings-page-head h1
 {
   margin:0;
@@ -147,38 +138,37 @@
   font-size:12px;
   line-height:1.55
 }
-.settings-content .settings-section-label
-{
-  margin:18px 0 7px
-}
 .settings-option-row,
 .settings-row-toggle
 {
   width:100%;
+  min-height:64px;
   display:flex;
   align-items:center;
   gap:12px;
-  box-sizing:border-box
+  box-sizing:border-box;
+  margin:0 0 5px;
+  padding:8px 14px;
+  background:#fff;
+  border:1px solid #ece9f0;
+  border-radius:18px;
+  box-shadow:0 1px 2px rgba(31,27,36,.06)
 }
 .settings-option-row
 {
   justify-content:flex-start;
-  padding:13px 0;
-  background:#fff;
   cursor:pointer
-}
-.settings-row-toggle
-{
-  padding:13px 0
 }
 .settings-option-icon-wrap
 {
-  width:30px;
-  height:30px;
+  width:32px;
+  height:32px;
   display:grid;
   place-items:center;
   flex:none;
-  color:#756d80
+  border-radius:10px;
+  background:linear-gradient(180deg,#fff,#f3effa);
+  color:#51627d
 }
 .settings-option-icon
 {
@@ -200,16 +190,17 @@
 {
   display:block;
   font-size:13px;
-  font-weight:700;
+  line-height:17px;
+  font-weight:600;
   color:#2c2733
 }
 .settings-row-text small
 {
   display:block;
-  margin-top:3px;
-  color:#8a8392;
+  margin-top:2px;
+  color:#77717f;
   font-size:11px;
-  line-height:1.35
+  line-height:15px
 }
 .settings-option-row:active .settings-option-icon-wrap,
 .settings-row-toggle:active .settings-option-icon-wrap
@@ -240,11 +231,7 @@
 }
 .settings-content .settings-row
 {
-  border-bottom:1px solid #eee8f4
-}
-.settings-content .settings-section-label:first-of-type
-{
-  margin-top:0
+  border-bottom:0
 }
 
 /* The app shell is a bounded vertical flex layout. Without this, child
@@ -291,7 +278,7 @@
   .settings-option-row,
   .settings-row-toggle
   {
-    padding:12px 0
+    padding:8px 12px
   }
 }
 
