@@ -14,21 +14,27 @@
     'terms-of-use': 'initMenuTermsOfUse',
     'privacy-policy': 'initMenuPrivacyPolicy',
     about: 'initMenuAbout',
-    lock: 'initMenuLock',
     'danger-zone': 'initMenuDangerZone',
     logout: 'initMenuLogout',
     profile: 'initMenuProfile',
     memory: 'initMenuMemory',
     'chat-history': 'initMenuChatHistory',
     'data-privacy': 'initMenuDataPrivacy',
-    plugins: 'initMenuPlugins'
+    plugins: 'initMenuPlugins',
+    update: 'initMenuUpdate'
   };
 
   // Two sections moved out of the menu and into settings, and one was renamed
   // to match the app, so the action name and the folder are no longer the same.
   const featurePaths = {
     'danger-zone': 'settings/danger-zone',
-    logout: 'settings/logout'
+    logout: 'settings/logout',
+    // Profile and About live in settings/ too - the app keeps
+    // android/settings/profile/ProfileScreen.kt and android/menu/about/ - so
+    // the path is named here the way danger-zone and logout already were.
+    profile: 'settings/profile',
+    about: 'settings/about',
+    update: 'settings/update'
   };
 
   const nestedInitializers = {

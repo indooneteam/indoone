@@ -1,4 +1,15 @@
 (() => {
+  // The web counterpart of android/settings/profile/ProfileScreen.kt.
+  //
+  // This screen is a menu feature, opened by menu/script.js the same way Danger
+  // Zone and Log out are: the loader fetches the fragment into #modal, calls
+  // this initializer, then shows the page. It used to be its own little modal -
+  // it fetched the fragment itself and unhid #overlay, which put a grey dim
+  // across the app and shrank the screen to a card. That is the bug that showed
+  // when Profile was tapped. It does not touch #overlay any more.
+  //
+  // The rows inside are wired here, and the × carries data-close, which
+  // shared/events.js handles globally.
   function currentUser() {
     return window.IndooneFirebase?.auth?.currentUser || null;
   }
@@ -44,61 +55,35 @@
     }
   }
 
-  window.showProfile = function ({ remember = true } = {}) {
-    if (remember) {
-      window.IndoonePageState?.set('profile');
+  window.initMenuProfile = function () {
+    const page = document.getElementById('modal');
+
+    if (!page) {
+      return false;
     }
 
-    const modal = document.getElementById('modal');
+    void renderProfile();
 
-    if (!modal) {
-      return;
-    }
+    page
+      .querySelectorAll('[data-profile-action]')
+      .forEach(button => {
+        const action = button.dataset.profileAction;
 
-    void fetch(
-      'settings/profile/index.html?v=20261018b',
-      { cache: 'no-store' }
-    )
-      .then(response =>
-        response.ok
-          ? response.text()
-          : Promise.reject(
-              new Error(
-                'Profile page could not be loaded.'
-              )
-            )
-      )
-      .then(html => {
-        modal.innerHTML = html;
-        void renderProfile();
-
-        modal
-          .querySelector(
-            '[data-profile-action="mobile"]'
-          )
-          ?.addEventListener(
+        if (action === 'mobile') {
+          button.addEventListener(
             'click',
             () => window.showChangeMobile?.()
           );
+        }
 
-        modal
-          .querySelector(
-            '[data-profile-action="email"]'
-          )
-          ?.addEventListener(
+        if (action === 'email') {
+          button.addEventListener(
             'click',
             () => window.showChangeEmail?.()
           );
+        }
+      });
 
-        document
-          .getElementById('overlay')
-          ?.classList.remove('hidden');
-      })
-      .catch(error =>
-        window.toast?.(
-          error?.message ||
-            'Could not open Profile'
-        )
-      );
+    return true;
   };
 })();
