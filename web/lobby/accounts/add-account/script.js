@@ -12,7 +12,7 @@
     },
     manual: {
       script:
-        'lobby/accounts/add-account/enter-setup-key/script.js?v=20261018j',
+        'lobby/accounts/add-account/enter-setup-key/script.js?v=20261018r',
       globalName: 'IndooneAddAccountManual'
     },
     import: {
