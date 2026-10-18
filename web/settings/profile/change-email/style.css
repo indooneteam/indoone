@@ -1,13 +1,75 @@
-.settings-subpage p
-{
-  color:#77707f;
-  line-height:1.5
+/* The web counterpart of CurrentValueField in
+   android/settings/profile/change-mobile-number/ChangeMobileNumberScreen.kt and
+   ChangeEmailScreen.kt: a label in small bold caps, then a read-only box -
+   48dp tall, 12dp corners, #F1EEF6 behind a 1dp #E4DDEA border, text #625D68.
+   The value already on the account is shown, never typed into. */
+.change-mobile-page,
+.change-email-page {
+  display: block;
+  padding: 4px 0 110px;
 }
-.settings-subpage .field
-{
-  margin-top:14px
+
+.change-mobile-page .page-back,
+.change-email-page .page-back {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6330db;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
-.settings-subpage .primary
-{
-  margin-top:16px
+
+.change-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f1b24;
+}
+
+.change-note {
+  margin: 5px 0 18px;
+  color: #77717f;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.current-value {
+  margin-bottom: 14px;
+}
+
+.current-value-label {
+  display: block;
+  color: #625d68;
+  font-size: 9px;
+  line-height: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.current-value-box {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 13px;
+  border: 1px solid #e4ddea;
+  border-radius: 12px;
+  background: #f1eef6;
+  color: #625d68;
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.change-mobile-page .field,
+.change-email-page .field {
+  margin-bottom: 12px;
+}
+
+.change-mobile-page .primary,
+.change-email-page .primary {
+  width: 100%;
+  margin-top: 16px;
 }

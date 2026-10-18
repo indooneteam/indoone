@@ -202,13 +202,13 @@
       case 'mobile':
         showSettingsPanel({ remember: false });
         window.openMenuFeature?.('profile');
-        window.showChangeMobile?.({ remember: false });
+        window.openMenuFeature?.('change-mobile-number');
         break;
 
       case 'email':
         showSettingsPanel({ remember: false });
         window.openMenuFeature?.('profile');
-        window.showChangeEmail?.({ remember: false });
+        window.openMenuFeature?.('change-email');
         break;
 
 

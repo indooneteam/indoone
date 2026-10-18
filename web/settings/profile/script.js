@@ -72,14 +72,14 @@
         if (action === 'mobile') {
           button.addEventListener(
             'click',
-            () => window.showChangeMobile?.()
+            () => window.openMenuFeature?.('change-mobile-number')
           );
         }
 
         if (action === 'email') {
           button.addEventListener(
             'click',
-            () => window.showChangeEmail?.()
+            () => window.openMenuFeature?.('change-email')
           );
         }
       });
