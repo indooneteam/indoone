@@ -16,6 +16,15 @@
   }
 
   function renderLoginNow() {
+    // A signed-in session must never be covered by the sign-in screen. This
+    // used to call showLogin() whenever the overlay was not already showing an
+    // .auth-page, which put the beige backdrop back over the app after a
+    // restored session - the half-page of colour in the bug report.
+    if (window.IndooneFirebase?.auth?.currentUser) {
+      markAuthReady();
+      return false;
+    }
+
     try {
       if (window.IndooneAuthUI?.showLogin) {
         const overlayNode = $('overlay');
