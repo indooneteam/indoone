@@ -1,23 +1,23 @@
 (() => {
   const MENU_MARKUP_URL =
-    'lobby/accounts/add-account/index.html?v=20261018b';
+    'lobby/accounts/add-account/index.html?v=20261018j';
   const MENU_STYLE_URL =
-    'lobby/accounts/add-account/style.css?v=20261018b';
+    'lobby/accounts/add-account/style.css?v=20261018j';
 
   const FEATURES = {
     qr: {
       script:
-        'lobby/accounts/add-account/scan-qr/account-details/script.js?v=20261018b',
+        'lobby/accounts/add-account/scan-qr/account-details/script.js?v=20261018j',
       globalName: 'IndooneAddAccountQr'
     },
     manual: {
       script:
-        'lobby/accounts/add-account/enter-setup-key/script.js?v=20261018b',
+        'lobby/accounts/add-account/enter-setup-key/script.js?v=20261018j',
       globalName: 'IndooneAddAccountManual'
     },
     import: {
       script:
-        'lobby/accounts/add-account/import-uri/script.js?v=20261018b',
+        'lobby/accounts/add-account/import-uri/script.js?v=20261018j',
       globalName: 'IndooneAddAccountImport'
     }
   };
