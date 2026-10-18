@@ -8,7 +8,6 @@
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
-    accounts: 'initMenuAccounts',
     favorites: 'initMenuFavorites',
     trash: 'initMenuTrash',
     security: 'initMenuSecurity',
@@ -312,12 +311,6 @@
     event.preventDefault();
     event.stopPropagation();
     const action = item.dataset.action;
-    if (action === 'accounts') {
-      closeDrawer();
-      window.showAccounts?.();
-      return;
-    }
-
     if (action === 'new-chat') {
       closeDrawer();
       window.IndooneChatStore?.clear?.();

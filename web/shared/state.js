@@ -100,13 +100,6 @@ window.renderAccounts = function () {
   }).join('');
 
   document.getElementById('emptyState').hidden = list.length > 0;
-  // MenuDrawer.kt passes the count to the row only when it is above zero:
-  //   DrawerItem(GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null)
-  // so the badge is simply not there on an empty vault. The web always drew it
-  // and put a 0 in it.
-  const drawerCount = document.getElementById('drawerCount');
-  drawerCount.textContent = accounts.length;
-  drawerCount.hidden = accounts.length === 0;
 };
 
 window.startDemoTimers = function () {
