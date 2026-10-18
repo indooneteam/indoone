@@ -32,10 +32,8 @@
   };
 
   const nestedInitializers = {
-    'danger-zone/delete-local-data': 'initMenuDeleteLocalData',
     'danger-zone/delete-account': 'initMenuDeleteAccount',
     'logout/this-device': 'initMenuLogoutThisDevice',
-    'logout/all-devices': 'initMenuLogoutAllDevices',
     // the plugin screens sit under Plugins, as they do in the app: GitHub's
     // Browse, and each provider's own screen
     // The paths have to be the folders' own names, because getFeatureBase turns
