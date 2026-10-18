@@ -38,9 +38,14 @@
     'logout/all-devices': 'initMenuLogoutAllDevices',
     // the plugin screens sit under Plugins, as they do in the app: GitHub's
     // Browse, and each provider's own screen
+    // The paths have to be the folders' own names, because getFeatureBase turns
+    // them into menu/<path>. The Zoho Mail folder is zoho_mail, not zoho-mail,
+    // and the email screen sits under email/gmail, not email - so those two
+    // used to resolve to folders with no index.html and the screens never
+    // opened.
     'plugins/github': 'initMenuPluginGitHub',
-    'plugins/zoho-mail': 'initMenuPluginZohoMail',
-    'plugins/email': 'initMenuPluginEmail'
+    'plugins/zoho_mail': 'initMenuPluginZohoMail',
+    'plugins/email/gmail': 'initMenuPluginEmail'
   };
 
   const createSvg = paths => {
