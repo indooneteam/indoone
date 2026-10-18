@@ -422,6 +422,12 @@
 
       authStateResolved = true;
 
+      // Nothing else closes the sign-in screen on this path. firebase-auth-otp
+      // closes it, but a session that is simply restored never went through the
+      // OTP flow - so the backdrop stayed up over the app, which is the panel of
+      // colour in the bug report. Close it here, before anything else runs.
+      window.IndooneAuthUI?.close?.();
+
       if (!persistedUid || persistedUid !== user.uid) {
         localStorage.removeItem('indoone_otp_verified_uid');
         localStorage.removeItem('indoone_authenticated_uid');
@@ -483,6 +489,25 @@
 
     if (typeof auth.onAuthStateChanged === 'function') {
       auth.onAuthStateChanged(showAuthOrHome);
+
+      // Belt and braces. Whatever order the auth scripts settle in, a signed-in
+      // session must never be left under the sign-in backdrop.
+      const clearAuthScreenIfSignedIn = () => {
+        if (!auth.currentUser) return;
+
+        const overlayNode = document.getElementById('overlay');
+
+        if (overlayNode?.classList.contains('hidden')) return;
+
+        window.IndooneAuthUI?.close?.();
+        overlayNode?.classList.remove('indoone-auth-screen');
+        overlayNode?.classList.add('hidden');
+        document.body.classList.remove('auth-open', 'auth-pending');
+      };
+
+      [400, 1500, 4000].forEach(delay =>
+        setTimeout(clearAuthScreenIfSignedIn, delay)
+      );
 
       setTimeout(() => {
         if (
