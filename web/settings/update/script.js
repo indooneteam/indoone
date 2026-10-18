@@ -1,13 +1,19 @@
-/* Check for updates, opened the same way as every other settings screen: set
-   the page state, fetch the fragment into #modal, wire the inner parts, then
-   unhide the overlay. data-close on the × and on Done is handled once,
-   globally, by shared/events.js.
-
-   The app reads the same place this does - the repository's releases, looking
-   for a terminal-build-* tag with indoone-terminal.apk attached. A browser
-   cannot install an APK, so this screen reports what is published and hands
-   over the download link instead of installing anything. */
-
+/* Check for updates. The web counterpart of android/settings/update.
+ *
+ * It is a menu feature like the others: menu/script.js fetches the fragment
+ * into #modal, calls this initializer, then shows the page. It used to fetch
+ * the fragment itself and unhide #overlay, which dimmed the whole app and
+ * shrank the screen to a card - the same bug Profile and About had. It does
+ * not touch #overlay any more.
+ *
+ * The app reads the same place this does - the repository's releases, looking
+ * for a terminal-build-* tag with indoone-terminal.apk attached. A browser
+ * cannot install an APK, so this screen reports what is published and hands
+ * over the download link instead of installing anything.
+ *
+ * data-close on the × and on Done is handled once, globally, by
+ * shared/events.js.
+ */
 (() => {
   const RELEASES_URL =
     'https://api.github.com/repos/indooneteam/indoone/releases';
@@ -81,87 +87,63 @@
     };
   }
 
-  window.showUpdate = function ({ remember = true } = {}) {
-    if (remember) {
-      window.IndoonePageState?.set('update');
+  window.initMenuUpdate = function () {
+    const page = document.getElementById('modal');
+
+    if (!page) {
+      return false;
     }
 
-    const modal = document.getElementById('modal');
+    const status = page.querySelector('[data-update-status]');
+    const current = page.querySelector('[data-update-current]');
+    const latest = page.querySelector('[data-update-latest]');
+    const download = page.querySelector('[data-update-download]');
 
-    if (!modal) {
-      return;
-    }
+    void (async () => {
+      const here = await currentVersion();
 
-    void fetch(
-      'settings/update/index.html?v=20261018c',
-      { cache: 'no-store' }
-    )
-      .then(response =>
-        response.ok
-          ? response.text()
-          : Promise.reject(new Error('The update page could not be loaded.'))
-      )
-      .then(html => {
-        modal.innerHTML = html;
+      if (current) {
+        current.textContent = here || 'Not stated';
+      }
 
-        const status = modal.querySelector('[data-update-status]');
-        const current = modal.querySelector('[data-update-current]');
-        const latest = modal.querySelector('[data-update-latest]');
-        const download = modal.querySelector('[data-update-download]');
+      try {
+        const build = await latestBuild();
 
-        document
-          .getElementById('overlay')
-          ?.classList.remove('hidden');
+        if (!build) {
+          setStatus(status, 'No build has been published yet.', 'error');
+          return;
+        }
 
-        void (async () => {
-          const here = await currentVersion();
+        if (latest) {
+          latest.textContent = `Build ${build.number}`;
+        }
 
-          if (current) {
-            current.textContent = here || 'Not stated';
-          }
+        if (download) {
+          download.href = build.url;
+          download.removeAttribute('hidden');
+        }
 
-          try {
-            const build = await latestBuild();
+        setStatus(
+          status,
+          build.published
+            ? `The newest build is ${build.number}, published ${build.published}. Download it below to move to it.`
+            : `The newest build is ${build.number}. Download it below to move to it.`,
+          'new'
+        );
+      } catch (error) {
+        setStatus(
+          status,
+          'The update list could not be reached. Open the releases page to see the newest build.',
+          'error'
+        );
 
-            if (!build) {
-              setStatus(status, 'No build has been published yet.', 'error');
-              return;
-            }
+        if (download) {
+          download.href = DOWNLOAD_URL;
+          download.removeAttribute('hidden');
+        }
+      }
+    })();
 
-            if (latest) {
-              latest.textContent = `Build ${build.number}`;
-            }
-
-            if (download) {
-              download.href = build.url;
-              download.removeAttribute('hidden');
-            }
-
-            setStatus(
-              status,
-              build.published
-                ? `The newest build is ${build.number}, published ${build.published}. Download it below to move to it.`
-                : `The newest build is ${build.number}. Download it below to move to it.`,
-              'new'
-            );
-          } catch (error) {
-            setStatus(
-              status,
-              'The update list could not be reached. Open the releases page to see the newest build.',
-              'error'
-            );
-
-            if (download) {
-              download.href = DOWNLOAD_URL;
-              download.removeAttribute('hidden');
-            }
-          }
-        })();
-      })
-      .catch(error =>
-        window.toast?.(
-          error?.message || 'Could not open Check for updates'
-        )
-      );
+    return true;
   };
 })();
