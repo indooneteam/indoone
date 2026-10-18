@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'lobby/accounts/add-account/import-uri/index.html?v=20261018b';
+    'lobby/accounts/add-account/import-uri/index.html?v=20261018i';
   const STYLE_URL =
-    'lobby/accounts/add-account/import-uri/style.css?v=20261018b';
+    'lobby/accounts/add-account/import-uri/style.css?v=20261018i';
 
   function loadStyle() {
     const baseUrl = STYLE_URL.split('?')[0];
