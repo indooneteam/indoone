@@ -1,5 +1,25 @@
 (() => {
 
+  // The web counterpart of android/settings/SettingsScreen.kt.
+  //
+  // The app draws one flat list, in this order, with no section heading and no
+  // eyebrow above the title:
+  //
+  //   SettingsMenuItem(ProfileIcon,       "Profile",       ...)
+  //   SettingsMenuItem(NotificationsIcon, "Notifications", ...)
+  //   SettingsMenuItem(InfoIcon,          "About Indoone") { ... }
+  //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")   { ... }
+  //   ...                                 "Log out"
+  //
+  // App Lock, Biometric Unlock and Auto-Lock sit between Profile and
+  // Notifications in the app and are deliberately absent here - they are
+  // device features and have nothing to do on the web.
+  //
+  // Danger Zone and Log out are menu features whose folders live under
+  // settings/ (see featurePaths in menu/script.js). They are opened through
+  // openMenuFeature, which loads the fragment, its stylesheet and its script -
+  // the same way the drawer opens them. That is why these two call
+  // openMenuFeature and not a window.show* of their own.
   const SETTINGS = [
     {
       id: 'profile',
@@ -23,13 +43,13 @@
       id: 'danger-zone',
       title: 'Danger Zone',
       icon: 'info',
-      action: () => window.showDangerZone?.()
+      action: () => window.openMenuFeature?.('danger-zone')
     },
     {
       id: 'logout',
       title: 'Log out',
       icon: 'info',
-      action: () => window.showLogout?.()
+      action: () => window.openMenuFeature?.('logout')
     }
   ];
 
@@ -153,42 +173,24 @@
 
     page.innerHTML = '';
 
+    // The app's head is the title and one line under it. There is no eyebrow
+    // above it and no section heading under it.
     const head = document.createElement('div');
     head.className = 'settings-page-head';
     head.innerHTML = `
-      <p class="eyebrow">PREFERENCES &amp; SECURITY</p>
       <h1>Settings</h1>
       <p>Manage your account, security and app preferences.</p>
     `;
     page.appendChild(head);
 
-    const sections = [
-      {
-        label: 'Account',
-        items: [SETTINGS[0]]
-      }
-    ];
-
-    sections.forEach(section => {
-      const label = document.createElement('div');
-      label.className = 'settings-section-label';
-      label.textContent = section.label;
-      page.appendChild(label);
-
-      section.items.forEach(item => {
-        const row = rowMarkup(item);
-        page.appendChild(row);
-      });
+    // Every row is drawn and every row is wired. This used to render only
+    // SETTINGS[0] and attach a click to profile alone, so the other four
+    // never appeared on the screen at all.
+    SETTINGS.forEach(item => {
+      const row = rowMarkup(item);
+      row.addEventListener('click', () => item.action());
+      page.appendChild(row);
     });
-
-    page
-      .querySelectorAll('[data-settings-action="profile"]')
-      .forEach(button => {
-        button.addEventListener(
-          'click',
-          () => window.showProfile?.()
-        );
-      });
 
     return page;
   }
