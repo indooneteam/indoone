@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261031h';
+  const ASSET_VERSION = '20261031i';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
@@ -21,7 +21,9 @@
     'chat-history': 'initMenuChatHistory',
     'data-privacy': 'initMenuDataPrivacy',
     plugins: 'initMenuPlugins',
-    update: 'initMenuUpdate'
+    update: 'initMenuUpdate',
+    'change-mobile-number': 'initMenuChangeMobile',
+    'change-email': 'initMenuChangeEmail'
   };
 
   // Two sections moved out of the menu and into settings, and one was renamed
@@ -34,7 +36,9 @@
     // the path is named here the way danger-zone and logout already were.
     profile: 'settings/profile',
     about: 'settings/about',
-    update: 'settings/update'
+    update: 'settings/update',
+    'change-mobile-number': 'settings/profile/change-mobile-number',
+    'change-email': 'settings/profile/change-email'
   };
 
   const nestedInitializers = {

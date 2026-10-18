@@ -1,49 +1,81 @@
 <section
-  class="settings-subpage"
+  class="menu-feature-shell change-email-page"
+  data-menu-feature
+  data-menu-section="change-email"
 >
-  <div
-    class="modal-head"
+  <!-- ChangeEmailScreen.kt draws, in this order:
+         Text        "← Back to Profile"
+         Text        "Change email"
+         Text        "The email on your Indoone account is shown below. Enter
+                      the new email and your current password to confirm."
+         CurrentValueField("CURRENT EMAIL", state.email)
+         OutlinedTextField  "ENTER YOUR NEW EMAIL"  "you@example.com"
+         OutlinedTextField  "CURRENT PASSWORD"  "Enter your current password"
+         Button      "Change email" / "Changing…"
+
+       The web used to load the old address straight into the editable field,
+       which made it look changeable. CurrentValueField is shown here as the
+       app draws it: a read-only box, never an input. -->
+  <button
+    type="button"
+    class="page-back"
+    data-change-email-action="back"
   >
-    <h2>
-      Change email
-    </h2>
-    <button
-      class="close-btn"
-      type="button"
-      data-close
-    >
-      ×
-    </button>
-  </div>
-  <p>
-    Change the email used for your Indoone account. Enter your current password to confirm.
+    ← Back to Profile
+  </button>
+
+  <h1 class="change-title">
+    Change email
+  </h1>
+
+  <p class="change-note">
+    The email on your Indoone account is shown below. Enter the new email and
+    your current password to confirm.
   </p>
-  <div
-    class="field"
-  >
-    <label>
-      Email address
+
+  <div class="current-value">
+    <span class="current-value-label">
+      CURRENT EMAIL
+    </span>
+    <div
+      class="current-value-box"
+      id="currentEmailValue"
+    >
+      Not set
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="newEmail">
+      ENTER YOUR NEW EMAIL
     </label>
     <input
-      id="changeEmail"
+      id="newEmail"
       type="email"
       autocomplete="email"
       placeholder="you@example.com"
     >
   </div>
-  <div
-    class="field"
-  >
-    <label>
-      Current password
+
+  <div class="field">
+    <label for="currentEmailPassword">
+      CURRENT PASSWORD
     </label>
     <input
-      id="changeEmailPassword"
+      id="currentEmailPassword"
       type="password"
       autocomplete="current-password"
       placeholder="Enter your current password"
     >
   </div>
+
+  <div
+    id="changeEmailStatus"
+    class="auth-status"
+    hidden
+  >
+  </div>
+
   <button
     class="primary"
     id="saveEmail"
