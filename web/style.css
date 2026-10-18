@@ -16,6 +16,21 @@ body {
   background: #eef0f5;
 }
 
+/* The app draws no scrollbar. Its screens scroll, and that is all - there is no
+   bar down the side. A browser draws a thick dark one, which lands as a hard
+   black line against the page on every screen that scrolls: the accounts list,
+   the chat, the menu, the drawer. Hidden here, on every element, while the
+   scrolling itself is left exactly as it was. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .phone-shell {
   position: relative;
   width: 100%;
