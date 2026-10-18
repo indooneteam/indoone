@@ -196,18 +196,18 @@
 
       case 'profile':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
+        window.openMenuFeature?.('profile');
         break;
 
       case 'mobile':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
+        window.openMenuFeature?.('profile');
         window.showChangeMobile?.({ remember: false });
         break;
 
       case 'email':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
+        window.openMenuFeature?.('profile');
         window.showChangeEmail?.({ remember: false });
         break;
 
@@ -271,11 +271,7 @@
     }
 
     if (action === 'about') {
-      return window.showAbout?.();
-    }
-
-    if (action === 'lock') {
-      return window.lockIndoone?.();
+      return window.openMenuFeature?.('about');
     }
 
     if (action === 'danger-zone') {
@@ -362,7 +358,7 @@
     }
 
     if (event.target.closest('[data-about]')) {
-      return window.showAbout?.();
+      return window.openMenuFeature?.('about');
     }
 
     if (event.target.closest('[data-security]')) {

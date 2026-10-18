@@ -154,7 +154,7 @@ window.showChangeMobile = function ({ remember = true } = {}) {
 
           await db.ref().update(updates);
           toast('Mobile number updated.');
-          window.showProfile?.({ remember: false });
+          window.openMenuFeature?.('profile');
         } catch (error) {
           toast(
             error?.message ||

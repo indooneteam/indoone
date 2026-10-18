@@ -38,7 +38,9 @@
       id: 'profile',
       title: 'Profile',
       icon: 'profile',
-      action: () => window.showProfile?.()
+      // Opened through the menu loader, exactly like Danger Zone and Log out,
+      // so Profile is a full page rather than a dimmed card over the app.
+      action: () => window.openMenuFeature?.('profile')
     },
     {
       id: 'notifications',
