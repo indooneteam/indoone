@@ -124,9 +124,14 @@
     window.showSettings?.({ remember: false });
   }
 
-  // LobbyScreen.kt is a screen of its own: the top bar, the centred column,
-  // and the bottom navigation with Lobby active. It used to open as a pop-up
-  // here, with a Done button, which is not what the app does at all.
+  // Lobby is the accounts screen. AccountsScreen.kt is what the app shows when
+  // Lobby is the active tab - "Your accounts", the Sort button, a row per
+  // account with its code and countdown, and the "+" button - and the web has
+  // had that screen all along behind #content. The tab used to open a
+  // placeholder saying the Lobby was still being built, which was wrong.
+  //
+  // The accounts page itself is showAccounts above; this is the same view with
+  // Lobby carrying the active tab instead of Home.
   function showLobbyPanel({ remember = true } = {}) {
     if (remember) {
       window.IndoonePageState?.set('lobby');
@@ -136,19 +141,20 @@
     closeModal();
 
     $('homeContent')?.setAttribute('hidden', '');
-    $('content')?.setAttribute('hidden', '');
+    $('content')?.removeAttribute('hidden');
+    $('settingsContent')?.setAttribute('hidden', '');
+    $('lobbyContent')?.setAttribute('hidden', '');
     document
       .querySelector('[data-notifications-page]')
       ?.setAttribute('hidden', '');
-    $('lobbyContent')?.removeAttribute('hidden');
-    $('addBtn')?.setAttribute('hidden', '');
-    $('searchWrap')?.setAttribute('hidden', '');
+    $('addBtn')?.removeAttribute('hidden');
+    $('searchWrap')?.removeAttribute('hidden');
 
     $('lobbyNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
 
-    window.IndooneLobby?.paint?.();
+    window.IndooneHome?.restoreHome?.();
   }
 
   function clearStaleAddAccountRoute() {
