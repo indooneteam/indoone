@@ -3,6 +3,17 @@
   data-menu-feature
   data-menu-section="danger-zone"
 >
+  <!-- DangerZoneScreen.kt draws one row, not two. The web carried a second
+       one, "Delete local data", which the app has never had: the app's only
+       DangerRow is
+         DangerRow("Delete Indoone account",
+                   "Permanently delete your Indoone account, cloud data and local files",
+                   onDeleteAccount)
+       and the note above it reads
+         "This permanently removes your Indoone account, your cloud data, and
+          everything Indoone keeps on this device. Continue only when you are
+          sure."
+       Both are used here verbatim. -->
   <div
     class="modal-head"
   >
@@ -21,27 +32,12 @@
   <p
     class="menu-feature-note"
   >
-    These actions can permanently remove Indoone data. Continue only when you
-    are sure.
+    This permanently removes your Indoone account, your cloud data, and
+    everything Indoone keeps on this device. Continue only when you are sure.
   </p>
   <div
     class="menu-feature-list"
   >
-    <button
-      type="button"
-      class="settings-row danger menu-feature-row"
-      data-open-nested="danger-zone/delete-local-data"
-    >
-      <span>
-        Delete local data
-        <small>
-          Remove data stored on this device
-        </small>
-      </span>
-      <b>
-        ›
-      </b>
-    </button>
     <button
       type="button"
       class="settings-row danger menu-feature-row"
@@ -50,7 +46,7 @@
       <span>
         Delete Indoone account
         <small>
-          Permanently delete your Indoone account and cloud data
+          Permanently delete your Indoone account, cloud data and local files
         </small>
       </span>
       <b>
