@@ -1,8 +1,8 @@
 (() => {
   const MARKUP_URL =
-    'lobby/accounts/add-account/enter-setup-key/index.html?v=20261018j';
+    'lobby/accounts/add-account/enter-setup-key/index.html?v=20261018r';
   const STYLE_URL =
-    'lobby/accounts/add-account/enter-setup-key/style.css?v=20261018j';
+    'lobby/accounts/add-account/enter-setup-key/style.css?v=20261018r';
 
   function loadStyle() {
     const baseUrl = STYLE_URL.split('?')[0];
@@ -190,10 +190,30 @@
       const button = document.getElementById('saveAccountButton');
       const id = Number(options.id || 0);
 
+      // Editing reuses this form - the app keeps a separate
+      // EditAccountScreen.kt, but the two draw the same six fields, so the
+      // differences are the words and the layout:
+      //
+      //   title      Edit Account          Enter Setup Key
+      //   subtitle   Update the details…   Enter the details…
+      //   button     Save Changes          Save Account
+      //   DIGITS     beside PERIOD         stacked
+      //
+      // The app's manual screen stacks them at every width and the edit screen
+      // puts them side by side at every width, so the layout is driven by the
+      // is-editing class rather than by the viewport.
+      const subtitle = document.getElementById('manualAccountSubtitle');
+
       if (title) {
         title.textContent = id
           ? 'Edit Account'
           : 'Enter Setup Key';
+      }
+
+      if (subtitle) {
+        subtitle.textContent = id
+          ? 'Update the details used to generate your one-time codes.'
+          : 'Enter the details used to generate your one-time codes.';
       }
 
       if (button) {
@@ -201,6 +221,10 @@
           ? 'Save Changes'
           : 'Save Account';
       }
+
+      mount
+        .querySelector('.manual-page')
+        ?.classList.toggle('is-editing', Boolean(id));
 
       bind(mount, { id, prefill });
     } catch (error) {
