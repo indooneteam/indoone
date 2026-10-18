@@ -258,10 +258,6 @@
 
     const action = item.dataset.action;
 
-    if (action === 'accounts') {
-      return showAccounts();
-    }
-
     if (action === 'favorites') {
       return window.showFavorites?.();
     }
