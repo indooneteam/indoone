@@ -2,18 +2,31 @@
 
   // The web counterpart of android/settings/SettingsScreen.kt.
   //
-  // The app draws one flat list, in this order, with no section heading and no
-  // eyebrow above the title:
+  // The rows below are read from the terminal branch, because that is the
+  // branch the installed test app is built from, and it does not match main.
+  //
+  // terminal draws, in this order, with no section heading and no eyebrow
+  // above the title:
   //
   //   SettingsMenuItem(ProfileIcon,       "Profile",       ...)
+  //   SettingsMenuItem(LockIcon,          "App Lock")
+  //   SettingsMenuToggle(BiometricIcon,   "Biometric Unlock", ...)
+  //   SettingsMenuItem(TimerIcon,         "Auto-Lock")
   //   SettingsMenuItem(NotificationsIcon, "Notifications", ...)
-  //   SettingsMenuItem(InfoIcon,          "About Indoone") { ... }
-  //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")   { ... }
-  //   ...                                 "Log out"
+  //   SettingsMenuAction(InfoIcon, "Version", versionName, "Check for updates")
+  //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")
+  //   SettingsMenuItem(LogoutIcon,        "Log out")
   //
-  // App Lock, Biometric Unlock and Auto-Lock sit between Profile and
-  // Notifications in the app and are deliberately absent here - they are
-  // device features and have nothing to do on the web.
+  // main replaces that Version row with SettingsMenuItem(InfoIcon, "About
+  // Indoone"). The installed app has no About row here at all - About Indoone
+  // is a drawer row, under SECURITY & INFORMATION - so the web does not draw
+  // one either. The settings/about screen still exists and the drawer still
+  // opens it; it is simply not listed here.
+  //
+  // Three of the app's rows are deliberately absent: App Lock, Biometric
+  // Unlock and Auto-Lock are device features with nothing to do on the web,
+  // and the Version row is absent for the same reason - a browser tab does not
+  // have an installed version to report.
   //
   // Danger Zone and Log out are menu features whose folders live under
   // settings/ (see featurePaths in menu/script.js). They are opened through
@@ -32,12 +45,6 @@
       title: 'Notifications',
       icon: 'info',
       action: () => window.IndooneNotifications?.show?.()
-    },
-    {
-      id: 'about',
-      title: 'About Indoone',
-      icon: 'info',
-      action: () => window.showAbout?.()
     },
     {
       id: 'danger-zone',
