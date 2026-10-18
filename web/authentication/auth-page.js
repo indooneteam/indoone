@@ -447,6 +447,13 @@
 
   function init() {
     if (localStorage.getItem('indoone_otp_verified_uid')) return;
+
+    // A session can already be live by the time this runs - Firebase restores
+    // it asynchronously - so never raise the sign-in screen over a signed-in
+    // user. events.js takes it down again if it slips through, but the right
+    // place to not do it is here.
+    if (window.IndooneFirebase?.auth?.currentUser) return;
+
     showLogin();
   }
 
