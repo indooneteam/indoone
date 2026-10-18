@@ -123,12 +123,29 @@
     }, 100);
   }
 
+  // The auth screen has to go the moment Firebase says somebody is signed in.
+  // restoreAccounts does it too, but it returns early when the stored
+  // verification marker does not match - a signed-in session restored from
+  // storage, or one whose marker was cleared - and the sign-in backdrop then
+  // stayed on screen behind the app. This runs before any of those returns.
+  function hideAuthScreen() {
+    window.IndooneAuthUI?.close?.();
+    document
+      .getElementById('overlay')
+      ?.classList.remove('indoone-auth-screen');
+    document
+      .getElementById('overlay')
+      ?.classList.add('hidden');
+    document.body.classList.remove('auth-open', 'auth-pending');
+  }
+
   function handleAuthState(user) {
     if (!user) {
       stopVerificationWatch();
       return;
     }
 
+    hideAuthScreen();
     restoreAccounts(user);
     watchForOtpVerification(user);
   }

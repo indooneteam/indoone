@@ -14,6 +14,12 @@
 .overlay.indoone-auth-screen {
   position: fixed;
   inset: 0;
+  /* style.css centres the account sheet over the phone: it sets
+     left: 50%; transform: translateX(-50%); max-width: 430px. The backdrop
+     below is a full-window gradient, so both of those have to be undone here or
+     the beige sits half a screen off to the left. */
+  transform: none;
+  max-width: none;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -26,6 +32,14 @@
     #d9d1c6 100%
   );
   pointer-events: auto;
+}
+
+/* style.css hides the overlay with .overlay.hidden. The rule above is just as
+   specific and this file loads later, so its display:flex was beating it: an
+   overlay carrying both classes stayed on screen as a beige half-page over the
+   app. Hidden wins here, always. */
+.overlay.indoone-auth-screen.hidden {
+  display: none !important;
 }
 
 .overlay.indoone-auth-screen .modal {
