@@ -94,7 +94,7 @@ window.initMenuChangeMobile = function () {
     }
 
     if (!password) {
-      setStatus('Enter your current password.', 'error');
+      setStatus('Enter your current password', 'error');
       return;
     }
 
@@ -176,8 +176,10 @@ window.initMenuChangeMobile = function () {
       }
 
       await db.ref().update(updates);
-      window.toast?.('Mobile number updated.');
-      window.openMenuFeature?.('account');
+      // The app keeps the change screen open and shows the message inline
+      // (ProfileViewModel: message = "Mobile number updated."), so the web does
+      // the same rather than toasting and navigating away.
+      setStatus('Mobile number updated.');
     } catch (error) {
       setStatus(
         error?.message || 'Could not change mobile number.',

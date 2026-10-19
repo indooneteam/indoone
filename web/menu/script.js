@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261018ab';
+  const ASSET_VERSION = '20261019b';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
@@ -14,6 +14,10 @@
     'terms-of-use': 'initMenuTermsOfUse',
     'privacy-policy': 'initMenuPrivacyPolicy',
     about: 'initMenuAbout',
+    // The Settings row's About is a different screen from the drawer's About,
+    // so it gets its own key and its own folder (see the note under
+    // featurePaths).
+    'settings-about': 'initSettingsAbout',
     'danger-zone': 'initMenuDangerZone',
     logout: 'initMenuLogout',
     profile: 'initMenuProfile',
@@ -32,16 +36,12 @@
   const featurePaths = {
     'danger-zone': 'settings/danger-zone',
     logout: 'settings/logout',
-    // About is NOT listed either, for the same reason as profile: the app has
-    // exactly one About screen, android/menu/about/MenuAboutScreen.kt, and
-    // getFeatureBase resolves 'about' to menu/about, which draws it in full -
-    // About Indoone, Sync, OTP Standard, Account Storage, Legal, Licenses.
-    //
-    // settings/about/ held a different screen, a "Check for updates" page with
-    // a Done button, which the app does not have anywhere. Pointing 'about' at
-    // it sent the drawer's About to the wrong screen and left menu/about
-    // unreachable. The folder has been removed; the app's update screen is
-    // settings/update/, which is its own entry below.
+    // About is NOT listed, for the same reason as profile: the drawer's About
+    // is android/menu/about/MenuAboutScreen.kt, and getFeatureBase resolves
+    // 'about' to menu/about, which draws it in full - About Indoone, Sync, OTP
+    // Standard, Account Storage, Legal, Licenses. The Settings row's About is
+    // android/settings/about/AboutScreen.kt, a different screen, and it is
+    // listed below under 'settings-about'.
     //
     // Profile is NOT listed: the drawer's Profile is android/menu/profile/
     // ProfileMenuScreen.kt - the name, nickname and profession editor - and
@@ -52,6 +52,11 @@
     // own, and both scripts defined the same initMenuProfile, so one silently
     // overwrote the other.
     account: 'settings/profile',
+    // The Settings row's About Indoone is android/settings/about/AboutScreen.kt
+    // - the sheet with Version and Updates - which is a different screen from
+    // the drawer's About (android/menu/about/MenuAboutScreen.kt). getFeatureBase
+    // resolves 'about' to menu/about, so the settings screen needs its own key.
+    'settings-about': 'settings/about',
     update: 'settings/update',
     'change-mobile-number': 'settings/profile/change-mobile-number',
     'change-email': 'settings/profile/change-email'

@@ -128,7 +128,6 @@
 {
   margin:0;
   font-size:26px;
-  letter-spacing:-.6px;
   color:#1f1b24
 }
 .settings-page-head p:last-child
@@ -170,10 +169,11 @@
   background:linear-gradient(180deg,#fff,#f3effa);
   color:#51627d
 }
+/* The app's SettingsMenuIcon holds an 18dp icon (SettingsScreen.kt). */
 .settings-option-icon
 {
-  width:22px;
-  height:22px;
+  width:18px;
+  height:18px;
   display:block;
   fill:none;
   stroke:currentColor;
@@ -207,6 +207,7 @@
 {
   color:#6330db
 }
+/* AppChevron: 22dp KeyboardArrowRight tinted #7A6F8C (AppPageChrome.kt). */
 .settings-content .settings-arrow
 {
   width:22px;
@@ -214,12 +215,12 @@
   display:grid;
   place-items:center;
   flex:none;
-  color:#aaa3b0
+  color:#7a6f8c
 }
 .settings-content .settings-arrow .settings-option-icon
 {
-  width:18px;
-  height:18px
+  width:22px;
+  height:22px
 }
 .settings-content .toggle
 {

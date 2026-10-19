@@ -1,0 +1,84 @@
+/* About Indoone - android/settings/about/AboutScreen.kt.
+ *
+ * The app draws this as a sheet: the title at 21sp bold in #201C25, a 35dp
+ * close box in #F5F2F8 with a #5D5666 ×, 37dp meta rows over an #EEE8F4
+ * divider, and a full-width Done button on the #6330DB to #9147ED gradient at
+ * 44dp with 13dp corners. The web renders menu features as pages, so the same
+ * values are applied to the page.
+ */
+
+.about-page .modal-head h2
+{
+  color:#201C25;
+  font-size:21px;
+  font-weight:700
+}
+
+.about-page .close-btn
+{
+  width:35px;
+  height:35px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:11px;
+  background:#f5f2f8;
+  color:#5d5666;
+  font-size:22px;
+  line-height:22px;
+  cursor:pointer
+}
+
+.about-meta
+{
+  margin-top:12px
+}
+
+.about-meta-row
+{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:37px;
+  padding:0;
+  border:0;
+  border-top:1px solid #eee8f4;
+  background:transparent;
+  text-align:left;
+  font:inherit;
+  cursor:default
+}
+
+.about-meta-button
+{
+  cursor:pointer
+}
+
+.about-meta-row span
+{
+  color:#756f7f;
+  font-size:12px
+}
+
+.about-meta-row strong
+{
+  margin-left:auto;
+  color:#24202a;
+  font-size:12px;
+  font-weight:700
+}
+
+.about-done
+{
+  width:100%;
+  height:44px;
+  margin-top:11px;
+  border:0;
+  border-radius:13px;
+  background:linear-gradient(90deg,#6330db 0%,#9147ed 100%);
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer
+}
