@@ -1,5 +1,6 @@
 (() => {
-  // The web counterpart of android/settings/profile/ProfileScreen.kt.
+  // The web counterpart of android/settings/profile/ProfileScreen.kt - the
+// ACCOUNT screen, not the drawer's profile editor, which is menu/profile.
   //
   // This screen is a menu feature, opened by menu/script.js the same way Danger
   // Zone and Log out are: the loader fetches the fragment into #modal, calls
@@ -55,7 +56,7 @@
     }
   }
 
-  window.initMenuProfile = function () {
+  window.initMenuAccount = function () {
     const page = document.getElementById('modal');
 
     if (!page) {

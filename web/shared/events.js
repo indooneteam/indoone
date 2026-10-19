@@ -205,18 +205,18 @@
 
       case 'profile':
         showSettingsPanel({ remember: false });
-        window.openMenuFeature?.('profile');
+        window.openMenuFeature?.('account');
         break;
 
       case 'mobile':
         showSettingsPanel({ remember: false });
-        window.openMenuFeature?.('profile');
+        window.openMenuFeature?.('account');
         window.openMenuFeature?.('change-mobile-number');
         break;
 
       case 'email':
         showSettingsPanel({ remember: false });
-        window.openMenuFeature?.('profile');
+        window.openMenuFeature?.('account');
         window.openMenuFeature?.('change-email');
         break;
 
