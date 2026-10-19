@@ -30,6 +30,9 @@
   justify-content: space-between;
   gap: 0;
   padding: 5px;
+  /* AppBottomNav's tray is height(62.dp) around a 5dp padding, so the tab
+     inside it is 52dp. The bar itself is 62dp plus 7dp top and bottom. */
+  height: 62px;
   border-radius: 30px;
   background: linear-gradient(
     to bottom,
@@ -48,7 +51,7 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 56px;
+  height: 52px;
   padding: 4px 2px;
   border: 0;
   border-radius: 15px;
