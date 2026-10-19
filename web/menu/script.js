@@ -4,7 +4,7 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261018y';
+  const ASSET_VERSION = '20261018ab';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
