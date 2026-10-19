@@ -239,7 +239,9 @@
   }
 
   // The app only lets Verify & Login be pressed once six digits are in, and
-  // Complete Login once both fields have something in them.
+  // Complete Login once both fields have something in them. The two Continue
+  // buttons on the identifier step are gated on the identifier being filled in
+  // (LoginScreen.kt: actionEnabled = !busy && identifier.isNotBlank()).
   function applyRules(root) {
     const otp = root.querySelector('#loginOtp');
     const verify = buttonFor(root, 'login-verify');
@@ -262,6 +264,20 @@
 
       complete.disabled = !identifierValue || !(password?.value || '');
     }
+
+    const identifierBlank = !(
+      passwordIdentifier?.value ||
+      identifier?.value ||
+      ''
+    ).trim();
+
+    ['login-continue-otp', 'login-continue-password'].forEach(action => {
+      const button = buttonFor(root, action);
+
+      if (button) {
+        button.disabled = identifierBlank;
+      }
+    });
   }
 
   function bind(root) {

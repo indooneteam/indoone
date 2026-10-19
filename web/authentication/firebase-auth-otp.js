@@ -48,23 +48,22 @@
   }
 
   function errorMessage(error) {
+    // The app's own strings, from IndooneAuthService.normalizeError. The app has
+    // no user-disabled case, so that entry is gone; PERMISSION_DENIED is the
+    // app's Firebase-database message.
     const map = {
       'auth/invalid-email': 'Enter a valid email address.',
-      'auth/user-disabled': 'This Indoone account has been disabled.',
       'auth/user-not-found': 'No Indoone account was found.',
-      'auth/wrong-password': 'The password is incorrect.',
-      'auth/invalid-credential': 'The email or password is incorrect.',
+      'auth/wrong-password': 'Email or password is incorrect.',
+      'auth/invalid-credential': 'Email or password is incorrect.',
       'auth/email-already-in-use': 'An account already exists with this email.',
       'auth/weak-password': 'Password should be at least 6 characters.',
-      'auth/too-many-requests': 'Too many attempts. Please try again shortly.',
-      'auth/network-request-failed': 'Check your connection and try again.'
+      'auth/too-many-requests': 'Too many attempts. Please try again later.',
+      'auth/network-request-failed': 'Network error. Check your connection and try again.',
+      'PERMISSION_DENIED': 'Indoone account data is temporarily unavailable. Please try again or use your email address.'
     };
 
     return map[error?.code] || error?.message || 'Authentication failed.';
-  }
-
-  function toastSafe(text) {
-    window.toast?.(text);
   }
 
   function db() {
@@ -178,6 +177,8 @@
     }
   }
 
+  // The app's syncProfile writes uid, email, updatedAt and mobile, and keeps the
+  // mobileIndex entry in step (IndooneAuthService.syncProfile).
   async function syncProfile(user, profile = {}) {
     if (!user?.uid) {
       return;
@@ -185,13 +186,22 @@
 
     const email = cleanEmail(profile.email || user.email || '');
     const mobile = normalizeMobile(profile.mobile || '');
-    const payload = { email };
+    const now = Date.now();
+    const payload = { uid: user.uid, email, updatedAt: now };
 
     if (mobile) {
       payload.mobile = mobile;
     }
 
     await db().ref(`users/${user.uid}/profile`).update(payload);
+
+    if (mobile) {
+      await db().ref(`mobileIndex/${encodeURIComponent(mobile)}`).set({
+        uid: user.uid,
+        email,
+        updatedAt: now
+      });
+    }
   }
 
   function readPending(key) {
@@ -269,27 +279,28 @@
       result.token
     ].find(value => value);
 
-    if (!customToken) {
-      throw new Error(
-        'OTP was verified, but the verification service did not return a login session.'
-      );
-    }
-
     window.__indooneAuthPending = true;
 
     try {
-      const credential = await auth().signInWithCustomToken(customToken);
-      const user = credential?.user;
+      // The app accepts an existing session when the service returns no custom
+      // token (IndooneAuthService.verifyLoginOtp falls back to auth.currentUser);
+      // only when neither is present does it fail.
+      const user = customToken
+        ? (await auth().signInWithCustomToken(customToken))?.user
+        : auth().currentUser;
 
       if (!user) {
-        throw new Error('OTP verified, but login session could not be created.');
+        throw new Error(
+          customToken
+            ? 'OTP verified, but login session could not be created.'
+            : 'OTP was verified, but the verification service did not return a login session.'
+        );
       }
 
       await validateLoginProfile(user.uid, pending.email, pending.rawIdentifier);
       await syncProfile(user, { email: pending.email });
       setAuthSession(user.uid);
       writePending(LOGIN_PENDING_KEY, null);
-      toastSafe('Login successful.');
       window.__indooneAuthPending = false;
       window.IndooneAuthUI?.close?.();
 
@@ -353,7 +364,6 @@
       await validateLoginProfile(user.uid, email, raw);
       await syncProfile(user, { email });
       setAuthSession(user.uid);
-      toastSafe('Login successful.');
       window.__indooneAuthPending = false;
       window.IndooneAuthUI?.close?.();
 
@@ -478,8 +488,6 @@
         mobile: pending.mobile
       });
 
-      let welcomeSent = true;
-
       try {
         await verification().sendSignupWelcome({
           email: pending.email,
@@ -487,17 +495,11 @@
           name: APP_NAME
         });
       } catch (error) {
-        welcomeSent = false;
         console.warn('Indoone welcome email failed:', error);
       }
 
       setAuthSession(user.uid);
       writePending(SIGNUP_PENDING_KEY, null);
-      toastSafe(
-        welcomeSent
-          ? 'Account created successfully.'
-          : 'Account created. Welcome email could not be sent.'
-      );
       window.__indooneAuthPending = false;
       window.IndooneAuthUI?.close?.();
 
@@ -557,7 +559,6 @@
         mobile: cleanMobile
       });
       setAuthSession(user.uid);
-      toastSafe('Account created successfully.');
       window.__indooneAuthPending = false;
       window.IndooneAuthUI?.close?.();
 
