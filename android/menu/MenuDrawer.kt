@@ -26,9 +26,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,9 +69,6 @@ import com.indoone.menu.trash.TrashScreen
 import com.indoone.menu.profile.ProfileMenuScreen
 import com.indoone.menu.memory.MemoryMenuScreen
 import com.indoone.menu.plugins.PluginsMenuScreen
-import com.indoone.menu.plugins.email.EmailPluginMenuScreen
-import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
-import com.indoone.menu.plugins.github.GitHubPluginMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.menu.chathistory.ChatHistoryMenuScreen
 import com.indoone.menu.dataprivacy.DataPrivacyMenuScreen
@@ -94,6 +93,7 @@ fun MenuDrawer(
     val repository = remember(context) { AccountRepositoryProvider(context.applicationContext) }
     var showTerms by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    var showSetLockPrompt by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
     var showSecurity by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
@@ -102,22 +102,7 @@ fun MenuDrawer(
     var showChatHistory by remember { mutableStateOf(false) }
     var showDataPrivacy by remember { mutableStateOf(false) }
     var showPlugins by remember { mutableStateOf(false) }
-    var showEmailPlugin by remember { mutableStateOf(false) }
-    var showGmailPlugin by remember { mutableStateOf(false) }
     var showZohoMailPlugin by remember { mutableStateOf(false) }
-    var showGitHubPlugin by remember { mutableStateOf(false) }
-
-    if (showGitHubPlugin) {
-        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            GitHubPluginMenuScreen(
-                onBack = {
-                    showGitHubPlugin = false
-                    showPlugins = true
-                },
-            )
-        }
-        return
-    }
 
     if (showZohoMailPlugin) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
@@ -131,45 +116,11 @@ fun MenuDrawer(
         return
     }
 
-    if (showGmailPlugin) {
-        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            GmailPluginMenuScreen(
-                onBack = {
-                    showGmailPlugin = false
-                    showEmailPlugin = true
-                },
-            )
-        }
-        return
-    }
-    if (showEmailPlugin) {
-        Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            EmailPluginMenuScreen(
-                onBack = {
-                    showEmailPlugin = false
-                    showPlugins = true
-                },
-                onGmailClick = {
-                    showEmailPlugin = false
-                    showGmailPlugin = true
-                },
-            )
-        }
-        return
-    }
     if (showPlugins) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
             PluginsMenuScreen(
                 onBack = {
                     showPlugins = false
-                },
-                onEmailClick = {
-                    showPlugins = false
-                    showEmailPlugin = true
-                },
-                onGitHubClick = {
-                    showPlugins = false
-                    showGitHubPlugin = true
                 },
             )
         }
@@ -229,6 +180,26 @@ fun MenuDrawer(
     if (showPrivacy) {
         PrivacyPolicyScreen(onBack = onDismiss, onAccountsClick = onAccounts, onLobbyClick = onDismiss, onVibeClick = onDismiss, onSettingsClick = onDismiss)
         return
+    }
+
+    if (showSetLockPrompt) {
+        AlertDialog(
+            onDismissRequest = { showSetLockPrompt = false },
+            title = { Text("Set your App Lock") },
+            text = {
+                Text("Indoone is not locked yet. Set an App PIN, and Lock App will ask for it, or for your fingerprint, before the app opens.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSetLockPrompt = false
+                    onDismiss()
+                    onLock()
+                }) { Text("Set App Lock") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSetLockPrompt = false }) { Text("Cancel") }
+            },
+        )
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
@@ -319,8 +290,7 @@ fun MenuDrawer(
                         onDismiss()
                         context.startActivity(Intent(context, UnlockAppActivity::class.java))
                     } else {
-                        onDismiss()
-                        Toast.makeText(context, "App Lock is not enabled.", Toast.LENGTH_SHORT).show()
+                        showSetLockPrompt = true
                     }
                 }
 

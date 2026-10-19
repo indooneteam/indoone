@@ -4,8 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.graphics.Color
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -34,19 +32,9 @@ import kotlinx.coroutines.launch
 class IndooneApplication : Application() {
     private val controllers = mutableMapOf<Activity, AutoLockController>()
     private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val autoLockHandler = Handler(Looper.getMainLooper())
     private var resumedActivityCount = 0
     private val lifecyclePreferences by lazy {
         getSharedPreferences(AUTO_LOCK_LIFECYCLE_PREFS, MODE_PRIVATE)
-    }
-    private val markBackgroundRunnable = Runnable {
-        if (resumedActivityCount == 0 &&
-            lifecyclePreferences.getLong(KEY_BACKGROUND_STARTED_AT, 0L) == 0L
-        ) {
-            lifecyclePreferences.edit()
-                .putLong(KEY_BACKGROUND_STARTED_AT, System.currentTimeMillis())
-                .apply()
-        }
     }
 
     /**
@@ -89,17 +77,28 @@ class IndooneApplication : Application() {
                 val componentActivity = activity as? ComponentActivity ?: return
 
                 resumedActivityCount += 1
-                autoLockHandler.removeCallbacks(markBackgroundRunnable)
 
-                val backgroundStartedAt = lifecyclePreferences.getLong(KEY_BACKGROUND_STARTED_AT, 0L)
-                lifecyclePreferences.edit().remove(KEY_BACKGROUND_STARTED_AT).apply()
-                val backgroundDuration = if (backgroundStartedAt > 0L) {
-                    (System.currentTimeMillis() - backgroundStartedAt).coerceAtLeast(0L)
-                } else {
-                    null
+                // A finishing screen must not consume the background time. The
+                // launcher hands over to the app and finishes itself, and if it read
+                // the time first, the screen that actually stays open would never
+                // lock: that is why a swiped-away app used to come back unlocked.
+                if (!activity.isFinishing) {
+                    val backgroundStartedAt =
+                        lifecyclePreferences.getLong(KEY_BACKGROUND_STARTED_AT, 0L)
+                    lifecyclePreferences.edit().remove(KEY_BACKGROUND_STARTED_AT).commit()
+                    val backgroundDuration = if (backgroundStartedAt > 0L) {
+                        (System.currentTimeMillis() - backgroundStartedAt).coerceAtLeast(0L)
+                    } else {
+                        null
+                    }
+                    // A hop between two of our own screens is not a trip away.
+                    val awayFor = backgroundDuration?.takeIf { it >= MIN_BACKGROUND_MS }
+                    controllers[activity]?.onResumed(componentActivity, awayFor)
+                    if (activity is MainActivity) {
+                        controllers[activity]?.startInactivityWatch()
+                    }
                 }
 
-                controllers[activity]?.onResumed(componentActivity, backgroundDuration)
                 installStatusBarInset(componentActivity)
             }
 
@@ -107,11 +106,12 @@ class IndooneApplication : Application() {
                 controllers[activity]?.onPaused()
                 resumedActivityCount = (resumedActivityCount - 1).coerceAtLeast(0)
                 if (resumedActivityCount == 0) {
-                    autoLockHandler.removeCallbacks(markBackgroundRunnable)
-                    autoLockHandler.postDelayed(
-                        markBackgroundRunnable,
-                        BACKGROUND_DETECTION_DELAY_MS,
-                    )
+                    // Written the moment the last screen leaves, and committed, so it
+                    // survives the process being killed: an app that is swiped away
+                    // must still lock when it is opened again.
+                    lifecyclePreferences.edit()
+                        .putLong(KEY_BACKGROUND_STARTED_AT, System.currentTimeMillis())
+                        .commit()
                 }
             }
 
@@ -129,6 +129,11 @@ class IndooneApplication : Application() {
 
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
+    }
+
+    /** Every touch or key on a screen, so Auto-Lock can count real inactivity. */
+    fun onUserInteraction(activity: Activity) {
+        controllers[activity]?.onUserInteraction()
     }
 
     private fun syncNotificationToken() {
@@ -177,6 +182,6 @@ class IndooneApplication : Application() {
     companion object {
         private const val AUTO_LOCK_LIFECYCLE_PREFS = "indoone_auto_lock_lifecycle"
         private const val KEY_BACKGROUND_STARTED_AT = "background_started_at"
-        private const val BACKGROUND_DETECTION_DELAY_MS = 750L
+        private const val MIN_BACKGROUND_MS = 1_000L
     }
 }
