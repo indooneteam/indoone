@@ -457,8 +457,8 @@
     close
   };
 
-  // Publish the canonical implementation separately so auth-ui.js can safely
-  // act as a legacy facade without ever creating a competing event bridge.
+  // Publish the one implementation on both names, so any code that still
+  // reaches for either gets the same object.
   window.__indooneCanonicalAuthUI = api;
   window.IndooneAuthUI = api;
 
