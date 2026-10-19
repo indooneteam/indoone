@@ -35,8 +35,17 @@
 
     if (!overlay || !modal) return false;
 
-    overlay.classList.remove('hidden');
-    overlay.classList.add(AUTH_CLASS);
+    // #modal is the element every page is written into, and it ships hidden in
+    // the shell. showMenuPage() unhides it; this never did, so the card was
+    // written into a hidden element and only the backdrop showed - a blank
+    // beige page with no sign-in form on it.
+    modal.removeAttribute('hidden');
+
+    // The backdrop belongs on #modal, which is what the auth stylesheet now
+    // targets. The overlay is a different element holding the account sheet;
+    // showing it put its own empty card over the app.
+    overlay.classList.add('hidden');
+    modal.classList.add(AUTH_CLASS);
     document.body.classList.add('auth-open', 'auth-pending');
 
     // The status line sits below the card, not inside it, which is where the
@@ -422,6 +431,8 @@
   }
 
   function close() {
+    $('modal')?.classList.remove(AUTH_CLASS);
+    $('modal')?.setAttribute('hidden', '');
     $('overlay')?.classList.remove(AUTH_CLASS);
     $('overlay')?.classList.add('hidden');
     document.body.classList.remove('auth-open', 'auth-pending');
