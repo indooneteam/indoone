@@ -12,7 +12,6 @@
   //   SettingsMenuItem(LockIcon,          "App Lock")
   //   SettingsMenuToggle(BiometricIcon,   "Biometric Unlock", ...)
   //   SettingsMenuItem(TimerIcon,         "Auto-Lock")
-  //   SettingsMenuItem(NotificationsIcon, "Notifications", ...)
   //   SettingsMenuAction(InfoIcon, "Version", versionName, "Check for updates")
   //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")
   //   SettingsMenuItem(LogoutIcon,        "Log out")
@@ -41,12 +40,6 @@
       // Opened through the menu loader, exactly like Danger Zone and Log out,
       // so Profile is a full page rather than a dimmed card over the app.
       action: () => window.openMenuFeature?.('account')
-    },
-    {
-      id: 'notifications',
-      title: 'Notifications',
-      icon: 'info',
-      action: () => window.IndooneNotifications?.show?.()
     },
     {
       id: 'danger-zone',
