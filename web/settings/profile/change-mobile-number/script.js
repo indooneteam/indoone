@@ -48,7 +48,7 @@ window.initMenuChangeMobile = function () {
   page
     .querySelector('[data-change-mobile-action="back"]')
     ?.addEventListener('click', () => {
-      window.openMenuFeature?.('profile');
+      window.openMenuFeature?.('account');
     });
 
   function setStatus(text, kind) {
@@ -177,7 +177,7 @@ window.initMenuChangeMobile = function () {
 
       await db.ref().update(updates);
       window.toast?.('Mobile number updated.');
-      window.openMenuFeature?.('profile');
+      window.openMenuFeature?.('account');
     } catch (error) {
       setStatus(
         error?.message || 'Could not change mobile number.',

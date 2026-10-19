@@ -20,7 +20,7 @@
   // main replaces that Version row with SettingsMenuItem(InfoIcon, "About
   // Indoone"). The installed app has no About row here at all - About Indoone
   // is a drawer row, under SECURITY & INFORMATION - so the web does not draw
-  // one either. The settings/about screen still exists and the drawer still
+  // one either. The About screen still exists and the drawer still
   // opens it; it is simply not listed here.
   //
   // Three of the app's rows are deliberately absent: App Lock, Biometric
@@ -40,7 +40,7 @@
       icon: 'profile',
       // Opened through the menu loader, exactly like Danger Zone and Log out,
       // so Profile is a full page rather than a dimmed card over the app.
-      action: () => window.openMenuFeature?.('profile')
+      action: () => window.openMenuFeature?.('account')
     },
     {
       id: 'notifications',
