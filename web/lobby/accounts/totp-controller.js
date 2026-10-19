@@ -19,7 +19,9 @@ window.IndooneTotpController = (() => {
         account.algorithm || 'SHA1'
       );
 
-      account.code = code.replace(/(\d{3})(\d{3})/, '$1 $2');
+      // The app shows the code exactly as generated, unbroken
+      // (AccountsScreen.kt and AccountDetailsScreen.kt draw account.code as-is).
+      account.code = code;
       account.seconds = remaining(period);
     } catch (_) {
       account.code = '------';
