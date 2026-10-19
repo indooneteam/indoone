@@ -3,6 +3,18 @@
   data-menu-feature
   data-menu-section="profile"
 >
+  <!-- ProfileScreen.kt draws this screen as: a card with a "Profile" heading and
+       a × (35dp, 11dp corners, #F5F2F8), an account card (42dp circle avatar in
+       #EEE6FF holding "P" in #6330DB, then the email in 15sp bold #17151D and
+       the mobile in 12sp #77707F), and THREE ProfileActionRows:
+
+         ProfileActionRow("Change mobile number", "Update your verified phone number")
+         ProfileActionRow("Change email",         "Update your account email address")
+         ProfileActionRow("Connections & plugins", gmailConnectionSummary)
+
+       The third was missing here, so the screen had two rows where the app has
+       three. Its description is not a fixed line - the app fills it from the
+       Gmail connection status, and profile-row.js does the same. -->
   <div class="modal-head">
     <h2>
       Profile
@@ -57,6 +69,22 @@
         Change email
         <small>
           Update your account email address
+        </small>
+      </span>
+      <span class="settings-arrow">
+        ›
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="settings-row settings-row-button"
+      data-profile-action="plugins"
+    >
+      <span>
+        Connections &amp; plugins
+        <small id="profileConnections">
+          Checking saved connections…
         </small>
       </span>
       <span class="settings-arrow">
