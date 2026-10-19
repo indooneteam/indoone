@@ -1,12 +1,74 @@
+/* The Danger Zone root, matched to DangerZoneScreen.kt.
+ *
+ * The app draws this in DangerModalShell, and the row inside it is DangerRow:
+ *
+ *   DangerRow(title, subtitle, onClick):
+ *     Surface(onClick, padding(vertical = 5.dp), color = White,
+ *             shape = RoundedCornerShape(18.dp),
+ *             border = BorderStroke(1.dp, Color(0xFFECE9F0)),
+ *             shadowElevation = 2.dp)
+ *       Row(height(64.dp), padding(horizontal = 15.dp, vertical = 8.dp))
+ *         Column(weight(1f))
+ *           Text(title,    13.sp, Bold, Color(0xFF3A3442))
+ *           Spacer(3.dp)
+ *           Text(subtitle, 11.sp, lineHeight 16.sp, Color(0xFF8A8492))
+ *         AppChevron()   // 22.dp KeyboardArrowRight, tint Color(0xFF7A6F8C)
+ *
+ * and the note above it is
+ *   Text(..., 12.sp, lineHeight 18.sp, Color(0xFF8A8492)).
+ *
+ * The shell heading is "Danger Zone" at 21.sp in Color(0xFF1E1A22), and the ×
+ * is 35.dp with 11.dp corners on Color(0xFFF5F2F8), its glyph 23.sp in
+ * Color(0xFF5D5666).
+ *
+ * The row was inheriting .settings-row, which is the flat list row the Settings
+ * index uses - padding 14px 0, a bottom hairline, no card. The app's DangerRow
+ * is a card, so it is drawn as one here, scoped to .danger so no other settings
+ * row is touched.
+ */
+
 .menu-feature-shell
 {
   display: block;
 }
 
+/* DangerModalShell's heading row: the title 21.sp Bold in Color(0xFF1E1A22),
+   the × 35.dp with 11.dp corners on Color(0xFFF5F2F8) and its glyph 23.sp in
+   Color(0xFF5D5666). The shared .close-btn gives the 35px square and the fill;
+   the glyph size and colour are the app's own and are set here. */
+.menu-feature-shell .modal-head
+{
+  margin-bottom: 14px;
+}
+
+.menu-feature-shell .modal-head h2
+{
+  color: #1e1a22;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.menu-feature-shell .close-btn
+{
+  color: #5d5666;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.menu-feature-note
+{
+  margin: 8px 0 0;
+  color: #8a8492;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .menu-feature-list
 {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .menu-feature-row
@@ -14,17 +76,68 @@
   width: 100%;
 }
 
-.menu-feature-note
+/* DangerRow: the card, not the list row. */
+.settings-row.danger
 {
-  margin: 8px 0 12px;
-  color: #8a8492;
-  font-size: 12px;
-  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 64px;
+  margin: 5px 0;
+  padding: 8px 15px;
+  border: 1px solid #ece9f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 2px 4px #17151d0f;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
 }
 
-.menu-feature-actions
+.settings-row.danger > span
 {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
+  min-width: 0;
+  display: block;
+  color: #3a3442;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.settings-row.danger > span small
+{
+  display: block;
+  margin-top: 3px;
+  color: #8a8492;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+/* AppChevron: a 22px arrow in #7A6F8C, not the 24px › the list rows use. */
+.settings-row.danger > b
+{
+  flex: 0 0 auto;
+  margin: 0;
+  color: #7a6f8c;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 400;
+  text-align: center;
+}
+
+.settings-row.danger:hover,
+.settings-row.danger:focus-visible
+{
+  border-color: #d7c9ee;
+  background: #fcfaff;
+  outline: none;
+}
+
+.settings-row.danger:active
+{
+  transform: scale(.995);
 }
