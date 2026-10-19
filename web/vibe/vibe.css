@@ -38,7 +38,8 @@
 .vibe-brand {
   display: inline-flex;
   align-items: baseline;
-  color: #9a82ff;
+  /* VibeScreen.kt draws the wordmark in Color.White, not violet. */
+  color: #fff;
 }
 
 .vibe-brand b {
@@ -146,7 +147,10 @@
   transform: rotate(var(--a)) translateY(calc(var(--vibe-ring) * -1));
 }
 
-.vibe-orbit i:nth-child(odd) {
+/* VibeScreen.kt: the dots at 0/90/180/270 (children 1, 3, 5, 7) are the purple
+   D8C4FF ones and the ones between them are the blue 6BC9FF. Child 1 sits at
+   --a: 0deg, so the blue rule belongs on the even children, not the odd. */
+.vibe-orbit i:nth-child(even) {
   width: 5px;
   height: 5px;
   margin: -2.5px 0 0 -2.5px;
