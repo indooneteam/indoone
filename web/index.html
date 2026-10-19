@@ -16,7 +16,7 @@
   />
   <title>Indoone</title>
 
-  <link rel="stylesheet" href="style.css?v=20261018aa" />
+  <link rel="stylesheet" href="style.css?v=20261019d" />
   <link rel="stylesheet" href="home/home.css?v=20261018g" />
   <link rel="stylesheet" href="home/message/message.css?v=20261018b" />
   <link rel="stylesheet" href="home/plus/plus.css?v=20261018b" />
@@ -60,6 +60,34 @@
           aria-label="Open menu"
         >
           <span data-app-icon="menu"></span>
+        </button>
+      </div>
+
+      <!-- The app's top bar carries a search control on the right
+           (AppPageChrome.kt AppTopBar, AppSearchIcon at 21dp). It is hidden
+           until the accounts screen is showing, because the app shows the
+           search field only on that screen. -->
+      <div class="top-actions">
+        <button
+          type="button"
+          class="icon-btn"
+          id="searchBtn"
+          aria-label="Search accounts"
+          hidden
+        >
+          <svg
+            class="top-search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="M16 16 20 20"></path>
+          </svg>
         </button>
       </div>
     </header>
@@ -227,7 +255,6 @@
     >
       <div class="page-heading">
         <div>
-          <p class="eyebrow">SECURE &amp; PRIVATE</p>
           <h1>Your accounts</h1>
         </div>
         <button
@@ -249,12 +276,12 @@
         id="emptyState"
         hidden
       >
-        <div class="empty-icon">⌁</div>
+        <div class="empty-icon">+</div>
         <h3>No accounts found</h3>
         <p>Add an account or try a different search.</p>
         <button
           type="button"
-          class="primary compact"
+          class="empty-add"
           id="emptyAddBtn"
         >
           Add account
@@ -685,7 +712,7 @@
   <script src="shared/branding.js?v=20261018b"></script>
   <script src="shared/app-icons.js?v=20261018b"></script>
   <script src="shared/core.js?v=20261018aa"></script>
-  <script src="shared/state.js?v=20261018l"></script>
+  <script src="shared/state.js?v=20261019d"></script>
 
   <!-- The web counterpart of android/menu/data/UserDataRepository.kt. Profile
        and Memory read and write through it, and Chat History lists through it.
@@ -703,7 +730,7 @@
   <script src="lobby/accounts/search/script.js?v=20261018b"></script>
   <script src="lobby/accounts/accounts/edit/script.js?v=20261018b"></script>
   <script src="lobby/accounts/accounts/edit/edit.js?v=20261018b"></script>
-  <script src="lobby/accounts/totp-controller.js?v=20261018b"></script>
+  <script src="lobby/accounts/totp-controller.js?v=20261019d"></script>
   <script src="shared/favorite.js?v=20261018b"></script>
 
   <script src="settings/profile/script.js?v=20261018z"></script>
@@ -715,7 +742,7 @@
   <script src="shared/navigation.js?v=20261018q"></script>
   <script src="shared/navigation-icons.js?v=20261018b"></script>
 
-  <script src="shared/events.js?v=20261018aa"></script>
+  <script src="shared/events.js?v=20261019d"></script>
   <script src="shared/safe-layout/safe-layout.js?v=20261018b"></script>
 </body>
 </html>
