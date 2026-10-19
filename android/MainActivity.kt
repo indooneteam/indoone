@@ -57,9 +57,6 @@ import com.indoone.home.HomeScreen
 import com.indoone.vibe.VibeScreen
 import com.indoone.menu.MenuDrawer
 import com.indoone.menu.plugins.PluginsMenuScreen
-import com.indoone.menu.plugins.email.EmailPluginMenuScreen
-import com.indoone.menu.plugins.email.gmail.GmailPluginMenuScreen
-import com.indoone.menu.plugins.github.GitHubPluginMenuScreen
 import com.indoone.menu.plugins.zoho_mail.ZohoMailPluginMenuScreen
 import com.indoone.notifications.NotificationPreferences
 import com.indoone.notifications.NotificationCenterScreen
@@ -70,15 +67,15 @@ import com.indoone.menu.privacypolicy.PrivacyPolicyScreen
 import com.indoone.menu.security.SecurityScreen
 import com.indoone.settings.SettingsScreen
 import com.indoone.settings.update.AppUpdateManager
-import com.indoone.settings.update.UpdateDownloadWorker
 import com.indoone.settings.diagnostics.CrashLogStore
-import com.indoone.settings.power.BatteryOptimisationStore
 import com.indoone.settings.profile.ProfileScreen
 import com.indoone.settings.profile.ProfileViewModel
 import com.indoone.settings.profile.change_email.ChangeEmailScreen
 import com.indoone.settings.profile.change_mobile_number.ChangeMobileNumberScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private enum class AppRoute {
     HOME,
@@ -86,10 +83,7 @@ private enum class AppRoute {
     SETTINGS,
     PROFILE,
     PLUGINS,
-    EMAIL_PLUGIN,
-    GMAIL_PLUGIN,
     ZOHO_MAIL_PLUGIN,
-    GITHUB_PLUGIN,
     CHANGE_MOBILE,
     CHANGE_EMAIL,
     FAVORITES,
@@ -109,15 +103,10 @@ private enum class AppRoute {
 }
 
 class MainActivity : ComponentActivity() {
-    override fun onResume() {
-        super.onResume()
-
-        // Vibe keeps its voice session alive while the app is in another app or the
-        // screen is off, and Android freezes an app that is still subject to battery
-        // optimisation. The request is remembered: the system dialog it opens covers
-        // the app, so asking on every launch looked like the app closing the moment
-        // it opened.
-        BatteryOptimisationStore(this).requestOnce(this)
+    /** Feeds Auto-Lock's inactivity timer: any touch or key counts as activity. */
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        (application as? IndooneApplication)?.onUserInteraction(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +128,7 @@ class MainActivity : ComponentActivity() {
                 var route by remember { mutableStateOf(AppRoute.HOME) }
                 var menuOpen by remember { mutableStateOf(false) }
                 var menuOriginRoute by remember { mutableStateOf(AppRoute.HOME) }
+                var settingsOpenAppLock by remember { mutableStateOf(false) }
                 var availableUpdate by remember { mutableStateOf<AppUpdateManager.UpdateInfo?>(null) }
                 var isCheckingUpdate by remember { mutableStateOf(false) }
                 var updateDialogHidden by remember { mutableStateOf(false) }
@@ -157,54 +147,15 @@ class MainActivity : ComponentActivity() {
                     ActivityResultContracts.RequestMultiplePermissions(),
                 ) { }
 
-                // The download is background work, so the dialog only reflects it.
-                // Closing the dialog or leaving the app does not touch the work.
-                val installedVersionCode = remember {
-                    AppUpdateManager.currentVersionCode(this@MainActivity)
-                }
-                val updateWorkInfos by UpdateDownloadWorker
-                    .observe(this@MainActivity)
-                    .collectAsState(initial = emptyList())
-                val updateWork = updateWorkInfos.firstOrNull()
-                val isDownloadingUpdate =
-                    updateWork?.state == WorkInfo.State.ENQUEUED ||
-                        updateWork?.state == WorkInfo.State.RUNNING
-                val downloadedBytes = updateWork?.progress
-                    ?.getLong(UpdateDownloadWorker.KEY_DOWNLOADED_BYTES, 0L) ?: 0L
-                val progressTotalBytes = updateWork?.progress
-                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
-                val outputTotalBytes = updateWork?.outputData
-                    ?.getLong(UpdateDownloadWorker.KEY_TOTAL_BYTES, 0L) ?: 0L
-                val totalBytes = when {
-                    progressTotalBytes > 0L -> progressTotalBytes
-                    outputTotalBytes > 0L -> outputTotalBytes
-                    else -> availableUpdate?.sizeBytes ?: 0L
-                }
-                val readyVersionCode = updateWork?.outputData
-                    ?.getLong(UpdateDownloadWorker.KEY_VERSION_CODE, 0L) ?: 0L
-                val updateReady =
-                    updateWork?.state == WorkInfo.State.SUCCEEDED &&
-                        readyVersionCode > installedVersionCode &&
-                        AppUpdateManager.apkFile(this@MainActivity).exists()
-
-                // Show the dialog again when the download starts or finishes, and
-                // report a failure once instead of leaving the user guessing.
-                LaunchedEffect(updateWork?.state) {
-                    when (updateWork?.state) {
-                        WorkInfo.State.ENQUEUED,
-                        WorkInfo.State.RUNNING,
-                        WorkInfo.State.SUCCEEDED -> updateDialogHidden = false
-
-                        WorkInfo.State.FAILED -> {
-                            val message = updateWork?.outputData
-                                ?.getString(UpdateDownloadWorker.KEY_ERROR)
-                                ?: "Could not download the update."
-                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
-                        }
-
-                        else -> Unit
-                    }
-                }
+                // The download runs here, inside the dialog, on the screen's own
+                // coroutine. It is deliberately not a foreground service: Android 14
+                // and later refuse to start one without a declared type, and that is
+                // what was closing the app the moment an update was started. Running
+                // it here costs only that leaving the app stops the download.
+                var isDownloadingUpdate by remember { mutableStateOf(false) }
+                var downloadedBytes by remember { mutableStateOf(0L) }
+                var totalBytes by remember { mutableStateOf(0L) }
+                var updateReady by remember { mutableStateOf(false) }
 
                 fun checkForUpdates(showUpToDateMessage: Boolean) {
                     if (isCheckingUpdate || isDownloadingUpdate) return
@@ -232,6 +183,35 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         isCheckingUpdate = false
+                    }
+                }
+
+                fun startUpdateDownload(update: AppUpdateManager.UpdateInfo) {
+                    if (isDownloadingUpdate) return
+                    isDownloadingUpdate = true
+                    updateReady = false
+                    downloadedBytes = 0L
+                    totalBytes = update.sizeBytes
+                    updateDialogHidden = false
+                    availableUpdate = null
+                    coroutineScope.launch {
+                        runCatching {
+                            AppUpdateManager.downloadApk(this@MainActivity, update) { copied, total ->
+                                withContext(Dispatchers.Main.immediate) {
+                                    downloadedBytes = copied
+                                    if (total > 0L) totalBytes = total
+                                }
+                            }
+                        }.onSuccess {
+                            updateReady = true
+                        }.onFailure { error ->
+                            Toast.makeText(
+                                this@MainActivity,
+                                error.message ?: "Could not download the update.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        isDownloadingUpdate = false
                     }
                 }
 
@@ -387,6 +367,8 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { navigate(AppRoute.SETTINGS) },
                         onNotificationsClick = { navigate(AppRoute.NOTIFICATIONS) },
                         onCheckForUpdates = { checkForUpdates(showUpToDateMessage = true) },
+                        startAtAppLock = settingsOpenAppLock,
+                        onStartAtAppLockHandled = { settingsOpenAppLock = false },
                     )
 
                     AppRoute.NOTIFICATIONS -> NotificationSettingsScreen(
@@ -421,24 +403,9 @@ class MainActivity : ComponentActivity() {
 
                     AppRoute.PLUGINS -> PluginsMenuScreen(
                         onBack = { navigate(AppRoute.PROFILE) },
-                        onEmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
-                        onGitHubClick = { navigate(AppRoute.GITHUB_PLUGIN) },
-                    )
-
-                    AppRoute.EMAIL_PLUGIN -> EmailPluginMenuScreen(
-                        onBack = { navigate(AppRoute.PLUGINS) },
-                        onGmailClick = { navigate(AppRoute.GMAIL_PLUGIN) },
-                    )
-
-                    AppRoute.GMAIL_PLUGIN -> GmailPluginMenuScreen(
-                        onBack = { navigate(AppRoute.PLUGINS) },
                     )
 
                     AppRoute.ZOHO_MAIL_PLUGIN -> ZohoMailPluginMenuScreen(
-                        onBack = { navigate(AppRoute.PLUGINS) },
-                    )
-
-                    AppRoute.GITHUB_PLUGIN -> GitHubPluginMenuScreen(
                         onBack = { navigate(AppRoute.PLUGINS) },
                     )
 
@@ -758,8 +725,8 @@ class MainActivity : ComponentActivity() {
 
                     AlertDialog(
                         // The download page stays put while it runs: it is the only
-                        // place the progress is shown. The download itself is
-                        // background work, so leaving the app does not stop it.
+                        // place the progress is shown. The download stops if the app
+                        // is closed, so the page is not dismissable while it runs.
                         onDismissRequest = { if (!isDownloadingUpdate) updateDialogHidden = true },
                         title = {
                             Text(
@@ -812,20 +779,19 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 !isDownloadingUpdate && update != null -> TextButton(
-                                    onClick = {
-                                        UpdateDownloadWorker.enqueue(this@MainActivity, update)
-                                        availableUpdate = null
-                                    },
+                                    onClick = { startUpdateDownload(update) },
                                 ) {
                                     Text("Update")
                                 }
                             }
                         },
                         dismissButton = {
-                            // Always offered: the download is background work, so
-                            // closing this page does not stop it.
-                            TextButton(onClick = { updateDialogHidden = true }) {
-                                Text("Later")
+                            // Hidden while the download runs: this page is where the
+                            // progress lives, and this download stops with the app.
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { updateDialogHidden = true }) {
+                                    Text("Later")
+                                }
                             }
                         },
                     )
@@ -873,7 +839,10 @@ class MainActivity : ComponentActivity() {
                         onTerms = { menuToast("Terms of Use is coming next") },
                         onPrivacy = { navigate(AppRoute.PRIVACY_POLICY) },
                         onAbout = { navigate(AppRoute.SETTINGS) },
-                        onLock = { navigate(AppRoute.SETTINGS) },
+                        onLock = {
+                            settingsOpenAppLock = true
+                            navigate(AppRoute.SETTINGS)
+                        },
                         onDangerZone = { menuToast("Danger Zone is coming next") },
                         onLogout = { menuToast("Log out is coming next") },
                     )
