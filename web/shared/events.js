@@ -76,8 +76,8 @@
     element.addEventListener('click', handler);
   }
 
-  // One implementation, in shared/core.js, so the tab, the brand button, the
-  // Notification Center's back button and the menu all land in the same place.
+  // One implementation, in shared/core.js, so the tab, the brand button and
+  // the menu all land in the same place.
   function showHome(options) {
     closeDrawer();
     closeModal();
@@ -96,9 +96,6 @@
     $('content')?.removeAttribute('hidden');
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
     $('searchWrap')?.removeAttribute('hidden');
     $('homeNav')?.classList.add('active');
@@ -121,9 +118,6 @@
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
     $('lobbyContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
     $('searchWrap')?.setAttribute('hidden', '');
     $('settingsNav')?.classList.add('active');
@@ -153,9 +147,6 @@
     $('content')?.removeAttribute('hidden');
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
     $('searchWrap')?.removeAttribute('hidden');
 
@@ -243,7 +234,6 @@
   bindClick($('menuBtn'), () => window.toggleMenu?.());
   bindClick($('addBtn'), () => window.showAdd?.());
   bindClick($('emptyAddBtn'), () => window.showAdd?.());
-  bindClick($('notificationsBtn'), () => window.IndooneNotifications?.show?.());
   bindClick($('clearSearch'), () => window.IndooneHomeSearch?.clear?.());
   bindClick($('brandBtn'), showHome);
   bindClick($('homeNav'), showHome);
