@@ -61,7 +61,7 @@ window.initMenuChangeEmail = function () {
     }
 
     if (!password) {
-      setStatus('Enter your current password.', 'error');
+      setStatus('Enter your current password', 'error');
       return;
     }
 
@@ -141,14 +141,14 @@ window.initMenuChangeEmail = function () {
       }
 
       setStatus(
-        'Email changed in Firebase. A verification email was sent.'
+        'Email changed. A verification email was sent.'
       );
     } catch (error) {
       const messages = {
         'auth/wrong-password': 'Current password is incorrect.',
         'auth/invalid-credential': 'Current password is incorrect.',
         'auth/requires-recent-login':
-          'Please sign in again, then change your email.',
+          'Please sign in again, then try this change.',
         'auth/email-already-in-use':
           'An account already exists with this email.',
         'auth/invalid-email': 'Enter a valid email address.'
