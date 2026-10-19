@@ -299,8 +299,10 @@
   line-height:1;
   box-shadow:0 6px 15px #703be333
 }
+/* .drawer-brand strong is NOT listed: the drawer's wordmark is
+   MenuDrawer.kt's 0xFF263753 at 19sp Bold, which style.css already draws. This
+   rule is for the top bar and the auth brand only. */
 .brand strong,
-.drawer-brand strong,
 .auth-brand strong
 {
   color:#6330db;
