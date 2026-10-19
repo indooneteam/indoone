@@ -180,7 +180,11 @@
 
     clearPending();
     setBusy(true);
+    // HomeScreen.kt shows Received for 350ms, then Thinking while the request
+    // is in flight, then Preparing for 600ms before the reply.
     setActivity('received');
+    await new Promise(resolve => setTimeout(resolve, 350));
+    setActivity('thinking');
 
     // Save the user's side to the account, exactly as the app does.
     void window.IndooneCloudChat
@@ -201,9 +205,8 @@
       });
 
       store.setConversationId(result.conversationId);
-      setActivity('thinking');
-      await new Promise(resolve => setTimeout(resolve, 600));
       setActivity('preparing');
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       store.add({ text: result.reply, mine: false });
 
