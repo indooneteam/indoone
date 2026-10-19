@@ -29,7 +29,7 @@ window.initMenuChangeEmail = function () {
   page
     .querySelector('[data-change-email-action="back"]')
     ?.addEventListener('click', () => {
-      window.openMenuFeature?.('profile');
+      window.openMenuFeature?.('account');
     });
 
   function setStatus(text, kind) {
