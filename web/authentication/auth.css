@@ -11,11 +11,12 @@
 
 /* ---------------------------------------------------------- the backdrop */
 
-#modal.indoone-auth-screen {
+.overlay.indoone-auth-screen {
   position: fixed;
   inset: 0;
-  /* These belong to the overlay in style.css, not to #modal, but they are
-     cleared here so nothing about the account sheet can reach this element. */
+  /* style.css centres this element over the phone: it sets left: 50%;
+     transform: translateX(-50%); max-width: 430px. The sign-in backdrop is the
+     whole window, so those are cleared here. */
   transform: none;
   max-width: none;
   display: flex;
@@ -32,14 +33,14 @@
   pointer-events: auto;
 }
 
-/* #modal ships with the hidden attribute, and .menu-content[hidden] hides it.
-   While the sign-in screen is up the attribute is removed, so this only guards
-   the moment between the two. */
-#modal.indoone-auth-screen[hidden] {
+/* The overlay is hidden by style.css's .overlay.hidden, which is just as
+   specific as the rule above and would lose to it - this file loads later.
+   Hidden wins here, always. */
+.overlay.indoone-auth-screen.hidden {
   display: none !important;
 }
 
-#modal.indoone-auth-screen .auth-page {
+.overlay.indoone-auth-screen .modal {
   width: 100%;
   max-width: 460px;
   height: auto;
@@ -319,13 +320,13 @@
 
 /* ------------------------------------------------------ the mobile prefix */
 
-#modal.indoone-auth-screen .mobile-field,
+.overlay.indoone-auth-screen .mobile-field,
 .auth-page .mobile-field {
   position: relative;
   width: 100%;
 }
 
-#modal.indoone-auth-screen .mobile-field .mobile-prefix,
+.overlay.indoone-auth-screen .mobile-field .mobile-prefix,
 .auth-page .mobile-field .mobile-prefix {
   position: absolute;
   left: 13px;
@@ -338,7 +339,7 @@
   pointer-events: none;
 }
 
-#modal.indoone-auth-screen .mobile-field input.has-mobile-prefix,
+.overlay.indoone-auth-screen .mobile-field input.has-mobile-prefix,
 .auth-page .mobile-field input.has-mobile-prefix {
   padding-left: 42px !important;
 }
