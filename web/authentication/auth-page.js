@@ -15,8 +15,16 @@
 
   const $ = id => document.getElementById(id);
 
+  // The auth screen has a container of its own - the card inside #overlay, which
+  // nothing else uses. It must NOT be #modal: #modal is the element every menu
+  // page and the Settings screens are written into, so putting the sign-in
+  // backdrop on it painted every one of those pages beige.
+  function host() {
+    return $('accountDialog');
+  }
+
   function root() {
-    return $('modal')?.querySelector('.auth-page') || document;
+    return host()?.querySelector('.auth-page') || document;
   }
 
   function setStatus(message = '', error = false) {
@@ -35,22 +43,19 @@
 
     if (!overlay || !modal) return false;
 
-    // #modal is the element every page is written into, and it ships hidden in
-    // the shell. showMenuPage() unhides it; this never did, so the card was
-    // written into a hidden element and only the backdrop showed - a blank
-    // beige page with no sign-in form on it.
-    modal.removeAttribute('hidden');
+    // The card goes into the overlay's own child, and the overlay is the
+    // backdrop. The overlay belongs to the sign-in screen and to nothing else.
+    const card = host();
 
-    // The backdrop belongs on #modal, which is what the auth stylesheet now
-    // targets. The overlay is a different element holding the account sheet;
-    // showing it put its own empty card over the app.
-    overlay.classList.add('hidden');
-    modal.classList.add(AUTH_CLASS);
+    if (!card) return false;
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add(AUTH_CLASS);
     document.body.classList.add('auth-open', 'auth-pending');
 
     // The status line sits below the card, not inside it, which is where the
     // app puts it.
-    modal.innerHTML = `
+    card.innerHTML = `
       <div class="auth-page">
         ${html}
       </div>
@@ -62,9 +67,9 @@
       ></div>
     `;
 
-    bindButtons(modal);
-    bindMobileDefaults(modal);
-    bindPasswordToggles(modal);
+    bindButtons(card);
+    bindMobileDefaults(card);
+    bindPasswordToggles(card);
 
     return true;
   }
@@ -72,7 +77,7 @@
   // Render the screen only if it is not already the one on display, so a step
   // change never throws away what has been typed.
   function renderScreen(name, html) {
-    if (currentScreen === name && $('modal')?.querySelector('.auth-page')) {
+    if (currentScreen === name && host()?.querySelector('.auth-page')) {
       return true;
     }
 
@@ -431,16 +436,19 @@
   }
 
   function close() {
-    $('modal')?.classList.remove(AUTH_CLASS);
-    $('modal')?.setAttribute('hidden', '');
     $('overlay')?.classList.remove(AUTH_CLASS);
     $('overlay')?.classList.add('hidden');
-    document.body.classList.remove('auth-open', 'auth-pending');
 
-    if ($('modal')) {
-      $('modal').innerHTML = '';
+    // #modal must never carry the auth class. Clear it here as well, so a
+    // session that was left over from an older build cannot keep painting the
+    // menu and Settings pages beige.
+    $('modal')?.classList.remove(AUTH_CLASS);
+
+    if (host()) {
+      host().innerHTML = '';
     }
 
+    document.body.classList.remove('auth-open', 'auth-pending');
     currentScreen = null;
   }
 
