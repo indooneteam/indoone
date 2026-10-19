@@ -25,6 +25,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +55,6 @@ import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppChevron
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
-import com.indoone.settings.about.AboutScreen
 import com.indoone.settings.applock.AppLockScreen
 import com.indoone.settings.applock.AppLockStore
 import com.indoone.settings.applock.AppLockViewModel
@@ -89,6 +89,8 @@ fun SettingsScreen(
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
+    startAtAppLock: Boolean = false,
+    onStartAtAppLockHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -97,16 +99,26 @@ fun SettingsScreen(
     val autoLockStore = remember { AutoLockStore(context) }
     val biometricAuthenticator = remember { activity?.let(::BiometricAuthenticator) }
     val flow = remember { AppLockViewModel() }
+    val versionName = remember { installedVersionName(context) }
 
     var appLockPage by remember { mutableStateOf(false) }
     var autoLockPage by remember { mutableStateOf(false) }
-    var aboutPage by remember { mutableStateOf(false) }
     var dangerZonePage by remember { mutableStateOf(false) }
     var logoutPage by remember { mutableStateOf(false) }
     var biometricOn by remember { mutableStateOf(biometricStore.isEnabled()) }
     var showAppLockRequired by remember { mutableStateOf(false) }
     var showBiometricUnavailable by remember { mutableStateOf(false) }
     var biometricError by remember { mutableStateOf<String?>(null) }
+
+    // "Lock App" in the menu sends you here when no App PIN is set yet, so you land
+    // straight on the App Lock setup rather than on the top of Settings.
+    LaunchedEffect(startAtAppLock) {
+        if (startAtAppLock) {
+            flow.sync(appLockStore.isEnabled())
+            appLockPage = true
+            onStartAtAppLockHandled()
+        }
+    }
 
     fun resetToSettings() {
         flow.sync(appLockStore.isEnabled())
@@ -197,7 +209,13 @@ fun SettingsScreen(
                 SettingsMenuItem(TimerIcon, "Auto-Lock") { autoLockPage = true }
 
                 SettingsMenuItem(NotificationsIcon, "Notifications", onClick = onNotificationsClick)
-                SettingsMenuItem(InfoIcon, "About Indoone") { aboutPage = true }
+                SettingsMenuAction(
+                    icon = InfoIcon,
+                    title = "Version",
+                    subtitle = versionName,
+                    action = "Check for updates",
+                    onClick = onCheckForUpdates,
+                )
 
                 SettingsMenuItem(DangerZoneIcon, "Danger Zone") { dangerZonePage = true }
                 SettingsMenuItem(LogoutIcon, "Log out") { logoutPage = true }
@@ -309,17 +327,6 @@ fun SettingsScreen(
             biometricStore.isEnabled(),
             { autoLockStore.setMinutes(it); autoLockPage = false },
             { autoLockPage = false },
-        )
-    }
-
-    if (aboutPage) {
-        AboutScreen(
-            onBack = { aboutPage = false },
-            onAccountsClick = onAccountsClick,
-            onLobbyClick = onLobbyClick,
-            onVibeClick = onVibeClick,
-            onSettingsClick = onSettingsClick,
-            onCheckForUpdates = onCheckForUpdates,
         )
     }
 
@@ -458,6 +465,24 @@ private fun SettingsMenuItem(
 }
 
 @Composable
+private fun SettingsMenuAction(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    action: String,
+    onClick: () -> Unit,
+) {
+    SettingsMenuRow(
+        icon = icon,
+        title = title,
+        subtitle = subtitle,
+        onClick = onClick,
+    ) {
+        Text(action, color = Color(0xFF6330DB), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
 private fun SettingsMenuToggle(
     icon: ImageVector,
     title: String,
@@ -476,3 +501,8 @@ private fun SettingsMenuToggle(
         )
     }
 }
+
+/** The real installed version, so this row never shows a build number. */
+private fun installedVersionName(context: android.content.Context): String = runCatching {
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName
+}.getOrNull().orEmpty()
