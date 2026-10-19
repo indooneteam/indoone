@@ -352,6 +352,15 @@
       return;
     }
 
+    if (action === 'lock') {
+      // MenuDrawer.kt opens UnlockAppActivity when app lock is on and shows
+      // "App Lock is not enabled." otherwise. The web has no device app lock,
+      // so the message is what it shows; the row used to do nothing at all.
+      closeDrawer();
+      window.toast?.('App Lock is not enabled.');
+      return;
+    }
+
     window.openMenuFeature(action);
   });
 
