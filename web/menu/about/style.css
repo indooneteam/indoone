@@ -23,3 +23,9 @@
   gap: 8px;
   margin-top: 12px;
 }
+
+/* MenuAboutScreen.kt draws a 1px #EEE8F4 divider above every one of the six
+   rows. */
+.menu-about .settings-row {
+  border-top: 1px solid #eee8f4;
+}
