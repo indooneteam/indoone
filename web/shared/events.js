@@ -78,9 +78,22 @@
 
   // One implementation, in shared/core.js, so the tab, the brand button and
   // the menu all land in the same place.
+  // The app's search field is hidden until the top-bar search icon is tapped
+  // (AccountsScreen.kt: searchVisible starts false), and the icon itself is
+  // drawn only where the search field lives. The web draws it on the accounts
+  // screen and nowhere else.
+  function setSearchControlVisible(visible) {
+    $('searchBtn')?.toggleAttribute('hidden', !visible);
+
+    if (!visible) {
+      $('searchWrap')?.setAttribute('hidden', '');
+    }
+  }
+
   function showHome(options) {
     closeDrawer();
     closeModal();
+    setSearchControlVisible(false);
     window.showHome?.(options);
   }
 
@@ -97,7 +110,7 @@
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
-    $('searchWrap')?.removeAttribute('hidden');
+    setSearchControlVisible(true);
     $('homeNav')?.classList.add('active');
     $('lobbyNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
@@ -119,7 +132,7 @@
     $('content')?.removeAttribute('hidden');
     $('lobbyContent')?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
-    $('searchWrap')?.setAttribute('hidden', '');
+    setSearchControlVisible(false);
     $('settingsNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
     $('lobbyNav')?.classList.remove('active');
@@ -148,7 +161,7 @@
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
-    $('searchWrap')?.removeAttribute('hidden');
+    setSearchControlVisible(true);
 
     $('lobbyNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
