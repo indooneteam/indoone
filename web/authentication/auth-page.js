@@ -357,7 +357,6 @@
         const email = await auth.startLoginOtp(readLoginIdentifier());
         window.IndooneLoginFeature?.otpEmail?.(email, scope);
         showLogin('otp');
-        setStatus('OTP sent. Enter the code from your email.');
       } else if (action === 'login-continue-password') {
         showLogin('password');
       } else if (action === 'login-verify') {
@@ -367,7 +366,7 @@
         button.textContent = 'Sending…';
         const email = await auth.resendLoginOtp();
         window.IndooneLoginFeature?.otpEmail?.(email, scope);
-        setStatus('New OTP sent. Check your email.');
+        setStatus('New OTP sent to your email.');
       } else if (action === 'login-complete') {
         button.textContent = 'Logging in…';
         await auth.loginWithPassword(
@@ -381,7 +380,6 @@
         );
         window.IndooneSignupFeature?.otpEmail?.(email, scope);
         showSignup('otp');
-        setStatus('OTP sent. Enter the code from your email.');
       } else if (action === 'signup-password') {
         button.textContent = 'Creating account…';
         await auth.createSignupWithPassword(
@@ -396,7 +394,7 @@
         button.textContent = 'Sending…';
         const email = await auth.resendSignupOtp();
         window.IndooneSignupFeature?.otpEmail?.(email, scope);
-        setStatus('New OTP sent. Check your email.');
+        setStatus('New OTP sent to your email.');
       }
     } catch (error) {
       const message =
