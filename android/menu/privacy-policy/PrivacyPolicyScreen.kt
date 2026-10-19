@@ -1,13 +1,12 @@
 package com.indoone.menu.privacypolicy
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,9 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 data class PrivacySection(val title: String, val body: String)
+
+private val PrivacyPurple = Color(0xFF6330DB)
+private val PrivacyInk = Color(0xFF211D27)
+private val PrivacyMuted = Color(0xFF756F7F)
+private val PrivacyBorder = Color(0xFFECE7F8)
+private val PrivacyChip = Color(0xFFF3EDFF)
 
 @Composable
 fun PrivacyPolicyScreen(
@@ -53,97 +61,106 @@ fun PrivacyPolicyScreen(
         PrivacySection("13. Contact", "Email: indoone@zohomail.in"),
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0x5519141F))
-            .clickable(onClick = onBack),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Surface(
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.88f)
-                .padding(bottom = 14.dp)
-                .clickable(onClick = {}),
-            color = Color.White,
-            shadowElevation = 14.dp,
-            shape = RoundedCornerShape(25.dp),
+                .fillMaxSize()
+                .padding(horizontal = 18.dp, vertical = 10.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
+            PolicyHeader(title = "Privacy Policy", onBack = onBack)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Privacy Policy",
-                        modifier = Modifier.weight(1f),
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1A22),
-                    )
-                    TextButton(
-                        onClick = onBack,
-                        modifier = Modifier.size(35.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(35.dp),
-                            shape = RoundedCornerShape(11.dp),
-                            color = Color(0xFFF5F2F8),
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "×",
-                                    fontSize = 23.sp,
-                                    lineHeight = 23.sp,
-                                    color = Color(0xFF5D5666),
-                                )
-                            }
-                        }
-                    }
+                items(sections) { section ->
+                    PolicySectionCard(section)
                 }
+            }
+        }
+    }
 
-                Spacer(modifier = Modifier.height(8.dp))
+    @Suppress("UNUSED_VARIABLE")
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onVibeClick to onSettingsClick
+}
 
-                Text(
-                    text = "Last Updated: 08/09/2026",
-                    color = Color(0xFF8A8492),
-                    fontSize = 11.sp,
+@Composable
+private fun PolicyHeader(title: String, onBack: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Back",
                 )
+            }
+            Text(
+                text = title,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2C2733),
+            )
+        }
+        Surface(
+            modifier = Modifier.padding(start = 6.dp),
+            shape = RoundedCornerShape(9.dp),
+            color = PrivacyChip,
+        ) {
+            Text(
+                text = "Last updated 08/09/2026",
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                color = PrivacyPurple,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(14.dp))
+@Composable
+private fun PolicySectionCard(section: PrivacySection) {
+    val number = section.title.substringBefore(".", "").trim()
+    val heading = section.title.substringAfter(". ", section.title)
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(sections) { section ->
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = section.title,
-                                fontSize = 14.sp,
-                                lineHeight = 19.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E1A22),
-                            )
-                            Text(
-                                text = section.body,
-                                modifier = Modifier.padding(top = 3.dp),
-                                color = Color(0xFF8A8492),
-                                fontSize = 12.sp,
-                                lineHeight = 19.sp,
-                            )
-                        }
-                    }
-                }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, PrivacyBorder),
+        shadowElevation = 1.dp,
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .background(PrivacyChip, RoundedCornerShape(9.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = number,
+                    color = PrivacyPurple,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(
+                    text = heading,
+                    color = PrivacyInk,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = section.body,
+                    modifier = Modifier.padding(top = 4.dp),
+                    color = PrivacyMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 19.sp,
+                )
             }
         }
     }
