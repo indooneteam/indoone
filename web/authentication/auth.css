@@ -11,13 +11,11 @@
 
 /* ---------------------------------------------------------- the backdrop */
 
-.overlay.indoone-auth-screen {
+#modal.indoone-auth-screen {
   position: fixed;
   inset: 0;
-  /* style.css centres the account sheet over the phone: it sets
-     left: 50%; transform: translateX(-50%); max-width: 430px. The backdrop
-     below is a full-window gradient, so both of those have to be undone here or
-     the beige sits half a screen off to the left. */
+  /* These belong to the overlay in style.css, not to #modal, but they are
+     cleared here so nothing about the account sheet can reach this element. */
   transform: none;
   max-width: none;
   display: flex;
@@ -34,15 +32,14 @@
   pointer-events: auto;
 }
 
-/* style.css hides the overlay with .overlay.hidden. The rule above is just as
-   specific and this file loads later, so its display:flex was beating it: an
-   overlay carrying both classes stayed on screen as a beige half-page over the
-   app. Hidden wins here, always. */
-.overlay.indoone-auth-screen.hidden {
+/* #modal ships with the hidden attribute, and .menu-content[hidden] hides it.
+   While the sign-in screen is up the attribute is removed, so this only guards
+   the moment between the two. */
+#modal.indoone-auth-screen[hidden] {
   display: none !important;
 }
 
-.overlay.indoone-auth-screen .modal {
+#modal.indoone-auth-screen .auth-page {
   width: 100%;
   max-width: 460px;
   height: auto;
@@ -322,13 +319,13 @@
 
 /* ------------------------------------------------------ the mobile prefix */
 
-.indoone-auth-screen .mobile-field,
+#modal.indoone-auth-screen .mobile-field,
 .auth-page .mobile-field {
   position: relative;
   width: 100%;
 }
 
-.indoone-auth-screen .mobile-field .mobile-prefix,
+#modal.indoone-auth-screen .mobile-field .mobile-prefix,
 .auth-page .mobile-field .mobile-prefix {
   position: absolute;
   left: 13px;
@@ -341,7 +338,7 @@
   pointer-events: none;
 }
 
-.indoone-auth-screen .mobile-field input.has-mobile-prefix,
+#modal.indoone-auth-screen .mobile-field input.has-mobile-prefix,
 .auth-page .mobile-field input.has-mobile-prefix {
   padding-left: 42px !important;
 }
