@@ -14,7 +14,8 @@ window.initMenuChatHistory = function () {
 
     const text = document.createElement('span');
     const title = document.createElement('b');
-    title.textContent = 'Conversation';
+    // ChatHistoryMenuScreen.kt shows the conversation's own title.
+    title.textContent = chat.title || 'Conversation';
     const when = document.createElement('small');
     when.textContent = chat.savedAt
       ? new Date(Number(chat.savedAt)).toLocaleString()

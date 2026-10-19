@@ -11,32 +11,16 @@
   font-size: 9px !important;
 }
 
-/* The drawer is grouped the way the app groups it: a heading, then the items
-   that belong under it. */
-.drawer-section-label {
-  margin: 14px 12px 6px;
-  color: #8d87a0;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: .8px;
-}
-
-.drawer-item-new {
-  margin: 2px 6px 4px;
-  border-radius: 13px;
-  background: linear-gradient(145deg, #f3ecff, #e6d9ff);
-  color: #5e2dd2;
-  font-weight: 700;
-}
-
-/* The drawer's top row, as the app draws it: the mark, the word Indoone, and
-   a close button on the right. */
-.drawer-brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 3px 0 13px;
-}
+/* The drawer's own rules live in style.css and already match MenuDrawer.kt: the
+   section heading (0xFF8592A8, 10sp, letter-spacing 1px, padding 15/0/5/9), the
+   New Chat row (0xFFEDE3FA, radius 15px, margin 2px 0) and the brand row (5px
+   left padding with the wordmark 9px in from the mark).
+ *
+ * This file used to override all three with different values - #8d87a0 at
+ * 9.5px, a gradient with 13px corners, and a 9px gap with no left padding - and
+ * because it loads after style.css those overrides won. They are gone, so the
+ * app-matching rules in style.css now apply.
+ */
 
 .drawer-brand-name {
   flex: 1 1 auto;

@@ -24,8 +24,8 @@
   <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20261019a" />
   <link rel="stylesheet" href="bottom-nav-svg.css?v=20261019a" />
   <link rel="stylesheet" href="shared/app-icons.css?v=20261018b" />
-  <link rel="stylesheet" href="menu/style.css?v=20261018aa" />
-  <link rel="stylesheet" href="settings/settings.css?v=20261019b" />
+  <link rel="stylesheet" href="menu/style.css?v=20261019e" />
+  <link rel="stylesheet" href="settings/settings.css?v=20261019e" />
   <link rel="stylesheet" href="settings/profile/style.css?v=20261018aa" />
   <link rel="stylesheet" href="settings/update/style.css?v=20261018aa" />
   <link rel="stylesheet" href="settings/profile/change-email/style.css?v=20261018aa" />
@@ -439,6 +439,23 @@
       >
         <span data-app-icon="apps"></span>
         <span>Plugins</span>
+        <!-- The app draws a chevron on this row alone (MenuDrawer.kt
+             showChevron = true, 18dp, 0xFF8B9AB0). -->
+        <span
+          class="drawer-chevron"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m9 5 7 7-7 7"></path>
+          </svg>
+        </span>
       </button>
 
       <button
@@ -726,7 +743,7 @@
   <script src="shared/persistence.js?v=20261018b"></script>
   <script src="lobby/accounts/recovery-pdf.js?v=20261018b"></script>
 
-  <script src="menu/script.js?v=20261019b"></script>
+  <script src="menu/script.js?v=20261019e"></script>
   <script src="lobby/accounts/search/script.js?v=20261018b"></script>
   <script src="lobby/accounts/accounts/edit/script.js?v=20261018b"></script>
   <script src="lobby/accounts/accounts/edit/edit.js?v=20261018b"></script>
