@@ -1,20 +1,23 @@
 package com.indoone.menu.termsofuse
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 data class TermsSection(val title: String, val body: String)
+
+private val TermsPurple = Color(0xFF6330DB)
+private val TermsInk = Color(0xFF211D27)
+private val TermsMuted = Color(0xFF756F7F)
+private val TermsBorder = Color(0xFFECE7F8)
+private val TermsChip = Color(0xFFF3EDFF)
 
 private val TERMS_SECTIONS = listOf(
     TermsSection("1. Account Creation", "When creating an Indoone account, users may provide an email address, mobile number, password, and OTP. The OTP is verified through the IndoVerification system. After successful OTP verification, the Indoone account is created in Firebase."),
@@ -50,22 +59,95 @@ private val TERMS_SECTIONS = listOf(
 
 @Composable
 fun TermsOfUseScreen(onBack: () -> Unit, onAccountsClick: () -> Unit, onLobbyClick: () -> Unit, onVibeClick: () -> Unit, onSettingsClick: () -> Unit) {
-    Box(Modifier.fillMaxSize().background(Color(0x5519141F)).clickable(onClick = onBack), contentAlignment = Alignment.BottomCenter) {
-        Surface(Modifier.fillMaxWidth().fillMaxHeight(0.88f).padding(start = 14.dp, end = 14.dp, bottom = 14.dp).clickable(onClick = {}), shape = RoundedCornerShape(25.dp), color = Color.White, shadowElevation = 14.dp) {
-            Column(Modifier.fillMaxSize().padding(23.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Terms of Use", fontSize = 21.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2C2733))
-                    IconButton(onClick = onBack, modifier = Modifier.size(35.dp).background(Color(0xFFF5F2F8), RoundedCornerShape(11.dp))) { Text("×", fontSize = 21.sp, color = Color(0xFF2C2733)) }
+    Surface(Modifier.fillMaxSize(), color = Color.White) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                    )
                 }
-                Text("Last Updated: 08/09/2026", Modifier.padding(top = 1.dp, bottom = 14.dp), color = Color(0xFF8A8492), fontSize = 11.sp)
-                LazyColumn(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(TERMS_SECTIONS) { section ->
-                        Column(Modifier.fillMaxWidth()) {
-                            Text(section.title, Modifier.padding(top = 4.dp), fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold, color = Color(0xFF211D27))
-                            Text(section.body, Modifier.padding(top = 2.dp), fontSize = 12.sp, lineHeight = 19.sp, color = Color(0xFF8A8492))
-                        }
-                    }
+                Text(
+                    text = "Terms of Use",
+                    modifier = Modifier.padding(start = 4.dp),
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2C2733),
+                )
+            }
+            Surface(
+                modifier = Modifier.padding(start = 6.dp),
+                shape = RoundedCornerShape(9.dp),
+                color = TermsChip,
+            ) {
+                Text(
+                    text = "Last updated 08/09/2026",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    color = TermsPurple,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(TERMS_SECTIONS) { section ->
+                    TermsSectionCard(section)
                 }
+            }
+        }
+    }
+
+    @Suppress("UNUSED_VARIABLE")
+    val keepNavigationContract = onAccountsClick to onLobbyClick to onVibeClick to onSettingsClick
+}
+
+@Composable
+private fun TermsSectionCard(section: TermsSection) {
+    val number = section.title.substringBefore(".", "").trim()
+    val heading = section.title.substringAfter(". ", section.title)
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, TermsBorder),
+        shadowElevation = 1.dp,
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .background(TermsChip, RoundedCornerShape(9.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = number,
+                    color = TermsPurple,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(
+                    text = heading,
+                    color = TermsInk,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = section.body,
+                    modifier = Modifier.padding(top = 4.dp),
+                    color = TermsMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 19.sp,
+                )
             }
         }
     }

@@ -4,11 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.indoone.settings.applock.AppLockStore
+import com.indoone.settings.biometric.BiometricAuthenticator
+import com.indoone.settings.biometric.BiometricUnlockStore
 
 class UnlockAppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,35 +17,33 @@ class UnlockAppActivity : ComponentActivity() {
             finish()
             return
         }
+        val biometricStore = BiometricUnlockStore(applicationContext)
 
         setContent {
             MaterialTheme {
-                var pin by remember { mutableStateOf("") }
-                var error by remember { mutableStateOf("") }
-
-                UnlockAppScreen(
-                    pin = pin,
-                    error = error,
-                    onDigit = { digit ->
-                        if (pin.length < 12) {
-                            pin += digit
-                            error = ""
-                        }
-                    },
-                    onBackspace = {
-                        pin = pin.dropLast(1)
-                        error = ""
-                    },
-                    onClear = {
-                        pin = ""
-                        error = ""
-                    },
-                    onUnlock = {
+                // The same lock screen Auto-Lock shows, so "Lock App" and an automatic
+                // lock look and behave identically: biometric first when it is enabled,
+                // then the App PIN.
+                AutoLockUnlockScreen(
+                    biometricEnabled = biometricStore.isEnabled(),
+                    onUnlockWithPin = { pin ->
                         if (store.verifyPin(pin)) {
                             finish()
+                            true
                         } else {
-                            pin = ""
-                            error = "Incorrect App PIN"
+                            false
+                        }
+                    },
+                    onUnlockWithBiometric = {
+                        val authenticator = BiometricAuthenticator(this)
+                        if (!authenticator.canAuthenticate()) {
+                            false
+                        } else {
+                            authenticator.authenticateForUnlock(
+                                onSuccess = { finish() },
+                                onError = { },
+                            )
+                            true
                         }
                     },
                 )
