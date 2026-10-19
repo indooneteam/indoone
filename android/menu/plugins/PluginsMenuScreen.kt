@@ -2,6 +2,9 @@ package com.indoone.menu.plugins
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +47,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.AuthorizationResult
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.indoone.R
 import com.indoone.menu.plugins.email.gmail.GmailPluginApi
 import com.indoone.menu.plugins.github.GitHubConnectionStatus
@@ -61,14 +69,13 @@ private val ConnectedGreen = Color(0xFF218653)
 @Composable
 fun PluginsMenuScreen(
     onBack: () -> Unit,
-    onEmailClick: () -> Unit,
-    onGitHubClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var checking by remember { mutableStateOf(true) }
     var gmailConnected by remember { mutableStateOf<Boolean?>(null) }
     var gmailAddress by remember { mutableStateOf("") }
+    var gmailConnecting by remember { mutableStateOf(false) }
     var zohoConnected by remember { mutableStateOf<Boolean?>(null) }
     var zohoAddress by remember { mutableStateOf("") }
     var zohoUpdatedAt by remember { mutableStateOf<String?>(null) }
@@ -89,7 +96,7 @@ fun PluginsMenuScreen(
             }
             .onFailure {
                 gmailConnected = null
-                statusMessage = "Could not check the Email connection. Try again."
+                statusMessage = "Could not check the Gmail connection. Try again."
             }
 
         runCatching { ZohoMailPluginApi.getConnectionStatus() }
@@ -221,6 +228,103 @@ fun PluginsMenuScreen(
         }
     }
 
+    fun finishGmailAuthorization(result: AuthorizationResult) {
+        val serverAuthCode = result.serverAuthCode?.trim().orEmpty()
+        if (serverAuthCode.isBlank()) {
+            gmailConnecting = false
+            statusMessage = "Google did not return a server authorization code. Reconnect Gmail and approve offline access."
+            return
+        }
+        val grantedScope = result.grantedScopes.orEmpty().joinToString(" ")
+        scope.launch {
+            runCatching {
+                GmailPluginApi.storeServerAuthCode(
+                    serverAuthCode = serverAuthCode,
+                    grantedScope = grantedScope,
+                )
+            }.onSuccess { saved ->
+                gmailConnected = saved.connected
+                gmailAddress = saved.emailAddress.orEmpty()
+                statusMessage = if (saved.connected) {
+                    "Gmail connected and verified" +
+                        saved.emailAddress?.takeIf { it.isNotBlank() }?.let { " as $it." }.orEmpty()
+                } else {
+                    "Gmail authorization completed, but the connection was not saved everywhere."
+                }
+            }.onFailure { error ->
+                statusMessage = error.message?.takeIf { it.isNotBlank() }
+                    ?: "Could not save Gmail authorization."
+            }
+            gmailConnecting = false
+        }
+    }
+
+    // Google answers through an intent sender rather than a browser, so Gmail needs
+    // its own launcher. The row's + starts it directly, with no page in between,
+    // exactly like Zoho Mail and GitHub.
+    val gmailAuthorizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { activityResult ->
+        try {
+            val result = Identity
+                .getAuthorizationClient(context)
+                .getAuthorizationResultFromIntent(activityResult.data)
+            finishGmailAuthorization(result)
+        } catch (error: ApiException) {
+            gmailConnecting = false
+            statusMessage = "Google authorization failed (${error.statusCode}): " +
+                (error.message ?: "unknown Google authorization error.")
+        } catch (error: Exception) {
+            gmailConnecting = false
+            statusMessage = error.message ?: "Google authorization failed."
+        }
+    }
+
+    fun startGmailAuthorization() {
+        if (checking || gmailConnecting || disconnectingProvider == "gmail") return
+        gmailConnecting = true
+        statusMessage = if (gmailConnected == true) {
+            "Opening Gmail reauthorization…"
+        } else {
+            "Opening Gmail authorization…"
+        }
+        scope.launch {
+            try {
+                val serverClientId = GmailPluginApi.getGoogleServerClientId()
+                val authorizationRequest = AuthorizationRequest.builder()
+                    .setRequestedScopes(listOf(Scope(GmailPluginApi.GMAIL_SCOPE)))
+                    .requestOfflineAccess(serverClientId)
+                    .setPrompt(AuthorizationRequest.Prompt.CONSENT)
+                    .build()
+
+                Identity.getAuthorizationClient(context)
+                    .authorize(authorizationRequest)
+                    .addOnSuccessListener { authorizationResult ->
+                        if (authorizationResult.hasResolution()) {
+                            val pendingIntent = authorizationResult.pendingIntent
+                            if (pendingIntent == null) {
+                                gmailConnecting = false
+                                statusMessage = "Google authorization could not start."
+                            } else {
+                                gmailAuthorizationLauncher.launch(
+                                    IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                                )
+                            }
+                        } else {
+                            finishGmailAuthorization(authorizationResult)
+                        }
+                    }
+                    .addOnFailureListener { error ->
+                        gmailConnecting = false
+                        statusMessage = error.message ?: "Could not start Google authorization."
+                    }
+            } catch (error: Exception) {
+                gmailConnecting = false
+                statusMessage = error.message ?: "Could not prepare secure Gmail authorization."
+            }
+        }
+    }
+
     fun disconnect(provider: String) {
         if (disconnectingProvider != null) return
         scope.launch {
@@ -228,7 +332,7 @@ fun PluginsMenuScreen(
             statusMessage = ""
             try {
                 when (provider) {
-                    "email" -> {
+                    "gmail" -> {
                         GmailPluginApi.disconnect()
                         gmailConnected = false
                         gmailAddress = ""
@@ -246,7 +350,7 @@ fun PluginsMenuScreen(
                     }
                 }
                 statusMessage = when (provider) {
-                    "email" -> "Email disconnected."
+                    "gmail" -> "Gmail disconnected."
                     "zoho-mail" -> "Zoho Mail disconnected."
                     else -> "GitHub disconnected."
                 }
@@ -279,7 +383,6 @@ fun PluginsMenuScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                         contentDescription = "Back",
-                        tint = AppPurple,
                     )
                 }
                 Text(
@@ -291,21 +394,21 @@ fun PluginsMenuScreen(
             }
 
             MailProviderRow(
-                title = "Email",
+                title = "Gmail",
                 accountAddress = gmailAddress,
                 connected = gmailConnected,
-                isZoho = false,
-                busy = checking || disconnectingProvider == "email",
-                onAdd = onEmailClick,
-                onReauthorize = onEmailClick,
-                onDisconnect = { pendingDisconnect = "email" },
+                logoRes = R.drawable.gmail_logo,
+                busy = checking || gmailConnecting || disconnectingProvider == "gmail",
+                onAdd = { startGmailAuthorization() },
+                onReauthorize = { startGmailAuthorization() },
+                onDisconnect = { pendingDisconnect = "gmail" },
             )
 
             MailProviderRow(
                 title = "Zoho Mail",
                 accountAddress = zohoAddress,
                 connected = zohoConnected,
-                isZoho = true,
+                logoRes = R.drawable.zoho_mail_logo,
                 busy = checking || zohoAuthorizing || disconnectingProvider == "zoho-mail",
                 onAdd = { startZohoAuthorization() },
                 onReauthorize = { startZohoAuthorization() },
@@ -320,7 +423,6 @@ fun PluginsMenuScreen(
                 onAdd = { startGitHubAuthorization() },
                 onReauthorize = { startGitHubAuthorization() },
                 onDisconnect = { pendingDisconnect = "github" },
-                onBrowse = onGitHubClick,
             )
 
             if (githubStatusMessage.isNotBlank()) {
@@ -371,7 +473,7 @@ fun PluginsMenuScreen(
 
     if (pendingDisconnect != null) {
         val disconnectTitle = when (pendingDisconnect) {
-            "email" -> "Disconnect Email?"
+            "gmail" -> "Disconnect Gmail?"
             "zoho-mail" -> "Disconnect Zoho Mail?"
             else -> "Disconnect GitHub?"
         }
@@ -416,7 +518,7 @@ private fun MailProviderRow(
     title: String,
     accountAddress: String,
     connected: Boolean?,
-    isZoho: Boolean,
+    logoRes: Int,
     busy: Boolean,
     onAdd: () -> Unit,
     onReauthorize: () -> Unit,
@@ -444,19 +546,11 @@ private fun MailProviderRow(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (isZoho) {
-                        Image(
-                            painter = painterResource(R.drawable.zoho_mail_logo),
-                            contentDescription = "Zoho Mail logo",
-                            modifier = Modifier.size(40.dp),
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(R.drawable.gmail_logo),
-                            contentDescription = "Gmail logo",
-                            modifier = Modifier.size(40.dp),
-                        )
-                    }
+                    Image(
+                        painter = painterResource(logoRes),
+                        contentDescription = "$title logo",
+                        modifier = Modifier.size(40.dp),
+                    )
                 }
             }
 
@@ -473,7 +567,7 @@ private fun MailProviderRow(
                 when (connected) {
                     true -> {
                         Text(
-                            text = accountAddress.ifBlank { if (isZoho) "Zoho Mail account" else "Gmail account" },
+                            text = accountAddress.ifBlank { "$title account" },
                             color = Muted,
                             fontSize = 12.sp,
                             maxLines = 1,
@@ -485,7 +579,7 @@ private fun MailProviderRow(
                         )
                     }
                     false -> Text(
-                        text = if (isZoho) "Connect your Zoho Mail account" else "Connect your Gmail account",
+                        text = "Connect your $title account",
                         color = Muted,
                         fontSize = 12.sp,
                     )
@@ -577,7 +671,6 @@ private fun GitHubProviderRow(
     onAdd: () -> Unit,
     onReauthorize: () -> Unit,
     onDisconnect: () -> Unit,
-    onBrowse: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -631,13 +724,6 @@ private fun GitHubProviderRow(
                     false -> Text("Connect your GitHub account", color = Muted, fontSize = 12.sp)
                     null -> Text("Connection status unavailable", color = Muted, fontSize = 11.sp)
                 }
-            }
-
-            TextButton(
-                enabled = !busy,
-                onClick = onBrowse,
-            ) {
-                Text("Browse", color = AppPurple, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
 
             if (connected == true) {
