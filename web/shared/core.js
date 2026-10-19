@@ -79,9 +79,6 @@ window.showHome = function ({ remember = true } = {}) {
   document.getElementById('content')?.setAttribute('hidden', '');
   document.getElementById('settingsContent')?.setAttribute('hidden', '');
   document.getElementById('lobbyContent')?.setAttribute('hidden', '');
-  document
-    .querySelector('[data-notifications-page]')
-    ?.setAttribute('hidden', '');
   document.getElementById('addBtn')?.setAttribute('hidden', '');
   document.getElementById('searchWrap')?.setAttribute('hidden', '');
 

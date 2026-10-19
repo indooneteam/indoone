@@ -167,7 +167,6 @@
     PAGE_IDS.forEach(id => {
       document.getElementById(id)?.setAttribute('hidden', '');
     });
-    document.querySelector('[data-notifications-page]')?.setAttribute('hidden', '');
     document.getElementById('addBtn')?.setAttribute('hidden', '');
     document.getElementById('searchWrap')?.setAttribute('hidden', '');
 

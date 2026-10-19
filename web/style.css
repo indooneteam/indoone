@@ -1128,12 +1128,10 @@ html, body { height: 100%; }
 
 /* The hidden attribute has to win everywhere.
 
-   The chat page carries .chat-page { display: flex } and the Notification
-   Center carries .notifications-page { display: flex }. A display rule in the
+   The chat page carries .chat-page { display: flex }. A display rule in the
    stylesheet beats the browser's own [hidden] { display: none }, so putting
-   hidden on those pages did nothing at all: the chat stayed up under the
-   Notification Center, which is exactly what it looked like. One rule, marked
-   important, and the attribute means hidden for every element on the page. */
+   hidden on such a page did nothing at all. One rule, marked important, and the
+   attribute means hidden for every element on the page. */
 [hidden] {
   display: none !important;
 }
@@ -1144,7 +1142,6 @@ html, body { height: 100%; }
 
 #app.phone-shell > #content,
 #app.phone-shell > #homeContent,
-#app.phone-shell > .notifications-page,
 #app.phone-shell > .settings-content,
 #app.phone-shell > #modal {
   flex: 1 1 auto !important;
@@ -1310,8 +1307,7 @@ html, body { height: 100%; }
   .accounts-content,
   #content,
   #lobbyContent,
-  .settings-content,
-  [data-notifications-page] {
+  .settings-content {
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
