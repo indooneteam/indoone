@@ -67,10 +67,11 @@
       const limit = limitFor(mimeType);
 
       if (bytes.length > limit) {
+        // ChatApi.kt's own wording.
         throw new Error(
           mimeType.startsWith('image/')
-            ? 'This image is larger than 5 MB.'
-            : 'This file is larger than 8 MB.'
+            ? 'This attachment exceeds the 5 MB limit.'
+            : 'This attachment exceeds the 8 MB limit.'
         );
       }
 

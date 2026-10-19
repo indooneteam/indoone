@@ -4,18 +4,18 @@
     // chat-api.js was written but never listed here, so window.IndooneChatApi
     // was undefined and both the composer and Vibe threw the moment they tried
     // to send. It goes first, because the others call it.
-    'home/message/chat-api.js?v=20261018b',
+    'home/message/chat-api.js?v=20261019f',
     'home/message/cloud-chat.js?v=20261018b',
     'home/message/chat-store.js?v=20261018b',
     'home/message/message.js?v=20261018b',
-    'home/send/send.js?v=20261018b',
-    'home/voice/voice.js?v=20261018b',
+    'home/send/send.js?v=20261019f',
+    'home/voice/voice.js?v=20261019f',
     'home/plus/plus.js?v=20261018b',
     'home/plus/camera/camera.js?v=20261018b',
     'home/plus/photos/photos.js?v=20261018b',
     'home/plus/files/files.js?v=20261018b',
     'vibe/vibe-live.js?v=20261018b',
-    'vibe/vibe.js?v=20261018b'
+    'vibe/vibe.js?v=20261019f'
   ];
 
   // The app alternates these two, every two seconds.

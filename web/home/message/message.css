@@ -46,14 +46,19 @@
   word-break: break-word;
 }
 
+/* HomeScreen.kt: the user bubble has its small corner at bottomEnd
+   (bottom-right) and its padding is 12dp horizontal / 10dp vertical; the
+   assistant bubble has its small corner at bottomStart (bottom-left) and its
+   padding is 15dp / 12dp. The two radii used to be swapped. */
 .chat-row.mine .chat-bubble {
-  border-radius: 18px 18px 18px 5px;
+  border-radius: 18px 18px 5px 18px;
+  padding: 10px 12px;
   background: #703be2;
   color: #fff;
 }
 
 .chat-row.theirs .chat-bubble {
-  border-radius: 18px 18px 5px 18px;
+  border-radius: 18px 18px 18px 5px;
   background: #f5f2fb;
   color: #292331;
 }
@@ -90,7 +95,8 @@
 .chat-attachment-photo {
   max-width: 220px;
   max-height: 220px;
-  border-radius: 14px;
+  /* HomeScreen.kt draws a sent photo with RoundedCornerShape(9.dp). */
+  border-radius: 9px;
   display: block;
   object-fit: cover;
 }

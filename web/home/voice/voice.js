@@ -54,7 +54,7 @@
 
   function start() {
     if (!SpeechRecognition) {
-      setError('Speech recognition is not available in this browser.');
+      setError('Speech recognition is not available on this device.');
       return;
     }
 
@@ -89,6 +89,8 @@
 
       const messages = {
         'no-speech': 'No speech detected. Try again.',
+        // HomeScreen.kt's ERROR_NO_MATCH line.
+        'no-match': 'I could not hear that clearly. Try again.',
         'not-allowed': 'Microphone permission is required.',
         'service-not-allowed': 'Microphone permission is required.',
         'audio-capture': 'Microphone permission is required.'

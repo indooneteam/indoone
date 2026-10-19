@@ -76,7 +76,13 @@
   function paintSpeaker() {
     speaker?.classList.toggle('on', speakerOn);
     speakerLabel && (speakerLabel.textContent = speakerOn ? 'Speaker' : 'Muted');
-    window.IndooneIcons?.apply?.(speaker);
+
+    // VibeScreen.kt uses VolumeUp when the speaker is on and VolumeOff when it
+    // is muted. The icon was left on volumeUp whatever the state.
+    if (speakerIcon) {
+      speakerIcon.dataset.appIcon = speakerOn ? 'volumeUp' : 'volumeOff';
+      window.IndooneIcons?.redraw?.(speakerIcon);
+    }
   }
 
   // VibeScreen.kt shows the connection state until it is Connected, and then
@@ -110,15 +116,21 @@
         paintState();
         return;
 
-      case 'transcript':
+      case 'transcript': {
+        // VibeSessionService.kt stores a user line as "You: $text" and an
+        // assistant line as "Indoone: $text", so the transcript carries the
+        // speaker's name.
+        const line = String(event.text || '').trim();
+
         if (event.role === 'assistant') {
-          setTranscript(String(event.text || '').trim());
+          setTranscript(`Indoone: ${line}`);
         } else {
-          userLine = String(event.text || '').trim();
-          setTranscript(userLine);
+          userLine = line;
+          setTranscript(`You: ${line}`);
         }
 
         return;
+      }
 
       case 'interrupted':
         thinking = false;
@@ -202,7 +214,8 @@
     speakerLabel = document.getElementById('vibeSpeakerLabel');
 
     mute?.addEventListener('click', toggleMic);
-    orb?.addEventListener('click', toggleMic);
+    // VibeScreen.kt's orb has no click handler - only the mic control toggles
+    // the mic - so tapping the orb does nothing here either.
 
     speaker?.addEventListener('click', () => {
       speakerOn = !speakerOn;
