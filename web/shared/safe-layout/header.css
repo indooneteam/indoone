@@ -26,16 +26,17 @@
 }
 
 .topbar-left .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   position: relative;
 }
 
 .topbar-left .brand strong {
-  font-size: 22px;
-  line-height: 22px;
-  color: #6330db;
-  letter-spacing: -0.2px;
+  font-size: 19px;
+  line-height: 18px;
+  color: #5e2dd2;
+  font-weight: 700;
+  letter-spacing: normal;
 }
 
 .topbar-left .brand small {
@@ -50,6 +51,13 @@
   font-size: 23px;
   line-height: 1;
   transform: translateY(4px);
+}
+
+/* MenuIcon is 21dp in the app (AppPageChrome.kt AppTopBar). .app-icon defaults
+   to 22px, so it is sized down here for the top bar only. */
+.topbar-left .menu-top-btn .app-icon {
+  width: 21px;
+  height: 21px;
 }
 
 .topbar .top-actions {
@@ -87,24 +95,3 @@
   min-height: 42px;
 }
 
-@media (max-width: 360px) {
-  .topbar-left {
-    gap: 9px;
-  }
-
-  .topbar-left .brand {
-    padding-left: 4px;
-    padding-right: 4px;
-    gap: 7px;
-  }
-
-  .topbar-left .brand-mark {
-    width: 30px;
-    height: 30px;
-  }
-
-  .topbar-left .brand strong {
-    font-size: 19px;
-    line-height: 19px;
-  }
-}
