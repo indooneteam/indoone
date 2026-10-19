@@ -2,36 +2,37 @@
 
   // The web counterpart of android/settings/SettingsScreen.kt.
   //
-  // The rows below are read from the terminal branch, because that is the
-  // branch the installed test app is built from, and it does not match main.
-  //
-  // terminal draws, in this order, with no section heading and no eyebrow
-  // above the title:
+  // The app on main draws, in this order, with no section heading and no
+  // eyebrow above the title:
   //
   //   SettingsMenuItem(ProfileIcon,       "Profile",       ...)
   //   SettingsMenuItem(LockIcon,          "App Lock")
   //   SettingsMenuToggle(BiometricIcon,   "Biometric Unlock", ...)
   //   SettingsMenuItem(TimerIcon,         "Auto-Lock")
-  //   SettingsMenuAction(InfoIcon, "Version", versionName, "Check for updates")
+  //   SettingsMenuItem(NotificationsIcon, "Notifications")
+  //   SettingsMenuItem(InfoIcon,          "About Indoone")
   //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")
   //   SettingsMenuItem(LogoutIcon,        "Log out")
   //
-  // main replaces that Version row with SettingsMenuItem(InfoIcon, "About
-  // Indoone"). The installed app has no About row here at all - About Indoone
-  // is a drawer row, under SECURITY & INFORMATION - so the web does not draw
-  // one either. The About screen still exists and the drawer still
-  // opens it; it is simply not listed here.
+  // Four of those rows are deliberately absent on the web. App Lock, Biometric
+  // Unlock and Auto-Lock are device features - a device PIN, a device biometric
+  // and a device auto-lock timer - with nothing to do in a browser tab, and
+  // Notifications has no web push parity here. They are left out rather than
+  // drawn as rows that open nothing.
   //
-  // Three of the app's rows are deliberately absent: App Lock, Biometric
-  // Unlock and Auto-Lock are device features with nothing to do on the web,
-  // and the Version row is absent for the same reason - a browser tab does not
-  // have an installed version to report.
+  // About Indoone IS drawn here, because the app draws it and its own screen is
+  // a different one from the drawer's About. The app carries both:
   //
-  // Danger Zone and Log out are menu features whose folders live under
-  // settings/ (see featurePaths in menu/script.js). They are opened through
-  // openMenuFeature, which loads the fragment, its stylesheet and its script -
-  // the same way the drawer opens them. That is why these two call
-  // openMenuFeature and not a window.show* of their own.
+  //   android/settings/about/AboutScreen.kt   - the Settings row's screen
+  //   android/menu/about/MenuAboutScreen.kt   - the drawer's screen
+  //
+  // so the Settings row opens the settings one under its own loader key,
+  // 'settings-about' (see featureInitializers / featurePaths in menu/script.js).
+  //
+  // Profile, About Indoone, Danger Zone and Log out are menu features whose
+  // folders live under settings/ (see featurePaths in menu/script.js). They are
+  // opened through openMenuFeature, which loads the fragment, its stylesheet
+  // and its script - the same way the drawer opens them.
   const SETTINGS = [
     {
       id: 'profile',
@@ -42,28 +43,48 @@
       action: () => window.openMenuFeature?.('account')
     },
     {
+      id: 'about',
+      title: 'About Indoone',
+      icon: 'info',
+      action: () => window.openMenuFeature?.('settings-about')
+    },
+    {
       id: 'danger-zone',
       title: 'Danger Zone',
-      icon: 'info',
+      icon: 'warning',
       action: () => window.openMenuFeature?.('danger-zone')
     },
     {
       id: 'logout',
       title: 'Log out',
-      icon: 'info',
+      icon: 'logout',
       action: () => window.openMenuFeature?.('logout')
     }
   ];
 
   const ICONS = {
+    // Icons.Outlined.Person, the app's ProfileIcon
     profile: `
       <circle cx="12" cy="8" r="3.1"></circle>
       <path d="M5.5 19.5c.8-3.1 3.1-4.8 6.5-4.8s5.7 1.7 6.5 4.8"></path>
     `,
+    // Icons.Outlined.Info, the app's InfoIcon (About Indoone)
     info: `
       <circle cx="12" cy="12" r="8"></circle>
       <path d="M12 10.5v5"></path>
       <path d="M12 7.5h.01"></path>
+    `,
+    // Icons.Outlined.WarningAmber, the app's DangerZoneIcon
+    warning: `
+      <path d="M12 3.6 2.6 20.2h18.8z"></path>
+      <path d="M12 9.6v4.6"></path>
+      <path d="M12 17.1h.01"></path>
+    `,
+    // Icons.Outlined.Logout, the app's LogoutIcon
+    logout: `
+      <path d="M14.5 4.8H7a2 2 0 0 0-2 2v10.4a2 2 0 0 0 2 2h7.5"></path>
+      <path d="m16.6 8.3 3.4 3.7-3.4 3.7"></path>
+      <path d="M20 12H10"></path>
     `,
     next: `
       <path d="m9 5 7 7-7 7"></path>
@@ -72,8 +93,7 @@
 
   function makeIcon(type) {
     const svg = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'svg'
+      'http://www.w3.org/2000/svg'
     );
 
     svg.setAttribute('class', 'settings-option-icon');
@@ -185,9 +205,7 @@
     `;
     page.appendChild(head);
 
-    // Every row is drawn and every row is wired. This used to render only
-    // SETTINGS[0] and attach a click to profile alone, so the other four
-    // never appeared on the screen at all.
+    // Every row is drawn and every row is wired.
     SETTINGS.forEach(item => {
       const row = rowMarkup(item);
       row.addEventListener('click', () => item.action());
