@@ -258,29 +258,7 @@
   cursor: default;
 }
 
-.composer-send[hidden],
-
-/* The app swaps the last button: Send when there is something to send, the
-   Vibe button when there is not. */
-
-
-/* The white core, breathing between 0.88 and 1.08. */
-
-
-/* The dot that goes round, with the small white one on top of it. */
-
-
-/* The highlight in the top left corner. */
-
-@keyframes vibePulse {
-  from { transform: scale(.88); }
-  to   { transform: scale(1.08); }
-}
-
-@keyframes vibeOrbit {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+/* The hidden attribute is handled once, globally (style.css). */
 
 .voice-error {
   margin: 0;
