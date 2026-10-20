@@ -219,6 +219,21 @@
 
   window.closeMenuPage = closeMenuPage;
 
+  // Leaving every menu page, for the flows that jump straight to Home: the
+  // drawer's New Chat, opening a saved conversation, and finishing Add account.
+  // closeMenuPage() only steps back ONE level, so on a nested page (Plugins ->
+  // GitHub) it re-opens the parent underneath instead of clearing the way home.
+  // That is why the menu page stayed on screen behind Home.
+  function closeAllMenuPages() {
+    const page = document.getElementById('modal');
+
+    menuStack = [];
+    pageBeforeMenu = null;
+    page?.setAttribute('hidden', '');
+  }
+
+  window.closeAllMenuPages = closeAllMenuPages;
+
   // The features' own close buttons carry data-close. shared/events.js watches
   // for those on the overlay, which is where a feature used to live; now that
   // it is a page, the page has to watch for them itself.
