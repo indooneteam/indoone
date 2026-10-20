@@ -118,9 +118,11 @@
     renderPending();
   }
 
-  function clearPending() {
+  // keepUrls holds the object URLs that a sent message still points at. Only
+  // the ones nobody kept are revoked.
+  function clearPending(keepUrls) {
     pending.forEach(item => {
-      if (item.url) {
+      if (item.url && !(keepUrls && keepUrls.has(item.url))) {
         URL.revokeObjectURL(item.url);
       }
     });
@@ -161,14 +163,18 @@
       'or visible details.'
     );
 
+    // The bubble renders the photo straight from item.url, so the message and
+    // clearPending() have to agree on which object URLs are still needed.
+    const sentAttachments = attachments.map(item => ({
+      name: item.file.name,
+      type: item.file.type,
+      url: item.url
+    }));
+
     const mine = store.add({
       text,
       mine: true,
-      attachments: attachments.map(item => ({
-        name: item.file.name,
-        type: item.file.type,
-        url: item.url
-      }))
+      attachments: sentAttachments
     });
 
     if (input) {
@@ -178,7 +184,10 @@
 
     const conversationId = store.ensureConversationId();
 
-    clearPending();
+    // Hand the sent photos' URLs to clearPending so it does NOT revoke them.
+    // Revoking here is what left the sent photo as a broken image with only its
+    // filename showing: the bubble still pointed at the URL we had just killed.
+    clearPending(new Set(sentAttachments.map(item => item.url).filter(Boolean)));
     setBusy(true);
     // HomeScreen.kt shows Received for 350ms, then Thinking while the request
     // is in flight, then Preparing for 600ms before the reply.
