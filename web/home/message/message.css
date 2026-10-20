@@ -26,17 +26,24 @@
 }
 
 /* HomeScreen.kt caps only the USER's column - widthIn(max = 260.dp) sits on the
-   fromUser branch, and the assistant's Surface carries no cap at all, so a
-   reply takes the whole row beside the 24dp mark. Capping both columns here is
-   what left every reply in a 260px strip with the rest of the line empty. */
+   fromUser branch, and the assistant's Surface carries no cap at all. Capping
+   both columns here is what left every reply in a 260px strip with the rest of
+   the line empty. */
 .chat-row.mine .chat-column {
   align-items: flex-end;
   max-width: 260px;
 }
 
+/* The reply's column takes the rest of the row, so a long reply wraps at the
+   line - but the bubble must NOT be stretched to it. The app's Surface has no
+   width of its own: it wraps its text, so a short reply is a small bubble and
+   only a long one reaches the edge. align-items: flex-start keeps that - the
+   bubble sizes to its content, up to the column width - where the default
+   stretch made every reply, however short, span the whole line. */
 .chat-row.theirs .chat-column {
   flex: 1 1 auto;
   min-width: 0;
+  align-items: flex-start;
 }
 
 /* The app puts the Indoone mark beside every reply of its own. */
