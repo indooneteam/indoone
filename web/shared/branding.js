@@ -151,6 +151,12 @@
       .chat-logo.branding-image {
         width: 24px !important;
         height: 24px !important;
+        /* The rule above sets margin: 0 !important, which was silently wiping
+           the 8px the chat mark keeps before a reply. HomeScreen.kt gives its
+           mark padding(end = 8.dp), so the reply must start 8px clear of it -
+           without this the text sat flush against the mark and the bubble was
+           8px wider than the app's. Same specificity, so it wins. */
+        margin-right: 8px !important;
       }
 
       .drawer-brand .branding-image {
