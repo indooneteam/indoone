@@ -152,8 +152,13 @@
       payload.conversation_id = conversationId;
     }
 
+    // The key is "attachments", not "media_attachments". ChatApi.kt builds the
+    // same payload and names the array "attachments" (ChatApi.kt: put("attachments",
+    // attachmentArray)); the backend reads that name. This page used to send
+    // media_attachments, which the backend did not know, so a photo went up and
+    // was ignored - the reply came back as if no photo had been sent.
     if (media && media.length) {
-      payload.media_attachments = media;
+      payload.attachments = media;
     }
 
     const json = await postJson('/api/chat', payload);
