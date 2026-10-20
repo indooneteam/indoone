@@ -228,11 +228,24 @@
       });
     } finally {
       setBusy(false);
+
+      const messages = store.getMessages();
+
       window.IndooneMessages?.render(
         document.getElementById('chatList'),
-        store.getMessages(),
+        messages,
         null
       );
+
+      // The welcome block goes the moment there is a message. HomeScreen.kt
+      // only draws it while messages.isEmpty(), and paintThread() in
+      // chat-home.js does the same - but send() renders the thread itself and
+      // never went through paintThread, so the welcome stayed on screen after
+      // the first send. Same condition as paintThread.
+      document
+        .getElementById('chatWelcome')
+        ?.toggleAttribute('hidden', messages.length > 0);
+
       window.IndooneChatScroll?.toBottom?.();
       window.IndooneChatHome?.syncComposer?.();
     }
