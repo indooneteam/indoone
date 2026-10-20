@@ -92,8 +92,13 @@
   };
 
   function makeIcon(type) {
+    // createElementNS needs BOTH arguments. Without the tag name this throws
+    // "2 arguments required, but only 1 present" on the first row, so
+    // renderSettingsPage() died and the Settings tab kept showing the accounts
+    // page underneath. Every other createElementNS in web/ passes 'svg'.
     const svg = document.createElementNS(
-      'http://www.w3.org/2000/svg'
+      'http://www.w3.org/2000/svg',
+      'svg'
     );
 
     svg.setAttribute('class', 'settings-option-icon');
