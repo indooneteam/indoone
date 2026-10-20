@@ -74,6 +74,11 @@ window.showHome = function ({ remember = true } = {}) {
   clearHomeSubRoute();
   overlay?.classList.add('hidden');
   window.closeDrawer?.();
+  // Any menu page goes too. showHome is reached from the drawer's New Chat and
+  // from opening a saved conversation, and both of those happen with a menu
+  // page open - which it used to leave on screen underneath Home. closeModal
+  // above already does this; showHome did not.
+  window.closeAllMenuPages?.();
 
   document.getElementById('homeContent')?.removeAttribute('hidden');
   document.getElementById('content')?.setAttribute('hidden', '');
