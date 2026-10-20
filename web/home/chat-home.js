@@ -8,7 +8,7 @@
     'home/message/cloud-chat.js?v=20261018b',
     'home/message/chat-store.js?v=20261018b',
     'home/message/message.js?v=20261018b',
-    'home/send/send.js?v=20261020a',
+    'home/send/send.js?v=20261020b',
     'home/voice/voice.js?v=20261019f',
     'home/plus/plus.js?v=20261018b',
     'home/plus/camera/camera.js?v=20261018b',
