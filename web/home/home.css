@@ -29,11 +29,18 @@
   display: none;
 }
 
+/* The greeting. The app's welcome used to say a flat "Indoone AI"; it now
+   greets you by name and by the hour, so the line is mostly body colour with
+   the name in the brand purple. chat-home.js fills it in. */
 .welcome-title {
   margin: 12px 0 0;
+  color: #352742;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.welcome-name {
   color: #703be2;
-  font-size: 21px;
-  font-weight: 700;
 }
 
 .welcome-sub {
@@ -42,14 +49,29 @@
   font-size: 12px;
 }
 
+/* The panel. It was a plain bordered box; it now carries the purple, with a
+   3px accent down its left edge so the greeting reads as coming from Indoone
+   rather than as a chat bubble. */
 .welcome-card {
+  position: relative;
   width: 100%;
-  margin-top: 18px;
+  margin-top: 16px;
   padding: 15px 18px;
   border-radius: 20px;
-  background: #faf8ff;
-  border: 1px solid #e9e0f7;
+  background: linear-gradient(150deg, #f6efff 0%, #fbf8ff 100%);
+  border: 1px solid #e2d5f8;
   text-align: left;
+  overflow: hidden;
+}
+
+.welcome-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #703be2, #b78bff);
 }
 
 .welcome-hi {
@@ -78,16 +100,18 @@
   margin-top: 8px;
 }
 
+/* Filled, not outlined: an outline reads as a secondary button, and these are
+   the first thing to press on an empty screen. */
 .quick-chip {
   flex: 1 1 0;
   min-width: 0;
   padding: 10px 12px;
-  border-radius: 18px;
-  border: 1px solid #d9c9f2;
-  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e0d1fa;
+  background: #f0e7ff;
   color: #5e2dd2;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -95,7 +119,77 @@
 }
 
 .quick-chip:hover {
-  background: #faf7ff;
+  background: #e7daff;
+}
+
+/* ------------------------------------------------- pick up where you left off */
+
+.welcome-resume {
+  width: 100%;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.welcome-resume[hidden] {
+  display: none;
+}
+
+.welcome-resume-label {
+  margin: 0 0 7px;
+  color: #9a929f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.welcome-resume-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 12px 10px 14px;
+  border-radius: 14px;
+  border: 1px solid #ece4fa;
+  background: #fbf9ff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-resume-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #703be2, #b78bff);
+}
+
+.welcome-resume-row b {
+  display: block;
+  min-width: 0;
+  color: #352742;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.welcome-resume-row span {
+  flex: none;
+  color: #9a929f;
+  font-size: 10px;
+}
+
+.welcome-resume-row:hover {
+  background: #f6f1ff;
 }
 
 /* ---------------------------------------------------------- the composer */
