@@ -17,7 +17,7 @@
   <title>Indoone</title>
 
   <link rel="stylesheet" href="style.css?v=20261019h" />
-  <link rel="stylesheet" href="home/home.css?v=20261019h" />
+  <link rel="stylesheet" href="home/home.css?v=20261020a" />
   <link rel="stylesheet" href="home/message/message.css?v=20261020b" />
   <link rel="stylesheet" href="home/plus/plus.css?v=20261019f" />
   <link rel="stylesheet" href="vibe/vibe.css?v=20261019f" />
@@ -128,11 +128,14 @@
           class="chat-welcome"
           id="chatWelcome"
         >
-          <h2 class="welcome-title">Indoone AI</h2>
+          <h2
+            class="welcome-title"
+            id="welcomeTitle"
+          >Hi! 👋</h2>
           <p class="welcome-sub">Your Personal AI Assistant</p>
 
           <div class="welcome-card">
-            <strong class="welcome-hi">Hi! 👋</strong>
+            <strong class="welcome-hi">What shall we do?</strong>
             <p
               class="welcome-line"
               id="welcomeLine"
@@ -171,6 +174,18 @@
             >
               More…
             </button>
+          </div>
+
+          <div
+            class="welcome-resume"
+            id="welcomeResume"
+            hidden
+          >
+            <p class="welcome-resume-label">Pick up where you left off</p>
+            <div
+              class="welcome-resume-list"
+              id="welcomeResumeList"
+            ></div>
           </div>
         </div>
 
@@ -725,7 +740,7 @@
   <script src="authentication/sign-up/signup.js?v=20261018b"></script>
 
   <script src="home/home.js?v=20261018b"></script>
-  <script src="home/chat-home.js?v=20261020c"></script>
+  <script src="home/chat-home.js?v=20261020d"></script>
   <script src="shared/branding.js?v=20261020a"></script>
   <script src="shared/app-icons.js?v=20261018b"></script>
   <script src="shared/core.js?v=20261020a"></script>
