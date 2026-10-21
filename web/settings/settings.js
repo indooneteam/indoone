@@ -2,15 +2,16 @@
 
   // The web counterpart of android/settings/SettingsScreen.kt.
   //
-  // The app on main draws, in this order, with no section heading and no
-  // eyebrow above the title:
+  // The app draws, in this order, with no section heading and no eyebrow above
+  // the title:
   //
   //   SettingsMenuItem(ProfileIcon,       "Profile",       ...)
   //   SettingsMenuItem(LockIcon,          "App Lock")
   //   SettingsMenuToggle(BiometricIcon,   "Biometric Unlock", ...)
   //   SettingsMenuItem(TimerIcon,         "Auto-Lock")
   //   SettingsMenuItem(NotificationsIcon, "Notifications")
-  //   SettingsMenuItem(InfoIcon,          "About Indoone")
+  //   SettingsMenuAction(InfoIcon,        "Version", versionName,
+  //                                       "Check for updates")
   //   SettingsMenuItem(DangerZoneIcon,    "Danger Zone")
   //   SettingsMenuItem(LogoutIcon,        "Log out")
   //
@@ -20,19 +21,24 @@
   // Notifications has no web push parity here. They are left out rather than
   // drawn as rows that open nothing.
   //
-  // About Indoone IS drawn here, because the app draws it and its own screen is
-  // a different one from the drawer's About. The app carries both:
+  // The Version row IS drawn. It is the row the app has where it once had
+  // "About Indoone": the terminal branch replaced SettingsMenuItem(InfoIcon,
+  // "About Indoone") with SettingsMenuAction(InfoIcon, "Version", versionName,
+  // "Check for updates"), and the merge brought that into main - so main has no
+  // About row here and no android/settings/about/ any more. About Indoone is
+  // still a drawer row, under SECURITY & INFORMATION, and this file does not
+  // draw one.
   //
-  //   android/settings/about/AboutScreen.kt   - the Settings row's screen
-  //   android/menu/about/MenuAboutScreen.kt   - the drawer's screen
+  // The app reads the installed package version for that subtitle
+  // (installedVersionName). A browser tab has no installed package, so this
+  // reports what web/update.json publishes - the same file settings/update
+  // reads. The row's action opens the update screen, which is the app's
+  // onCheckForUpdates.
   //
-  // so the Settings row opens the settings one under its own loader key,
-  // 'settings-about' (see featureInitializers / featurePaths in menu/script.js).
-  //
-  // Profile, About Indoone, Danger Zone and Log out are menu features whose
-  // folders live under settings/ (see featurePaths in menu/script.js). They are
-  // opened through openMenuFeature, which loads the fragment, its stylesheet
-  // and its script - the same way the drawer opens them.
+  // Profile, Danger Zone and Log out are menu features whose folders live under
+  // settings/ (see featurePaths in menu/script.js). They are opened through
+  // openMenuFeature, which loads the fragment, its stylesheet and its script -
+  // the same way the drawer opens them.
   const SETTINGS = [
     {
       id: 'profile',
@@ -43,10 +49,12 @@
       action: () => window.openMenuFeature?.('account')
     },
     {
-      id: 'about',
-      title: 'About Indoone',
+      id: 'version',
+      title: 'Version',
       icon: 'info',
-      action: () => window.openMenuFeature?.('settings-about')
+      subtitle: () => webVersion,
+      trailing: 'Check for updates',
+      action: () => window.openMenuFeature?.('update')
     },
     {
       id: 'danger-zone',
@@ -62,13 +70,42 @@
     }
   ];
 
+  // The app's Version row reports the installed package version. A browser tab
+  // has none, so this reads web/update.json's versionName - the same value
+  // settings/update shows. Until it arrives the row draws its title alone,
+  // which is what the app does when the version cannot be read.
+  let webVersion = '';
+  let versionRequested = false;
+
+  function loadVersion() {
+    if (versionRequested) {
+      return;
+    }
+
+    versionRequested = true;
+
+    fetch('update.json', { cache: 'no-store' })
+      .then(response => (response.ok ? response.json() : null))
+      .then(metadata => {
+        webVersion = metadata?.versionName || '';
+
+        // Redraw only when the settings page is the one on screen.
+        const page = document.getElementById('settingsContent');
+
+        if (page && !page.hasAttribute('hidden')) {
+          renderSettingsPage();
+        }
+      })
+      .catch(() => {});
+  }
+
   const ICONS = {
     // Icons.Outlined.Person, the app's ProfileIcon
     profile: `
       <circle cx="12" cy="8" r="3.1"></circle>
       <path d="M5.5 19.5c.8-3.1 3.1-4.8 6.5-4.8s5.7 1.7 6.5 4.8"></path>
     `,
-    // Icons.Outlined.Info, the app's InfoIcon (About Indoone)
+    // Icons.Outlined.Info, the app's InfoIcon (the Version row)
     info: `
       <circle cx="12" cy="12" r="8"></circle>
       <path d="M12 10.5v5"></path>
@@ -146,12 +183,21 @@
       <b>${item.title}</b>
     `;
 
-    const arrow = document.createElement('span');
-    arrow.className = 'settings-arrow';
-    arrow.setAttribute('aria-hidden', 'true');
-    arrow.appendChild(makeIcon('next'));
+    // SettingsMenuAction draws its action as text on the row - Text(action,
+    // color = Color(0xFF6330DB), fontSize = 12.sp, fontWeight = SemiBold) -
+    // where SettingsMenuItem draws an AppChevron.
+    const trailing = document.createElement('span');
 
-    button.append(iconWrap, text, arrow);
+    if (item.trailing) {
+      trailing.className = 'settings-row-action';
+      trailing.textContent = item.trailing;
+    } else {
+      trailing.className = 'settings-arrow';
+      trailing.setAttribute('aria-hidden', 'true');
+      trailing.appendChild(makeIcon('next'));
+    }
+
+    button.append(iconWrap, text, trailing);
     return button;
   }
 
@@ -228,6 +274,7 @@
     closeModal?.();
     renderSettingsPage();
     showSettingsPage();
+    loadVersion();
   };
 
   document.addEventListener('click', event => {
