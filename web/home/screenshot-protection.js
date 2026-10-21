@@ -33,7 +33,6 @@
     [
       'homeNav',
       'lobbyNav',
-      'connectNav',
       'settingsNav'
     ].forEach(id => {
       const node = document.getElementById(id);

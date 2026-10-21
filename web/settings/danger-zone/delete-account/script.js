@@ -16,8 +16,8 @@ window.initMenuDeleteAccount = function () {
       <button class="close-btn" data-close>×</button>
     </div>
     <p>
-      This permanently deletes your Indoone cloud data and Firebase account.
-      This action cannot be undone.
+      This permanently deletes your Indoone account, your cloud data and
+      everything stored on this device. This action cannot be undone.
     </p>
     <div class="field">
       <label>ACCOUNT PASSWORD</label>
@@ -193,7 +193,7 @@ window.initMenuDeleteAccount = function () {
 
         await db.ref().update(updates);
 
-        setStatus('Deleting your Firebase account…');
+        setStatus('Deleting your Indoone account…');
 
         await liveUser.delete();
 
@@ -238,7 +238,7 @@ window.initMenuDeleteAccount = function () {
         }
 
         if (code === 'auth/network-request-failed') {
-          setStatus('Network error. Check your connection and retry.', true);
+          setStatus('Network error. Check your connection and try again.', true);
           toast('Network error. Please retry');
           return;
         }

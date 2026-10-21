@@ -1,7 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const overlay = $('overlay');
-  const ADD_ROUTE_PREFIX = '#menu/accounts/add-account';
+  const ADD_ROUTE_PREFIX = '#lobby/accounts/add-account';
 
   let authResolved = false;
   let authGateRunning = false;
@@ -16,6 +16,15 @@
   }
 
   function renderLoginNow() {
+    // A signed-in session must never be covered by the sign-in screen. This
+    // used to call showLogin() whenever the overlay was not already showing an
+    // .auth-page, which put the beige backdrop back over the app after a
+    // restored session - the half-page of colour in the bug report.
+    if (window.IndooneFirebase?.auth?.currentUser) {
+      markAuthReady();
+      return false;
+    }
+
     try {
       if (window.IndooneAuthUI?.showLogin) {
         const overlayNode = $('overlay');
@@ -67,12 +76,24 @@
     element.addEventListener('click', handler);
   }
 
-  // One implementation, in shared/core.js, so the tab, the brand button, the
-  // Notification Center's back button and the menu all land in the same place.
+  // One implementation, in shared/core.js, so the tab, the brand button and
+  // the menu all land in the same place.
+  // The app's search field is hidden until the top-bar search icon is tapped
+  // (AccountsScreen.kt: searchVisible starts false), and the icon itself is
+  // drawn only where the search field lives. The web draws it on the accounts
+  // screen and nowhere else.
+  function setSearchControlVisible(visible) {
+    $('searchBtn')?.toggleAttribute('hidden', !visible);
+
+    if (!visible) {
+      $('searchWrap')?.setAttribute('hidden', '');
+    }
+  }
+
   function showHome(options) {
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
+    setSearchControlVisible(false);
     window.showHome?.(options);
   }
 
@@ -83,21 +104,15 @@
 
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
 
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
-    $('connectContent')?.setAttribute('hidden', '');
     $('settingsContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
     $('addBtn')?.removeAttribute('hidden');
-    $('searchWrap')?.removeAttribute('hidden');
+    setSearchControlVisible(true);
     $('homeNav')?.classList.add('active');
     $('lobbyNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
 
     window.IndooneHome?.restoreHome?.();
@@ -115,24 +130,24 @@
     closeDrawer();
     $('homeContent')?.setAttribute('hidden', '');
     $('content')?.removeAttribute('hidden');
-    $('connectContent')?.setAttribute('hidden', '');
     $('lobbyContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
     $('addBtn')?.setAttribute('hidden', '');
-    $('searchWrap')?.setAttribute('hidden', '');
+    setSearchControlVisible(false);
     $('settingsNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
     $('lobbyNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
 
     window.showSettings?.({ remember: false });
   }
 
-  // LobbyScreen.kt is a screen of its own: the top bar, the centred column,
-  // and the bottom navigation with Lobby active. It used to open as a pop-up
-  // here, with a Done button, which is not what the app does at all.
+  // Lobby is the accounts screen. AccountsScreen.kt is what the app shows when
+  // Lobby is the active tab - "Your accounts", the Sort button, a row per
+  // account with its code and countdown, and the "+" button - and the web has
+  // had that screen all along behind #content. The tab used to open a
+  // placeholder saying the Lobby was still being built, which was wrong.
+  //
+  // The accounts page itself is showAccounts above; this is the same view with
+  // Lobby carrying the active tab instead of Home.
   function showLobbyPanel({ remember = true } = {}) {
     if (remember) {
       window.IndoonePageState?.set('lobby');
@@ -140,24 +155,19 @@
 
     closeDrawer();
     closeModal();
-    window.showConnectHome?.({ remember: false });
 
     $('homeContent')?.setAttribute('hidden', '');
-    $('content')?.setAttribute('hidden', '');
-    $('connectContent')?.setAttribute('hidden', '');
-    document
-      .querySelector('[data-notifications-page]')
-      ?.setAttribute('hidden', '');
-    $('lobbyContent')?.removeAttribute('hidden');
-    $('addBtn')?.setAttribute('hidden', '');
-    $('searchWrap')?.setAttribute('hidden', '');
+    $('content')?.removeAttribute('hidden');
+    $('settingsContent')?.setAttribute('hidden', '');
+    $('lobbyContent')?.setAttribute('hidden', '');
+    $('addBtn')?.removeAttribute('hidden');
+    setSearchControlVisible(true);
 
     $('lobbyNav')?.classList.add('active');
     $('homeNav')?.classList.remove('active');
-    $('connectNav')?.classList.remove('active');
     $('settingsNav')?.classList.remove('active');
 
-    window.IndooneLobby?.paint?.();
+    window.IndooneHome?.restoreHome?.();
   }
 
   function clearStaleAddAccountRoute() {
@@ -199,33 +209,23 @@
 
       case 'profile':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
+        window.openMenuFeature?.('account');
         break;
 
       case 'mobile':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
-        window.showChangeMobile?.({ remember: false });
+        window.openMenuFeature?.('account');
+        window.openMenuFeature?.('change-mobile-number');
         break;
 
       case 'email':
         showSettingsPanel({ remember: false });
-        window.showProfile?.({ remember: false });
-        window.showChangeEmail?.({ remember: false });
+        window.openMenuFeature?.('account');
+        window.openMenuFeature?.('change-email');
         break;
 
-      case 'connect':
-        window.showConnect?.({ remember: false });
-        break;
 
-      case 'connect-choice':
-        window.showConnectChoice?.({ remember: false });
-        break;
 
-      case 'pair':
-        window.showConnect?.({ remember: false });
-        await window.showConnectPair?.({ remember: false });
-        break;
 
       case 'add-account':
         await window.IndooneHome?.showAddAccount?.({
@@ -247,13 +247,13 @@
   bindClick($('menuBtn'), () => window.toggleMenu?.());
   bindClick($('addBtn'), () => window.showAdd?.());
   bindClick($('emptyAddBtn'), () => window.showAdd?.());
-  bindClick($('notificationsBtn'), () => window.IndooneNotifications?.show?.());
   bindClick($('clearSearch'), () => window.IndooneHomeSearch?.clear?.());
   bindClick($('brandBtn'), showHome);
   bindClick($('homeNav'), showHome);
   bindClick($('settingsNav'), showSettingsPanel);
   bindClick($('lobbyNav'), showLobbyPanel);
-  bindClick($('connectNav'), () => window.showConnect?.());
+  // Vibe keeps the button it has on Home: same call, same screen.
+  bindClick($('vibeNav'), () => window.IndooneVibe?.open?.());
   bindClick(
     $('sortBtn'),
     () => window.handleSortAccounts?.()
@@ -270,10 +270,6 @@
 
     const action = item.dataset.action;
 
-    if (action === 'accounts') {
-      return showAccounts();
-    }
-
     if (action === 'favorites') {
       return window.showFavorites?.();
     }
@@ -287,11 +283,7 @@
     }
 
     if (action === 'about') {
-      return window.showAbout?.();
-    }
-
-    if (action === 'lock') {
-      return window.lockIndoone?.();
+      return window.openMenuFeature?.('about');
     }
 
     if (action === 'danger-zone') {
@@ -378,7 +370,7 @@
     }
 
     if (event.target.closest('[data-about]')) {
-      return window.showAbout?.();
+      return window.openMenuFeature?.('about');
     }
 
     if (event.target.closest('[data-security]')) {
@@ -432,6 +424,12 @@
       }
 
       authStateResolved = true;
+
+      // Nothing else closes the sign-in screen on this path. firebase-auth-otp
+      // closes it, but a session that is simply restored never went through the
+      // OTP flow - so the backdrop stayed up over the app, which is the panel of
+      // colour in the bug report. Close it here, before anything else runs.
+      window.IndooneAuthUI?.close?.();
 
       if (!persistedUid || persistedUid !== user.uid) {
         localStorage.removeItem('indoone_otp_verified_uid');
@@ -494,6 +492,25 @@
 
     if (typeof auth.onAuthStateChanged === 'function') {
       auth.onAuthStateChanged(showAuthOrHome);
+
+      // Belt and braces. Whatever order the auth scripts settle in, a signed-in
+      // session must never be left under the sign-in backdrop.
+      const clearAuthScreenIfSignedIn = () => {
+        if (!auth.currentUser) return;
+
+        const overlayNode = document.getElementById('overlay');
+
+        if (overlayNode?.classList.contains('hidden')) return;
+
+        window.IndooneAuthUI?.close?.();
+        overlayNode?.classList.remove('indoone-auth-screen');
+        overlayNode?.classList.add('hidden');
+        document.body.classList.remove('auth-open', 'auth-pending');
+      };
+
+      [400, 1500, 4000].forEach(delay =>
+        setTimeout(clearAuthScreenIfSignedIn, delay)
+      );
 
       setTimeout(() => {
         if (

@@ -82,16 +82,6 @@ window.showSecurity = function () {
   `);
 };
 
-window.showAbout = function () {
-  openModal(`
-    <h2>About Indoone</h2>
-    <p>
-      Indoone Authenticator — a login-based cloud-synced TOTP authenticator.
-    </p>
-    <button class="primary" data-close>Done</button>
-  `);
-};
-
 // Keep Lock App packed with the menu items instead of pinning it to the bottom.
 document.querySelector('.lock-item')?.style.setProperty('margin-top', '0');
 
@@ -122,16 +112,6 @@ const MAIN_SVG_ICONS = {
     '<path d="M7 5v14M4 8l3-3 3 3M17 19V5M14 16l3 3 3-3"></path>',
   empty:
     '<path d="M4 12h16M12 4v16"></path>',
-  pair:
-    '<path d="M8.5 8.5 6.7 10.3a4 4 0 0 0 5.7 5.7l1.8-1.8M15.5 15.5l1.8-1.8a4 4 0 0 0-5.7-5.7L9.8 9.8"></path>' +
-    '<path d="m9.3 14.7 5.4-5.4"></path>',
-  connect:
-    '<path d="M5 12h14M8 7l-5 5 5 5M16 7l5 5-5 5"></path>',
-  devices:
-    '<rect x="3" y="5" width="13" height="10" rx="1.5"></rect>' +
-    '<path d="M7 19h5M9.5 15v4M19 9h2v10h-7V9h2M16.5 11h3"></path>',
-  status:
-    '<path d="M4 17a11.5 11.5 0 0 1 16 0M7 14a7.4 7.4 0 0 1 10 0M10 11a3.4 3.4 0 0 1 4 0"></path>',
   phone:
     '<rect x="6.5" y="3.5" width="11" height="17" rx="2"></rect><path d="M10 17.5h4"></path>',
   laptop:
@@ -246,75 +226,12 @@ function applyMainSvgIcons() {
     empty.appendChild(makeMainSvg('empty'));
   }
 
-  document
-    .querySelectorAll('[data-connect-action="pair"] strong')
-    .forEach(el => {
-      if (!el.querySelector('.ui-svg-icon')) {
-        el.textContent = '';
-        el.appendChild(makeMainSvg('pair'));
-      }
-    });
 
-  document
-    .querySelectorAll('[data-connect-action="connect"] strong')
-    .forEach(el => {
-      if (!el.querySelector('.ui-svg-icon')) {
-        el.textContent = '';
-        el.appendChild(makeMainSvg('connect'));
-      }
-    });
 
-  document
-    .querySelectorAll('[data-connect-action="devices"] strong')
-    .forEach(el => {
-      if (!el.querySelector('.ui-svg-icon')) {
-        el.textContent = '';
-        el.appendChild(makeMainSvg('devices'));
-      }
-    });
 
-  const status = document.querySelector(
-    '.connect-status-icon'
-  );
 
-  if (
-    status &&
-    !status.querySelector('.ui-svg-icon')
-  ) {
-    status.textContent = '';
-    status.appendChild(makeMainSvg('status'));
-  }
 
-  document
-    .querySelectorAll('.connect-back')
-    .forEach(el => {
-      if (!el.querySelector('.ui-svg-icon')) {
-        el.textContent = '';
-        el.appendChild(makeMainSvg('back'));
-        el.appendChild(
-          document.createTextNode('Back')
-        );
-      }
-    });
 
-  document
-    .querySelectorAll('.connect-choice .choice-icon')
-    .forEach((el, index) => {
-      if (el.querySelector('.ui-svg-icon')) return;
-      el.textContent = '';
-      el.appendChild(
-        makeMainSvg(index === 0 ? 'phone' : 'laptop')
-      );
-    });
-
-  document
-    .querySelectorAll('.connect-choice .arrow')
-    .forEach(el => {
-      if (!el.querySelector('.ui-svg-icon')) {
-        el.textContent = '';
-        el.appendChild(makeMainSvg('next'));
-      }
-    });
 }
 
 function applySvgIconStyles() {
@@ -361,52 +278,14 @@ function applySvgIconStyles() {
       height: 27px;
     }
 
-    .connect-action strong {
-      display: grid;
-      place-items: center;
-      font-size: 0;
-    }
 
-    .connect-action strong .ui-svg-icon {
-      width: 25px;
-      height: 25px;
-    }
 
-    .connect-status-icon .ui-svg-icon {
-      width: 23px;
-      height: 23px;
-    }
 
-    .connect-choice .choice-icon {
-      display: grid;
-      place-items: center;
-      font-size: 0;
-    }
 
-    .connect-choice .choice-icon .ui-svg-icon {
-      width: 22px;
-      height: 22px;
-    }
 
-    .connect-choice .arrow .ui-svg-icon {
-      width: 18px;
-      height: 18px;
-    }
 
-    .connect-back {
-      display: inline-flex !important;
-      align-items: center;
-      gap: 6px;
-    }
 
-    .connect-back::before {
-      content: none !important;
-    }
 
-    .connect-back .ui-svg-icon {
-      width: 16px;
-      height: 16px;
-    }
   `;
   document.head.appendChild(style);
 }
@@ -427,7 +306,7 @@ if (document.readyState === 'loading') {
   applyAllSvgIcons();
 }
 
-// Pages such as Pair/Connect/Logout are loaded into the modal after startup.
+// Pages such as Logout are loaded into the modal after startup.
 // Re-apply only when the DOM actually changes so dynamically inserted controls use the same SVG set.
 if (typeof MutationObserver !== 'undefined') {
   let iconObserverQueued = false;

@@ -16,6 +16,21 @@ body {
   background: #eef0f5;
 }
 
+/* The app draws no scrollbar. Its screens scroll, and that is all - there is no
+   bar down the side. A browser draws a thick dark one, which lands as a hard
+   black line against the page on every screen that scrolls: the accounts list,
+   the chat, the menu, the drawer. Hidden here, on every element, while the
+   scrolling itself is left exactly as it was. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .phone-shell {
   position: relative;
   width: 100%;
@@ -272,21 +287,24 @@ body {
   color: #5f31d4;
 }
 
+/* The app draws the ring's arc in the same colour as the code
+   (AccountsScreen.kt CountdownRing: ringColor = codeColor), so the accent is
+   #20883E / #AD8500 / #C62828, not a separate green/amber/red. */
 .timer-green {
   border-color: #d9f0df;
-  border-top-color: #24a148;
+  border-top-color: #20883e;
   color: #20883e;
 }
 
 .timer-yellow {
   border-color: #f4ebc7;
-  border-top-color: #d7a500;
+  border-top-color: #ad8500;
   color: #ad8500;
 }
 
 .timer-red {
   border-color: #f3d7d7;
-  border-top-color: #d93025;
+  border-top-color: #c62828;
   color: #c62828;
 }
 
@@ -305,12 +323,12 @@ body {
 .fab {
   position: absolute;
   right: 20px;
-  bottom: 78px;
+  bottom: 88px;
   width: 57px;
   height: 57px;
   border: 0;
   border-radius: 19px;
-  background: linear-gradient(145deg, #5e2ce2, #9346ed);
+  background: #703be2;
   color: #fff;
   font-size: 31px;
   line-height: 1;
@@ -377,6 +395,28 @@ body {
 
 .empty-state h3 {
   margin: 14px 0 5px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17151d;
+}
+
+/* The app's empty-state Add account is a plain purple TextButton, not the
+   filled gradient .primary button (AccountsScreen.kt EmptyAccountsState). */
+.empty-state .empty-add {
+  margin-top: 4px;
+  border: 0;
+  background: transparent;
+  color: #703be2;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* AppSearchIcon is 21dp (AppPageChrome.kt AppTopBar). */
+.top-actions .top-search-icon {
+  width: 21px;
+  height: 21px;
+  display: block;
 }
 
 .empty-state p {
@@ -412,7 +452,8 @@ body {
 .drawer-backdrop {
   position: absolute;
   inset: 0;
-  background: #1d172755;
+  /* MenuDrawer.kt: Color(0xFF101827).copy(alpha = 0.30f) */
+  background: rgba(16, 24, 39, 0.30);
   opacity: 0;
   transition: .2s;
 }
@@ -434,12 +475,14 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  width: min(320px, 86vw);
+  /* MenuDrawer.kt: a fixed 320dp sheet, gradient stops at 0 / 0.5 / 1. */
+  width: 320px;
+  max-width: 100%;
   padding: 19px 15px;
   background: linear-gradient(
     to bottom,
     #faf8ff,
-    #f2ecfa 55%,
+    #f2ecfa 50%,
     #f8f4fc
   );
   border-radius: 0 26px 26px 0;
@@ -574,6 +617,24 @@ body {
   color: #6b3fa5;
   border-radius: 8px;
   padding: 3px 7px;
+}
+
+/* The Plugins row carries a chevron the app draws itself: Icons.Outlined.
+   ChevronRight at 18dp, tinted 0xFF8B9AB0 (MenuDrawer.kt:464-470). It is not
+   AppChevron, which is 22dp and 0xFF7A6F8C. */
+.drawer-item .drawer-chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding-left: 0;
+  display: grid;
+  place-items: center;
+  color: #8b9ab0;
+}
+
+.drawer-item .drawer-chevron svg {
+  width: 18px;
+  height: 18px;
 }
 
 .drawer-item:hover {
@@ -1094,31 +1155,30 @@ html, body { height: 100%; }
 .account:has(.timer-yellow) .account-info strong { color: #ad8500; }
 .account:has(.timer-red) .account-info strong { color: #c62828; }
 
-.search-wrap { padding: 10px 18px 3px !important; flex: 0 0 auto; }
-.search-box { height: 40px !important; border-radius: 12px !important; padding: 0 11px !important; }
-.search-box input { font-size: 13px !important; }
-.search-box button { font-size: 20px !important; }
-.content { padding: 16px 18px 18px !important; }
+/* Every value below is AccountsScreen.kt's own. */
+.search-wrap { padding: 12px 18px 4px !important; flex: 0 0 auto; }
+.search-box { height: 44px !important; border-radius: 14px !important; padding: 0 12px !important; }
+.search-box input { font-size: 14px !important; }
+.search-box button { font-size: 22px !important; }
+.content { padding: 18px 18px 24px !important; }
 .page-heading { margin-bottom: 11px !important; }
 .page-heading h1 { font-size: 23px !important; }
-.content .page-heading h1 { font-size: 26px !important; }
-.small-btn { padding: 7px 10px !important; font-size: 10px !important; }
-.account-list { gap: 9px !important; }
-.account { gap: 10px !important; padding: 11px !important; border-radius: 15px !important; }
-.service-icon { width: 42px !important; height: 42px !important; border-radius: 12px !important; font-size: 19px !important; }
-.account-info b { font-size: 13px !important; }
-.account-info span { font-size: 10px !important; margin: 2px 0 4px !important; }
-.account-info strong { font-size: 21px !important; }
-.timer { width: 33px !important; height: 33px !important; font-size: 10px !important; }
+.content .page-heading h1 { font-size: 19px !important; letter-spacing: -0.25px !important; }
+.small-btn { padding: 8px 11px !important; font-size: 11px !important; }
+.account-list { gap: 11px !important; }
+.account { gap: 12px !important; padding: 13px !important; border-radius: 18px !important; }
+.service-icon { width: 48px !important; height: 48px !important; border-radius: 14px !important; font-size: 21px !important; }
+.account-info b { font-size: 14px !important; }
+.account-info span { font-size: 11px !important; margin: 3px 0 2px !important; }
+.account-info strong { font-size: 23px !important; letter-spacing: 1px !important; }
+.timer { width: 35px !important; height: 35px !important; font-size: 10px !important; }
 
 /* The hidden attribute has to win everywhere.
 
-   The chat page carries .chat-page { display: flex } and the Notification
-   Center carries .notifications-page { display: flex }. A display rule in the
+   The chat page carries .chat-page { display: flex }. A display rule in the
    stylesheet beats the browser's own [hidden] { display: none }, so putting
-   hidden on those pages did nothing at all: the chat stayed up under the
-   Notification Center, which is exactly what it looked like. One rule, marked
-   important, and the attribute means hidden for every element on the page. */
+   hidden on such a page did nothing at all. One rule, marked important, and the
+   attribute means hidden for every element on the page. */
 [hidden] {
   display: none !important;
 }
@@ -1129,8 +1189,6 @@ html, body { height: 100%; }
 
 #app.phone-shell > #content,
 #app.phone-shell > #homeContent,
-#app.phone-shell > #connectContent,
-#app.phone-shell > .notifications-page,
 #app.phone-shell > .settings-content,
 #app.phone-shell > #modal {
   flex: 1 1 auto !important;
@@ -1156,7 +1214,6 @@ html, body { height: 100%; }
 
 /* Shared headings stay aligned; safe-area padding is handled centrally. */
 #app.phone-shell > #content .page-heading,
-#app.phone-shell > #connectContent .connect-hero,
 #app.phone-shell > .settings-content .settings-page-head {
   margin-top: 0 !important;
   padding-top: 0 !important;
@@ -1166,7 +1223,6 @@ html, body { height: 100%; }
    safe-area contract as mobile WebView layouts. */
 @media (min-width: 700px) {
   #app.phone-shell > #content,
-  #app.phone-shell > #connectContent,
   #app.phone-shell > .settings-content {
     padding-right: calc(18px + var(--indoone-safe-right)) !important;
     padding-left: calc(18px + var(--indoone-safe-left)) !important;
@@ -1229,7 +1285,6 @@ html, body { height: 100%; }
      |                |  top bar                  |               |
      |   the menu     |---------------------------|   Home        |
      |   always open  |                           |   Lobby       |
-     |                |  the page                 |   Connect     |
      |                |                           |   Settings    |
      |                |---------------------------|               |
      +----------------+---------------------------+---------------+
@@ -1240,7 +1295,12 @@ html, body { height: 100%; }
    Nothing else changes: every option, every button, every animation.
    ========================================================================== */
 
-@media (min-width: 1024px) {
+/* The desktop shell: the menu standing open on the left, the tabs standing up
+   on the right, and the page between them. It needs a wide window AND a real
+   pointer. Width alone is not enough: a phone whose browser asks for the
+   desktop site reports a wide viewport while still being a phone, and that is
+   how the rail and the 264px margin ended up on a handset. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
   :root {
     --menu-w: 264px;
     --nav-w: 92px;
@@ -1293,10 +1353,8 @@ html, body { height: 100%; }
   .chat-page,
   .accounts-content,
   #content,
-  #connectContent,
   #lobbyContent,
-  .settings-content,
-  [data-notifications-page] {
+  .settings-content {
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;

@@ -1,6 +1,76 @@
 (() => {
+  // The web counterpart of android/settings/profile/ProfileScreen.kt - the
+  // ACCOUNT screen, not the drawer's profile editor, which is menu/profile.
+  //
+  // This screen is a menu feature, opened by menu/script.js the same way Danger
+  // Zone and Log out are: the loader fetches the fragment into #modal, calls
+  // this initializer, then shows the page.
+  //
+  // The app draws three rows here, not two. The third is
+  //   ProfileActionRow("Connections & plugins", gmailConnectionSummary)
+  // and its description is not a fixed line - ProfileScreen.kt fills it from the
+  // Gmail connection status:
+  //
+  //   "Checking saved connections…"                        while it looks
+  //   "Gmail linked · ${status.emailAddress}"               connected, with an address
+  //   "Gmail linked to this Indoone profile"                connected, no address
+  //   "Connect Gmail and manage your plugin connections"    not connected
+  //   "Could not load saved connections"                    the call failed
+  //
+  // The same five strings are used here, from the same endpoint the plugins
+  // screen reads: api/integrations/gmail/status.
+
+  const BACKEND_URL = 'https://indooneai.duckdns.org';
+
   function currentUser() {
     return window.IndooneFirebase?.auth?.currentUser || null;
+  }
+
+  // The app's sentence, word for word, from the status answer.
+  function connectionSummary(status) {
+    if (status?.connected && String(status.emailAddress || '').trim()) {
+      return `Gmail linked · ${String(status.emailAddress).trim()}`;
+    }
+
+    if (status?.connected) {
+      return 'Gmail linked to this Indoone profile';
+    }
+
+    return 'Connect Gmail and manage your plugin connections';
+  }
+
+  async function renderConnections() {
+    const node = document.getElementById('profileConnections');
+
+    if (!node) {
+      return;
+    }
+
+    node.textContent = 'Checking saved connections…';
+
+    const user = currentUser();
+
+    if (!user?.uid) {
+      node.textContent = 'Could not load saved connections';
+      return;
+    }
+
+    try {
+      const idToken = await user.getIdToken(false);
+      const response = await fetch(
+        `${BACKEND_URL}/api/integrations/gmail/status?user_id=${encodeURIComponent(user.uid)}`,
+        { headers: { Authorization: `Bearer ${idToken}` } }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Indoone backend returned ${response.status}`);
+      }
+
+      const status = await response.json().catch(() => ({}));
+      node.textContent = connectionSummary(status);
+    } catch (_) {
+      node.textContent = 'Could not load saved connections';
+    }
   }
 
   async function renderProfile() {
@@ -44,61 +114,45 @@
     }
   }
 
-  window.showProfile = function ({ remember = true } = {}) {
-    if (remember) {
-      window.IndoonePageState?.set('profile');
+  window.initMenuAccount = function () {
+    const page = document.getElementById('modal');
+
+    if (!page) {
+      return false;
     }
 
-    const modal = document.getElementById('modal');
+    void renderProfile();
+    void renderConnections();
 
-    if (!modal) {
-      return;
-    }
+    page
+      .querySelectorAll('[data-profile-action]')
+      .forEach(button => {
+        const action = button.dataset.profileAction;
 
-    void fetch(
-      'settings/profile/index.html?v=20260904a',
-      { cache: 'no-store' }
-    )
-      .then(response =>
-        response.ok
-          ? response.text()
-          : Promise.reject(
-              new Error(
-                'Profile page could not be loaded.'
-              )
-            )
-      )
-      .then(html => {
-        modal.innerHTML = html;
-        void renderProfile();
-
-        modal
-          .querySelector(
-            '[data-profile-action="mobile"]'
-          )
-          ?.addEventListener(
+        if (action === 'mobile') {
+          button.addEventListener(
             'click',
-            () => window.showChangeMobile?.()
+            () => window.openMenuFeature?.('change-mobile-number')
           );
+        }
 
-        modal
-          .querySelector(
-            '[data-profile-action="email"]'
-          )
-          ?.addEventListener(
+        if (action === 'email') {
+          button.addEventListener(
             'click',
-            () => window.showChangeEmail?.()
+            () => window.openMenuFeature?.('change-email')
           );
+        }
 
-        document
-          .getElementById('overlay')
-          ?.classList.remove('hidden');
-      })
-      .catch(error =>
-        window.toast?.(
-          error?.message ||
-            'Could not open Profile'
-        )
-      );
+        // The app's onPluginsClick opens the Plugins screen, which is where
+        // Gmail is actually connected and disconnected.
+        if (action === 'plugins') {
+          button.addEventListener(
+            'click',
+            () => window.openMenuFeature?.('plugins')
+          );
+        }
+      });
+
+    return true;
   };
 })();

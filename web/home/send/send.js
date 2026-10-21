@@ -118,9 +118,11 @@
     renderPending();
   }
 
-  function clearPending() {
+  // keepUrls holds the object URLs that a sent message still points at. Only
+  // the ones nobody kept are revoked.
+  function clearPending(keepUrls) {
     pending.forEach(item => {
-      if (item.url) {
+      if (item.url && !(keepUrls && keepUrls.has(item.url))) {
         URL.revokeObjectURL(item.url);
       }
     });
@@ -161,14 +163,18 @@
       'or visible details.'
     );
 
+    // The bubble renders the photo straight from item.url, so the message and
+    // clearPending() have to agree on which object URLs are still needed.
+    const sentAttachments = attachments.map(item => ({
+      name: item.file.name,
+      type: item.file.type,
+      url: item.url
+    }));
+
     const mine = store.add({
       text,
       mine: true,
-      attachments: attachments.map(item => ({
-        name: item.file.name,
-        type: item.file.type,
-        url: item.url
-      }))
+      attachments: sentAttachments
     });
 
     if (input) {
@@ -178,9 +184,16 @@
 
     const conversationId = store.ensureConversationId();
 
-    clearPending();
+    // Hand the sent photos' URLs to clearPending so it does NOT revoke them.
+    // Revoking here is what left the sent photo as a broken image with only its
+    // filename showing: the bubble still pointed at the URL we had just killed.
+    clearPending(new Set(sentAttachments.map(item => item.url).filter(Boolean)));
     setBusy(true);
+    // HomeScreen.kt shows Received for 350ms, then Thinking while the request
+    // is in flight, then Preparing for 600ms before the reply.
     setActivity('received');
+    await new Promise(resolve => setTimeout(resolve, 350));
+    setActivity('thinking');
 
     // Save the user's side to the account, exactly as the app does.
     void window.IndooneCloudChat
@@ -201,9 +214,8 @@
       });
 
       store.setConversationId(result.conversationId);
-      setActivity('thinking');
-      await new Promise(resolve => setTimeout(resolve, 600));
       setActivity('preparing');
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       store.add({ text: result.reply, mine: false });
 
@@ -225,11 +237,24 @@
       });
     } finally {
       setBusy(false);
+
+      const messages = store.getMessages();
+
       window.IndooneMessages?.render(
         document.getElementById('chatList'),
-        store.getMessages(),
+        messages,
         null
       );
+
+      // The welcome block goes the moment there is a message. HomeScreen.kt
+      // only draws it while messages.isEmpty(), and paintThread() in
+      // chat-home.js does the same - but send() renders the thread itself and
+      // never went through paintThread, so the welcome stayed on screen after
+      // the first send. Same condition as paintThread.
+      document
+        .getElementById('chatWelcome')
+        ?.toggleAttribute('hidden', messages.length > 0);
+
       window.IndooneChatScroll?.toBottom?.();
       window.IndooneChatHome?.syncComposer?.();
     }

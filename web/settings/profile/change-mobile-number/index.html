@@ -1,0 +1,86 @@
+<section
+  class="menu-feature-shell change-mobile-page"
+  data-menu-feature
+  data-menu-section="change-mobile-number"
+>
+  <!-- ChangeMobileNumberScreen.kt draws, in this order:
+         TextButton  "← Back to Profile"
+         Text        "Change mobile number"
+         Text        "The number on your Indoone account is shown below. Enter
+                      the new number and your current password to confirm."
+         CurrentValueField("CURRENT MOBILE NUMBER", state.mobile)
+         OutlinedTextField  "ENTER YOUR NEW MOBILE NUMBER"  "+91 98765 43210"
+         OutlinedTextField  "CURRENT PASSWORD"  "Enter your current password"
+         Button      "Update mobile number" / "Updating…"
+
+       The web used to draw one field and no password, and read the old number
+       into that same field, which made it look editable. CurrentValueField is
+       shown here as the app draws it: a read-only box, never an input. -->
+  <button
+    type="button"
+    class="page-back"
+    data-change-mobile-action="back"
+  >
+    ← Back to Profile
+  </button>
+
+  <h1 class="change-title">
+    Change mobile number
+  </h1>
+
+  <p class="change-note">
+    The number on your Indoone account is shown below. Enter the new number and
+    your current password to confirm.
+  </p>
+
+  <div class="current-value">
+    <span class="current-value-label">
+      CURRENT MOBILE NUMBER
+    </span>
+    <div
+      class="current-value-box"
+      id="currentMobileValue"
+    >
+      Not set
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="newMobileNumber">
+      ENTER YOUR NEW MOBILE NUMBER
+    </label>
+    <input
+      id="newMobileNumber"
+      type="tel"
+      inputmode="tel"
+      autocomplete="tel"
+      placeholder="+91 98765 43210"
+    >
+  </div>
+
+  <div class="field">
+    <label for="currentMobilePassword">
+      CURRENT PASSWORD
+    </label>
+    <input
+      id="currentMobilePassword"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Enter your current password"
+    >
+  </div>
+
+  <div
+    id="changeMobileStatus"
+    class="auth-status"
+    hidden
+  >
+  </div>
+
+  <button
+    class="primary"
+    id="saveMobileNumber"
+  >
+    Update mobile number
+  </button>
+</section>

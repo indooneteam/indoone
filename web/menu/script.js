@@ -4,45 +4,80 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261031h';
+  // Bumped with the three plugin stylesheets added in this change: they are
+  // fetched as <base>/style.css?v=<this>, and that exact URL used to 404, so a
+  // browser that cached the miss would otherwise keep asking for it.
+  const ASSET_VERSION = '20261020a';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
-    accounts: 'initMenuAccounts',
     favorites: 'initMenuFavorites',
     trash: 'initMenuTrash',
     security: 'initMenuSecurity',
     'terms-of-use': 'initMenuTermsOfUse',
     'privacy-policy': 'initMenuPrivacyPolicy',
     about: 'initMenuAbout',
-    lock: 'initMenuLock',
+    // The Settings row's About is a different screen from the drawer's About,
+    // so it gets its own key and its own folder (see the note under
+    // featurePaths).
+    'settings-about': 'initSettingsAbout',
     'danger-zone': 'initMenuDangerZone',
     logout: 'initMenuLogout',
     profile: 'initMenuProfile',
+    account: 'initMenuAccount',
     memory: 'initMenuMemory',
     'chat-history': 'initMenuChatHistory',
     'data-privacy': 'initMenuDataPrivacy',
-    plugins: 'initMenuPlugins'
+    plugins: 'initMenuPlugins',
+    update: 'initMenuUpdate',
+    'change-mobile-number': 'initMenuChangeMobile',
+    'change-email': 'initMenuChangeEmail'
   };
 
   // Two sections moved out of the menu and into settings, and one was renamed
   // to match the app, so the action name and the folder are no longer the same.
   const featurePaths = {
-    lock: 'menu/lock-app',
     'danger-zone': 'settings/danger-zone',
-    logout: 'settings/logout'
+    logout: 'settings/logout',
+    // About is NOT listed, for the same reason as profile: the drawer's About
+    // is android/menu/about/MenuAboutScreen.kt, and getFeatureBase resolves
+    // 'about' to menu/about, which draws it in full - About Indoone, Sync, OTP
+    // Standard, Account Storage, Legal, Licenses. The Settings row's About is
+    // android/settings/about/AboutScreen.kt, a different screen, and it is
+    // listed below under 'settings-about'.
+    //
+    // Profile is NOT listed: the drawer's Profile is android/menu/profile/
+    // ProfileMenuScreen.kt - the name, nickname and profession editor - and
+    // that is what getFeatureBase resolves 'profile' to. The Settings row's
+    // Profile is a different screen, android/settings/profile/ProfileScreen.kt
+    // - the account screen - and it has its own key, 'account'. Listing
+    // 'profile' here made the drawer open the settings screen instead of its
+    // own, and both scripts defined the same initMenuProfile, so one silently
+    // overwrote the other.
+    account: 'settings/profile',
+    // The Settings row's About Indoone is android/settings/about/AboutScreen.kt
+    // - the sheet with Version and Updates - which is a different screen from
+    // the drawer's About (android/menu/about/MenuAboutScreen.kt). getFeatureBase
+    // resolves 'about' to menu/about, so the settings screen needs its own key.
+    'settings-about': 'settings/about',
+    update: 'settings/update',
+    'change-mobile-number': 'settings/profile/change-mobile-number',
+    'change-email': 'settings/profile/change-email'
   };
 
   const nestedInitializers = {
-    'danger-zone/delete-local-data': 'initMenuDeleteLocalData',
     'danger-zone/delete-account': 'initMenuDeleteAccount',
     'logout/this-device': 'initMenuLogoutThisDevice',
-    'logout/all-devices': 'initMenuLogoutAllDevices',
     // the plugin screens sit under Plugins, as they do in the app: GitHub's
     // Browse, and each provider's own screen
+    // The paths have to be the folders' own names, because getFeatureBase turns
+    // them into menu/<path>. The Zoho Mail folder is zoho_mail, not zoho-mail,
+    // and the email screen sits under email/gmail, not email - so those two
+    // used to resolve to folders with no index.html and the screens never
+    // opened.
     'plugins/github': 'initMenuPluginGitHub',
-    'plugins/zoho-mail': 'initMenuPluginZohoMail',
-    'plugins/email': 'initMenuPluginEmail'
+    'plugins/zoho_mail': 'initMenuPluginZohoMail',
+    'plugins/email/gmail': 'initMenuPluginEmail'
   };
 
   const createSvg = paths => {
@@ -112,7 +147,6 @@
   const PAGE_IDS = [
     'homeContent',
     'content',
-    'connectContent',
     'lobbyContent',
     'settingsContent'
   ];
@@ -141,7 +175,6 @@
     PAGE_IDS.forEach(id => {
       document.getElementById(id)?.setAttribute('hidden', '');
     });
-    document.querySelector('[data-notifications-page]')?.setAttribute('hidden', '');
     document.getElementById('addBtn')?.setAttribute('hidden', '');
     document.getElementById('searchWrap')?.setAttribute('hidden', '');
 
@@ -171,11 +204,10 @@
 
     const tab = back === 'content' ? 'homeNav'
       : back === 'lobbyContent' ? 'lobbyNav'
-      : back === 'connectContent' ? 'connectNav'
       : back === 'settingsContent' ? 'settingsNav'
       : 'homeNav';
 
-    ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+    ['homeNav', 'lobbyNav', 'settingsNav'].forEach(id => {
       document.getElementById(id)?.classList.toggle('active', id === tab);
     });
 
@@ -189,6 +221,21 @@
   }
 
   window.closeMenuPage = closeMenuPage;
+
+  // Leaving every menu page, for the flows that jump straight to Home: the
+  // drawer's New Chat, opening a saved conversation, and finishing Add account.
+  // closeMenuPage() only steps back ONE level, so on a nested page (Plugins ->
+  // GitHub) it re-opens the parent underneath instead of clearing the way home.
+  // That is why the menu page stayed on screen behind Home.
+  function closeAllMenuPages() {
+    const page = document.getElementById('modal');
+
+    menuStack = [];
+    pageBeforeMenu = null;
+    page?.setAttribute('hidden', '');
+  }
+
+  window.closeAllMenuPages = closeAllMenuPages;
 
   // The features' own close buttons carry data-close. shared/events.js watches
   // for those on the overlay, which is where a feature used to live; now that
@@ -292,7 +339,7 @@
   };
 
   // The four tabs and the brand leave a menu page behind when they are used.
-  ['homeNav', 'lobbyNav', 'connectNav', 'settingsNav'].forEach(id => {
+  ['homeNav', 'lobbyNav', 'settingsNav'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', closeMenuPage);
   });
   document.getElementById('brandBtn')?.addEventListener('click', closeMenuPage);
@@ -315,17 +362,20 @@
     event.preventDefault();
     event.stopPropagation();
     const action = item.dataset.action;
-    if (action === 'accounts') {
-      closeDrawer();
-      window.showAccounts?.();
-      return;
-    }
-
     if (action === 'new-chat') {
       closeDrawer();
       window.IndooneChatStore?.clear?.();
       window.showHome?.();
       window.IndooneChatHome?.refresh?.();
+      return;
+    }
+
+    if (action === 'lock') {
+      // MenuDrawer.kt opens UnlockAppActivity when app lock is on and shows
+      // "App Lock is not enabled." otherwise. The web has no device app lock,
+      // so the message is what it shows; the row used to do nothing at all.
+      closeDrawer();
+      window.toast?.('App Lock is not enabled.');
       return;
     }
 

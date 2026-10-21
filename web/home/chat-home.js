@@ -4,18 +4,18 @@
     // chat-api.js was written but never listed here, so window.IndooneChatApi
     // was undefined and both the composer and Vibe threw the moment they tried
     // to send. It goes first, because the others call it.
-    'home/message/chat-api.js?v=20261025a',
-    'home/message/cloud-chat.js?v=20261031e',
-    'home/message/chat-store.js?v=20261031b',
-    'home/message/message.js?v=20261015a',
-    'home/send/send.js?v=20261015a',
-    'home/voice/voice.js?v=20261015a',
-    'home/plus/plus.js?v=20261015a',
-    'home/plus/camera/camera.js?v=20261015a',
-    'home/plus/photos/photos.js?v=20261015a',
-    'home/plus/files/files.js?v=20261015a',
-    'home/vibe/vibe-live.js?v=20261029a',
-    'home/vibe/vibe.js?v=20261029a'
+    'home/message/chat-api.js?v=20261020a',
+    'home/message/cloud-chat.js?v=20261018b',
+    'home/message/chat-store.js?v=20261018b',
+    'home/message/message.js?v=20261018b',
+    'home/send/send.js?v=20261020b',
+    'home/voice/voice.js?v=20261019f',
+    'home/plus/plus.js?v=20261018b',
+    'home/plus/camera/camera.js?v=20261018b',
+    'home/plus/photos/photos.js?v=20261018b',
+    'home/plus/files/files.js?v=20261018b',
+    'vibe/vibe-live.js?v=20261018b',
+    'vibe/vibe.js?v=20261019f'
   ];
 
   // The app alternates these two, every two seconds.
@@ -135,12 +135,12 @@
     });
   }
 
-  // The app shows Send only when there is text or an attachment; with an empty
-  // box the same spot holds the Vibe button.
+  // The app shows Send only when there is text or an attachment. Vibe used to
+  // take that spot when the box was empty; it lives in the navigation now, so
+  // the spot simply stays empty.
   function syncComposer() {
     const input = document.getElementById('chatInput');
     const send = document.getElementById('sendBtn');
-    const vibe = document.getElementById('vibeBtn');
     const listening = document.getElementById('listeningCard');
     const mic = document.getElementById('voiceBtn');
     const pending = window.IndooneSend?.getPending?.() || [];
@@ -151,10 +151,6 @@
     if (send) {
       send.hidden = !showSend;
       send.disabled = isListening;
-    }
-
-    if (vibe) {
-      vibe.hidden = showSend || isListening;
     }
 
     mic?.classList.toggle('listening', isListening);
@@ -184,8 +180,8 @@
       await loadModules();
     } catch (error) {
       console.error('Indoone chat home could not load:', error);
-      // Even then the composer must be in the right state: no Vibe button and
-      // no account "+" left on screen.
+      // Even then the composer must be in the right state: no account "+" left
+      // on screen.
       syncComposer();
       return;
     }
@@ -217,24 +213,6 @@
     document
       .getElementById('sendBtn')
       ?.addEventListener('click', () => window.IndooneSend?.send?.());
-
-    document
-      .getElementById('vibeBtn')
-      ?.addEventListener('click', () => window.IndooneVibe?.open?.());
-
-    const vibe = document.getElementById('vibeBtn');
-
-    if (vibe && !vibe.querySelector('.vibe-orbit')) {
-      const shine = document.createElement('span');
-      shine.className = 'vibe-shine';
-
-      const orbit = document.createElement('span');
-      orbit.className = 'vibe-orbit';
-      orbit.appendChild(document.createElement('i'));
-
-      vibe.appendChild(shine);
-      vibe.appendChild(orbit);
-    }
 
     const input = document.getElementById('chatInput');
 

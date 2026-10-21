@@ -1,12 +1,15 @@
+// The app sorts by name and nothing else: AccountsState.kt defaults to
+// DESCENDING (name Z->A) and the Sort button toggles to ASCENDING
+// (AccountsViewModel). There is no newest-first state in the app.
 window.indooneState = {
   accounts: [],
   search: '',
-  newestFirst: true,
+  sortAscending: false,
   trash: []
 };
 
 window.handleSortAccounts = function () {
-  indooneState.newestFirst = !indooneState.newestFirst;
+  indooneState.sortAscending = !indooneState.sortAscending;
   renderAccounts();
 };
 
@@ -40,7 +43,7 @@ window.renderAccounts = function () {
   const {
     accounts,
     search,
-    newestFirst
+    sortAscending
   } = indooneState;
 
   // Search matches only the account/service name, not the email address.
@@ -51,9 +54,9 @@ window.renderAccounts = function () {
   );
 
   list = [...list].sort(
-    newestFirst
-      ? (a, b) => b.id - a.id
-      : (a, b) => a.name.localeCompare(b.name)
+    sortAscending
+      ? (a, b) => String(a.name || '').localeCompare(String(b.name || ''))
+      : (a, b) => String(b.name || '').localeCompare(String(a.name || ''))
   );
 
   const listEl = document.getElementById('accountList');
@@ -100,13 +103,6 @@ window.renderAccounts = function () {
   }).join('');
 
   document.getElementById('emptyState').hidden = list.length > 0;
-  // MenuDrawer.kt passes the count to the row only when it is above zero:
-  //   DrawerItem(GridView, "Accounts", if (accountCount > 0) accountCount.toString() else null)
-  // so the badge is simply not there on an empty vault. The web always drew it
-  // and put a 0 in it.
-  const drawerCount = document.getElementById('drawerCount');
-  drawerCount.textContent = accounts.length;
-  drawerCount.hidden = accounts.length === 0;
 };
 
 window.startDemoTimers = function () {

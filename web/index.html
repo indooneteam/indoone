@@ -8,34 +8,30 @@
   />
   <meta
     name="theme-color"
-    content="#ffffff"
+    content="#f8f4ff"
   />
   <meta
     name="description"
-    content="Indoone Authenticator — private, cloud-synced authenticator demo."
+    content="Indoone — private, cloud-synced AI assistant."
   />
-  <title>Indoone Authenticator</title>
+  <title>Indoone</title>
 
-  <link rel="stylesheet" href="style.css?v=20261031c" />
-  <link rel="stylesheet" href="home/home.css?v=20261024a" />
-  <link rel="stylesheet" href="home/message/message.css?v=20261015a" />
-  <link rel="stylesheet" href="home/plus/plus.css?v=20261015c" />
-  <link rel="stylesheet" href="home/vibe/vibe.css?v=20261024a" />
-  <link rel="stylesheet" href="notifications/style.css?v=20261031c" />
-  <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20260925a" />
-  <link rel="stylesheet" href="bottom-nav-svg.css?v=20261014a" />
-  <link rel="stylesheet" href="shared/app-icons.css?v=20261031c" />
-  <link rel="stylesheet" href="connect/connect.css?v=20261030b" />
-  <link rel="stylesheet" href="connect/connect-device/style.css?v=20261031c" />
-  <link rel="stylesheet" href="connect/devices/style.css?v=20261031c" />
-  <link rel="stylesheet" href="menu/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/settings.css?v=20260922b" />
-  <link rel="stylesheet" href="settings/profile/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/profile/email/style.css?v=20261031c" />
-  <link rel="stylesheet" href="settings/profile/mobile/style.css?v=20261031c" />
-  <link rel="stylesheet" href="authentication/auth.css?v=20261015a" />
-  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261031c" />
-  <link rel="stylesheet" href="lobby/lobby.css?v=20261030a" />
+  <link rel="stylesheet" href="style.css?v=20261019h" />
+  <link rel="stylesheet" href="home/home.css?v=20261019h" />
+  <link rel="stylesheet" href="home/message/message.css?v=20261020b" />
+  <link rel="stylesheet" href="home/plus/plus.css?v=20261019f" />
+  <link rel="stylesheet" href="vibe/vibe.css?v=20261019f" />
+  <link rel="stylesheet" href="shared/safe-layout/safe-layout.css?v=20261019h" />
+  <link rel="stylesheet" href="bottom-nav-svg.css?v=20261019h" />
+  <link rel="stylesheet" href="shared/app-icons.css?v=20261018b" />
+  <link rel="stylesheet" href="menu/style.css?v=20261019e" />
+  <link rel="stylesheet" href="settings/settings.css?v=20261020a" />
+  <link rel="stylesheet" href="settings/profile/style.css?v=20261018aa" />
+  <link rel="stylesheet" href="settings/update/style.css?v=20261018aa" />
+  <link rel="stylesheet" href="settings/profile/change-email/style.css?v=20261018aa" />
+  <link rel="stylesheet" href="settings/profile/change-mobile-number/style.css?v=20261018aa" />
+  <link rel="stylesheet" href="authentication/auth.css?v=20261018x" />
+  <link rel="stylesheet" href="authentication/forgot-password/style.css?v=20261018aa" />
 </head>
 
 <body>
@@ -67,17 +63,31 @@
         </button>
       </div>
 
+      <!-- The app's top bar carries a search control on the right
+           (AppPageChrome.kt AppTopBar, AppSearchIcon at 21dp). It is hidden
+           until the accounts screen is showing, because the app shows the
+           search field only on that screen. -->
       <div class="top-actions">
         <button
           type="button"
           class="icon-btn"
-          id="notificationsBtn"
-          aria-label="Notifications"
+          id="searchBtn"
+          aria-label="Search accounts"
+          hidden
         >
-          <span
-            data-app-icon="notificationsNone"
-            data-app-icon-class="app-icon app-icon-lg"
-          ></span>
+          <svg
+            class="top-search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="M16 16 20 20"></path>
+          </svg>
         </button>
       </div>
     </header>
@@ -219,12 +229,6 @@
             <span class="send-spinner" hidden></span>
           </button>
 
-          <button
-            type="button"
-            class="composer-vibe"
-            id="vibeBtn"
-            aria-label="Open Vibe"
-          ></button>
         </div>
 
         <p
@@ -244,46 +248,6 @@
       </div>
     </section>
 
-    <section
-      class="notifications-page"
-      data-notifications-page
-    >
-      <div class="notifications-head">
-        <button
-          type="button"
-          class="notifications-back"
-          id="notificationsBack"
-          aria-label="Back"
-        >
-          <span data-app-icon="arrowBack" data-app-icon-class="app-icon app-icon-sm"></span>
-        </button>
-
-        <h2>Notifications</h2>
-
-        <button
-          type="button"
-          class="notifications-mark"
-          id="notificationsMark"
-        >
-          Mark all as read
-        </button>
-      </div>
-
-      <div
-        class="notifications-list"
-        id="notificationsList"
-      ></div>
-
-      <div
-        class="notifications-empty"
-        id="notificationsEmpty"
-        hidden
-      >
-        <strong>No notifications yet</strong>
-        <span>New Indoone alerts will appear here.</span>
-      </div>
-    </section>
-
 <section
       class="content"
       id="content"
@@ -291,7 +255,6 @@
     >
       <div class="page-heading">
         <div>
-          <p class="eyebrow">SECURE &amp; PRIVATE</p>
           <h1>Your accounts</h1>
         </div>
         <button
@@ -313,12 +276,12 @@
         id="emptyState"
         hidden
       >
-        <div class="empty-icon">⌁</div>
+        <div class="empty-icon">+</div>
         <h3>No accounts found</h3>
         <p>Add an account or try a different search.</p>
         <button
           type="button"
-          class="primary compact"
+          class="empty-add"
           id="emptyAddBtn"
         >
           Add account
@@ -326,147 +289,6 @@
       </div>
     </section>
 
-    <section
-      class="connect-content"
-      id="connectContent"
-      hidden
-    >
-      <div id="connectHomePage">
-        <div class="connect-hero">
-          <p class="eyebrow">BUSINESS INTEGRATIONS</p>
-          <h1>Connect a Platform</h1>
-          <p>Bring your customer conversations to Indoone. Connect once and automate replies across your business channels.</p>
-        </div>
-
-        <div class="connect-balance">
-          <div class="connect-balance-top">
-            <div class="connect-balance-left">
-              <p class="connect-balance-label">INDOONE BALANCE</p>
-              <p
-                class="connect-balance-value"
-                id="connectBalance"
-              ></p>
-              <p class="connect-balance-note">Prepaid balance for your Indoone usage</p>
-            </div>
-            <span class="connect-balance-pill">CREDITS</span>
-          </div>
-
-          <div class="connect-balance-bottom">
-            <div class="connect-balance-left">
-              <p class="connect-usage-label">Usage</p>
-              <p
-                class="connect-usage-value"
-                id="connectUsage"
-              ></p>
-            </div>
-            <button
-              type="button"
-              class="connect-add-credits"
-              data-connect-action="credits"
-            >
-              ADD CREDITS
-            </button>
-          </div>
-        </div>
-
-        <div class="connect-cards">
-          <button
-            type="button"
-            class="connect-card"
-            style="--accent: #25d366; --accent-soft: rgba(37, 211, 102, 0.12)"
-            data-connect-action="whatsapp"
-          >
-            <span class="connect-card-top">
-              <span class="connect-card-chip">WA</span>
-              <span class="connect-card-arrow" aria-hidden="true">›</span>
-            </span>
-            <span class="connect-card-title">WhatsApp</span>
-            <span class="connect-card-desc">Connect your WhatsApp Business</span>
-            <span class="connect-card-action">CONNECT</span>
-          </button>
-          <button
-            type="button"
-            class="connect-card"
-            style="--accent: #e1306c; --accent-soft: rgba(225, 48, 108, 0.12)"
-            data-connect-action="instagram"
-          >
-            <span class="connect-card-top">
-              <span class="connect-card-chip">IG</span>
-              <span class="connect-card-arrow" aria-hidden="true">›</span>
-            </span>
-            <span class="connect-card-title">Instagram</span>
-            <span class="connect-card-desc">Automate comments & DMs</span>
-            <span class="connect-card-action">CONNECT</span>
-          </button>
-          <button
-            type="button"
-            class="connect-card"
-            style="--accent: #6d3de4; --accent-soft: rgba(109, 61, 228, 0.12)"
-            data-connect-action="app"
-          >
-            <span class="connect-card-top">
-              <span class="connect-card-chip">AP</span>
-              <span class="connect-card-arrow" aria-hidden="true">›</span>
-            </span>
-            <span class="connect-card-title">App</span>
-            <span class="connect-card-desc">Connect your own app backend</span>
-            <span class="connect-card-action">CONNECT</span>
-          </button>
-          <button
-            type="button"
-            class="connect-card"
-            style="--accent: #2f80ed; --accent-soft: rgba(47, 128, 237, 0.12)"
-            data-connect-action="website"
-          >
-            <span class="connect-card-top">
-              <span class="connect-card-chip connect-card-chip-sm">WEB</span>
-              <span class="connect-card-arrow" aria-hidden="true">›</span>
-            </span>
-            <span class="connect-card-title">Website</span>
-            <span class="connect-card-desc">AI support for your website</span>
-            <span class="connect-card-action">CONNECT</span>
-          </button>
-          <button
-            type="button"
-            class="connect-card connect-card-wide"
-            style="--accent: #229ed9; --accent-soft: rgba(34, 158, 217, 0.12)"
-            data-connect-action="telegram"
-          >
-            <span class="connect-card-top">
-              <span class="connect-card-chip">TG</span>
-              <span class="connect-card-arrow" aria-hidden="true">›</span>
-            </span>
-            <span class="connect-card-title">Telegram</span>
-            <span class="connect-card-desc">Connect your Telegram bot and automate support.</span>
-            <span class="connect-card-action">CONNECT</span>
-          </button>
-        </div>
-      </div>
-
-      <div
-        class="connect-setup"
-        id="connectSetupPage"
-        hidden
-      ></div>
-    </section>
-
-    <section
-      class="lobby-content"
-      id="lobbyContent"
-      hidden
-    >
-      <div class="lobby-body">
-        <p class="lobby-eyebrow">INDOONE LOBBY</p>
-        <h1
-          class="lobby-title"
-          id="lobbyTitle"
-        ></h1>
-        <p
-          class="lobby-message"
-          id="lobbyMessage"
-        ></p>
-      </div>
-    </section>
 
     <!-- A menu feature is a page, not a pop-up. MenuDrawer.kt replaces the
          whole screen, and the web was opening each item as a 430px card over a
@@ -492,56 +314,60 @@
       class="bottom-nav"
       aria-label="Main navigation"
     >
-      <button
-        type="button"
-        class="nav-btn active"
-        id="homeNav"
-        aria-label="Home"
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-        ></span>
-        <span>Home</span>
-      </button>
+      <!-- The app's AppBottomNav draws three tabs in one neumorphic pill and
+           keeps Vibe apart: it keeps the exact button it has on Home, with
+           none of the navigation bar's background or styling. -->
+      <div class="nav-pill">
+        <button
+          type="button"
+          class="nav-btn active"
+          id="homeNav"
+          aria-label="Home"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Home</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-btn"
+          id="lobbyNav"
+          aria-label="Lobby"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Lobby</span>
+        </button>
+
+        <button
+          type="button"
+          class="nav-btn"
+          id="settingsNav"
+          aria-label="Settings"
+        >
+          <span
+            class="nav-icon"
+            aria-hidden="true"
+          ></span>
+          <span>Settings</span>
+        </button>
+      </div>
 
       <button
         type="button"
-        class="nav-btn"
-        id="lobbyNav"
-        aria-label="Lobby"
+        class="nav-vibe"
+        id="vibeNav"
+        aria-label="Vibe"
       >
         <span
-          class="nav-icon"
+          class="nav-vibe-core"
           aria-hidden="true"
         ></span>
-        <span>Lobby</span>
-      </button>
-
-      <button
-        type="button"
-        class="nav-btn"
-        id="connectNav"
-        aria-label="Connect"
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-        ></span>
-        <span>Connect</span>
-      </button>
-
-      <button
-        type="button"
-        class="nav-btn"
-        id="settingsNav"
-        aria-label="Settings"
-      >
-        <span
-          class="nav-icon"
-          aria-hidden="true"
-        ></span>
-        <span>Settings</span>
       </button>
     </nav>
   </main>
@@ -613,6 +439,23 @@
       >
         <span data-app-icon="apps"></span>
         <span>Plugins</span>
+        <!-- The app draws a chevron on this row alone (MenuDrawer.kt
+             showChevron = true, 18dp, 0xFF8B9AB0). -->
+        <span
+          class="drawer-chevron"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m9 5 7 7-7 7"></path>
+          </svg>
+        </span>
       </button>
 
       <button
@@ -634,16 +477,6 @@
       </button>
 
       <p class="drawer-section-label">ACCOUNTS</p>
-
-      <button
-        type="button"
-        class="drawer-item active"
-        data-action="accounts"
-      >
-        <span data-app-icon="gridView"></span>
-        <span>Accounts</span>
-        <b id="drawerCount" hidden>0</b>
-      </button>
 
       <button
         type="button"
@@ -881,65 +714,52 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="authentication/firebase-config.js?v=20261015a"></script>
-  <script src="authentication/firebase-auth.js?v=20260914a"></script>
-  <script src="authentication/indoverification.js?v=20260904c"></script>
-  <script src="authentication/firebase-auth-otp.js?v=20261014a"></script>
-  <script src="authentication/auth-session-persistence.js?v=20260914a"></script>
-  <script src="authentication/forgot-password/script.js?v=20260904c"></script>
-  <script src="authentication/auth-page.js?v=20261015a"></script>
-  <script src="authentication/login/login.js?v=20261015a"></script>
-  <script src="authentication/sign-up/signup.js?v=20261015a"></script>
+  <script src="authentication/firebase-config.js?v=20261018b"></script>
+  <script src="authentication/firebase-auth.js?v=20261018b"></script>
+  <script src="authentication/indoverification.js?v=20261018b"></script>
+  <script src="authentication/firebase-auth-otp.js?v=20261019c"></script>
+  <script src="authentication/auth-session-persistence.js?v=20261018b"></script>
+  <script src="authentication/forgot-password/script.js?v=20261018b"></script>
+  <script src="authentication/auth-page.js?v=20261019h"></script>
+  <script src="authentication/login/login.js?v=20261019c"></script>
+  <script src="authentication/sign-up/signup.js?v=20261018b"></script>
 
-  <script src="home/home.js?v=20261014a"></script>
-  <script src="home/chat-home.js?v=20261031e"></script>
-  <script src="notifications/script.js?v=20261031e"></script>
-  <script src="shared/branding.js?v=20261015a"></script>
-  <script src="shared/app-icons.js?v=20261031c"></script>
-  <script src="shared/core.js?v=20261031a"></script>
-  <script src="shared/state.js?v=20261030c"></script>
+  <script src="home/home.js?v=20261018b"></script>
+  <script src="home/chat-home.js?v=20261020c"></script>
+  <script src="shared/branding.js?v=20261020a"></script>
+  <script src="shared/app-icons.js?v=20261018b"></script>
+  <script src="shared/core.js?v=20261020a"></script>
+  <script src="shared/state.js?v=20261019d"></script>
 
   <!-- The web counterpart of android/menu/data/UserDataRepository.kt. Profile
        and Memory read and write through it, and Chat History lists through it.
        It was written and then never loaded by anything, so all three reported
        "Cannot read properties of undefined (reading 'readProfile')" instead of
        showing their data. -->
-  <script src="menu/data/user-data.js?v=20261031b"></script>
-  <script src="shared/cloud-accounts.js?v=20260922a"></script>
-  <script src="menu/accounts/totp.js?v=20260914a"></script>
-  <script src="authentication/secure-session.js?v=20260914a"></script>
-  <script src="shared/persistence.js?v=20260914a"></script>
-  <script src="menu/accounts/recovery-pdf.js?v=20260914a"></script>
+  <script src="menu/data/user-data.js?v=20261018b"></script>
+  <script src="shared/cloud-accounts.js?v=20261018b"></script>
+  <script src="lobby/accounts/totp.js?v=20261018b"></script>
+  <script src="authentication/secure-session.js?v=20261018b"></script>
+  <script src="shared/persistence.js?v=20261018b"></script>
+  <script src="lobby/accounts/recovery-pdf.js?v=20261018b"></script>
 
-  <script src="menu/script.js?v=20261015c"></script>
-  <script src="menu/accounts/search/script.js?v=20260903e"></script>
-  <script src="menu/accounts/account/script.js?v=20260904a"></script>
-  <script src="menu/accounts/account/edit.js?v=20260904a"></script>
-  <script src="menu/accounts/totp-controller.js?v=20260914a"></script>
-  <script src="shared/favorite.js?v=20260914a"></script>
+  <script src="menu/script.js?v=20261020b"></script>
+  <script src="lobby/accounts/search/script.js?v=20261018b"></script>
+  <script src="lobby/accounts/accounts/edit/script.js?v=20261018b"></script>
+  <script src="lobby/accounts/accounts/edit/edit.js?v=20261018b"></script>
+  <script src="lobby/accounts/totp-controller.js?v=20261019d"></script>
+  <script src="shared/favorite.js?v=20261018b"></script>
 
-  <script src="settings/profile/script.js?v=20260904d"></script>
-  <script src="settings/profile/mobile/script.js?v=20260904d"></script>
-  <script src="settings/profile/email/script.js?v=20260904c"></script>
-  <script src="settings/settings.js?v=20260922c"></script>
+  <script src="settings/profile/script.js?v=20261018z"></script>
+  <script src="settings/update/script.js?v=20261018q"></script>
+  <script src="settings/profile/change-mobile-number/script.js?v=20261018s"></script>
+  <script src="settings/profile/change-email/script.js?v=20261018s"></script>
+  <script src="settings/settings.js?v=20261020d"></script>
 
-  <script src="shared/navigation.js?v=20261014a"></script>
-  <script src="shared/navigation-icons.js?v=20261030c"></script>
+  <script src="shared/navigation.js?v=20261018q"></script>
+  <script src="shared/navigation-icons.js?v=20261018b"></script>
 
-  <script src="connect/integrations/platforms.js?v=20261030b"></script>
-  <script src="connect/integrations/setup.js?v=20261030b"></script>
-  <script src="connect/connect.js?v=20261030b"></script>
-  <script src="connect/connect-native.js?v=20260921a"></script>
-  <script src="connect/permissions/permission-connection-flow.js?v=20260921a"></script>
-  <script src="connect/pair/script.js?v=20260904c"></script>
-  <script src="connect/pair/qr/script.js?v=20260921a"></script>
-  <script src="connect/pair/scanner/script.js?v=20260921a"></script>
-  <script src="connect/connect-device/script.js?v=20260921a"></script>
-  <script src="connect/devices/script.js?v=20260921a"></script>
-
-  <script src="lobby/lobby-status.js?v=20261030a"></script>
-
-  <script src="shared/events.js?v=20261031a"></script>
-  <script src="shared/safe-layout/safe-layout.js?v=20260925a"></script>
+  <script src="shared/events.js?v=20261019d"></script>
+  <script src="shared/safe-layout/safe-layout.js?v=20261018b"></script>
 </body>
 </html>

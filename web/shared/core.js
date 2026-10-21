@@ -31,7 +31,7 @@ window.IndoonePageState = window.IndoonePageState || {
 function clearHomeSubRoute() {
   const hash = window.location.hash || '';
 
-  if (!hash.startsWith('#menu/accounts/add-account')) return;
+  if (!hash.startsWith('#lobby/accounts/add-account')) return;
 
   history.replaceState(
     {},
@@ -74,15 +74,16 @@ window.showHome = function ({ remember = true } = {}) {
   clearHomeSubRoute();
   overlay?.classList.add('hidden');
   window.closeDrawer?.();
+  // Any menu page goes too. showHome is reached from the drawer's New Chat and
+  // from opening a saved conversation, and both of those happen with a menu
+  // page open - which it used to leave on screen underneath Home. closeModal
+  // above already does this; showHome did not.
+  window.closeAllMenuPages?.();
 
   document.getElementById('homeContent')?.removeAttribute('hidden');
   document.getElementById('content')?.setAttribute('hidden', '');
-  document.getElementById('connectContent')?.setAttribute('hidden', '');
   document.getElementById('settingsContent')?.setAttribute('hidden', '');
   document.getElementById('lobbyContent')?.setAttribute('hidden', '');
-  document
-    .querySelector('[data-notifications-page]')
-    ?.setAttribute('hidden', '');
   document.getElementById('addBtn')?.setAttribute('hidden', '');
   document.getElementById('searchWrap')?.setAttribute('hidden', '');
 

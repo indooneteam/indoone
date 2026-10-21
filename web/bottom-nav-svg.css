@@ -7,12 +7,32 @@
  * measurements.
  */
 
+/* The bar is only a row now. The app keeps Home, Lobby and Settings inside one
+   neumorphic pill and Vibe outside it, so the pill moved to .nav-pill below and
+   this element carries no surface of its own. */
 .bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+/* The three tabs, in the app's tray: the light violet gradient, the white
+   hairline and the wide soft shadow, exactly as AppBottomNav draws them. */
+.nav-pill {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0;
   padding: 5px;
+  /* AppBottomNav's tray is height(62.dp) around a 5dp padding, so the tab
+     inside it is 52dp. The bar itself is 62dp plus 7dp top and bottom. */
+  height: 62px;
   border-radius: 30px;
   background: linear-gradient(
     to bottom,
@@ -31,7 +51,7 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 56px;
+  height: 52px;
   padding: 4px 2px;
   border: 0;
   border-radius: 15px;
@@ -82,6 +102,104 @@
   border-radius: 15px;
 }
 
+/* Vibe, apart from the tray, drawn as the app's VibeButton draws it: a 48dp
+   circle on #21143B carrying four layers from its Canvas.
+
+     1  the glow       a soft wash around the core, gone by 40% of the circle.
+                       Held back from the app's 49% because a browser paints a
+                       radial gradient over the whole element at once, so the
+                       same numbers read much brighter than the Canvas does.
+     2  the highlight  a light wash at the top left, centred at 28% by 24%
+     3  the core       white, 7px of the 48, breathing between 0.88 and 1.08
+                       every 1100ms
+     4  the orbit      a #D6B7FF dot at 5.5% riding 25% out from the centre,
+                       a full turn every 3200ms, with a white pip inside it
+
+   The app animates this on a Canvas; the web does the same work in CSS. */
+.nav-vibe {
+  position: relative;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #21143b;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.nav-vibe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* VibeButton.kt: the highlight is White@0.24 out to radius 0.20 x 48 = 9.6px;
+     the glow is E3C8FF@0.96, 9A5CFF@0.78, 6F35DA@0.26 over radius
+     0.49 x 48 = 23.5px. A bare `circle` gradient uses farthest-corner, so the
+     radii are given in px here. */
+  background:
+    radial-gradient(
+      circle 9.6px at 28% 24%,
+      #ffffff3d 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle 23.5px at 50% 50%,
+      #e3c8fff5 0%,
+      #9a5cffc7 33%,
+      #6f35da42 67%,
+      transparent 100%
+    );
+}
+
+.nav-vibe::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -14.5px 0 0 -2.5px;
+  border-radius: 50%;
+  /* VibeButton.kt draws a filled White@0.85 pip of radius 0.025 x 48 = 1.2px
+     on the dot, not an inset ring. */
+  background: radial-gradient(
+    circle at 50% 50%,
+    #ffffffd9 0 1.2px,
+    #d6b7ff 1.2px 100%
+  );
+  transform-origin: 2.5px 14.5px;
+  animation: nav-vibe-orbit 3.2s linear infinite;
+}
+
+.nav-vibe-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* VibeButton.kt: core radius = 0.17 x 48 = 8.16px, so 16.3px across. */
+  width: 16.3px;
+  height: 16.3px;
+  margin: -8.15px 0 0 -8.15px;
+  border-radius: 50%;
+  background: #fffffff0;
+  animation: nav-vibe-pulse 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes nav-vibe-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nav-vibe-pulse {
+  from { transform: scale(0.88); }
+  to { transform: scale(1.08); }
+}
+
+.nav-vibe:focus-visible {
+  outline: 2px solid #9a6be8;
+  outline-offset: 2px;
+}
+
 /* The Lobby status dot keeps the same family as the navigation icons. */
 .lobby-status-icon,
 .ui-svg-icon {
@@ -99,21 +217,25 @@
 
 
 /* --------------------------------------------------------------------------
-   On a desktop the same four tabs stand up the right-hand side, from the top
-   of the window to the bottom, beside the page. It is the same control, the
-   same four tabs, the same colours and the same active pill - only the
-   direction and the stretch change.
+   On a desktop the same control stands up the right-hand side, from the top
+   of the window to the bottom, beside the page. The three tabs stay in their
+   tray at the top of the rail and the Vibe button takes the bottom, the way
+   the app keeps the three together and Vibe apart.
 
    This lives here, not in style.css, for two reasons: this file is loaded
    after style.css, and it is loaded after shared/safe-layout/safe-layout.css,
    which pins the bar's height and padding down with !important. A rule in
    style.css is overruled by that file whatever it says, which is why the bar
-   stayed 58px tall and the four tabs bunched up at the top.
+   stayed 58px tall and the tabs bunched up at the top.
    -------------------------------------------------------------------------- */
-@media (min-width: 1024px) {
+/* Standing the tabs up the side is for a pointer, not for a narrow screen
+   pretending to be wide. A phone in desktop mode gets the bottom bar. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  /* The row becomes the rail. It carries no surface: the tray keeps its own
+     gradient below, and the Vibe button keeps its circle. */
   #app.phone-shell .bottom-nav {
     position: fixed !important;
-    /* below the top bar's line, not over it: the four start where the page
+    /* below the top bar's line, not over it: the tabs start where the page
        starts, the way they do in the app */
     top: var(--indoone-topbar-base, 76px) !important;
     right: 0 !important;
@@ -125,11 +247,23 @@
     max-height: none !important;
     flex: 0 0 auto !important;
     flex-direction: column !important;
-    /* the four run the whole side: the first at the top, the last at the
-       bottom, equal room between them */
+    /* the row runs the whole side: the tray at the top, the Vibe button at
+       the bottom */
     justify-content: space-between !important;
     gap: 0 !important;
     padding: 14px 8px !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  /* The tray stands up and runs the rail's full height, the way it did before,
+     with the three tabs spread down it rather than bunched at the top. The
+     Vibe button keeps its own place at the bottom, outside the tray. */
+  #app.phone-shell .bottom-nav .nav-pill {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     /* the tray's own shape is a pill 30dp across; standing up it is a rail,
        so the corners come off and the left edge carries the line instead */
     border-radius: 0 !important;
@@ -137,7 +271,7 @@
     border-left: 1px solid #eeeaf2 !important;
     /* the app's background, not a flat white one. This is the tray gradient
        from AppBottomNav: Color(0xFFFAF8FF), 0xFFF5F0FA, 0xFFEEE7F7. Painting
-       it white here is what made the four look washed out. */
+       it white here is what made the tabs look washed out. */
     background: linear-gradient(
       to bottom,
       #faf8ff,
@@ -149,7 +283,7 @@
 
   /* In the app only the tab you are on carries a surface; the other three are
      bare, and it is their switch to one that brings its background in. A first
-     attempt at this gave all four a soft white card so they would read as
+     attempt at this gave every tab a soft white card so they would read as
      buttons in a tall rail, and that was wrong: it put a background on the
      three that the app leaves plain. They are bare again here.
      .nav-btn.active, above, still paints the app's violet pill - it is more
@@ -159,7 +293,7 @@
      app's violet pill. Writing "background: transparent !important" here to
      say the same thing looked harmless and was not - !important beats the
      active rule's plain background whatever its specificity, so it wiped the
-     pill off the tab you are on as well. The four measured as transparent,
+     pill off the tab you are on as well. All of them measured transparent,
      the active one among them. */
   #app.phone-shell .bottom-nav .nav-btn {
     flex: 0 0 auto !important;

@@ -15,8 +15,16 @@
 
   const $ = id => document.getElementById(id);
 
+  // The auth screen has a container of its own - the card inside #overlay, which
+  // nothing else uses. It must NOT be #modal: #modal is the element every menu
+  // page and the Settings screens are written into, so putting the sign-in
+  // backdrop on it painted every one of those pages beige.
+  function host() {
+    return $('accountDialog');
+  }
+
   function root() {
-    return $('modal')?.querySelector('.auth-page') || document;
+    return host()?.querySelector('.auth-page') || document;
   }
 
   function setStatus(message = '', error = false) {
@@ -35,13 +43,19 @@
 
     if (!overlay || !modal) return false;
 
+    // The card goes into the overlay's own child, and the overlay is the
+    // backdrop. The overlay belongs to the sign-in screen and to nothing else.
+    const card = host();
+
+    if (!card) return false;
+
     overlay.classList.remove('hidden');
     overlay.classList.add(AUTH_CLASS);
     document.body.classList.add('auth-open', 'auth-pending');
 
     // The status line sits below the card, not inside it, which is where the
     // app puts it.
-    modal.innerHTML = `
+    card.innerHTML = `
       <div class="auth-page">
         ${html}
       </div>
@@ -53,9 +67,9 @@
       ></div>
     `;
 
-    bindButtons(modal);
-    bindMobileDefaults(modal);
-    bindPasswordToggles(modal);
+    bindButtons(card);
+    bindMobileDefaults(card);
+    bindPasswordToggles(card);
 
     return true;
   }
@@ -63,7 +77,7 @@
   // Render the screen only if it is not already the one on display, so a step
   // change never throws away what has been typed.
   function renderScreen(name, html) {
-    if (currentScreen === name && $('modal')?.querySelector('.auth-page')) {
+    if (currentScreen === name && host()?.querySelector('.auth-page')) {
       return true;
     }
 
@@ -343,7 +357,6 @@
         const email = await auth.startLoginOtp(readLoginIdentifier());
         window.IndooneLoginFeature?.otpEmail?.(email, scope);
         showLogin('otp');
-        setStatus('OTP sent. Enter the code from your email.');
       } else if (action === 'login-continue-password') {
         showLogin('password');
       } else if (action === 'login-verify') {
@@ -353,7 +366,7 @@
         button.textContent = 'Sending…';
         const email = await auth.resendLoginOtp();
         window.IndooneLoginFeature?.otpEmail?.(email, scope);
-        setStatus('New OTP sent. Check your email.');
+        setStatus('New OTP sent to your email.');
       } else if (action === 'login-complete') {
         button.textContent = 'Logging in…';
         await auth.loginWithPassword(
@@ -367,7 +380,6 @@
         );
         window.IndooneSignupFeature?.otpEmail?.(email, scope);
         showSignup('otp');
-        setStatus('OTP sent. Enter the code from your email.');
       } else if (action === 'signup-password') {
         button.textContent = 'Creating account…';
         await auth.createSignupWithPassword(
@@ -382,7 +394,7 @@
         button.textContent = 'Sending…';
         const email = await auth.resendSignupOtp();
         window.IndooneSignupFeature?.otpEmail?.(email, scope);
-        setStatus('New OTP sent. Check your email.');
+        setStatus('New OTP sent to your email.');
       }
     } catch (error) {
       const message =
@@ -424,12 +436,17 @@
   function close() {
     $('overlay')?.classList.remove(AUTH_CLASS);
     $('overlay')?.classList.add('hidden');
-    document.body.classList.remove('auth-open', 'auth-pending');
 
-    if ($('modal')) {
-      $('modal').innerHTML = '';
+    // #modal must never carry the auth class. Clear it here as well, so a
+    // session that was left over from an older build cannot keep painting the
+    // menu and Settings pages beige.
+    $('modal')?.classList.remove(AUTH_CLASS);
+
+    if (host()) {
+      host().innerHTML = '';
     }
 
+    document.body.classList.remove('auth-open', 'auth-pending');
     currentScreen = null;
   }
 
@@ -440,13 +457,20 @@
     close
   };
 
-  // Publish the canonical implementation separately so auth-ui.js can safely
-  // act as a legacy facade without ever creating a competing event bridge.
+  // Publish the one implementation on both names, so any code that still
+  // reaches for either gets the same object.
   window.__indooneCanonicalAuthUI = api;
   window.IndooneAuthUI = api;
 
   function init() {
     if (localStorage.getItem('indoone_otp_verified_uid')) return;
+
+    // A session can already be live by the time this runs - Firebase restores
+    // it asynchronously - so never raise the sign-in screen over a signed-in
+    // user. events.js takes it down again if it slips through, but the right
+    // place to not do it is here.
+    if (window.IndooneFirebase?.auth?.currentUser) return;
+
     showLogin();
   }
 
