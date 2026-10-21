@@ -4,7 +4,10 @@
   const backdrop = drawer?.querySelector('.drawer-backdrop');
   const loadedScripts = new Set();
   const loadedStyles = new Set();
-  const ASSET_VERSION = '20261019b';
+  // Bumped with the three plugin stylesheets added in this change: they are
+  // fetched as <base>/style.css?v=<this>, and that exact URL used to 404, so a
+  // browser that cached the miss would otherwise keep asking for it.
+  const ASSET_VERSION = '20261020a';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
