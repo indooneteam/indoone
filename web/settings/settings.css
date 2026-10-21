@@ -207,6 +207,17 @@
 {
   color:#6330db
 }
+/* SettingsMenuAction's action: Text(action, color = Color(0xFF6330DB),
+   fontSize = 12.sp, fontWeight = FontWeight.SemiBold) in SettingsScreen.kt.
+   The Version row draws this instead of an AppChevron. */
+.settings-content .settings-row-action
+{
+  flex:none;
+  color:#6330db;
+  font-size:12px;
+  font-weight:600
+}
+
 /* AppChevron: 22dp KeyboardArrowRight tinted #7A6F8C (AppPageChrome.kt). */
 .settings-content .settings-arrow
 {
