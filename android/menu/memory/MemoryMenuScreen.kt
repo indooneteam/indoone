@@ -42,6 +42,15 @@ import kotlinx.coroutines.launch
 
 private data class MemoryItem(val key: String, val value: String)
 
+// A memory is stored under its key, and the key is a storage detail -
+// "favourite_colour". The person reading the list did not type that, so the
+// label is the key made readable. The key itself is untouched.
+private fun memoryLabel(key: String): String {
+    val words = key.replace(Regex("[_-]+"), " ").trim()
+
+    return words.ifBlank { key }.replaceFirstChar { it.uppercase() }
+}
+
 @Composable
 fun MemoryMenuScreen(onBack: () -> Unit) {
     val repository = remember { UserDataRepository() }
@@ -84,12 +93,29 @@ fun MemoryMenuScreen(onBack: () -> Unit) {
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
+
+                // How much is remembered, at a glance.
+                if (memories.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier.padding(start = 10.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color(0xFFF0E7FF),
+                    ) {
+                        Text(
+                            "${memories.size} saved",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            color = Color(0xFF5E2DD2),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
             }
 
             Surface(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp),
                 shape = RoundedCornerShape(18.dp),
-                color = Color(0xFFF5F9FF),
+                color = Color(0xFFF8F3FF),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -134,17 +160,17 @@ fun MemoryMenuScreen(onBack: () -> Unit) {
             Surface(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp),
                 shape = RoundedCornerShape(15.dp),
-                color = Color(0xFFEDF5FF),
+                color = Color(0xFFF6F0FF),
             ) {
                 TextButton(
                     onClick = { showAdd = true },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Outlined.Add, contentDescription = null, tint = Color(0xFF2168D6))
+                    Icon(Icons.Outlined.Add, contentDescription = null, tint = Color(0xFF703BE2))
                     Spacer(Modifier.size(7.dp))
                     Text(
                         "Add memory",
-                        color = Color(0xFF2168D6),
+                        color = Color(0xFF703BE2),
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -197,7 +223,7 @@ fun MemoryMenuScreen(onBack: () -> Unit) {
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        memory.key,
+                                        memoryLabel(memory.key),
                                         color = Color(0xFF6B3FD1),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
