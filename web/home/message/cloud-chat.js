@@ -175,6 +175,7 @@
       .map(item => ({
         id: item.id,
         title: String(item.data.title || '').trim() || 'New chat',
+        messageCount: Number(item.data.messageCount) || 0,
         updatedAt: item.data.updatedAt?.toMillis?.() || 0
       }));
   }
