@@ -3,60 +3,107 @@
   data-menu-feature
   data-menu-section="memory"
 >
-  <div class="modal-head">
-    <h2>Memory</h2>
+  <header class="mm-head">
     <button
       type="button"
-      class="close-btn"
+      class="mm-back"
       data-close
-      aria-label="Close Memory"
+      aria-label="Back"
     >
-      ×
+      <span data-app-icon="arrowBack"></span>
     </button>
+    <h2 class="mm-title">Memory</h2>
+    <span
+      class="mm-count"
+      id="menuMemoryCount"
+      hidden
+    ></span>
+  </header>
+
+  <!-- MemoryMenuScreen.kt opens with this card: the memory icon, the heading and
+       the line under it. The web used to go straight into a form. -->
+  <div class="mm-hero">
+    <span class="mm-hero-icon">
+      <span data-app-icon="memory"></span>
+    </span>
+    <div class="mm-hero-text">
+      <b>Saved memories</b>
+      <span>Manage the information you want Indoone to remember.</span>
+    </div>
   </div>
 
-  <p class="menu-feature-intro">Saved memories</p>
-  <p class="menu-feature-note">
-    Manage the information you want Indoone to remember.
-  </p>
-
-  <form
-    class="menu-feature-form memory-add"
-    id="menuMemoryForm"
-  >
-    <label>
-      <span>Key</span>
-      <input
-        type="text"
-        id="menuMemoryKey"
-        placeholder="favourite_colour"
-      />
-    </label>
-
-    <label>
-      <span>Value</span>
-      <input
-        type="text"
-        id="menuMemoryValue"
-        placeholder="Blue"
-      />
-    </label>
-
-    <button
-      type="submit"
-      class="primary"
-    >
-      Add memory
-    </button>
-  </form>
+  <p
+    class="mm-status"
+    id="menuMemoryStatus"
+  ></p>
 
   <div
-    class="menu-feature-list"
+    class="menu-feature-list mm-list"
     id="menuMemoryList"
   ></div>
 
-  <p
-    class="menu-feature-status"
-    id="menuMemoryStatus"
-  ></p>
+  <!-- The app keeps adding behind an action, not above the list. -->
+  <button
+    type="button"
+    class="mm-add"
+    id="menuMemoryAdd"
+  >
+    <span data-app-icon="add"></span>
+    Add memory
+  </button>
+
+  <div
+    class="mm-dialog-backdrop"
+    id="menuMemoryDialog"
+    hidden
+  >
+    <div
+      class="mm-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="menuMemoryDialogTitle"
+    >
+      <h3 id="menuMemoryDialogTitle">Add memory</h3>
+
+      <label class="mm-field">
+        <span>Key</span>
+        <input
+          type="text"
+          id="menuMemoryKey"
+          placeholder="favourite_colour"
+        />
+      </label>
+
+      <label class="mm-field">
+        <span>Value</span>
+        <input
+          type="text"
+          id="menuMemoryValue"
+          placeholder="Blue"
+        />
+      </label>
+
+      <p
+        class="mm-dialog-status"
+        id="menuMemoryDialogStatus"
+      ></p>
+
+      <div class="mm-dialog-actions">
+        <button
+          type="button"
+          class="mm-cancel"
+          id="menuMemoryDialogCancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="mm-confirm"
+          id="menuMemoryDialogSave"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
 </section>
