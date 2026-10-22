@@ -1,32 +1,76 @@
 window.initMenuMemory = function () {
-  const form = document.getElementById('menuMemoryForm');
-  const key = document.getElementById('menuMemoryKey');
-  const value = document.getElementById('menuMemoryValue');
   const list = document.getElementById('menuMemoryList');
   const status = document.getElementById('menuMemoryStatus');
+  const count = document.getElementById('menuMemoryCount');
+  const addButton = document.getElementById('menuMemoryAdd');
+  const dialog = document.getElementById('menuMemoryDialog');
+  const dialogStatus = document.getElementById('menuMemoryDialogStatus');
+  const keyInput = document.getElementById('menuMemoryKey');
+  const valueInput = document.getElementById('menuMemoryValue');
+  const cancelButton = document.getElementById('menuMemoryDialogCancel');
+  const saveButton = document.getElementById('menuMemoryDialogSave');
 
   function setStatus(text) {
     if (status) {
-      status.textContent = text;
+      status.textContent = text || '';
     }
+  }
+
+  function setDialogStatus(text) {
+    if (dialogStatus) {
+      dialogStatus.textContent = text || '';
+    }
+  }
+
+  // A memory is stored under its key, and the key is a storage detail -
+  // "favourite_colour". The person reading the list did not type that, so the
+  // label is the key made readable. The key itself is untouched.
+  function labelFor(key) {
+    const words = String(key || '').replace(/[_-]+/g, ' ').trim();
+
+    if (!words) {
+      return key;
+    }
+
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  function openDialog() {
+    if (keyInput) keyInput.value = '';
+    if (valueInput) valueInput.value = '';
+    setDialogStatus('');
+    dialog?.removeAttribute('hidden');
+    keyInput?.focus();
+  }
+
+  function closeDialog() {
+    dialog?.setAttribute('hidden', '');
   }
 
   function row(entryKey, entryValue) {
     const wrap = document.createElement('div');
-    wrap.className = 'memory-row';
+    wrap.className = 'mm-row';
 
     const text = document.createElement('span');
+    text.className = 'mm-row-text';
+
     const title = document.createElement('b');
-    title.textContent = entryKey;
-    const body = document.createElement('small');
+    title.textContent = labelFor(entryKey);
+
+    const body = document.createElement('span');
     body.textContent = entryValue;
+
     text.appendChild(title);
     text.appendChild(body);
 
     const remove = document.createElement('button');
     remove.type = 'button';
-    remove.setAttribute('aria-label', `Delete ${entryKey}`);
-    remove.textContent = '×';
+    remove.className = 'mm-delete';
+    remove.setAttribute('aria-label', 'Delete ' + labelFor(entryKey));
+    remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+      + ' stroke-width="1.8" stroke-linecap="round" aria-hidden="true">'
+      + '<path d="M5 7h14M10 7V5h4v2M6.5 7l1 12h9l1-12"></path></svg>';
+
     remove.addEventListener('click', async () => {
       try {
         await window.IndooneUserData.deleteMemory(entryKey);
@@ -42,56 +86,66 @@ window.initMenuMemory = function () {
   }
 
   async function load() {
-    setStatus('Loading…');
+    setStatus('');
 
     try {
-      const memories = await window.IndooneUserData.readMemory();
-      const keys = Object.keys(memories);
+      const memory = await window.IndooneUserData.readMemory();
+      const entries = Object.keys(memory || {})
+        .map(key => ({ key, value: String(memory[key]?.value || '') }))
+        .filter(entry => entry.value.trim())
+        .sort((a, b) => a.key.localeCompare(b.key));
 
       if (list) {
         list.textContent = '';
 
-        if (!keys.length) {
+        if (!entries.length) {
           const empty = document.createElement('p');
-          empty.className = 'menu-feature-note';
+          empty.className = 'mm-empty';
           empty.textContent = 'No memories saved yet.';
           list.appendChild(empty);
         } else {
-          keys.forEach(entryKey => {
-            const entry = memories[entryKey] || {};
-            list.appendChild(row(entryKey, entry.value || ''));
-          });
+          entries.forEach(entry => list.appendChild(row(entry.key, entry.value)));
         }
       }
 
-      setStatus('');
+      if (count) {
+        if (entries.length) {
+          count.textContent = entries.length + ' saved';
+          count.removeAttribute('hidden');
+        } else {
+          count.setAttribute('hidden', '');
+        }
+      }
     } catch (error) {
       setStatus(error?.message || 'Could not load memory.');
     }
   }
 
-  form?.addEventListener('submit', async event => {
-    event.preventDefault();
+  addButton?.addEventListener('click', openDialog);
+  cancelButton?.addEventListener('click', closeDialog);
 
-    const entryKey = (key?.value || '').trim();
-    const entryValue = (value?.value || '').trim();
+  saveButton?.addEventListener('click', async () => {
+    const key = (keyInput?.value || '').trim();
+    const value = (valueInput?.value || '').trim();
 
-    if (!entryKey || !entryValue) {
-      setStatus('A memory needs both a key and a value.');
+    if (!key || !value) {
+      setDialogStatus('A key and a value are both needed.');
       return;
     }
 
-    setStatus('Saving…');
+    setDialogStatus('');
 
     try {
-      await window.IndooneUserData.setMemory(entryKey, entryValue);
-      if (key) key.value = '';
-      if (value) value.value = '';
-      void load();
+      await window.IndooneUserData.setMemory(key, value);
+      closeDialog();
+      await load();
     } catch (error) {
-      setStatus(error?.message || 'Could not save memory.');
+      setDialogStatus(error?.message || 'Could not save memory.');
     }
   });
+
+  // The key's own rule, which the account enforces: letters, digits, - and _.
+  keyInput?.addEventListener('input', () => setDialogStatus(''));
 
   void load();
 };
