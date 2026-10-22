@@ -39,12 +39,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.data.UserDataRepository
 import kotlinx.coroutines.launch
 
 private val LabelColor = Color(0xFF77717F)
 private val ValueColor = Color(0xFF201B28)
-private val AccentColor = Color(0xFF2168D6)
+// The brand purple. This screen used to be blue (#2168D6), which nothing else
+// in the app is - the drawer, Settings, the welcome and Plugins are all purple.
+private val AccentColor = Color(0xFF703BE2)
 
 @Composable
 fun ProfileMenuScreen(onBack: () -> Unit) {
@@ -121,7 +124,7 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                color = Color(0xFFF5F9FF),
+                color = Color(0xFFF8F3FF),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
@@ -130,7 +133,7 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                     Surface(
                         modifier = Modifier.size(76.dp),
                         shape = CircleShape,
-                        color = Color(0xFFE3EEFF),
+                        color = Color(0xFFF0E7FF),
                     ) {
                         androidx.compose.foundation.layout.Box(
                             modifier = Modifier.fillMaxSize(),
@@ -151,8 +154,12 @@ fun ProfileMenuScreen(onBack: () -> Unit) {
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
+                    // The account's own email, which is what the web's hero shows.
+                    // With no email it keeps the line it had.
                     Text(
-                        "Your Indoone profile",
+                        FirebaseAuth.getInstance().currentUser?.email
+                            ?.takeIf { it.isNotBlank() }
+                            ?: "Your Indoone profile",
                         modifier = Modifier.padding(top = 3.dp),
                         color = LabelColor,
                         fontSize = 12.sp,
