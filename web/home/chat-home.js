@@ -5,7 +5,7 @@
     // was undefined and both the composer and Vibe threw the moment they tried
     // to send. It goes first, because the others call it.
     'home/message/chat-api.js?v=20261020a',
-    'home/message/cloud-chat.js?v=20261020a',
+    'home/message/cloud-chat.js?v=20261020b',
     'home/message/chat-store.js?v=20261018b',
     'home/message/message.js?v=20261018b',
     'home/send/send.js?v=20261020b',

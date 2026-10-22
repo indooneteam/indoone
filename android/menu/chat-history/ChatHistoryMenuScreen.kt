@@ -1,22 +1,30 @@
 package com.indoone.menu.chathistory
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ArrowForwardIos
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -31,16 +39,62 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.database.ValueEventListener
 import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
 import kotlinx.coroutines.launch
-import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
+import java.util.Locale
+
+// The brand purple, the same one the drawer, Settings and the welcome use.
+// This screen used to be blue (#2168D6), which nothing else in the app is.
+private val ChatHistoryPurple = Color(0xFF703BE2)
+private val ChatHistoryPurpleSoft = Color(0xFFB78BFF)
+private val ChatHistoryInk = Color(0xFF24212A)
+private val ChatHistoryMuted = Color(0xFF9A929F)
+private val ChatHistoryDanger = Color(0xFFB4232B)
+
+// Today reads as a time, anything older as a date. HomeScreen.kt carries the
+// same helper for the welcome's "pick up where you left off" rows.
+private fun historyWhenLabel(updatedAtMillis: Long): String {
+    if (updatedAtMillis <= 0L) {
+        return ""
+    }
+
+    val then = Date(updatedAtMillis)
+    val now = Calendar.getInstance()
+    val other = Calendar.getInstance().apply { time = then }
+    val sameDay = now.get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
+        now.get(Calendar.DAY_OF_YEAR) == other.get(Calendar.DAY_OF_YEAR)
+
+    return SimpleDateFormat(
+        if (sameDay) "h:mm a" else "d MMM",
+        Locale.getDefault(),
+    ).format(then)
+}
+
+private fun historyMetaLine(chat: CloudChatConversation): String {
+    val parts = mutableListOf<String>()
+
+    if (chat.messageCount > 0) {
+        parts += if (chat.messageCount == 1) "1 message" else "${chat.messageCount} messages"
+    }
+
+    val whenLabel = historyWhenLabel(chat.updatedAtMillis)
+
+    if (whenLabel.isNotEmpty()) {
+        parts += whenLabel
+    }
+
+    return parts.joinToString(" · ")
+}
 
 @Composable
 fun ChatHistoryMenuScreen(
@@ -98,58 +152,43 @@ fun ChatHistoryMenuScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFF5E2DD2),
+                    )
                 }
                 Text(
                     "Chat History",
-                    color = Color(0xFF211B29),
-                    fontSize = 20.sp,
+                    color = Color(0xFF272238),
+                    fontSize = 21.sp,
                     fontWeight = FontWeight.Bold,
                 )
-            }
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 7.dp),
-                shape = RoundedCornerShape(18.dp),
-                color = Color(0xFFF5F9FF),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(15.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                if (conversations.isNotEmpty()) {
                     Surface(
-                        modifier = Modifier.size(45.dp),
-                        shape = RoundedCornerShape(13.dp),
-                        color = Color(0xFFE3EEFF),
+                        modifier = Modifier.padding(start = 10.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color(0xFFF0E7FF),
                     ) {
-                        androidx.compose.foundation.layout.Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Outlined.History,
-                                contentDescription = null,
-                                tint = Color(0xFF2168D6),
-                            )
-                        }
-                    }
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
                         Text(
-                            "Your conversations",
-                            color = Color(0xFF201B28),
-                            fontSize = 15.sp,
+                            if (conversations.size == 1) "1 chat" else "${conversations.size} chats",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            color = Color(0xFF5E2DD2),
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            "Open or remove saved chats from your account history.",
-                            modifier = Modifier.padding(top = 3.dp),
-                            color = Color(0xFF6E6777),
-                            fontSize = 12.sp,
-                            lineHeight = 17.sp,
                         )
                     }
                 }
             }
+
+            Text(
+                "Open a conversation, or remove one.",
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
+                color = ChatHistoryInk,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
 
             when {
                 loading -> {
@@ -160,12 +199,12 @@ fun ChatHistoryMenuScreen(
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(26.dp),
-                            color = Color(0xFF2168D6),
+                            color = ChatHistoryPurple,
                         )
                         Text(
                             "Loading chats…",
                             modifier = Modifier.padding(top = 10.dp),
-                            color = Color(0xFF77717F),
+                            color = ChatHistoryMuted,
                             fontSize = 12.sp,
                         )
                     }
@@ -180,12 +219,12 @@ fun ChatHistoryMenuScreen(
                         Icon(
                             Icons.Outlined.ChatBubbleOutline,
                             contentDescription = null,
-                            tint = Color(0xFFD93025),
+                            tint = ChatHistoryDanger,
                         )
                         Text(
                             status.orEmpty(),
                             modifier = Modifier.padding(top = 10.dp),
-                            color = Color(0xFFD93025),
+                            color = ChatHistoryDanger,
                             fontSize = 12.sp,
                         )
                     }
@@ -201,7 +240,7 @@ fun ChatHistoryMenuScreen(
                             Icons.Outlined.History,
                             contentDescription = null,
                             modifier = Modifier.size(32.dp),
-                            tint = Color(0xFF9A91A6),
+                            tint = ChatHistoryMuted,
                         )
                         Text(
                             "No saved chats yet.",
@@ -216,89 +255,115 @@ fun ChatHistoryMenuScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 18.dp),
-                        verticalArrangement = Arrangement.spacedBy(9.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 6.dp, bottom = 18.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(top = 6.dp, bottom = 18.dp),
                     ) {
                         items(conversations, key = { it.id }) { chat ->
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                color = Color.White,
-                                shadowElevation = 1.dp,
-                                onClick = { onOpenChat(chat.id) },
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(13.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Surface(
-                                        modifier = Modifier.size(40.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = if (chat.closed) Color(0xFFF3F0F5) else Color(0xFFEAF4FF),
-                                    ) {
-                                        androidx.compose.foundation.layout.Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Icon(
-                                                Icons.Outlined.ChatBubbleOutline,
-                                                contentDescription = null,
-                                                tint = if (chat.closed) Color(0xFF8B8492) else Color(0xFF2168D6),
-                                            )
-                                        }
-                                    }
-
-                                    Column(
-                                        modifier = Modifier.weight(1f).padding(start = 11.dp),
-                                    ) {
-                                        Text(
-                                            chat.title,
-                                            color = Color(0xFF27212E),
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                        Text(
-                                            DateFormat.getDateTimeInstance(
-                                                DateFormat.MEDIUM,
-                                                DateFormat.SHORT,
-                                            ).format(Date(chat.updatedAtMillis)),
-                                            color = Color(0xFF8A8392),
-                                            fontSize = 10.sp,
-                                            modifier = Modifier.padding(top = 2.dp),
-                                        )
-                                    }
-
-                                    Icon(
-                                        Icons.Outlined.ArrowForwardIos,
-                                        contentDescription = "Open chat",
-                                        modifier = Modifier.size(15.dp),
-                                        tint = Color(0xFFAAA3B0),
-                                    )
-
-                                    IconButton(
-                                        onClick = {
-                                            scope.launch {
-                                                runCatching { repository.deleteConversation(chat.id) }
-                                                    .onSuccess {
-                                                        conversations = conversations.filterNot { it.id == chat.id }
-                                                        status = null
-                                                    }
-                                                    .onFailure {
-                                                        status = it.message ?: "Chat could not be deleted."
-                                                    }
+                            ChatHistoryRow(
+                                chat = chat,
+                                onOpen = { onOpenChat(chat.id) },
+                                onDelete = {
+                                    scope.launch {
+                                        runCatching { repository.deleteConversation(chat.id) }
+                                            .onSuccess {
+                                                conversations = conversations.filterNot { it.id == chat.id }
+                                                status = null
                                             }
-                                        },
-                                    ) {
-                                        Icon(
-                                            Icons.Outlined.DeleteOutline,
-                                            contentDescription = "Delete chat",
-                                            tint = Color(0xFFD93025),
-                                        )
+                                            .onFailure {
+                                                status = it.message ?: "Chat could not be deleted."
+                                            }
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// The row: the 3dp purple edge the welcome's "pick up where you left off" rows
+// use, the conversation's own title, how big it is and when it was last
+// touched, and the actions behind one button so Delete is no longer a peer of
+// the row itself.
+@Composable
+private fun ChatHistoryRow(
+    chat: CloudChatConversation,
+    onOpen: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = Color(0xFFFBF9FF),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFECE4FA)),
+        onClick = onOpen,
+    ) {
+        Row(
+            modifier = Modifier.height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.linearGradient(
+                            listOf(ChatHistoryPurple, ChatHistoryPurpleSoft),
+                        ),
+                    ),
+            )
+
+            Column(
+                modifier = Modifier.weight(1f).padding(start = 13.dp, top = 12.dp, bottom = 12.dp),
+            ) {
+                Text(
+                    chat.title,
+                    color = ChatHistoryInk,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    historyMetaLine(chat),
+                    modifier = Modifier.padding(top = 2.dp),
+                    color = ChatHistoryMuted,
+                    fontSize = 11.sp,
+                )
+            }
+
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(
+                        Icons.Outlined.MoreHoriz,
+                        contentDescription = "Actions",
+                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFF8A8492),
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = menuOpen,
+                    onDismissRequest = { menuOpen = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Open") },
+                        onClick = {
+                            menuOpen = false
+                            onOpen()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete", color = ChatHistoryDanger) },
+                        onClick = {
+                            menuOpen = false
+                            onDelete()
+                        },
+                    )
                 }
             }
         }
