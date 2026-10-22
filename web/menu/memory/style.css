@@ -1,96 +1,277 @@
-.menu-feature-intro {
-  margin: 0 0 4px;
-  color: #24212a;
-  font-size: 14px;
+/* MemoryMenuScreen.kt's screen, in the brand purple: the header, the card that
+   explains what this is, the list of what is remembered, and one action that
+   opens the form. The web used to put the form first, above everything. */
+.mm-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mm-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #5e2dd2;
+  cursor: pointer;
+}
+
+.mm-back svg {
+  width: 24px;
+  height: 24px;
+}
+
+.mm-title {
+  margin: 0;
+  color: #272238;
+  font-size: 21px;
   font-weight: 700;
 }
 
-.menu-feature-note {
-  margin: 0 0 12px;
-  color: #7a7482;
-  font-size: 12.5px;
+.mm-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5e2dd2;
+  background: #f0e7ff;
+  border: 1px solid #e0d1fa;
+  border-radius: 999px;
+  padding: 3px 10px;
 }
 
-.menu-feature-form {
+.mm-count[hidden] {
+  display: none;
+}
+
+.mm-hero {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, #f6efff 0%, #fbf8ff 100%);
+  border: 1px solid #e2d5f8;
 }
 
-.memory-add {
-  border: 1px solid #efeaf4;
+.mm-hero-icon {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
   border-radius: 14px;
-  padding: 12px;
-  background: #fbfaff;
+  background: #f0e7ff;
+  color: #703be2;
 }
 
-.menu-feature-form label {
+.mm-hero-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mm-hero-text {
+  min-width: 0;
+}
+
+.mm-hero-text b {
+  display: block;
+  color: #201b28;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mm-hero-text span {
+  display: block;
+  margin-top: 3px;
+  color: #6e6777;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.mm-status {
+  min-height: 16px;
+  margin: 10px 0 0;
+  color: #d93025;
+  font-size: 12px;
+}
+
+.mm-list {
+  margin-top: 12px;
+}
+
+/* One memory: what it is called, and what it holds. */
+.mm-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 10px 13px 14px;
+  border: 1px solid #ece4fa;
+  border-radius: 16px;
+  background: #fbf9ff;
+}
+
+.mm-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mm-row-text b {
+  display: block;
+  color: #5e2dd2;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mm-row-text span {
+  display: block;
+  margin-top: 5px;
+  color: #29232f;
+  font-size: 14px;
+  line-height: 19px;
+  word-break: break-word;
+}
+
+.mm-delete {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  color: #b4232b;
+  cursor: pointer;
+}
+
+.mm-delete svg {
+  width: 17px;
+  height: 17px;
+}
+
+.mm-empty {
+  margin: 26px 0 0;
+  text-align: center;
+  color: #4f4857;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mm-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  border: 1.5px dashed #cbb6f0;
+  border-radius: 16px;
+  background: #fbf9ff;
+  color: #5e2dd2;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mm-add svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The form, behind the action. */
+.mm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(28, 21, 36, .38);
+}
+
+.mm-dialog-backdrop[hidden] {
+  display: none;
+}
+
+.mm-dialog {
+  width: 100%;
+  max-width: 340px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 50px -20px rgba(40, 24, 70, .5);
+}
+
+.mm-dialog h3 {
+  margin: 0 0 14px;
+  color: #272238;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mm-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  margin-bottom: 10px;
   font-size: 12px;
   color: #6f6b77;
   font-weight: 600;
 }
 
-.menu-feature-form input {
+.mm-field input {
   border: 1px solid #e9e4ef;
   border-radius: 11px;
   padding: 10px 12px;
   font: inherit;
   font-size: 14px;
   color: #17151d;
-  background: #fff;
+  background: #fbfaff;
   outline: none;
 }
 
-.menu-feature-form input:focus {
+.mm-field input:focus {
   border-color: #cdb8f5;
+  background: #fff;
 }
 
-.menu-feature-list {
-  margin-top: 14px;
+.mm-dialog-status {
+  min-height: 16px;
+  margin: 4px 0 8px;
+  color: #d93025;
+  font-size: 12px;
+}
+
+.mm-dialog-actions {
   display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
   gap: 8px;
 }
 
-.memory-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid #efeaf4;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.memory-row b {
-  display: block;
-  color: #24212a;
-  font-size: 13px;
-}
-
-.memory-row small {
-  display: block;
-  color: #7a7482;
-  font-size: 11.5px;
-  word-break: break-word;
-}
-
-.memory-row button {
-  flex: none;
+.mm-cancel,
+.mm-confirm {
   border: 0;
-  background: transparent;
-  color: #b3261e;
-  font-size: 15px;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.menu-feature-status {
-  min-height: 18px;
-  margin: 10px 0 0;
-  text-align: center;
-  font-size: 12px;
-  color: #7a7482;
+.mm-cancel {
+  background: #f1eef5;
+  color: #6e6777;
+}
+
+.mm-confirm {
+  background: #703be2;
+  color: #fff;
 }
