@@ -105,15 +105,17 @@
   font-weight: 600;
 }
 
+/* The app's Text wraps; the web's did not. white-space: nowrap with an
+   ellipsis cut two of the three cards mid-sentence - "Connect your Zoho Mail
+   acco..." and "Connect your Gith..." - so the line now wraps to as many rows
+   as it needs. */
 .plugins-text small,
 .plugins-text i {
   display: block;
   color: #777286;
   font-size: 12px;
   font-style: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 16px;
 }
 
 .plugins-text i {
