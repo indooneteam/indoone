@@ -102,6 +102,17 @@
       '<path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path>'
     ].join(''),
 
+    // Icons.Outlined.Edit - the pencil Profile's edit control uses
+    edit: [
+      '<path d="M12 20h8"></path>',
+      '<path d="M16.4 3.7a2.1 2.1 0 0 1 3 3L7.3 18.8 3.4 20l1.2-3.9Z"></path>'
+    ].join(''),
+
+    // Icons.Outlined.Check - the tick it turns into once editing is open
+    check: [
+      '<path d="m5 12.6 4.6 4.6L19 7.2"></path>'
+    ].join(''),
+
     // Icons.Outlined.Memory
     memory: [
       '<rect x="6.6" y="6.6" width="10.8" height="10.8" rx="2"></rect>',
