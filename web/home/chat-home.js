@@ -5,7 +5,7 @@
     // was undefined and both the composer and Vibe threw the moment they tried
     // to send. It goes first, because the others call it.
     'home/message/chat-api.js?v=20261020a',
-    'home/message/cloud-chat.js?v=20261018b',
+    'home/message/cloud-chat.js?v=20261020b',
     'home/message/chat-store.js?v=20261018b',
     'home/message/message.js?v=20261018b',
     'home/send/send.js?v=20261020b',
@@ -19,8 +19,11 @@
   ];
 
   // The app alternates these two, every two seconds.
+  // The panel's second line. The first
+  // line now says what Indoone can actually do; "How can I help you today?"
+  // was already implied by the panel asking what to do.
   const WELCOME_LINES = [
-    'I am Indoone AI. How can I help you today?',
+    'I can read a screenshot, plan a trip, draft a message or explain something dense.',
     'Ask me anything.'
   ];
 
@@ -96,6 +99,145 @@
       clearInterval(welcomeTimer);
       welcomeTimer = null;
     }
+  }
+
+  // The app's welcome says a flat "Hi! 👋" to everyone. The reply already
+  // greets you by name - the profile in users/<uid>/profile carries one - and
+  // the greeting below puts it on the empty screen too, with the hour.
+  function partOfDay() {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return 'Good morning';
+    }
+
+    if (hour < 17) {
+      return 'Good afternoon';
+    }
+
+    return 'Good evening';
+  }
+
+  async function paintGreeting() {
+    const title = document.getElementById('welcomeTitle');
+
+    if (!title) {
+      return;
+    }
+
+    let name = '';
+
+    try {
+      const profile = await window.IndooneUserData?.readProfile?.();
+      name = String(profile?.name || '').trim();
+    } catch (error) {
+      // Not signed in, or the profile is unreachable. The greeting still works.
+      name = '';
+    }
+
+    // Built with textContent, never innerHTML: the name comes from the account.
+    title.textContent = '';
+
+    if (name) {
+      const greeting = document.createElement('span');
+      greeting.textContent = partOfDay() + ', ';
+
+      const who = document.createElement('span');
+      who.className = 'welcome-name';
+      who.textContent = name;
+
+      title.append(greeting, who, document.createTextNode(' 👋'));
+    } else {
+      const greeting = document.createElement('span');
+      greeting.textContent = partOfDay() + ' 👋';
+      title.appendChild(greeting);
+    }
+  }
+
+  function whenLabel(millis) {
+    if (!millis) {
+      return '';
+    }
+
+    const then = new Date(Number(millis));
+    const now = new Date();
+
+    if (then.toDateString() === now.toDateString()) {
+      return then.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    return then.toLocaleDateString();
+  }
+
+  async function openResume(conversationId) {
+    try {
+      const conversation = await window.IndooneCloudChat?.loadConversation?.(
+        conversationId
+      );
+
+      if (conversation) {
+        window.IndooneChatStore?.setConversationId?.(conversationId);
+        window.IndooneChatStore?.replace?.(
+          conversation.messages.map(item => ({
+            text: item.content,
+            mine: item.role === 'user'
+          }))
+        );
+      }
+    } catch (error) {
+      console.warn('Indoone chat could not be opened:', error);
+    }
+
+    window.IndooneChatHome?.refresh?.();
+  }
+
+  // "Pick up where you left off" - the two most recent conversations, read
+  // through the same list Chat History uses (IndooneCloudChat
+  // .listConversations, the web counterpart of the app's loadConversations).
+  async function loadResume() {
+    const wrap = document.getElementById('welcomeResume');
+    const list = document.getElementById('welcomeResumeList');
+
+    if (!wrap || !list) {
+      return;
+    }
+
+    let chats = [];
+
+    try {
+      chats = (await window.IndooneCloudChat?.listConversations?.(5)) || [];
+    } catch (error) {
+      chats = [];
+    }
+
+    // The thread already on screen is not something to go back to.
+    const currentId = window.IndooneChatStore?.getConversationId?.();
+    chats = chats.filter(chat => chat.id !== currentId).slice(0, 2);
+
+    list.textContent = '';
+
+    if (!chats.length) {
+      wrap.setAttribute('hidden', '');
+      return;
+    }
+
+    chats.forEach(chat => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'welcome-resume-row';
+
+      const title = document.createElement('b');
+      title.textContent = chat.title;
+
+      const when = document.createElement('span');
+      when.textContent = whenLabel(chat.updatedAt);
+
+      row.append(title, when);
+      row.addEventListener('click', () => void openResume(chat.id));
+      list.appendChild(row);
+    });
+
+    wrap.removeAttribute('hidden');
   }
 
   function paintThread() {
@@ -192,6 +334,8 @@
 
     bindQuickPrompts();
     paintWelcome();
+    void paintGreeting();
+    void loadResume();
     startWelcomeLoop();
 
     document

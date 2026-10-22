@@ -153,10 +153,38 @@
     }
   }
 
+  // The web counterpart of CloudChatRepository.loadConversations(limit). The
+  // app sorts the same query by updatedAt descending and falls back to
+  // "New chat" for a document with no title yet. The welcome screen reads the
+  // first two of these to offer "Pick up where you left off".
+  async function listConversations(limit = 50) {
+    const db = firestore();
+    const capped = Math.min(Math.max(Number(limit) || 50, 1), 100);
+    const snapshot = await db.collection(COLLECTION)
+      .where('userId', '==', uid())
+      .limit(capped)
+      .get();
+
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, data: doc.data() || {} }))
+      .sort((a, b) => {
+        const at = a.data.updatedAt?.toMillis?.() || 0;
+        const bt = b.data.updatedAt?.toMillis?.() || 0;
+        return bt - at;
+      })
+      .map(item => ({
+        id: item.id,
+        title: String(item.data.title || '').trim() || 'New chat',
+        messageCount: Number(item.data.messageCount) || 0,
+        updatedAt: item.data.updatedAt?.toMillis?.() || 0
+      }));
+  }
+
   window.IndooneCloudChat = {
     appendMessage,
     loadConversation,
     loadLatest,
+    listConversations,
     deleteConversation
   };
 })();

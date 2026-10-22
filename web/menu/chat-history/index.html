@@ -3,22 +3,24 @@
   data-menu-feature
   data-menu-section="chat-history"
 >
-  <div class="modal-head">
-    <h2>Chat History</h2>
+  <header class="ch-head">
     <button
       type="button"
-      class="close-btn"
+      class="ch-back"
       data-close
-      aria-label="Close Chat History"
+      aria-label="Back"
     >
-      ×
+      <span data-app-icon="arrowBack"></span>
     </button>
-  </div>
+    <h2 class="ch-title">Chat History</h2>
+    <span
+      class="ch-count"
+      id="menuChatHistoryCount"
+      hidden
+    ></span>
+  </header>
 
-  <p class="menu-feature-intro">Your conversations</p>
-  <p class="menu-feature-note">
-    Open or remove saved chats from your account history.
-  </p>
+  <p class="menu-feature-intro">Open a conversation, or remove one.</p>
 
   <div
     class="menu-feature-list"

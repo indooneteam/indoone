@@ -30,6 +30,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -90,9 +91,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
+import com.indoone.menu.data.UserDataRepository
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
+import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
 import com.indoone.home.plus.PlusAttachmentSheet
 import kotlinx.coroutines.Dispatchers
@@ -457,6 +460,90 @@ private fun ChatActivityState.label(): String = when (this) {
     ChatActivityState.PREPARING -> "Preparing your answer…"
 }
 
+// The welcome greets by the hour, the way the web's welcome does.
+private fun greetingLine(): String {
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+
+    return when {
+        hour < 12 -> "Good morning"
+        hour < 17 -> "Good afternoon"
+        else -> "Good evening"
+    }
+}
+
+// The web shows a time for today's conversation and a date for an older one.
+private fun chatWhenLabel(updatedAtMillis: Long): String {
+    if (updatedAtMillis <= 0L) {
+        return ""
+    }
+
+    val then = java.util.Date(updatedAtMillis)
+    val now = java.util.Calendar.getInstance()
+    val other = java.util.Calendar.getInstance().apply { time = then }
+    val sameDay = now.get(java.util.Calendar.YEAR) == other.get(java.util.Calendar.YEAR) &&
+        now.get(java.util.Calendar.DAY_OF_YEAR) == other.get(java.util.Calendar.DAY_OF_YEAR)
+
+    return java.text.SimpleDateFormat(
+        if (sameDay) "HH:mm" else "dd MMM",
+        java.util.Locale.getDefault(),
+    ).format(then)
+}
+
+// One "pick up where you left off" row: the 3dp accent, the conversation's own
+// title, and when it was last touched.
+@Composable
+private fun RecentChatRow(
+    title: String,
+    whenLabel: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = Color(0xFFFBF9FF),
+        border = BorderStroke(1.dp, Color(0xFFECE4FA)),
+    ) {
+        Row(
+            modifier = Modifier.height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .background(
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            listOf(
+                                Color(0xFF703BE2),
+                                Color(0xFFB78BFF),
+                            ),
+                        ),
+                    ),
+            )
+            Text(
+                title,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 11.dp, top = 10.dp, bottom = 10.dp),
+                color = Color(0xFF352742),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                whenLabel,
+                modifier = Modifier.padding(start = 8.dp, end = 12.dp),
+                color = Color(0xFF9A929F),
+                fontSize = 10.sp,
+            )
+        }
+    }
+}
+
 @Composable
 private fun RowScope.QuickPromptChip(
     label: String,
@@ -466,9 +553,11 @@ private fun RowScope.QuickPromptChip(
         modifier = Modifier
             .weight(1f)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFD9C9F2)),
+        // Filled, not outlined: an outline reads as a secondary button, and on
+        // an empty screen these are the first thing to press.
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF0E7FF),
+        border = BorderStroke(1.dp, Color(0xFFE0D1FA)),
     ) {
         Box(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
@@ -478,7 +567,7 @@ private fun RowScope.QuickPromptChip(
                 label,
                 color = Color(0xFF5E2DD2),
                 fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
             )
         }
     }
@@ -536,6 +625,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val userKey = remember { FirebaseAuth.getInstance().currentUser?.uid?.takeIf { it.isNotBlank() } ?: "" }
     val cloudChatRepository = remember { CloudChatRepository() }
+    val userDataRepository = remember { UserDataRepository() }
 
     var input by remember { mutableStateOf("") }
     var messages by remember(userKey, startNewChat) { mutableStateOf(emptyList<ChatMessage>()) }
@@ -551,6 +641,8 @@ fun HomeScreen(
     var voiceError by remember { mutableStateOf<String?>(null) }
     var isLoadingHistory by remember { mutableStateOf(!startNewChat) }
     var welcomeMessageIndex by remember { mutableStateOf(0) }
+    var welcomeName by remember { mutableStateOf("") }
+    var recentChats by remember { mutableStateOf(emptyList<CloudChatConversation>()) }
     val scope = rememberCoroutineScope()
     val chatListState = rememberLazyListState()
 
@@ -562,6 +654,27 @@ fun HomeScreen(
                 welcomeMessageIndex = 1 - welcomeMessageIndex
             }
         }
+    }
+
+    // The greeting's name and the "pick up where you left off" rows. Both come
+    // from the account - the profile in users/<uid>/profile, and the same
+    // conversations Chat History lists - which is where the web reads them too.
+    LaunchedEffect(userKey) {
+        if (userKey.isBlank()) {
+            welcomeName = ""
+            recentChats = emptyList()
+            return@LaunchedEffect
+        }
+
+        welcomeName = runCatching {
+            (userDataRepository.readProfile()["name"] as? String)?.trim().orEmpty()
+        }.getOrDefault("")
+
+        recentChats = runCatching {
+            cloudChatRepository.loadConversations(limit = 3)
+        }.getOrDefault(emptyList<CloudChatConversation>())
+            .filter { it.id != conversationId }
+            .take(2)
     }
 
     // Land on the newest message when a conversation opens, and stay there as replies
@@ -609,6 +722,26 @@ fun HomeScreen(
             messages = emptyList()
         }
         isLoadingHistory = false
+    }
+
+    // The welcome's "pick up where you left off" rows open a conversation the
+    // same way Chat History does: read it back and put it in the thread.
+    fun openWelcomeConversation(id: String) {
+        scope.launch {
+            isLoadingHistory = true
+            runCatching { cloudChatRepository.loadConversation(id) }
+                .onSuccess { chat ->
+                    conversationId = chat?.id
+                    messages = chat?.messages?.map {
+                        ChatMessage(it.content, it.role == "user")
+                    }.orEmpty()
+                }
+                .onFailure {
+                    conversationId = null
+                    messages = emptyList()
+                }
+            isLoadingHistory = false
+        }
     }
 
     fun sendMessage() {
@@ -1099,44 +1232,82 @@ fun HomeScreen(
                                 .padding(top = 26.dp, bottom = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Text(
-                                "Indoone AI",
+                            // The greeting. It used to say a flat "Indoone AI";
+                            // it now greets you by name and by the hour, the
+                            // same way the web's welcome does.
+                            Row(
                                 modifier = Modifier.padding(top = 12.dp),
-                                color = Color(0xFF703BE2),
-                                fontSize = 21.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    if (welcomeName.isBlank()) greetingLine() else "${greetingLine()},",
+                                    color = Color(0xFF352742),
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                )
+                                if (welcomeName.isNotBlank()) {
+                                    Text(
+                                        " $welcomeName",
+                                        color = Color(0xFF703BE2),
+                                        fontSize = 19.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                    )
+                                }
+                                Text(
+                                    " 👋",
+                                    color = Color(0xFF352742),
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                )
+                            }
                             Text(
                                 "Your Personal AI Assistant",
                                 modifier = Modifier.padding(top = 4.dp),
                                 color = Color(0xFF81758D),
                                 fontSize = 12.sp,
                             )
+                            // The panel carries the purple, with a 3dp accent
+                            // down its left edge - the same panel the web draws.
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 18.dp),
+                                    .padding(top = 16.dp),
                                 shape = RoundedCornerShape(20.dp),
-                                color = Color(0xFFFAF8FF),
-                                border = BorderStroke(1.dp, Color(0xFFE9E0F7)),
+                                color = Color(0xFFF8F2FF),
+                                border = BorderStroke(1.dp, Color(0xFFE2D5F8)),
                             ) {
-                                Column(Modifier.padding(horizontal = 18.dp, vertical = 15.dp)) {
-                                    Text(
-                                        "Hi! 👋",
-                                        color = Color(0xFF352742),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                Row(Modifier.height(IntrinsicSize.Min)) {
+                                    Box(
+                                        Modifier
+                                            .width(3.dp)
+                                            .fillMaxHeight()
+                                            .background(
+                                                androidx.compose.ui.graphics.Brush.linearGradient(
+                                                    listOf(
+                                                        Color(0xFF703BE2),
+                                                        Color(0xFFB78BFF),
+                                                    ),
+                                                ),
+                                            ),
                                     )
-                                    Text(
-                                        if (welcomeMessageIndex == 0) {
-                                            "I am Indoone AI. How can I help you today?"
-                                        } else {
-                                            "Ask me anything."
-                                        },
-                                        modifier = Modifier.padding(top = 3.dp),
-                                        color = Color(0xFF6F6578),
-                                        fontSize = 13.sp,
-                                    )
+                                    Column(Modifier.padding(horizontal = 18.dp, vertical = 15.dp)) {
+                                        Text(
+                                            "What shall we do?",
+                                            color = Color(0xFF352742),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            if (welcomeMessageIndex == 0) {
+                                                "I can read a screenshot, plan a trip, draft a message or explain something dense."
+                                            } else {
+                                                "Ask me anything."
+                                            },
+                                            modifier = Modifier.padding(top = 3.dp),
+                                            color = Color(0xFF6F6578),
+                                            fontSize = 13.sp,
+                                        )
+                                    }
                                 }
                             }
                             Row(
@@ -1156,6 +1327,27 @@ fun HomeScreen(
                             ) {
                                 QuickPromptChip("Help me plan") { input = "Help me plan" }
                                 QuickPromptChip("More…") { input = "Tell me more" }
+                            }
+
+                            // Pick up where you left off.
+                            if (recentChats.isNotEmpty()) {
+                                Text(
+                                    "PICK UP WHERE YOU LEFT OFF",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 16.dp, bottom = 7.dp),
+                                    color = Color(0xFF9A929F),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp,
+                                )
+                                recentChats.forEach { chat ->
+                                    RecentChatRow(
+                                        title = chat.title,
+                                        whenLabel = chatWhenLabel(chat.updatedAtMillis),
+                                        onClick = { openWelcomeConversation(chat.id) },
+                                    )
+                                }
                             }
                         }
                     }

@@ -3,23 +3,82 @@
   data-menu-feature
   data-menu-section="profile"
 >
-  <div class="modal-head">
-    <h2>Profile</h2>
+  <header class="pf-head">
     <button
       type="button"
-      class="close-btn"
+      class="pf-back"
       data-close
-      aria-label="Close Profile"
+      aria-label="Back"
     >
-      ×
+      <span data-app-icon="arrowBack"></span>
+    </button>
+    <h2 class="pf-title">Profile</h2>
+  </header>
+
+  <!-- ProfileMenuScreen.kt opens with the same hero: the avatar, the name and
+       the line under it. The web used to go straight into a bare form. -->
+  <div class="pf-hero">
+    <div
+      class="pf-avatar"
+      id="menuProfileInitials"
+      aria-hidden="true"
+    >I</div>
+    <b id="menuProfileDisplayName">Indoone User</b>
+    <span id="menuProfileEmail"></span>
+  </div>
+
+  <div class="pf-section-head">
+    <h3>Personal details</h3>
+    <button
+      type="button"
+      class="pf-round"
+      id="menuProfileEdit"
+      aria-label="Edit profile"
+    >
+      <span data-app-icon="edit"></span>
+    </button>
+    <button
+      type="button"
+      class="pf-round is-cancel"
+      id="menuProfileCancel"
+      aria-label="Cancel editing"
+      hidden
+    >
+      <span data-app-icon="close"></span>
+    </button>
+    <button
+      type="button"
+      class="pf-round"
+      id="menuProfileSave"
+      aria-label="Save profile"
+      hidden
+    >
+      <span data-app-icon="check"></span>
     </button>
   </div>
 
-  <p class="menu-feature-intro">Your Indoone profile</p>
+  <div
+    class="pf-details"
+    id="menuProfileDetails"
+  >
+    <div class="pf-detail">
+      <span class="pf-detail-label">Name</span>
+      <span class="pf-detail-value" id="menuProfileNameValue">Not set</span>
+    </div>
+    <div class="pf-detail">
+      <span class="pf-detail-label">Nickname</span>
+      <span class="pf-detail-value" id="menuProfileNicknameValue">Not set</span>
+    </div>
+    <div class="pf-detail">
+      <span class="pf-detail-label">Profession</span>
+      <span class="pf-detail-value" id="menuProfileProfessionValue">Not set</span>
+    </div>
+  </div>
 
   <form
-    class="menu-feature-form"
+    class="menu-feature-form pf-form"
     id="menuProfileForm"
+    hidden
   >
     <label>
       <span>Name</span>
@@ -45,15 +104,12 @@
         id="menuProfileProfession"
       />
     </label>
-
-    <button
-      type="submit"
-      class="primary"
-      id="menuProfileSave"
-    >
-      Save profile
-    </button>
   </form>
+
+  <p class="pf-reassure">
+    <span data-app-icon="personOutline"></span>
+    These profile fields stay under your control.
+  </p>
 
   <p
     class="menu-feature-status"

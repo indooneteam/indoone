@@ -1,7 +1,147 @@
-.menu-feature-intro {
-  margin: 0 0 12px;
-  color: #7a7482;
-  font-size: 12.5px;
+/* ProfileMenuScreen.kt's screen, in the brand purple. It opens with a hero -
+   the avatar, the name and the account email - then "Personal details" with one
+   round edit control, then the values, then the reassurance card. The web used
+   to be a bare form with a Save button. */
+.pf-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pf-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #5e2dd2;
+  cursor: pointer;
+}
+
+.pf-back svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pf-title {
+  margin: 0;
+  color: #272238;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.pf-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #f6efff 0%, #fbf8ff 100%);
+  border: 1px solid #e2d5f8;
+}
+
+.pf-avatar {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f0e7ff;
+  color: #703be2;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.pf-hero b {
+  margin-top: 10px;
+  color: #201b28;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.pf-hero span {
+  margin-top: 3px;
+  color: #77717f;
+  font-size: 12px;
+}
+
+.pf-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 8px;
+}
+
+.pf-section-head h3 {
+  flex: 1;
+  margin: 0;
+  color: #201b28;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pf-round {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f0e7ff;
+  color: #703be2;
+  cursor: pointer;
+}
+
+.pf-round.is-cancel {
+  background: #f1eef5;
+  color: #6e6777;
+}
+
+.pf-round svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pf-round[hidden] {
+  display: none;
+}
+
+.pf-details {
+  padding: 16px;
+  border-radius: 18px;
+  background: #faf8fe;
+}
+
+.pf-details[hidden] {
+  display: none;
+}
+
+.pf-detail + .pf-detail {
+  margin-top: 12px;
+}
+
+.pf-detail-label {
+  display: block;
+  color: #77717f;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.pf-detail-value {
+  display: block;
+  margin-top: 2px;
+  color: #201b28;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pf-form[hidden] {
+  display: none;
 }
 
 .menu-feature-form {
@@ -35,10 +175,37 @@
   background: #fff;
 }
 
+.pf-reassure {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 13px;
+  border-radius: 15px;
+  background: #faf8fe;
+  color: #6e6777;
+  font-size: 12px;
+}
+
+.pf-reassure svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #703be2;
+}
+
 .menu-feature-status {
   min-height: 18px;
   margin: 10px 0 0;
   text-align: center;
   font-size: 12px;
   color: #7a7482;
+}
+
+.menu-feature-status.is-ok {
+  color: #287a46;
+}
+
+.menu-feature-status.is-error {
+  color: #d93025;
 }
