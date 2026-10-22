@@ -1,5 +1,54 @@
+/* The app's header: a back arrow, the title, and a count of what is here.
+   PluginsMenuScreen.kt's header is the same shape, so the two read alike. */
+.ch-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ch-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #5e2dd2;
+  cursor: pointer;
+}
+
+.ch-back svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ch-title {
+  margin: 0;
+  color: #272238;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.ch-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5e2dd2;
+  background: #f0e7ff;
+  border: 1px solid #e0d1fa;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.ch-count[hidden] {
+  display: none;
+}
+
 .menu-feature-intro {
-  margin: 0 0 4px;
+  margin: 0 0 12px;
   color: #24212a;
   font-size: 14px;
   font-weight: 700;
@@ -17,47 +66,110 @@
   gap: 8px;
 }
 
-.chat-history-row {
+/* The row. It carries the same 3px purple edge the welcome's "pick up where you
+   left off" rows use, the conversation's own title, how big it is and when it
+   was last touched, and one button for the actions. */
+.ch-row {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid #efeaf4;
-  border-radius: 12px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 10px 12px 14px;
+  border: 1px solid #ece4fa;
+  border-radius: 14px;
+  background: #fbf9ff;
 }
 
-.chat-history-row b {
+.ch-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 14px 0 0 14px;
+  background: linear-gradient(180deg, #703be2, #b78bff);
+}
+
+.ch-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ch-row-text b {
   display: block;
   color: #24212a;
-  font-size: 13px;
-}
-
-.chat-history-row small {
-  display: block;
-  color: #7a7482;
-  font-size: 11.5px;
-}
-
-.chat-history-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.chat-history-actions button {
-  border: 1px solid #ece5f7;
-  background: #fff;
-  color: #5e2dd2;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 11.5px;
+  font-size: 13.5px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-row-text small {
+  display: block;
+  color: #9a929f;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.ch-more {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  color: #8a8492;
   cursor: pointer;
 }
 
-.chat-history-actions button.danger {
-  color: #b3261e;
-  border-color: #f6dedc;
+.ch-more svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Delete moved behind this, so it is no longer a peer of the row itself. */
+.ch-menu {
+  position: absolute;
+  right: 8px;
+  top: 46px;
+  z-index: 6;
+  min-width: 148px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid #ece4fa;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 30px -14px rgba(40, 24, 70, .4);
+}
+
+.ch-menu[hidden] {
+  display: none;
+}
+
+.ch-menu button {
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #24212a;
+  cursor: pointer;
+}
+
+.ch-menu button:hover {
+  background: #f6f1ff;
+}
+
+.ch-menu button.danger {
+  color: #b4232b;
 }
 
 .menu-feature-status {
