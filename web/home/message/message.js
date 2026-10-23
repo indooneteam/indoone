@@ -22,12 +22,6 @@
     return mark;
   }
 
-  function extensionOf(name) {
-    const parts = String(name || '').split('.');
-    const ext = parts.length > 1 ? parts.pop() : '';
-    return (ext || 'FILE').slice(0, 4).toUpperCase();
-  }
-
   function isImage(item) {
     const file = item.file;
     const type = file?.type || item.type || '';
@@ -137,10 +131,15 @@
         return;
       }
 
-      const badge = document.createElement('span');
-      badge.className = 'chat-attachment-file';
-      badge.textContent = extensionOf(item.name);
-      wrap.appendChild(badge);
+      // HomeScreen.kt draws a sent file as the attachment's own name in a
+      // violet pill - Surface(widthIn(max = 220.dp), RoundedCornerShape(9.dp),
+      // color = 0xFF8055DC, border = 0xFFB69AEF) with white 11sp text on two
+      // lines at most. The web used to show a 48px tile holding the file's
+      // extension instead, which is not what the app shows.
+      const pill = document.createElement('span');
+      pill.className = 'chat-attachment-file';
+      pill.textContent = item.name || 'Attachment';
+      wrap.appendChild(pill);
     });
 
     return wrap;
