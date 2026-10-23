@@ -14,8 +14,8 @@
     'home/plus/camera/camera.js?v=20261018b',
     'home/plus/photos/photos.js?v=20261018b',
     'home/plus/files/files.js?v=20261018b',
-    'vibe/vibe-live.js?v=20261018b',
-    'vibe/vibe.js?v=20261019f'
+    'vibe/vibe-live.js?v=20261023a',
+    'vibe/vibe.js?v=20261023a'
   ];
 
   // The app alternates these two, every two seconds.
