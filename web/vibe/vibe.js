@@ -150,6 +150,18 @@
     setTranscript(detail || 'Vibe could not reach the live voice service.');
   }
 
+  // VibeScreen.kt keeps a refused microphone apart from a connection error. When
+  // permissionDenied is set it draws "Microphone permission required" on the
+  // status line and "Microphone permission is required for Vibe." in the
+  // transcript, and it is the same words here.
+  function onPermissionDenied() {
+    connected = false;
+    listening = false;
+    paintMute();
+    setState('Microphone permission required');
+    setTranscript('Microphone permission is required for Vibe.');
+  }
+
   function open() {
     closed = false;
     connected = false;
@@ -166,7 +178,7 @@
     paintSpeaker();
     window.IndooneVibeLive?.setSpeaker?.(speakerOn);
 
-    void window.IndooneVibeLive?.open?.(onEvent, onFailure);
+    void window.IndooneVibeLive?.open?.(onEvent, onFailure, onPermissionDenied);
   }
 
   function close() {
