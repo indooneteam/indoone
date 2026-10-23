@@ -70,14 +70,14 @@
 }
 
 /* the notch needs something to sit against */
-.manual-page.is-editing .field {
+.manual-page .field {
   position: relative;
   margin: 0;
 }
 
 /* OutlinedTextField puts the label in a gap in the border. In CSS that is the
    label laid over the top edge, with the card's white showing through it. */
-.manual-page.is-editing .field label {
+.manual-page .field label {
   position: absolute;
   top: -7px;
   left: 11px;
@@ -93,8 +93,8 @@
 
 /* Material's outlined field: 56 high, a 4dp corner, white inside, and the
    outline colour the app's default scheme uses. */
-.manual-page.is-editing .field input,
-.manual-page.is-editing .field select {
+.manual-page .field input,
+.manual-page .field select {
   height: 56px;
   border: 1px solid #79747e;
   border-radius: 4px;
@@ -103,8 +103,8 @@
   font-size: 15px;
 }
 
-.manual-page.is-editing .field input:focus,
-.manual-page.is-editing .field select:focus {
+.manual-page .field input:focus,
+.manual-page .field select:focus {
   border-color: #703be2;
   border-width: 2px;
   background: #fff;
