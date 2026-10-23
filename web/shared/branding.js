@@ -175,9 +175,18 @@
         margin: 8px auto 12px !important;
       }
 
+      /* AccountDetailsScreen.kt draws the account's mark as a 58dp tile on
+         0xFFF2ECFF, cornered 18dp, with IndooneTopBarLogo(34.dp) centred in it.
+         The logo svg replaces the tile here, so without these it was a bare
+         48px mark with no tile behind it - which is not what the app shows. */
       .token-icon.branding-image {
-        width: 48px !important;
-        height: 48px !important;
+        width: 58px !important;
+        height: 58px !important;
+        /* 58 - 2 x 12 = 34, the app's logo */
+        padding: 12px !important;
+        box-sizing: border-box !important;
+        border-radius: 18px !important;
+        background: #f2ecff !important;
         margin: 0 auto !important;
       }
     `;
