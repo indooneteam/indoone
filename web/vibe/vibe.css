@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2");
 /* The Vibe screen, to match VibeScreen.kt.
 
    Every number here is the app's: the gradient, the 270dp stage, the two ring
@@ -42,9 +43,20 @@
   color: #fff;
 }
 
+/* VibeScreen.kt draws the wordmark in its own face:
+     private val WordmarkFont = FontFamily(Font(R.font.wordmark_courier))
+   and that file is Courier Prime Regular (SIL OFL, v3.018). The web had the
+   right sizes - 25, 17 and 24 - but no font-family at all, so the wordmark
+   came out in the body font, which is not what the app draws. */
+.vibe-brand,
+.vibe-word {
+  font-family: "Courier Prime", "Courier New", ui-monospace, monospace;
+}
+
 .vibe-brand b {
   font-size: 25px;
-  font-weight: 700;
+  /* the app sets no fontWeight for the wordmark, so it is the Regular */
+  font-weight: 400;
 }
 
 .vibe-brand span {
