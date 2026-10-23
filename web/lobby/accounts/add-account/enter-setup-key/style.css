@@ -49,3 +49,63 @@
    to one column on a phone - so on a handset the form stacked, which is what the
    app never does. EditAccountScreen.kt puts DIGITS and PERIOD in a Row at every
    width, so the class decides and the viewport does not. */
+
+/* ---------------------------------------------------------------------------
+   The editing form, to match EditAccountScreen.kt.
+
+   The app wraps the whole form in one card and uses Material's OutlinedTextField
+   for every field - the label sits IN the border, not above it. EnterSetupKeyScreen.kt
+   has no card and is untouched: everything here is scoped to .is-editing.
+   --------------------------------------------------------------------------- */
+
+/* Card(modifier = padding(top = 22.dp), shape = RoundedCornerShape(18.dp),
+         border = BorderStroke(1.dp, 0xFFE8E3EC)) { Column(padding(16.dp), spacedBy(14.dp)) } */
+.manual-page.is-editing .manual-form {
+  margin-top: 22px;
+  padding: 16px;
+  gap: 14px;
+  border: 1px solid #e8e3ec;
+  border-radius: 18px;
+  background: #fff;
+}
+
+/* the notch needs something to sit against */
+.manual-page.is-editing .field {
+  position: relative;
+  margin: 0;
+}
+
+/* OutlinedTextField puts the label in a gap in the border. In CSS that is the
+   label laid over the top edge, with the card's white showing through it. */
+.manual-page.is-editing .field label {
+  position: absolute;
+  top: -7px;
+  left: 11px;
+  z-index: 1;
+  margin: 0;
+  padding: 0 4px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  color: #49454f;
+}
+
+/* Material's outlined field: 56 high, a 4dp corner, white inside, and the
+   outline colour the app's default scheme uses. */
+.manual-page.is-editing .field input,
+.manual-page.is-editing .field select {
+  height: 56px;
+  border: 1px solid #79747e;
+  border-radius: 4px;
+  padding: 0 14px;
+  background: #fff;
+  font-size: 15px;
+}
+
+.manual-page.is-editing .field input:focus,
+.manual-page.is-editing .field select:focus {
+  border-color: #703be2;
+  border-width: 2px;
+  background: #fff;
+}
