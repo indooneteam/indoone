@@ -45,8 +45,7 @@
   margin-top: 6px;
 }
 
-@media (max-width: 600px) {
-  .manual-page.is-editing .manual-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* There used to be a max-width: 600px block here that put the editing grid back
+   to one column on a phone - so on a handset the form stacked, which is what the
+   app never does. EditAccountScreen.kt puts DIGITS and PERIOD in a Row at every
+   width, so the class decides and the viewport does not. */

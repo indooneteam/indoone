@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -121,6 +122,8 @@ fun EnterSetupKeyScreen(
                         .padding(top = 6.dp),
                     shape = RoundedCornerShape(13.dp),
                     contentPadding = PaddingValues(vertical = 0.dp),
+                    // Indoone's own purple, as the Edit screen's Save now is.
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF703BE2)),
                 ) {
                     Text(
                         if (state.isSaving) "Saving…" else "Save Account",
