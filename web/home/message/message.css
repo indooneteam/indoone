@@ -175,14 +175,25 @@
   object-fit: cover;
 }
 
+/* HomeScreen.kt draws a sent file as its own name in a violet pill - not a
+   tile holding the extension. The app's Surface: widthIn(max = 220.dp), a
+   9dp corner, 0xFF8055DC, a 1dp 0xFFB69AEF border, and white 11sp text on two
+   lines at most. */
 .chat-attachment-file {
-  display: inline-grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: #f0e9fb;
-  color: #5e2dd2;
-  font-size: 10px;
-  font-weight: 700;
+  /* -webkit-box with a 2-line clamp is how a block of text is cut off after two
+     rows - the app's maxLines = 2 with TextOverflow.Ellipsis. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-width: 220px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid #b69aef;
+  background: #8055dc;
+  color: #fff;
+  font-size: 11px;
+  line-height: 15px;
+  text-align: left;
+  overflow: hidden;
+  word-break: break-word;
 }
