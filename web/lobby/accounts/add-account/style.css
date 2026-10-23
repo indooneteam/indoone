@@ -76,12 +76,7 @@
   margin-top: 10px;
 }
 
-@media (max-width: 600px) {
-  .add-account-options {
-    grid-template-columns: 1fr;
-  }
-
-  .add-account-option {
-    min-height: 120px;
-  }
-}
+/* There used to be a max-width: 600px block here that put the two options in
+   one column on a phone and shortened them to 120px. AddAccountScreen.kt draws
+   them in a Row with spacedBy(14.dp) at every width, so on a handset the web
+   stacked them where the app never does. The class decides, not the viewport. */
