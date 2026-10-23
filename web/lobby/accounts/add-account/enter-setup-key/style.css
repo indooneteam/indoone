@@ -109,3 +109,11 @@
   border-width: 2px;
   background: #fff;
 }
+
+/* Material greys a disabled button - onSurface at 12% on the container and 38%
+   on the words - which is what the app shows before the form is filled. */
+.manual-page .primary:disabled {
+  background: #e4e1e6;
+  color: #9a959e;
+  cursor: not-allowed;
+}
