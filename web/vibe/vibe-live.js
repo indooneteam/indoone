@@ -262,7 +262,7 @@
 
   // ------------------------------------------------------------------- session
 
-  async function open(onEvent, onFailure) {
+  async function open(onEvent, onFailure, onPermissionDenied) {
     closing = false;
 
     let token;
@@ -335,6 +335,17 @@
             );
           });
         } catch (error) {
+          // VibeScreen.kt treats a refused microphone as its own state, not as a
+          // connection error: it shows "Microphone permission required" on the
+          // status line and "Microphone permission is required for Vibe." in the
+          // transcript. A refusal arrives here as NotAllowedError (or
+          // SecurityError when the page itself is not allowed to ask), so it is
+          // handed to its own callback rather than the generic failure.
+          if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') {
+            onPermissionDenied?.();
+            return;
+          }
+
           onFailure?.(
             error?.message || 'This browser would not give the microphone.'
           );
