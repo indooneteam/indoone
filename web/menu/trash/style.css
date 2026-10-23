@@ -9,7 +9,9 @@
   width: 100%;
   margin-bottom: 8px;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 16px;
+  /* TrashScreen.kt puts the whole swipe area on 0xFFF7EDEE, a 16dp corner */
+  background: #f7edee;
   touch-action: pan-y;
   user-select: none;
 }
@@ -21,7 +23,8 @@
   display: flex;
   align-items: stretch;
   justify-content: flex-end;
-  background: #fff1f2;
+  /* the app's delete panel is 0xFFF7E0E1, a shade deeper than the wrap */
+  background: #f7e0e1;
 }
 
 .trash-permanent-btn {
@@ -54,7 +57,7 @@
   transform: translate3d(0, 0, 0);
   transition: transform 180ms ease;
   will-change: transform;
-  border-radius: 14px;
+  border-radius: 16px;
 }
 
 .trash-swipe-wrap.trash-swipe-open .trash-swipe-card {
