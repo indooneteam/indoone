@@ -155,6 +155,28 @@
   }
 
   function bind(root, options) {
+    // EnterSetupKeyState.kt:
+    //   val canSave: Boolean
+    //     get() = name.isNotBlank() && secret.isNotBlank() && !isSaving
+    // The email is not required. The web left the button enabled from the
+    // start, so it could be pressed on an empty form.
+    const form = root.querySelector('#manualAccountForm');
+    const button = root.querySelector('#saveAccountButton');
+    const nameField = root.querySelector('#accountName');
+    const secretField = root.querySelector('#secretKey');
+
+    const syncSave = () => {
+      if (!button) return;
+      const name = (nameField?.value || '').trim();
+      const secret = (secretField?.value || '').trim();
+      button.disabled = !(name && secret);
+    };
+
+    if (form && button) {
+      form.addEventListener('input', syncSave);
+      syncSave();
+    }
+
     root
       .querySelector('[data-manual-action="back"]')
       ?.addEventListener('click', event => {
