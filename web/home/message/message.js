@@ -2,6 +2,7 @@
 //   - an AI reply has the Indoone mark to its left
 //   - a user reply is a violet bubble, right aligned
 //   - sent photos stack, sent files show a badge
+//   - a URL in a reply gets its own row with a copy button
 //   - while a reply is coming, the mark sits next to a spinner and a label
 (() => {
   const ACTIVITY_LABELS = {
@@ -9,6 +10,10 @@
     thinking: 'Thinking…',
     preparing: 'Preparing your answer…'
   };
+
+  // HomeScreen.kt: REPLY_LINK_PATTERN = Regex("""https?://\S+""") - an http or
+  // https URL, running to the next space.
+  const REPLY_LINK_PATTERN = /https?:\/\/\S+/g;
 
   function logo() {
     const mark = document.createElement('span');
@@ -27,6 +32,95 @@
     const file = item.file;
     const type = file?.type || item.type || '';
     return type.startsWith('image/');
+  }
+
+  // The app's splitReplyIntoParts: the prose, then one part per URL, then the
+  // tail. The prose keeps its own line breaks, so the bubble's pre-wrap still
+  // does its job.
+  function replyParts(text) {
+    const source = String(text || '');
+    const parts = [];
+    let last = 0;
+    let match;
+
+    REPLY_LINK_PATTERN.lastIndex = 0;
+
+    while ((match = REPLY_LINK_PATTERN.exec(source)) !== null) {
+      const prose = source.slice(last, match.index);
+
+      if (prose) {
+        parts.push({ prose });
+      }
+
+      parts.push({ url: match[0] });
+      last = match.index + match[0].length;
+    }
+
+    const tail = source.slice(last);
+
+    if (tail) {
+      parts.push({ prose: tail });
+    }
+
+    return parts;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+
+    // A tab served over plain http has no clipboard API, so fall back to the
+    // old selection trick rather than leaving the button doing nothing.
+    return new Promise((resolve, reject) => {
+      const field = document.createElement('textarea');
+      field.value = text;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+
+      try {
+        document.execCommand('copy') ? resolve() : reject(new Error('copy refused'));
+      } catch (error) {
+        reject(error);
+      } finally {
+        field.remove();
+      }
+    });
+  }
+
+  // The app's ReplyLinkRow: the URL in violet on one line, ellipsis if it is
+  // long, and a copy button at the end of the row. The button puts the whole
+  // URL on the clipboard and says so - a tap with no visible result reads as
+  // though it did nothing.
+  function linkRow(url, isFirst) {
+    const row = document.createElement('div');
+    row.className = isFirst ? 'chat-link-row' : 'chat-link-row chat-gap';
+
+    const link = document.createElement('span');
+    link.className = 'chat-link-url';
+    link.textContent = url;
+
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'chat-link-copy';
+    copy.setAttribute('aria-label', 'Copy link');
+    copy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+      + ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + '<rect x="9" y="9" width="11" height="11" rx="2"></rect>'
+      + '<path d="M5.5 15H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v.5"></path></svg>';
+
+    copy.addEventListener('click', () => {
+      copyText(url)
+        .then(() => window.toast?.('Link copied'))
+        .catch(() => window.toast?.('Could not copy the link'));
+    });
+
+    row.appendChild(link);
+    row.appendChild(copy);
+    return row;
   }
 
   function sentAttachments(attachments) {
@@ -70,10 +164,22 @@
     if (message.text) {
       const body = document.createElement('div');
       body.className = 'chat-bubble';
-      const text = document.createElement('span');
-      text.className = 'chat-text';
-      text.textContent = message.text;
-      body.appendChild(text);
+
+      // A reply that carries links reads better as its prose and then one row
+      // per link, each with a copy button, than as one run of text with the
+      // URLs buried inside it.
+      replyParts(message.text).forEach((part, index) => {
+        if (part.url) {
+          body.appendChild(linkRow(part.url, index === 0));
+          return;
+        }
+
+        const text = document.createElement('span');
+        text.className = index === 0 ? 'chat-text' : 'chat-text chat-gap';
+        text.textContent = part.prose;
+        body.appendChild(text);
+      });
+
       column.appendChild(body);
     }
 
