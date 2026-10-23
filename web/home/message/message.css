@@ -80,6 +80,63 @@
   color: #292331;
 }
 
+/* One part of a reply is a block, so the 8px gap above every part after the
+   first has something to push against - the app gives each one
+   padding(top = 8.dp). With a single part this changes nothing. */
+.chat-text {
+  display: block;
+}
+
+.chat-gap {
+  margin-top: 8px;
+}
+
+/* HomeScreen.kt's ReplyLinkRow. A URL in a reply is pulled onto its own row:
+   the URL in violet on one line, ellipsis if it is long, and a copy button at
+   the end. The row is a 12dp-cornered white card with a #E6DEF4 hairline, capped
+   at 250dp, and it sits inside the reply's bubble - which is why it is white
+   against the lilac bubble. */
+.chat-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 250px;
+  padding: 5px 5px 5px 12px;
+  border: 1px solid #e6def4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.chat-link-url {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: #6330db;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-link-copy {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: #f3eefc;
+  color: #6330db;
+  cursor: pointer;
+}
+
+.chat-link-copy svg {
+  width: 16px;
+  height: 16px;
+}
+
 .chat-activity {
   display: flex;
   align-items: center;
