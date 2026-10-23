@@ -7,7 +7,7 @@
   // Bumped with the three plugin stylesheets added in this change: they are
   // fetched as <base>/style.css?v=<this>, and that exact URL used to 404, so a
   // browser that cached the miss would otherwise keep asking for it.
-  const ASSET_VERSION = '20261023d';
+  const ASSET_VERSION = '20261023e';
   let suppressNextUnderlyingClick = false;
 
   const featureInitializers = {
