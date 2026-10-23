@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
@@ -1579,11 +1580,20 @@ fun HomeScreen(
                     BasicTextField(
                         value = input,
                         onValueChange = { input = it },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp),
+                        // The composer grows with the draft, up to 120dp, and then scrolls.
+                        // The web's textarea does exactly this - autoGrow() in chat-home.js
+                        // sets its height to min(scrollHeight, 120) on every keystroke, and
+                        // home.css caps it at max-height: 120px. This field used to be
+                        // singleLine, so a long draft scrolled sideways on one line and you
+                        // could not read what you had typed. No singleLine means the text
+                        // wraps, which is what makes it grow.
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 15.dp, vertical = 13.dp)
+                            .heightIn(max = 120.dp),
                         // Keep the composer available while an AI reply is in progress.
                         // The send action remains locked until the current reply finishes.
                         enabled = true,
-                        singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF17151D), fontSize = 15.sp),
                         decorationBox = { innerTextField -> Box { if (input.isEmpty()) Text("Message Indoone AI", color = Color(0xFF8A8492), fontSize = 15.sp); innerTextField() } },
                     )
