@@ -191,7 +191,8 @@
   width: 18px;
   height: 18px;
   flex: none;
-  color: #703be2;
+  /* ProfileMenuScreen.kt tints the shield 0xFF6B3FD1 */
+  color: #6b3fd1;
 }
 
 .menu-feature-status {

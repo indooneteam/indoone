@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800;900&display=swap");
 @import url("shared/responsive-compact.css");
 @import url("shared/safe-layout/safe-layout.css");
 * {
@@ -8,7 +9,12 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* The app renders in Roboto - it is Android's own font and the app sets no
+     other, apart from Vibe's wordmark. The web used to name "Inter" first,
+     but nothing ever loaded it, so every device quietly fell back to its own
+     system font and a desktop browser drew Segoe UI or the Mac face instead.
+     Roboto is loaded above, so the web now draws what the app draws. */
+  font-family: Roboto, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #17151d;
 }
 
@@ -247,6 +253,12 @@ body {
 
 .dropbox {
   color: #1976ff;
+}
+
+/* AccountsScreen.kt's provider colour map has a zoho entry - 0xFFE42525 -
+   which the web's list never had, so a Zoho account drew in the fallback blue. */
+.zoho {
+  color: #e42525;
 }
 
 .account-info {
@@ -1020,7 +1032,8 @@ body {
 }
 
 .danger {
-  color: #d64242 !important;
+  /* the app's destructive red, 0xFFE24B55 - it was #d64242 */
+  color: #e24b55 !important;
 }
 
 .toast {
