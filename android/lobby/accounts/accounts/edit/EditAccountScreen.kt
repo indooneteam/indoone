@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -90,7 +91,15 @@ fun EditAccountScreen(
 
                     EditDropdown("ALGORITHM", state.algorithm, listOf("SHA1", "SHA256", "SHA512")) { onAlgorithmChanged(it) }
                     state.errorMessage?.let { Text(it, color = Color(0xFFB3261E)) }
-                    Button(onClick = onSave, enabled = state.canSave, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
+                    Button(
+                        onClick = onSave,
+                        enabled = state.canSave,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        // Indoone's own purple. Without this the button falls back to
+                        // Material's default primary, which is not the app's brand.
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF703BE2)),
+                    ) {
                         Text(if (state.isSaving) "Saving…" else "Save Changes")
                     }
                 }
