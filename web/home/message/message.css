@@ -244,3 +244,35 @@
   overflow: hidden;
   word-break: break-word;
 }
+
+/* Follow-ups under a reply. Wrapped, left-aligned with the bubble, and never full width:
+   they are a suggestion attached to one message, not a toolbar for the thread. */
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 100%;
+}
+
+.chat-chip {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d8dbe2;
+  background: #fff;
+  color: #2b2f36;
+  cursor: pointer;
+}
+
+.chat-chip:hover {
+  background: #f4f2ff;
+  border-color: #6330db;
+  color: #4b21b3;
+}
+
+.chat-chip:active {
+  transform: scale(0.98);
+}
