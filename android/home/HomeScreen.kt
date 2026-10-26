@@ -107,6 +107,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.indoone.home.message.ActionChip
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
@@ -463,6 +464,9 @@ private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
     val attachments: List<ChatAttachment> = emptyList(),
+    // Follow-ups the backend offered with this reply: Confirm/Cancel for a held write, or
+    // the obvious next step after a list. Empty for most answers.
+    val chips: List<ActionChip> = emptyList(),
 )
 
 private enum class ChatActivityState {
@@ -944,37 +948,110 @@ fun HomeScreen(
         // The turn is written first, so a process death leaves something to reconcile
         // against instead of a question with no answer.
         if (!hasPendingAttachment) {
-            val store = PendingTurnStore.get(context)
-            val turn = store.begin(requestConversationId, messageToBackend)
-            val request = OneTimeWorkRequestBuilder<SendTurnWorker>()
+            // Foreground stream first: the words appear as they are produced, and the
+            // activity indicator goes on the first one instead of after the whole answer.
+            //
+            // The durable worker below is still the fallback. If the stream cannot start,
+            // or dies before a single token, the turn is handed to it exactly as before -
+            // so a turn that may be a GitHub write still survives a process death.
+            scope.launch {
+                var streamedIndex = -1
+
+                val streamed = runCatching {
+                    ChatApi.streamMessage(
+                        message = messageToBackend,
+                        conversationId = requestConversationId,
+                        onMeta = { id -> conversationId = id },
+                        onDelta = { full ->
+                            // First token: the wait is over.
+                            chatActivityState = ChatActivityState.IDLE
+
+                            if (streamedIndex < 0) {
+                                messages = messages + ChatMessage(full, false)
+                                streamedIndex = messages.lastIndex
+                            } else {
+                                val updated = messages.toMutableList()
+                                updated[streamedIndex] = updated[streamedIndex].copy(text = full)
+                                messages = updated
+                            }
+                        },
+                    )
+                }
+
+                streamed.getOrNull()?.let { response ->
+                    conversationId = response.conversationId
+
+                    if (streamedIndex < 0) {
+                        messages = messages + ChatMessage(
+                            response.reply,
+                            false,
+                            chips = response.actionChips,
+                        )
+                    } else {
+                        val updated = messages.toMutableList()
+                        updated[streamedIndex] = updated[streamedIndex].copy(
+                            text = response.reply,
+                            chips = response.actionChips,
+                        )
+                        messages = updated
+                    }
+
+                    chatActivityState = ChatActivityState.IDLE
+                    isSending = false
+
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = response.conversationId,
+                                role = "assistant",
+                                content = response.reply,
+                            )
+                        }
+                    }
+
+                    return@launch
+                }
+
+                // A partial bubble is removed before the worker takes over, so the
+                // fallback cannot leave half an answer above the real one.
+                if (streamedIndex >= 0 && streamedIndex < messages.size) {
+                    val updated = messages.toMutableList()
+                    updated.removeAt(streamedIndex)
+                    messages = updated
+                }
+
+                val store = PendingTurnStore.get(context)
+                val turn = store.begin(requestConversationId, messageToBackend)
+                val request = OneTimeWorkRequestBuilder<SendTurnWorker>()
                 .setInputData(workDataOf(SendTurnWorker.KEY_TURN_ID to turn.id))
                 .build()
 
-            WorkManager.getInstance(context).enqueueUniqueWork(
+                WorkManager.getInstance(context).enqueueUniqueWork(
                 SendTurnWorker.workName(turn.id),
                 // One work item per turn: a double tap cannot send the same text twice.
                 ExistingWorkPolicy.KEEP,
                 request,
-            )
+                )
 
-            // The live activity stays, and the reconciliation effect below owns every
-            // stage of it. A coroutine here that flipped to Thinking after a delay used
-            // to race that effect: on a fast reply it fired after the answer had landed
-            // and the indicator reappeared. One owner, one order: Received, Thinking,
-            // Preparing, done.
-            isSending = true
-            activeTurnId = turn.id
-            activeTurnStartedAt = System.currentTimeMillis()
-            chatActivityState = ChatActivityState.RECEIVED
+                // The live activity stays, and the reconciliation effect below owns every
+                // stage of it. A coroutine here that flipped to Thinking after a delay used
+                // to race that effect: on a fast reply it fired after the answer had landed
+                // and the indicator reappeared. One owner, one order: Received, Thinking,
+                // Preparing, done.
+                isSending = true
+                activeTurnId = turn.id
+                activeTurnStartedAt = System.currentTimeMillis()
+                chatActivityState = ChatActivityState.RECEIVED
 
-            scope.launch {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        cloudChatRepository.appendMessage(
-                            conversationId = requestConversationId,
-                            role = "user",
-                            content = persistedUserContent,
-                        )
+                scope.launch {
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = requestConversationId,
+                                role = "user",
+                                content = persistedUserContent,
+                            )
+                        }
                     }
                 }
             }
@@ -1729,6 +1806,28 @@ fun HomeScreen(
                                         null
                                     },
                                 )
+                                if (message.chips.isNotEmpty()) {
+                                    Row(
+                                        modifier = Modifier.padding(top = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    ) {
+                                        message.chips.forEach { chip ->
+                                            Text(
+                                                text = chip.label,
+                                                color = Color(0xFF4B21B3),
+                                                fontSize = 13.sp,
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(999.dp))
+                                                    .background(Color(0xFFF4F2FF))
+                                                    .clickable {
+                                                        input = chip.action
+                                                        sendMessage()
+                                                    }
+                                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
