@@ -15,14 +15,6 @@
   // https URL, running to the next space.
   const REPLY_LINK_PATTERN = /https?:\/\/\S+/g;
 
-  function setPendingTurn(kind, index, extra = {}) {
-    window.IndoonePendingTurn = { kind, index, ...extra };
-  }
-
-  function clearPendingTurn() {
-    window.IndoonePendingTurn = null;
-  }
-
   function logo() {
     const mark = document.createElement('span');
     mark.className = 'chat-logo';
@@ -363,7 +355,6 @@
     const updatedQuestion = { ...question, retryCount: currentRetryCount + 1 };
     next[next.length - 1] = updatedQuestion;
     store.replace(next);
-    setPendingTurn('retry', questionIndex, { retryCount: updatedQuestion.retryCount });
 
     const input = document.getElementById('chatInput');
 
@@ -398,9 +389,6 @@
 
     if (Array.isArray(messages) && index >= 0 && index < messages.length) {
       window.IndooneChatStore?.replace(messages.slice(0, index));
-      setPendingTurn('edit', index);
-    } else {
-      clearPendingTurn();
     }
 
     input.value = text;
