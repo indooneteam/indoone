@@ -35,7 +35,7 @@
     }
   }
 
-  function begin({ conversationId, text }) {
+  function begin({ conversationId, text, hadAttachments = false }) {
     const value = String(text || '').trim();
 
     if (!value) {
@@ -48,6 +48,10 @@
         JSON.stringify({
           conversationId: conversationId || null,
           text: value,
+          // A File cannot be brought back after the page is gone - the browser gives no
+          // handle to it once the document dies. The record remembers that there was
+          // one, so the restore can say so instead of silently sending text only.
+          hadAttachments: Boolean(hadAttachments),
           startedAt: Date.now()
         })
       );

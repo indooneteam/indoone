@@ -203,7 +203,11 @@
     // Record the turn before the request opens. If this tab is refreshed or closed
     // while it is open, the next load finds this record and puts the text back in the
     // composer instead of leaving a question with no answer and no explanation.
-    window.IndooneInflight?.begin({ conversationId, text: message });
+    window.IndooneInflight?.begin({
+      conversationId,
+      text: message,
+      hadAttachments: sentAttachments.length > 0
+    });
 
     try {
       const api = window.IndooneChatApi;

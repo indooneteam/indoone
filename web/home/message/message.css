@@ -137,29 +137,39 @@
   height: 16px;
 }
 
-/* Copy and Share under every bubble. Quiet by default: they are useful, not the
-   point of the screen, and a row of buttons that shouts under each message makes a
-   conversation hard to read. */
+/* The action row under a bubble. Compact icons, aligned to the bubble's own edge:
+   a full-width row of buttons reads as a toolbar for the thread rather than an
+   affordance on one message. */
 .chat-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 0 2px;
 }
 
 .chat-row.mine .chat-actions {
-  justify-content: flex-end;
+  align-self: flex-end;
 }
 
 .chat-action {
-  padding: 4px 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #6b6b76;
-  font-size: 12px;
-  line-height: 1.2;
+  color: #8a8f98;
   cursor: pointer;
+}
+
+.chat-action svg {
+  width: 16px;
+  height: 16px;
 }
 
 .chat-action:hover,
@@ -170,26 +180,16 @@
 
 /* The rating that was chosen stays coloured, so the state is visible after the tap. */
 .chat-action.chat-rating.is-on {
-  background: #f3eefc;
   color: #6330db;
-  font-weight: 600;
 }
 
-/* A 44px target is the smallest a thumb hits reliably; the label stays small, the
+/* A 44px target is the smallest a thumb hits reliably; the icon stays small, the
    tappable box does not. */
 @media (pointer: coarse) {
   .chat-action {
-    min-height: 44px;
-    padding: 0 12px;
+    width: 44px;
+    height: 44px;
   }
-}
-
-.chat-activity {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #6f6578;
-  font-size: 13px;
 }
 
 .chat-spinner {
