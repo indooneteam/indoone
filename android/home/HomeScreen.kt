@@ -751,6 +751,10 @@ fun HomeScreen(
                 val reply = turn.reply
 
                 if (turn.status == PendingTurnStore.STATUS_DELIVERED && !reply.isNullOrBlank()) {
+                    // The last stage of the same sequence: Preparing, then the answer and
+                    // its actions. Received and Thinking came from the send.
+                    chatActivityState = ChatActivityState.PREPARING
+                    delay(600L)
                     messages = messages + ChatMessage(reply, false)
                     runCatching {
                         withContext(Dispatchers.IO) {
@@ -910,11 +914,22 @@ fun HomeScreen(
                 request,
             )
 
-            // The composer is free immediately - the user is not waiting on the network.
-            isSending = false
-            chatActivityState = ChatActivityState.IDLE
+            // The live activity stays. Sending used to show Received, then Thinking, and
+            // the reply arrived with Preparing - handing the turn to a worker must not
+            // cost that, because it is the only sign the message went anywhere.
+            //
+            // It is cleared where the turn settles: the reconciliation effect below, once
+            // the worker has an answer or a failure.
+            isSending = true
+            chatActivityState = ChatActivityState.RECEIVED
 
             scope.launch {
+                delay(350L)
+
+                if (chatActivityState != ChatActivityState.IDLE) {
+                    chatActivityState = ChatActivityState.THINKING
+                }
+
                 runCatching {
                     withContext(Dispatchers.IO) {
                         cloudChatRepository.appendMessage(
