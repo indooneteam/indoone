@@ -1831,7 +1831,6 @@ private fun splitReplyIntoParts(text: String): List<ReplyPart> {
  * the whole URL on the clipboard and says so, because a tap with no visible result
  * reads as though it did nothing.
  */
-@Composable
 // Copy and Share under a bubble.
 //
 // Quiet on purpose: they are useful, not the point of the screen, and a row of buttons
@@ -1887,6 +1886,7 @@ private fun MessageActions(text: String, alignEnd: Boolean = false) {
     }
 }
 
+@Composable
 private fun ReplyLinkRow(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Surface(
