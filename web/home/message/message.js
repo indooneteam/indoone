@@ -151,7 +151,136 @@
   // button is only added when the API exists, rather than shown and failing. Copy is
   // always there, and says so when it works: a tap with no visible result reads as a
   // broken button.
-  function actionRow(message) {
+  // ---- speech ---------------------------------------------------------------
+  // One utterance at a time. Starting a second while the first is speaking talks over
+  // itself, so whatever is playing is cancelled first, and the button that started it
+  // goes back to "Listen".
+  let speaking = null;
+
+  function stopSpeaking() {
+    if (!('speechSynthesis' in window)) {
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const previous = speaking;
+    speaking = null;
+
+    if (previous && previous.button) {
+      previous.button.textContent = 'Listen';
+    }
+  }
+
+  function toggleSpeech(text, button) {
+    if (!('speechSynthesis' in window)) {
+      return;
+    }
+
+    if (speaking && speaking.text === text) {
+      stopSpeaking();
+      return;
+    }
+
+    stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const entry = { text, button };
+
+    const settle = () => {
+      if (speaking === entry) {
+        speaking = null;
+        button.textContent = 'Listen';
+      }
+    };
+
+    utterance.onend = settle;
+    utterance.onerror = settle;
+
+    speaking = entry;
+    button.textContent = 'Stop';
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // ---- feedback -------------------------------------------------------------
+  // Local only for now. There is no endpoint that accepts a rating, and a button that
+  // pretends to send one is worse than no button: the ratings are kept here so they can
+  // go to the backend the day it has somewhere to put them.
+  const FEEDBACK_KEY = 'indoone_feedback_v1';
+
+  function readFeedback() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function recordFeedback(text, rating) {
+    const kept = readFeedback().filter(item => item && item.text !== text);
+    kept.push({ text: String(text).slice(0, 2000), rating, at: Date.now() });
+
+    try {
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(kept.slice(-200)));
+    } catch (error) {
+      // A full quota must not break the thread.
+    }
+  }
+
+  function ratingFor(text) {
+    const match = readFeedback().find(item => item && item.text === text);
+    return match ? match.rating : '';
+  }
+
+  // ---- retry ----------------------------------------------------------------
+  // Re-ask the question behind the last reply. The trailing exchange is removed first -
+  // the reply and the question it answered - because send() adds the question back. Both
+  // are in the store, so the thread does not grow a duplicate turn.
+  function retryLast(messages) {
+    const store = window.IndooneChatStore;
+    const send = window.IndooneSend;
+
+    if (!store || !send || !Array.isArray(messages) || !messages.length) {
+      return;
+    }
+
+    let question = '';
+
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].mine) {
+        question = String(messages[index].text || '').trim();
+        break;
+      }
+    }
+
+    if (!question) {
+      return;
+    }
+
+    const next = messages.slice();
+
+    while (next.length && !next[next.length - 1].mine) {
+      next.pop();
+    }
+
+    if (next.length && next[next.length - 1].mine) {
+      next.pop();
+    }
+
+    store.replace(next);
+
+    const input = document.getElementById('chatInput');
+
+    if (input) {
+      input.value = question;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    send.send();
+  }
+
+  function actionRow(message, options) {
     const text = String(message.text || '').trim();
 
     if (!text) {
@@ -184,10 +313,50 @@
       row.appendChild(share);
     }
 
+    if (!message.mine) {
+      if ('speechSynthesis' in window) {
+        const listen = document.createElement('button');
+        listen.type = 'button';
+        listen.className = 'chat-action';
+        listen.textContent = 'Listen';
+        listen.addEventListener('click', () => toggleSpeech(text, listen));
+        row.appendChild(listen);
+      }
+
+      const rating = ratingFor(text);
+
+      ['up', 'down'].forEach(kind => {
+        const thumb = document.createElement('button');
+        thumb.type = 'button';
+        thumb.className = 'chat-action chat-rating' + (rating === kind ? ' is-on' : '');
+        thumb.textContent = kind === 'up' ? 'Good' : 'Bad';
+        thumb.setAttribute('aria-pressed', rating === kind ? 'true' : 'false');
+        thumb.addEventListener('click', () => {
+          recordFeedback(text, kind);
+          row.querySelectorAll('.chat-rating').forEach(node => {
+            node.classList.remove('is-on');
+            node.setAttribute('aria-pressed', 'false');
+          });
+          thumb.classList.add('is-on');
+          thumb.setAttribute('aria-pressed', 'true');
+        });
+        row.appendChild(thumb);
+      });
+
+      if (options && options.isLastAssistant && options.onRetry) {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'chat-action';
+        retry.textContent = 'Retry';
+        retry.addEventListener('click', options.onRetry);
+        row.appendChild(retry);
+      }
+    }
+
     return row;
   }
 
-  function bubble(message) {
+  function bubble(message, options) {
     const row = document.createElement('div');
     row.className = message.mine ? 'chat-row mine' : 'chat-row theirs';
 
@@ -224,7 +393,7 @@
       column.appendChild(body);
     }
 
-    const actions = actionRow(message);
+    const actions = actionRow(message, options);
 
     if (actions) {
       column.appendChild(actions);
@@ -263,7 +432,19 @@
 
     list.textContent = '';
 
-    messages.forEach(message => list.appendChild(bubble(message)));
+    const lastAssistant = messages.reduce(
+      (found, message, index) => (message.mine ? found : index),
+      -1
+    );
+
+    messages.forEach((message, index) => {
+      list.appendChild(
+        bubble(message, {
+          isLastAssistant: index === lastAssistant,
+          onRetry: () => retryLast(messages)
+        })
+      );
+    });
 
     if (activity) {
       list.appendChild(activityBubble(activity));

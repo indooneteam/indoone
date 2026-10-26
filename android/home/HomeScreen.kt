@@ -3,6 +3,8 @@ package com.indoone.home
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.content.pm.PackageManager
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -47,6 +49,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -102,6 +105,7 @@ import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.home.message.MessageFeedbackStore
 import com.indoone.home.message.PendingTurnStore
 import com.indoone.home.message.SendTurnWorker
 import com.indoone.home.plus.PlusAttachmentSheet
@@ -111,6 +115,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.util.Locale
 import java.util.UUID
 
 private const val MAX_UPLOAD_BYTES = 2_000_000
@@ -652,6 +657,59 @@ fun HomeScreen(
     var recentChats by remember { mutableStateOf(emptyList<CloudChatConversation>()) }
     val scope = rememberCoroutineScope()
     val chatListState = rememberLazyListState()
+
+    // One speech engine for the screen, not one per bubble: each engine is a service
+    // connection, and a thread of twenty replies would open twenty of them. The
+    // listener is what turns the button back to "Listen" when the reading finishes,
+    // rather than leaving it saying "Stop" after the audio has gone.
+    var speakingText by remember { mutableStateOf<String?>(null) }
+    val speechEngine = remember { arrayOfNulls<TextToSpeech>(1) }
+
+    DisposableEffect(Unit) {
+        val engine = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                speechEngine[0]?.language = Locale.getDefault()
+            }
+        }
+
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) = Unit
+
+            override fun onDone(utteranceId: String?) {
+                speakingText = null
+            }
+
+            @Deprecated("Kept for the platform's older callback")
+            override fun onError(utteranceId: String?) {
+                speakingText = null
+            }
+
+            override fun onError(utteranceId: String?, errorCode: Int) {
+                speakingText = null
+            }
+        })
+
+        speechEngine[0] = engine
+
+        onDispose {
+            engine.stop()
+            engine.shutdown()
+        }
+    }
+
+    fun speakOrStop(text: String) {
+        val engine = speechEngine[0] ?: return
+
+        if (speakingText == text) {
+            engine.stop()
+            speakingText = null
+            return
+        }
+
+        engine.stop()
+        speakingText = text
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "indoone-reply")
+    }
 
     LaunchedEffect(messages.isEmpty()) {
         if (messages.isEmpty()) {
@@ -1449,7 +1507,7 @@ fun HomeScreen(
                     }
                 }
 
-                items(messages) { message ->
+                itemsIndexed(messages) { index, message ->
                     if (message.fromUser) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -1529,7 +1587,56 @@ fun HomeScreen(
                                         }
                                     }
                                 }
-                                MessageActions(message.text)
+                                MessageActions(
+                                    text = message.text,
+                                    assistant = true,
+                                    speaking = speakingText == message.text,
+                                    initialRating = remember(message.text) {
+                                        MessageFeedbackStore.ratingFor(context, message.text)
+                                    },
+                                    onListen = { speakOrStop(message.text) },
+                                    onRate = { kind ->
+                                        MessageFeedbackStore.record(context, message.text, kind)
+                                    },
+                                    onRetry = if (index == messages.indexOfLast { !it.fromUser }) {
+                                        {
+                                            // Re-ask the question behind this reply. The
+                                            // trailing exchange comes off first - the reply
+                                            // and the question it answered - because
+                                            // sendMessage adds the question back, and both
+                                            // are in the thread already.
+                                            var question = ""
+
+                                            for (position in messages.indices.reversed()) {
+                                                if (messages[position].fromUser) {
+                                                    question = messages[position].text.trim()
+                                                    break
+                                                }
+                                            }
+
+                                            if (question.isNotEmpty()) {
+                                                val trimmed = messages.toMutableList()
+
+                                                while (
+                                                    trimmed.isNotEmpty() &&
+                                                    !trimmed.last().fromUser
+                                                ) {
+                                                    trimmed.removeAt(trimmed.size - 1)
+                                                }
+
+                                                if (trimmed.isNotEmpty()) {
+                                                    trimmed.removeAt(trimmed.size - 1)
+                                                }
+
+                                                messages = trimmed
+                                                input = question
+                                                sendMessage()
+                                            }
+                                        }
+                                    } else {
+                                        null
+                                    },
+                                )
                             }
                         }
                     }
@@ -1838,13 +1945,26 @@ private fun splitReplyIntoParts(text: String): List<ReplyPart> {
 // system chooser, so the message can go to WhatsApp or Notes without the app knowing
 // anything about where it went.
 @Composable
-private fun MessageActions(text: String, alignEnd: Boolean = false) {
+private fun MessageActions(
+    text: String,
+    alignEnd: Boolean = false,
+    assistant: Boolean = false,
+    speaking: Boolean = false,
+    initialRating: String = "",
+    onListen: (() -> Unit)? = null,
+    onRate: ((String) -> Unit)? = null,
+    onRetry: (() -> Unit)? = null,
+) {
     val context = LocalContext.current
     val value = text.trim()
 
     if (value.isEmpty()) {
         return
     }
+
+    // The chosen thumb stays coloured after the tap, so the state is visible - a rating
+    // that looks identical before and after reads as a button that did nothing.
+    var rating by remember(value, initialRating) { mutableStateOf(initialRating) }
 
     Row(
         modifier = Modifier
@@ -1883,6 +2003,55 @@ private fun MessageActions(text: String, alignEnd: Boolean = false) {
             color = Color(0xFF6B6B76),
             fontSize = 12.sp,
         )
+
+        // Reading the user's own message back to them is not a feature, so these three
+        // belong to a reply only.
+        if (assistant) {
+            if (onListen != null) {
+                Text(
+                    text = if (speaking) "Stop" else "Listen",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onListen() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    color = Color(0xFF6B6B76),
+                    fontSize = 12.sp,
+                )
+            }
+
+            if (onRate != null) {
+                listOf(
+                    MessageFeedbackStore.UP to "Good",
+                    MessageFeedbackStore.DOWN to "Bad",
+                ).forEach { (kind, label) ->
+                    val chosen = rating == kind
+                    Text(
+                        text = label,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                rating = kind
+                                onRate(kind)
+                            }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        color = if (chosen) Color(0xFF6330DB) else Color(0xFF6B6B76),
+                        fontSize = 12.sp,
+                    )
+                }
+            }
+
+            if (onRetry != null) {
+                Text(
+                    text = "Retry",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onRetry() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    color = Color(0xFF6B6B76),
+                    fontSize = 12.sp,
+                )
+            }
+        }
     }
 }
 

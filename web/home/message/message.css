@@ -168,6 +168,13 @@
   color: #6330db;
 }
 
+/* The rating that was chosen stays coloured, so the state is visible after the tap. */
+.chat-action.chat-rating.is-on {
+  background: #f3eefc;
+  color: #6330db;
+  font-weight: 600;
+}
+
 /* A 44px target is the smallest a thumb hits reliably; the label stays small, the
    tappable box does not. */
 @media (pointer: coarse) {
