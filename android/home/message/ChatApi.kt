@@ -316,7 +316,8 @@ private const val READ_TIMEOUT_MS = 300_000
         onMeta: suspend (String) -> Unit = {},
         onDelta: suspend (String) -> Unit = {},
     ): ChatResponse {
-        val token = authToken()
+        val token = requireAuthToken()
+        val backendUrl = requireBackendUrl()
         val payload = JSONObject().apply {
             put("message", message)
             if (!conversationId.isNullOrBlank()) put("conversation_id", conversationId)
