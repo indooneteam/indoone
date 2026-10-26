@@ -15,6 +15,14 @@
   // https URL, running to the next space.
   const REPLY_LINK_PATTERN = /https?:\/\/\S+/g;
 
+  function setPendingTurn(kind, index, extra = {}) {
+    window.IndoonePendingTurn = { kind, index, ...extra };
+  }
+
+  function clearPendingTurn() {
+    window.IndoonePendingTurn = null;
+  }
+
   function logo() {
     const mark = document.createElement('span');
     mark.className = 'chat-logo';
@@ -331,35 +339,36 @@
       return;
     }
 
-    let question = '';
+    let questionIndex = -1;
 
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       if (messages[index].mine) {
-        question = String(messages[index].text || '').trim();
+        questionIndex = index;
         break;
       }
     }
 
-    if (!question) {
+    if (questionIndex < 0) {
       return;
     }
 
-    const next = messages.slice();
+    const question = messages[questionIndex];
+    const currentRetryCount = Number(question.retryCount || 0);
 
-    while (next.length && !next[next.length - 1].mine) {
-      next.pop();
+    if (currentRetryCount >= 2) {
+      return;
     }
 
-    if (next.length && next[next.length - 1].mine) {
-      next.pop();
-    }
-
+    const next = messages.slice(0, questionIndex + 1);
+    const updatedQuestion = { ...question, retryCount: currentRetryCount + 1 };
+    next[next.length - 1] = updatedQuestion;
     store.replace(next);
+    setPendingTurn('retry', questionIndex, { retryCount: updatedQuestion.retryCount });
 
     const input = document.getElementById('chatInput');
 
     if (input) {
-      input.value = question;
+      input.value = String(question.text || '').trim();
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
@@ -389,6 +398,9 @@
 
     if (Array.isArray(messages) && index >= 0 && index < messages.length) {
       window.IndooneChatStore?.replace(messages.slice(0, index));
+      setPendingTurn('edit', index);
+    } else {
+      clearPendingTurn();
     }
 
     input.value = text;
@@ -471,7 +483,13 @@
 
     if (options && options.isLastAssistant && options.onRetry) {
       const retry = iconButton('retry', 'Ask again');
-      retry.addEventListener('click', options.onRetry);
+      const allowed = Boolean(options.retryAllowed);
+      retry.disabled = !allowed;
+      retry.hidden = !allowed;
+      retry.setAttribute('aria-disabled', String(!allowed));
+      if (allowed) {
+        retry.addEventListener('click', options.onRetry);
+      }
       row.appendChild(retry);
     }
 
@@ -559,17 +577,12 @@
       -1
     );
 
-    // Retry is limited to two regenerations. The answer, then two more attempts: after
-    // that the thread holds three answers to one question, which is enough to know
-    // whether it will ever be right - and an unlimited retry is just a slot machine.
     const lastQuestion = messages.reduce(
       (found, message, index) => (message.mine ? index : found),
       -1
     );
-    const answersSince = messages.filter(
-      (message, index) => index > lastQuestion && !message.mine
-    ).length;
-    const retryAllowed = answersSince <= 2;
+    const retryCount = Number(messages[lastQuestion]?.retryCount || 0);
+    const retryAllowed = lastQuestion >= 0 && retryCount < 2;
 
     messages.forEach((message, index) => {
       // Copy and share carry the question with the answer: an answer on its own is
@@ -591,7 +604,8 @@
 
       list.appendChild(
         bubble(message, {
-          isLastAssistant: index === lastAssistant && retryAllowed,
+          isLastAssistant: index === lastAssistant,
+          retryAllowed,
           pairText,
           onRetry: () => retryLast(messages),
           onEdit: () => editPrompt(answer, index, messages)
