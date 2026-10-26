@@ -5,6 +5,17 @@
   const MAX_ATTACHMENTS = 10;
   let pending = [];
   let sending = false;
+  let activeAbortController = null;
+  let activeTurnId = 0;
+
+  function clearActivity() {
+    window.IndooneMessages?.render(
+      document.getElementById('chatList'),
+      window.IndooneChatStore?.getMessages?.() || [],
+      null
+    );
+    window.IndooneChatScroll?.toBottom?.();
+  }
 
   function setActivity(state) {
     window.IndooneMessages?.render(
@@ -13,6 +24,13 @@
       state
     );
     window.IndooneChatScroll?.toBottom?.();
+  }
+
+  function abortActiveRequest() {
+    if (activeAbortController) {
+      activeAbortController.abort();
+      activeAbortController = null;
+    }
   }
 
   function isImage(item) {
@@ -163,8 +181,6 @@
       'or visible details.'
     );
 
-    // The bubble renders the photo straight from item.url, so the message and
-    // clearPending() have to agree on which object URLs are still needed.
     const sentAttachments = attachments.map(item => ({
       name: item.file.name,
       type: item.file.type,
@@ -183,26 +199,23 @@
     }
 
     const conversationId = store.ensureConversationId();
+    const turnId = ++activeTurnId;
+    const controller = new AbortController();
+    activeAbortController = controller;
 
-    // Hand the sent photos' URLs to clearPending so it does NOT revoke them.
-    // Revoking here is what left the sent photo as a broken image with only its
-    // filename showing: the bubble still pointed at the URL we had just killed.
     clearPending(new Set(sentAttachments.map(item => item.url).filter(Boolean)));
     setBusy(true);
-    // HomeScreen.kt shows Received for 350ms, then Thinking while the request
-    // is in flight, then Preparing for 600ms before the reply.
     setActivity('received');
     await new Promise(resolve => setTimeout(resolve, 350));
+    if (activeTurnId !== turnId) {
+      return;
+    }
     setActivity('thinking');
 
-    // Save the user's side to the account, exactly as the app does.
     void window.IndooneCloudChat
       ?.appendMessage?.(conversationId, 'user', text || message)
       .catch(error => console.warn('Indoone chat save failed:', error));
 
-    // Record the turn before the request opens. If this tab is refreshed or closed
-    // while it is open, the next load finds this record and puts the text back in the
-    // composer instead of leaving a question with no answer and no explanation.
     window.IndooneInflight?.begin({
       conversationId,
       text: message,
@@ -219,13 +232,16 @@
       const result = await api.send({
         message,
         conversationId,
-        attachments
+        attachments,
+        signal: controller.signal
       });
 
-      store.setConversationId(result.conversationId);
-      setActivity('preparing');
-      await new Promise(resolve => setTimeout(resolve, 600));
+      if (activeTurnId !== turnId) {
+        return;
+      }
 
+      store.setConversationId(result.conversationId);
+      setActivity(null);
       window.IndooneInflight?.finish();
       store.add({ text: result.reply, mine: false });
 
@@ -233,13 +249,14 @@
         ?.appendMessage?.(result.conversationId, 'assistant', result.reply)
         .catch(error => console.warn('Indoone chat save failed:', error));
     } catch (error) {
-      console.error('Indoone chat send failed:', error);
+      if (error?.name === 'AbortError') {
+        return;
+      }
 
-      // The failure is on screen now, so the record has done its job.
+      console.error('Indoone chat send failed:', error);
       window.IndooneInflight?.finish();
       store.remove(mine);
       store.add({
-        // never the raw failure text
         text:
           error?.message &&
           !/undefined|not a function|null/i.test(error.message)
@@ -248,27 +265,17 @@
         mine: false
       });
     } finally {
-      setBusy(false);
-
-      const messages = store.getMessages();
-
-      window.IndooneMessages?.render(
-        document.getElementById('chatList'),
-        messages,
-        null
-      );
-
-      // The welcome block goes the moment there is a message. HomeScreen.kt
-      // only draws it while messages.isEmpty(), and paintThread() in
-      // chat-home.js does the same - but send() renders the thread itself and
-      // never went through paintThread, so the welcome stayed on screen after
-      // the first send. Same condition as paintThread.
-      document
-        .getElementById('chatWelcome')
-        ?.toggleAttribute('hidden', messages.length > 0);
-
-      window.IndooneChatScroll?.toBottom?.();
-      window.IndooneChatHome?.syncComposer?.();
+      if (activeAbortController === controller) {
+        activeAbortController = null;
+      }
+      if (activeTurnId === turnId) {
+        setBusy(false);
+        clearActivity();
+        const messages = store.getMessages();
+        document.getElementById('chatWelcome')?.toggleAttribute('hidden', messages.length > 0);
+        window.IndooneChatScroll?.toBottom?.();
+        window.IndooneChatHome?.syncComposer?.();
+      }
     }
   }
 
@@ -276,6 +283,7 @@
     send,
     attach,
     clearPending,
-    getPending: () => pending
+    getPending: () => pending,
+    cancel: abortActiveRequest
   };
 })();
