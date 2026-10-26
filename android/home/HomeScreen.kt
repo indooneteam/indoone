@@ -1480,6 +1480,7 @@ fun HomeScreen(
                                             fontSize = 15.sp,
                                         )
                                     }
+                                    MessageActions(message.text, alignEnd = true)
                                 }
                             }
                         }
@@ -1496,36 +1497,39 @@ fun HomeScreen(
                                     .align(Alignment.Bottom),
                             )
 
-                            Surface(
-                                shape = RoundedCornerShape(
-                                    topStart = 18.dp,
-                                    topEnd = 18.dp,
-                                    bottomStart = 5.dp,
-                                    bottomEnd = 18.dp,
-                                ),
-                                color = Color(0xFFF5F2FB),
-                            ) {
-                                Column(Modifier.padding(horizontal = 15.dp, vertical = 12.dp)) {
-                                    // A reply that carries links reads better as its prose and
-                                    // then one row per link, each with a copy button, than as
-                                    // one run of text with the URLs buried inside it.
-                                    val parts = remember(message.text) { splitReplyIntoParts(message.text) }
-                                    parts.forEachIndexed { index, part ->
-                                        val gap = if (index == 0) 0.dp else 8.dp
-                                        when (part) {
-                                            is ReplyPart.Prose -> Text(
-                                                part.text,
-                                                Modifier.padding(top = gap),
-                                                color = Color(0xFF292331),
-                                                fontSize = 15.sp,
-                                            )
-                                            is ReplyPart.Link -> ReplyLinkRow(
-                                                url = part.url,
-                                                modifier = Modifier.padding(top = gap),
-                                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Surface(
+                                    shape = RoundedCornerShape(
+                                        topStart = 18.dp,
+                                        topEnd = 18.dp,
+                                        bottomStart = 5.dp,
+                                        bottomEnd = 18.dp,
+                                    ),
+                                    color = Color(0xFFF5F2FB),
+                                ) {
+                                    Column(Modifier.padding(horizontal = 15.dp, vertical = 12.dp)) {
+                                        // A reply that carries links reads better as its prose and
+                                        // then one row per link, each with a copy button, than as
+                                        // one run of text with the URLs buried inside it.
+                                        val parts = remember(message.text) { splitReplyIntoParts(message.text) }
+                                        parts.forEachIndexed { index, part ->
+                                            val gap = if (index == 0) 0.dp else 8.dp
+                                            when (part) {
+                                                is ReplyPart.Prose -> Text(
+                                                    part.text,
+                                                    Modifier.padding(top = gap),
+                                                    color = Color(0xFF292331),
+                                                    fontSize = 15.sp,
+                                                )
+                                                is ReplyPart.Link -> ReplyLinkRow(
+                                                    url = part.url,
+                                                    modifier = Modifier.padding(top = gap),
+                                                )
+                                            }
                                         }
                                     }
                                 }
+                                MessageActions(message.text)
                             }
                         }
                     }
@@ -1828,6 +1832,61 @@ private fun splitReplyIntoParts(text: String): List<ReplyPart> {
  * reads as though it did nothing.
  */
 @Composable
+// Copy and Share under a bubble.
+//
+// Quiet on purpose: they are useful, not the point of the screen, and a row of buttons
+// that shouts under every message makes a conversation hard to read. Share opens the
+// system chooser, so the message can go to WhatsApp or Notes without the app knowing
+// anything about where it went.
+@Composable
+private fun MessageActions(text: String, alignEnd: Boolean = false) {
+    val context = LocalContext.current
+    val value = text.trim()
+
+    if (value.isEmpty()) {
+        return
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = if (alignEnd) Arrangement.End else Arrangement.Start,
+    ) {
+        Text(
+            text = "Copy",
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    val clipboard =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Indoone message", value))
+                    // A tap with no visible result reads as a broken button.
+                    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            color = Color(0xFF6B6B76),
+            fontSize = 12.sp,
+        )
+
+        Text(
+            text = "Share",
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    val share = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, value)
+                    }
+                    context.startActivity(Intent.createChooser(share, "Share message"))
+                }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            color = Color(0xFF6B6B76),
+            fontSize = 12.sp,
+        )
+    }
+}
+
 private fun ReplyLinkRow(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Surface(
