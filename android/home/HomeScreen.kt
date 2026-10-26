@@ -103,6 +103,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -1634,9 +1635,28 @@ fun HomeScreen(
             }
             Box(Modifier.fillMaxWidth().weight(1f)) {
             if (!isLoadingHistory && messages.isNotEmpty()) {
-                Box(Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 10.dp)) {
-                    IconButton(onClick = { threadMenuOpen = true }) {
-                        Text("⋮", color = Color(0xFF6B6478), fontSize = 20.sp)
+                // zIndex is the fix, not the styling: this Box is declared BEFORE the
+                // LazyColumn in the same parent, so the list was drawn over the button and
+                // took the taps. A bare glyph also read as broken rather than as a control,
+                // hence the circular surface and the 40dp touch target.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 8.dp, end = 12.dp)
+                        .zIndex(10f),
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White.copy(alpha = 0.94f),
+                        border = BorderStroke(1.dp, Color(0xFFE5E0ED)),
+                        shadowElevation = 2.dp,
+                    ) {
+                        IconButton(
+                            onClick = { threadMenuOpen = true },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Text("⋮", color = Color(0xFF352742), fontSize = 20.sp)
+                        }
                     }
 
                     DropdownMenu(
