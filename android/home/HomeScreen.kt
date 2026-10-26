@@ -93,11 +93,17 @@ import com.indoone.menu.AppBottomNav
 import com.indoone.menu.AppTab
 import com.indoone.menu.AppTopBar
 import com.indoone.menu.data.UserDataRepository
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.home.message.PendingTurnStore
+import com.indoone.home.message.SendTurnWorker
 import com.indoone.home.plus.PlusAttachmentSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -657,6 +663,57 @@ fun HomeScreen(
         }
     }
 
+    // A text-only turn is sent by SendTurnWorker, so nothing here waits on the network.
+    // This reconciles what the worker settled: a delivered turn becomes the reply bubble,
+    // a failed one becomes the failure and puts the text back in the composer.
+    //
+    // The store hands each settled turn over once and forgets it, so this poll cannot
+    // append the same reply twice. The text is never re-sent from here - a failed turn
+    // may have been a GitHub write, and repeating it is the user's decision, not a loop's.
+    LaunchedEffect(conversationId, userKey) {
+        val store = PendingTurnStore.get(context)
+
+        while (true) {
+            delay(1000L)
+
+            val current = conversationId ?: continue
+            val settled = withContext(Dispatchers.IO) { store.takeSettled(current) }
+
+            if (settled.isEmpty()) {
+                continue
+            }
+
+            for (turn in settled) {
+                val reply = turn.reply
+
+                if (turn.status == PendingTurnStore.STATUS_DELIVERED && !reply.isNullOrBlank()) {
+                    messages = messages + ChatMessage(reply, false)
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            cloudChatRepository.appendMessage(
+                                conversationId = turn.conversationId,
+                                role = "assistant",
+                                content = reply,
+                            )
+                        }
+                    }
+                } else {
+                    // Back in the box where the user left it, exactly as the web does.
+                    if (input.isBlank()) {
+                        input = turn.text
+                    }
+                    messages = messages + ChatMessage(
+                        turn.error ?: "Indoone AI could not complete the request.",
+                        false,
+                    )
+                }
+            }
+
+            chatActivityState = ChatActivityState.IDLE
+            isSending = false
+        }
+    }
+
     // The greeting's name and the "pick up where you left off" rows. Both come
     // from the account - the profile in users/<uid>/profile, and the same
     // conversations Chat History lists - which is where the web reads them too.
@@ -768,6 +825,44 @@ fun HomeScreen(
         val persistedUserContent = listOf(typed, attachmentSummary.orEmpty())
             .filter { it.isNotBlank() }
             .joinToString("\n")
+
+        // A text-only turn is handed to the application, not to this composition. The
+        // send used to run in `scope`, which is cancelled the moment the screen goes
+        // away - backgrounding the app dropped the request and the reply with it.
+        //
+        // The turn is written first, so a process death leaves something to reconcile
+        // against instead of a question with no answer.
+        if (!hasPendingAttachment) {
+            val store = PendingTurnStore.get(context)
+            val turn = store.begin(requestConversationId, messageToBackend)
+            val request = OneTimeWorkRequestBuilder<SendTurnWorker>()
+                .setInputData(workDataOf(SendTurnWorker.KEY_TURN_ID to turn.id))
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                SendTurnWorker.workName(turn.id),
+                // One work item per turn: a double tap cannot send the same text twice.
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+
+            // The composer is free immediately - the user is not waiting on the network.
+            isSending = false
+            chatActivityState = ChatActivityState.IDLE
+
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        cloudChatRepository.appendMessage(
+                            conversationId = requestConversationId,
+                            role = "user",
+                            content = persistedUserContent,
+                        )
+                    }
+                }
+            }
+            return@sendMessage
+        }
 
         scope.launch {
             val receivedStage = async { delay(350L) }

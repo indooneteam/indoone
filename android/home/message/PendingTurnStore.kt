@@ -103,6 +103,63 @@ class PendingTurnStore private constructor(context: Context) :
 
     fun find(id: String): Turn? = read("id = ?", arrayOf(id)).firstOrNull()
 
+    /**
+     * Hand back the turns that have settled for this conversation, and forget them.
+     *
+     * Read-and-delete in one transaction, so the screen cannot append the same reply
+     * twice - which is exactly what a poll would do on the second tick. A failed turn is
+     * returned the same way and consumed the same way: the screen shows the failure once
+     * and puts the text back in the composer, and nothing stays queued behind it.
+     */
+    fun takeSettled(conversationId: String): List<Turn> {
+        val key = conversationId.trim()
+
+        if (key.isEmpty()) {
+            return emptyList()
+        }
+
+        val db = writableDatabase
+        val selection = "conversation_id = ? AND status IN (?, ?)"
+        val args = arrayOf(key, STATUS_DELIVERED, STATUS_FAILED)
+        val settled = mutableListOf<Turn>()
+
+        db.beginTransaction()
+        try {
+            db.query(
+                TABLE,
+                arrayOf("id", "conversation_id", "text", "status", "reply", "error", "created_at"),
+                selection,
+                args,
+                null,
+                null,
+                "created_at ASC",
+                "20",
+            ).use { cursor ->
+                while (cursor.moveToNext()) {
+                    settled += Turn(
+                        id = cursor.getString(0),
+                        conversationId = cursor.getString(1),
+                        text = cursor.getString(2),
+                        status = cursor.getString(3),
+                        reply = if (cursor.isNull(4)) null else cursor.getString(4),
+                        error = if (cursor.isNull(5)) null else cursor.getString(5),
+                        createdAt = cursor.getLong(6),
+                    )
+                }
+            }
+
+            if (settled.isNotEmpty()) {
+                db.delete(TABLE, selection, args)
+            }
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+
+        return settled
+    }
+
     /** A turn that was still sending when the process died, if there is one. */
     fun unfinished(): Turn? = read("status = ?", arrayOf(STATUS_SENDING)).firstOrNull()
 
