@@ -376,11 +376,19 @@
   // Editing a prompt means putting it back where it came from: the composer. The sent
   // message stays in the thread, because the reply below it answered that text - silently
   // rewriting history would leave an answer to a question that no longer exists.
-  function editPrompt(text) {
+  // Editing replaces the message. The thread is cut back to just before it - the old
+  // prompt and the answer it got - and the text goes into the composer. Sending then
+  // puts the edited prompt where the old one was, instead of appending a second copy
+  // underneath an answer to a question the user has just changed.
+  function editPrompt(text, index, messages) {
     const input = document.getElementById('chatInput');
 
     if (!input) {
       return;
+    }
+
+    if (Array.isArray(messages) && index >= 0 && index < messages.length) {
+      window.IndooneChatStore?.replace(messages.slice(0, index));
     }
 
     input.value = text;
@@ -406,7 +414,7 @@
 
     if (message.mine) {
       const edit = iconButton('edit', 'Edit this message');
-      edit.addEventListener('click', () => editPrompt(text));
+      edit.addEventListener('click', () => (options && options.onEdit ? options.onEdit() : editPrompt(text)));
       row.appendChild(edit);
       return row;
     }
@@ -551,6 +559,18 @@
       -1
     );
 
+    // Retry is limited to two regenerations. The answer, then two more attempts: after
+    // that the thread holds three answers to one question, which is enough to know
+    // whether it will ever be right - and an unlimited retry is just a slot machine.
+    const lastQuestion = messages.reduce(
+      (found, message, index) => (message.mine ? index : found),
+      -1
+    );
+    const answersSince = messages.filter(
+      (message, index) => index > lastQuestion && !message.mine
+    ).length;
+    const retryAllowed = answersSince <= 2;
+
     messages.forEach((message, index) => {
       // Copy and share carry the question with the answer: an answer on its own is
       // usually meaningless out of context, and pasting a pair back into a chat is what
@@ -571,9 +591,10 @@
 
       list.appendChild(
         bubble(message, {
-          isLastAssistant: index === lastAssistant,
+          isLastAssistant: index === lastAssistant && retryAllowed,
           pairText,
-          onRetry: () => retryLast(messages)
+          onRetry: () => retryLast(messages),
+          onEdit: () => editPrompt(answer, index, messages)
         })
       );
     });
