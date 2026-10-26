@@ -193,7 +193,11 @@ private const val READ_TIMEOUT_MS = 300_000
                     if (reply.isBlank()) {
                         throw ChatApiException("Indoone backend returned an empty reply")
                     }
-                    ChatResponse(returnedConversationId, reply)
+                    ChatResponse(
+                        returnedConversationId,
+                        reply,
+                        parseActionChips(json.optJSONArray("action_chips")),
+                    )
                 } finally {
                     connection.disconnect()
                 }

@@ -1115,7 +1115,11 @@ fun HomeScreen(
                 }
                 chatActivityState = ChatActivityState.PREPARING
                 delay(600L)
-                messages = messages + ChatMessage(response.reply, false)
+                messages = messages + ChatMessage(
+                    response.reply,
+                    false,
+                    chips = response.actionChips,
+                )
                 chatActivityState = ChatActivityState.IDLE
 
                 var userSave = userSaveDeferred.await()
@@ -1815,8 +1819,13 @@ fun HomeScreen(
                                     },
                                 )
                                 if (message.chips.isNotEmpty()) {
+                                    // Scrolls sideways: a reply can offer three or four
+                                    // follow-ups, and wrapping them would push the
+                                    // conversation down for something that is optional.
                                     Row(
-                                        modifier = Modifier.padding(top = 6.dp),
+                                        modifier = Modifier
+                                            .padding(top = 6.dp)
+                                            .horizontalScroll(rememberScrollState()),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     ) {
                                         message.chips.forEach { chip ->
