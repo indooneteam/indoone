@@ -6,6 +6,13 @@ import android.content.Intent
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.content.pm.PackageManager
+import android.print.PrintAttributes
+import android.print.PrintManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -460,6 +467,56 @@ private data class ChatAttachment(
     val id: String = UUID.randomUUID().toString(),
 )
 
+/**
+ * Hand the conversation to Android's print framework.
+ *
+ * A PDF is what the print dialog produces; building one by hand would mean carrying a PDF
+ * library for a document the platform already knows how to lay out. The HTML is generated
+ * here, and no script runs in it.
+ */
+private fun exportChatAsPdf(context: Context, messages: List<ChatMessage>) {
+    if (messages.isEmpty()) {
+        Toast.makeText(context, "Nothing to export yet", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    val body = messages.joinToString("") { message ->
+        val who = if (message.fromUser) "You" else "Indoone AI"
+        val background = if (message.fromUser) "#F4F2FF" else "#FFFFFF"
+        val escaped = message.text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br/>")
+
+        "<div class=\"row\" style=\"background:$background\">" +
+            "<div class=\"who\">$who</div><div class=\"text\">$escaped</div></div>"
+    }
+
+    val html = """
+        <html><head><meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <style>
+          body { font-family: sans-serif; padding: 24px; color: #242129; }
+          h1 { font-size: 18px; color: #5E2DD2; }
+          .row { border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; border: 1px solid #E5E0ED; }
+          .who { font-size: 11px; color: #6B6478; margin-bottom: 4px; }
+          .text { font-size: 13px; line-height: 1.45; }
+        </style></head><body><h1>Indoone chat</h1>$body</body></html>
+    """.trimIndent()
+
+    val webView = WebView(context)
+    webView.settings.javaScriptEnabled = false
+    webView.webViewClient = object : WebViewClient() {
+        override fun onPageFinished(view: WebView?, url: String?) {
+            val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
+            val adapter = webView.createPrintDocumentAdapter("Indoone chat")
+            printManager.print("Indoone chat", adapter, PrintAttributes.Builder().build())
+        }
+    }
+    webView.loadDataWithBaseURL(null, html, "text/html", "utf-8", null)
+}
+
+
 private data class ChatMessage(
     val text: String,
     val fromUser: Boolean,
@@ -655,6 +712,11 @@ fun HomeScreen(
     var isSending by remember { mutableStateOf(false) }
     var chatActivityState by remember { mutableStateOf(ChatActivityState.IDLE) }
     var conversationId by rememberSaveable(userKey, startNewChat) { mutableStateOf<String?>(null) }
+
+    // The thread menu's rename dialog. The title is seeded from what the thread is called
+    // now, so the field opens with something to edit rather than an empty box.
+    var renameOpen by remember { mutableStateOf(false) }
+    var renameTitle by remember { mutableStateOf("") }
     var pendingAttachments by remember { mutableStateOf<List<ChatAttachment>>(emptyList()) }
     var cameraCaptureUri by remember { mutableStateOf<Uri?>(null) }
     var isPlusMenuOpen by remember { mutableStateOf(false) }
@@ -1495,7 +1557,73 @@ fun HomeScreen(
                 onMenuClick = onMenuClick,
                 hasUnreadNotifications = hasUnreadNotifications,
                 onNotificationsClick = onNotificationClick,
+                onShareThread = {
+                    val thread = conversationId
+
+                    if (thread.isNullOrBlank()) {
+                        Toast.makeText(context, "Send a message first", Toast.LENGTH_SHORT).show()
+                    } else {
+                        scope.launch {
+                            runCatching { ChatApi.shareThread(thread) }
+                                .onSuccess { url ->
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Indoone chat", url))
+                                    Toast.makeText(
+                                        context,
+                                        "Link copied to clipboard! Anyone with this link can view this chat",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                                .onFailure {
+                                    Toast.makeText(context, "Could not create a share link", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    }
+                },
+                onRenameThread = {
+                    if (!conversationId.isNullOrBlank()) {
+                        renameTitle = ""
+                        renameOpen = true
+                    }
+                },
+                onExportPdf = { exportChatAsPdf(context, messages) },
             )
+
+            if (renameOpen) {
+                AlertDialog(
+                    onDismissRequest = { renameOpen = false },
+                    title = { Text("Rename chat") },
+                    text = {
+                        OutlinedTextField(
+                            value = renameTitle,
+                            onValueChange = { renameTitle = it },
+                            singleLine = true,
+                            placeholder = { Text("A name for this chat") },
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                val thread = conversationId
+                                val title = renameTitle.trim()
+                                renameOpen = false
+
+                                if (thread.isNullOrBlank() || title.isBlank()) return@TextButton
+
+                                scope.launch {
+                                    runCatching { ChatApi.renameThread(thread, title) }
+                                        .onFailure {
+                                            Toast.makeText(context, "Could not rename this chat", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                            },
+                        ) { Text("Save") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { renameOpen = false }) { Text("Cancel") }
+                    },
+                )
+            }
             Box(Modifier.fillMaxWidth().weight(1f)) {
             if (isLoadingHistory) {
                 Row(

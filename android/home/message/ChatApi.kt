@@ -459,6 +459,65 @@ private const val READ_TIMEOUT_MS = 300_000
             )
         }
     }
+
+    /** Mint a read-only link to a thread, and return it. */
+    suspend fun shareThread(conversationId: String): String = withContext(Dispatchers.IO) {
+        val connection = openConnection(
+            "${requireBackendUrl()}/api/chat/threads/$conversationId/share",
+            requireAuthToken(),
+        )
+
+        try {
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.outputStream.use { it.write("{}".toByteArray()) }
+
+            val code = connection.responseCode
+            val body = (if (code in 200..299) connection.inputStream else connection.errorStream)
+                ?.bufferedReader()?.use { it.readText() }.orEmpty()
+
+            if (code !in 200..299) {
+                throw ChatApiException("Indoone backend could not create a share link")
+            }
+
+            val url = JSONObject(body).optString("share_url").trim()
+
+            if (url.isBlank()) throw ChatApiException("Indoone backend returned no share link")
+
+            url
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    /** Rename a thread, and return the title as the backend stored it. */
+    suspend fun renameThread(conversationId: String, title: String): String = withContext(Dispatchers.IO) {
+        val connection = openConnection(
+            "${requireBackendUrl()}/api/chat/threads/$conversationId",
+            requireAuthToken(),
+        )
+
+        try {
+            connection.requestMethod = "PATCH"
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            val payload = JSONObject().put("title", title).toString()
+            connection.outputStream.use { it.write(payload.toByteArray()) }
+
+            val code = connection.responseCode
+            val body = (if (code in 200..299) connection.inputStream else connection.errorStream)
+                ?.bufferedReader()?.use { it.readText() }.orEmpty()
+
+            if (code !in 200..299) {
+                throw ChatApiException("Indoone backend could not rename this chat")
+            }
+
+            JSONObject(body).optString("status").trim().ifBlank { title.trim() }
+        } finally {
+            connection.disconnect()
+        }
+    }
 }
 
 class ChatApiException(
