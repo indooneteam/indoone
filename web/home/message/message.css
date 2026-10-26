@@ -276,3 +276,16 @@
 .chat-chip:active {
   transform: scale(0.98);
 }
+
+/* A [label](url) link: the label only, inline with the sentence it belongs to. The URL
+   stays in the href, so the line reads as prose rather than as a pasted address. */
+.chat-link {
+  color: #4b21b3;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.chat-link:hover,
+.chat-link:focus-visible {
+  text-decoration: underline;
+}
