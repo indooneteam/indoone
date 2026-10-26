@@ -105,6 +105,7 @@ import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
 import com.indoone.home.message.CloudChatConversation
 import com.indoone.home.message.CloudChatRepository
+import com.indoone.home.message.MessageFeedbackStore
 import com.indoone.home.message.PendingTurnStore
 import com.indoone.home.message.SendTurnWorker
 import com.indoone.home.plus.PlusAttachmentSheet
