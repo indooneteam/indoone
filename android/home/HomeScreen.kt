@@ -717,6 +717,10 @@ fun HomeScreen(
     // now, so the field opens with something to edit rather than an empty box.
     var renameOpen by remember { mutableStateOf(false) }
     var renameTitle by remember { mutableStateOf("") }
+    // The thread menu belongs to the conversation, not to the app chrome: it sits inside
+    // the chat container, under the divider, so it reads as "this chat" and never collides
+    // with the notification bell.
+    var threadMenuOpen by remember { mutableStateOf(false) }
     var pendingAttachments by remember { mutableStateOf<List<ChatAttachment>>(emptyList()) }
     var cameraCaptureUri by remember { mutableStateOf<Uri?>(null) }
     var isPlusMenuOpen by remember { mutableStateOf(false) }
@@ -1551,42 +1555,43 @@ fun HomeScreen(
         }
     }
 
+    val shareCurrentChat: () -> Unit = {
+        val thread = conversationId
+
+        if (thread.isNullOrBlank()) {
+            Toast.makeText(context, "Send a message first", Toast.LENGTH_SHORT).show()
+        } else {
+            scope.launch {
+                runCatching { ChatApi.shareThread(thread) }
+                    .onSuccess { url ->
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Indoone chat", url))
+                        Toast.makeText(
+                            context,
+                            "Link copied to clipboard! Anyone with this link can view this chat",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(context, "Could not create a share link", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+
+    val renameCurrentChat: () -> Unit = {
+        if (!conversationId.isNullOrBlank()) {
+            renameTitle = ""
+            renameOpen = true
+        }
+    }
+
     Box(Modifier.fillMaxSize().background(Color.White)) {
         Column(Modifier.fillMaxSize()) {
             AppTopBar(
                 onMenuClick = onMenuClick,
                 hasUnreadNotifications = hasUnreadNotifications,
                 onNotificationsClick = onNotificationClick,
-                onShareThread = {
-                    val thread = conversationId
-
-                    if (thread.isNullOrBlank()) {
-                        Toast.makeText(context, "Send a message first", Toast.LENGTH_SHORT).show()
-                    } else {
-                        scope.launch {
-                            runCatching { ChatApi.shareThread(thread) }
-                                .onSuccess { url ->
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Indoone chat", url))
-                                    Toast.makeText(
-                                        context,
-                                        "Link copied to clipboard! Anyone with this link can view this chat",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                                }
-                                .onFailure {
-                                    Toast.makeText(context, "Could not create a share link", Toast.LENGTH_SHORT).show()
-                                }
-                        }
-                    }
-                },
-                onRenameThread = {
-                    if (!conversationId.isNullOrBlank()) {
-                        renameTitle = ""
-                        renameOpen = true
-                    }
-                },
-                onExportPdf = { exportChatAsPdf(context, messages) },
             )
 
             if (renameOpen) {
@@ -1625,6 +1630,32 @@ fun HomeScreen(
                 )
             }
             Box(Modifier.fillMaxWidth().weight(1f)) {
+            if (!isLoadingHistory && messages.isNotEmpty()) {
+                Box(Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 10.dp)) {
+                    IconButton(onClick = { threadMenuOpen = true }) {
+                        Text("⋮", color = Color(0xFF6B6478), fontSize = 20.sp)
+                    }
+
+                    DropdownMenu(
+                        expanded = threadMenuOpen,
+                        onDismissRequest = { threadMenuOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Share Chat Link") },
+                            onClick = { threadMenuOpen = false; shareCurrentChat() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export as PDF") },
+                            onClick = { threadMenuOpen = false; exportChatAsPdf(context, messages) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Rename Chat") },
+                            onClick = { threadMenuOpen = false; renameCurrentChat() },
+                        )
+                    }
+                }
+            }
+
             if (isLoadingHistory) {
                 Row(
                     modifier = Modifier.fillMaxSize(),

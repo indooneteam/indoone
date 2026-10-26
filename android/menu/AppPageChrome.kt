@@ -27,8 +27,6 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -202,13 +200,7 @@ fun AppTopBar(
     onTrailingClick: () -> Unit = {},
     hasUnreadNotifications: Boolean = false,
     onNotificationsClick: (() -> Unit)? = null,
-    // The chat screen's thread actions. Null everywhere else, so every other screen keeps
-    // exactly the bar it had.
-    onShareThread: (() -> Unit)? = null,
-    onRenameThread: (() -> Unit)? = null,
-    onExportPdf: (() -> Unit)? = null,
 ) {
-    var threadMenuOpen by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(
@@ -245,38 +237,6 @@ fun AppTopBar(
                     fontWeight = FontWeight.Bold,
                     lineHeight = 18.sp,
                 )
-            }
-
-            if (onShareThread != null || onRenameThread != null || onExportPdf != null) {
-                Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                    IconButton(onClick = { threadMenuOpen = true }) {
-                        Text("⋮", color = Color(0xFF242129), fontSize = 22.sp)
-                    }
-
-                    DropdownMenu(
-                        expanded = threadMenuOpen,
-                        onDismissRequest = { threadMenuOpen = false },
-                    ) {
-                        onShareThread?.let { action ->
-                            DropdownMenuItem(
-                                text = { Text("Share Chat Link") },
-                                onClick = { threadMenuOpen = false; action() },
-                            )
-                        }
-                        onExportPdf?.let { action ->
-                            DropdownMenuItem(
-                                text = { Text("Export as PDF") },
-                                onClick = { threadMenuOpen = false; action() },
-                            )
-                        }
-                        onRenameThread?.let { action ->
-                            DropdownMenuItem(
-                                text = { Text("Rename Chat") },
-                                onClick = { threadMenuOpen = false; action() },
-                            )
-                        }
-                    }
-                }
             }
 
             if (onNotificationsClick != null) {
