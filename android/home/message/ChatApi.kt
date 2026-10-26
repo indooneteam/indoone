@@ -459,7 +459,6 @@ private const val READ_TIMEOUT_MS = 300_000
             )
         }
     }
-}
 
     /** Mint a read-only link to a thread, and return it. */
     suspend fun shareThread(conversationId: String): String = withContext(Dispatchers.IO) {
@@ -519,6 +518,7 @@ private const val READ_TIMEOUT_MS = 300_000
             connection.disconnect()
         }
     }
+}
 
 class ChatApiException(
     message: String,
