@@ -5,6 +5,8 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.indoone.BuildConfig
 import org.json.JSONArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -15,10 +17,40 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 
+// One clickable follow-up the backend offered with a reply. The action is the exact text
+// this chip sends as the user's next message, so a button and typing cannot diverge.
+data class ActionChip(
+    val label: String,
+    val action: String,
+)
+
 data class ChatResponse(
     val conversationId: String,
     val reply: String,
+    val actionChips: List<ActionChip> = emptyList(),
 )
+
+// Follow-ups, if the backend sent any. A malformed entry is skipped rather than failing
+// the whole reply: the answer matters more than the buttons under it.
+internal fun parseActionChips(array: JSONArray?): List<ActionChip> {
+    if (array == null) {
+        return emptyList()
+    }
+
+    val chips = mutableListOf<ActionChip>()
+
+    for (index in 0 until array.length()) {
+        val item = array.optJSONObject(index) ?: continue
+        val label = item.optString("label").trim()
+        val action = item.optString("action").trim()
+
+        if (label.isNotEmpty() && action.isNotEmpty()) {
+            chips.add(ActionChip(label, action))
+        }
+    }
+
+    return chips
+}
 
 data class FileUploadResponse(
     val fileId: String,
@@ -270,6 +302,90 @@ private const val READ_TIMEOUT_MS = 300_000
             // Warm-up is best-effort; the chat request still reports the real error.
         } finally {
             connection.disconnect()
+        }
+    }
+
+    // The same pipeline as /api/chat, read as it is produced.
+    //
+    // Deltas are handed to the caller on the Main thread, because they land in Compose
+    // state. The socket stays on IO. A stream that ends without its final event is an
+    // error, not a short answer: the caller falls back to the durable worker.
+    suspend fun streamMessage(
+        message: String,
+        conversationId: String?,
+        onMeta: suspend (String) -> Unit = {},
+        onDelta: suspend (String) -> Unit = {},
+    ): ChatResponse {
+        val token = requireAuthToken()
+        val backendUrl = requireBackendUrl()
+        val payload = JSONObject().apply {
+            put("message", message)
+            if (!conversationId.isNullOrBlank()) put("conversation_id", conversationId)
+        }.toString()
+
+        return withContext(Dispatchers.IO) {
+            val connection = openConnection("$backendUrl/api/chat/stream", token)
+            connection.setRequestProperty("Accept", "text/event-stream")
+
+            try {
+                connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+
+                val code = connection.responseCode
+
+                if (code !in 200..299) {
+                    throw ChatApiException("Indoone stream failed ($code)")
+                }
+
+                var conversation = conversationId.orEmpty()
+                val text = StringBuilder()
+                var final: ChatResponse? = null
+                val reader = BufferedReader(InputStreamReader(connection.inputStream, Charsets.UTF_8))
+
+                reader.use { stream ->
+                    while (true) {
+                        val line = stream.readLine() ?: break
+
+                        if (!line.startsWith("data: ")) {
+                            continue
+                        }
+
+                        val event = runCatching {
+                            JSONObject(line.removePrefix("data: "))
+                        }.getOrNull() ?: continue
+
+                        when (event.optString("type")) {
+                            "meta" -> {
+                                conversation = event.optString("conversation_id").ifBlank { conversation }
+                                if (conversation.isNotBlank()) {
+                                    withContext(Dispatchers.Main) { onMeta(conversation) }
+                                }
+                            }
+
+                            "delta" -> {
+                                val chunk = event.optString("text")
+
+                                if (chunk.isNotEmpty()) {
+                                    text.append(chunk)
+                                    val soFar = text.toString()
+                                    withContext(Dispatchers.Main) { onDelta(soFar) }
+                                }
+                            }
+
+                            "done" -> {
+                                final = ChatResponse(
+                                    conversationId = conversation,
+                                    reply = event.optString("reply").ifBlank { text.toString() },
+                                    actionChips = parseActionChips(event.optJSONArray("action_chips")),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                final ?: throw ChatApiException("Indoone stream ended without a reply")
+            } finally {
+                connection.disconnect()
+            }
         }
     }
 
