@@ -200,6 +200,11 @@
       ?.appendMessage?.(conversationId, 'user', text || message)
       .catch(error => console.warn('Indoone chat save failed:', error));
 
+    // Record the turn before the request opens. If this tab is refreshed or closed
+    // while it is open, the next load finds this record and puts the text back in the
+    // composer instead of leaving a question with no answer and no explanation.
+    window.IndooneInflight?.begin({ conversationId, text: message });
+
     try {
       const api = window.IndooneChatApi;
 
@@ -217,6 +222,7 @@
       setActivity('preparing');
       await new Promise(resolve => setTimeout(resolve, 600));
 
+      window.IndooneInflight?.finish();
       store.add({ text: result.reply, mine: false });
 
       void window.IndooneCloudChat
@@ -225,6 +231,8 @@
     } catch (error) {
       console.error('Indoone chat send failed:', error);
 
+      // The failure is on screen now, so the record has done its job.
+      window.IndooneInflight?.finish();
       store.remove(mine);
       store.add({
         // never the raw failure text
