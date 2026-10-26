@@ -145,6 +145,48 @@
     return wrap;
   }
 
+  // Copy, and Share where the browser offers it.
+  //
+  // Share is `navigator.share`, which phones have and desktop Chrome does not - so the
+  // button is only added when the API exists, rather than shown and failing. Copy is
+  // always there, and says so when it works: a tap with no visible result reads as a
+  // broken button.
+  function actionRow(message) {
+    const text = String(message.text || '').trim();
+
+    if (!text) {
+      return null;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'chat-actions';
+
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'chat-action';
+    copy.textContent = 'Copy';
+    copy.addEventListener('click', () => {
+      copyText(text)
+        .then(() => window.toast?.('Copied'))
+        .catch(() => window.toast?.('Could not copy'));
+    });
+    row.appendChild(copy);
+
+    if (typeof navigator.share === 'function') {
+      const share = document.createElement('button');
+      share.type = 'button';
+      share.className = 'chat-action';
+      share.textContent = 'Share';
+      share.addEventListener('click', () => {
+        // A dismissed share sheet rejects; that is not an error to report.
+        Promise.resolve(navigator.share({ text })).catch(() => {});
+      });
+      row.appendChild(share);
+    }
+
+    return row;
+  }
+
   function bubble(message) {
     const row = document.createElement('div');
     row.className = message.mine ? 'chat-row mine' : 'chat-row theirs';
@@ -180,6 +222,12 @@
       });
 
       column.appendChild(body);
+    }
+
+    const actions = actionRow(message);
+
+    if (actions) {
+      column.appendChild(actions);
     }
 
     row.appendChild(column);

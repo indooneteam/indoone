@@ -137,6 +137,46 @@
   height: 16px;
 }
 
+/* Copy and Share under every bubble. Quiet by default: they are useful, not the
+   point of the screen, and a row of buttons that shouts under each message makes a
+   conversation hard to read. */
+.chat-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.chat-row.mine .chat-actions {
+  justify-content: flex-end;
+}
+
+.chat-action {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b6b76;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.chat-action:hover,
+.chat-action:focus-visible {
+  background: #f3eefc;
+  color: #6330db;
+}
+
+/* A 44px target is the smallest a thumb hits reliably; the label stays small, the
+   tappable box does not. */
+@media (pointer: coarse) {
+  .chat-action {
+    min-height: 44px;
+    padding: 0 12px;
+  }
+}
+
 .chat-activity {
   display: flex;
   align-items: center;
