@@ -7,6 +7,8 @@
     'home/message/chat-api.js?v=20261020a',
     'home/message/cloud-chat.js?v=20261020b',
     'home/message/chat-store.js?v=20261018b',
+    // The in-flight record. It has to load with the store, before anything can send.
+    'home/message/inflight.js?v=20261026a',
     'home/message/message.js?v=20261023a',
     'home/send/send.js?v=20261020b',
     'home/voice/voice.js?v=20261019f',
@@ -309,6 +311,33 @@
   // cloud-chat, chat-store and the rest of the chat - was never published and
   // never called, so none of those modules ever loaded. Nothing could send, and
   // nothing reached the history. It runs itself now.
+  // A turn that was open when the tab was refreshed or closed comes back to the
+  // composer. The text is not re-sent automatically: the lost request may have been a
+  // GitHub write, and repeating it without being asked would repeat the side effect.
+  //
+  // Nothing is added to the thread. An assistant bubble would be a lie - the model never
+  // answered - and a system bubble has no styling of its own, so the honest signal is
+  // the text back in the box where the user left it.
+  function restoreInflightTurn() {
+    const record = window.IndooneInflight?.pending?.();
+
+    if (!record) {
+      return;
+    }
+
+    window.IndooneInflight?.finish?.();
+
+    const input = document.getElementById('chatInput');
+
+    if (input && !input.value.trim()) {
+      input.value = record.text;
+      // The composer grows with its content, and the send button enables on input.
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    console.warn('Indoone: an unfinished message was restored to the composer.');
+  }
+
   async function init() {
     const page = document.getElementById('homeContent');
 
@@ -336,6 +365,7 @@
     paintWelcome();
     void paintGreeting();
     void loadResume();
+    restoreInflightTurn();
     startWelcomeLoop();
 
     document
