@@ -1726,10 +1726,18 @@ fun HomeScreen(
                                                     color = Color(0xFF292331),
                                                     fontSize = 15.sp,
                                                 )
-                                                is ReplyPart.Link -> ReplyLinkRow(
-                                                    url = part.url,
-                                                    modifier = Modifier.padding(top = gap),
-                                                )
+                                                is ReplyPart.Link -> if (part.label.isNotBlank()) {
+                                                    MarkdownLink(
+                                                        label = part.label,
+                                                        url = part.url,
+                                                        modifier = Modifier.padding(top = gap),
+                                                    )
+                                                } else {
+                                                    ReplyLinkRow(
+                                                        url = part.url,
+                                                        modifier = Modifier.padding(top = gap),
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -2098,10 +2106,13 @@ fun HomeScreen(
 
 private sealed interface ReplyPart {
     data class Prose(val text: String) : ReplyPart
-    data class Link(val url: String) : ReplyPart
+    data class Link(val url: String, val label: String = "") : ReplyPart
 }
 
 private val REPLY_LINK_PATTERN = Regex("""https?://\S+""")
+
+// [label](url) is a link the backend wrote on purpose - a repository list, for example.
+private val MARKDOWN_LINK_PATTERN = Regex("""\[([^\]\n]+)\]\((https?://[^\s)]+)\)""")
 
 /**
  * Splits a reply into prose and links, so each link can be given a row of its own.
@@ -2113,15 +2124,32 @@ private val REPLY_LINK_PATTERN = Regex("""https?://\S+""")
 private fun splitReplyIntoParts(text: String): List<ReplyPart> {
     val parts = mutableListOf<ReplyPart>()
     var cursor = 0
-    REPLY_LINK_PATTERN.findAll(text).forEach { match ->
-        val prose = text.substring(cursor, match.range.first).trim()
+
+    // A markdown link is matched first, so its label stays inline with the line the
+    // backend wrote instead of the URL being lifted out into a row of its own.
+    MARKDOWN_LINK_PATTERN.findAll(text).forEach { match ->
+        appendBareLinks(parts, text.substring(cursor, match.range.first))
+        parts += ReplyPart.Link(url = match.groupValues[2], label = match.groupValues[1])
+        cursor = match.range.last + 1
+    }
+
+    appendBareLinks(parts, text.substring(cursor))
+    return parts
+}
+
+// A bare URL in the prose around a markdown link keeps its own row, as before.
+private fun appendBareLinks(parts: MutableList<ReplyPart>, segment: String) {
+    var cursor = 0
+
+    REPLY_LINK_PATTERN.findAll(segment).forEach { match ->
+        val prose = segment.substring(cursor, match.range.first).trim()
         if (prose.isNotEmpty()) parts += ReplyPart.Prose(prose)
         parts += ReplyPart.Link(match.value)
         cursor = match.range.last + 1
     }
-    val tail = text.substring(cursor).trim()
+
+    val tail = segment.substring(cursor).trim()
     if (tail.isNotEmpty()) parts += ReplyPart.Prose(tail)
-    return parts
 }
 
 /**
@@ -2268,6 +2296,24 @@ private fun IconAction(
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(7.dp),
+    )
+}
+
+// A [label](url) link. The device's browser, not an in-app webview: the user asked for
+// a link, and the page it opens is not ours to render.
+@Composable
+private fun MarkdownLink(label: String, url: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+
+    Text(
+        text = label,
+        modifier = modifier.clickable {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            }
+        },
+        color = Color(0xFF4B21B3),
+        fontSize = 15.sp,
     )
 }
 

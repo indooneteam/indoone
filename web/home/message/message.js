@@ -31,23 +31,44 @@
   // The app's splitReplyIntoParts: the prose, then one part per URL, then the
   // tail. The prose keeps its own line breaks, so the bubble's pre-wrap still
   // does its job.
+  // [label](url) is a link the backend wrote on purpose - a repository list, for example.
+  // It is matched before bare URLs so the label stays inline with its line instead of the
+  // URL being pulled out into a row of its own and the line splitting in two.
+  const MARKDOWN_LINK_PATTERN = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
   function replyParts(text) {
     const source = String(text || '');
     const parts = [];
     let last = 0;
     let match;
 
-    REPLY_LINK_PATTERN.lastIndex = 0;
+    MARKDOWN_LINK_PATTERN.lastIndex = 0;
 
-    while ((match = REPLY_LINK_PATTERN.exec(source)) !== null) {
+    while ((match = MARKDOWN_LINK_PATTERN.exec(source)) !== null) {
       const prose = source.slice(last, match.index);
 
       if (prose) {
         parts.push({ prose });
       }
 
-      parts.push({ url: match[0] });
+      parts.push({ label: match[1], url: match[2] });
       last = match.index + match[0].length;
+    }
+
+    const tailAfterMarkdown = source.slice(last);
+    const markdownPrefixLength = last;
+
+    REPLY_LINK_PATTERN.lastIndex = 0;
+
+    while ((match = REPLY_LINK_PATTERN.exec(tailAfterMarkdown)) !== null) {
+      const prose = tailAfterMarkdown.slice(last - markdownPrefixLength, match.index);
+
+      if (prose) {
+        parts.push({ prose });
+      }
+
+      parts.push({ url: match[0] });
+      last = markdownPrefixLength + match.index + match[0].length;
     }
 
     const tail = source.slice(last);
@@ -550,6 +571,17 @@
       // per link, each with a copy button, than as one run of text with the
       // URLs buried inside it.
       replyParts(message.text).forEach((part, index) => {
+        if (part.url && part.label) {
+          const link = document.createElement('a');
+          link.className = 'chat-link';
+          link.href = part.url;
+          link.textContent = part.label;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          body.appendChild(link);
+          return;
+        }
+
         if (part.url) {
           body.appendChild(linkRow(part.url, index === 0));
           return;
