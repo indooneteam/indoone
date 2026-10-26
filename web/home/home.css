@@ -15,6 +15,26 @@
   padding: 12px 18px;
 }
 
+/* Mobile browsers: dvh follows the on-screen keyboard, vh does not, so the composer
+   stays above the keyboard instead of being pushed underneath it. */
+@supports (height: 100dvh) {
+  .chat-page {
+    height: 100dvh;
+  }
+}
+
+/* Wide monitors: a reply stretched across 2000px is hard to read. The conversation
+   and the composer sit in one centred column instead. */
+@media (min-width: 900px) {
+  .chat-scroll,
+  .chat-composer {
+    width: 100%;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 /* ------------------------------------------------------ the welcome block */
 
 .chat-welcome {

@@ -151,6 +151,50 @@
   // button is only added when the API exists, rather than shown and failing. Copy is
   // always there, and says so when it works: a tap with no visible result reads as a
   // broken button.
+  // ---- icons ----------------------------------------------------------------
+  // Text buttons made the row wide and shouty under every reply. A compact row of
+  // icons aligned to the bubble reads as an affordance instead of a toolbar, and the
+  // label still exists for a screen reader through aria-label and title.
+  const ICON_PATHS = {
+    copy:
+      '<rect x="9" y="9" width="11" height="11" rx="2"></rect>' +
+      '<path d="M5.5 15H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v.5"></path>',
+    share:
+      '<path d="M12 15V4"></path><path d="m8 7 4-3 4 3"></path>' +
+      '<path d="M5 13v6h14v-6"></path>',
+    speaker:
+      '<path d="M4 9.5h3l4-3.5v12l-4-3.5H4z"></path>' +
+      '<path d="M15.5 9a4 4 0 0 1 0 6"></path>',
+    stop: '<rect x="7" y="7" width="10" height="10" rx="2"></rect>',
+    thumbUp:
+      '<path d="M7 11v8H4v-8z"></path>' +
+      '<path d="M7 11l4-7a2 2 0 0 1 2 2v3h4a2 2 0 0 1 2 2l-1.5 6H7"></path>',
+    thumbDown:
+      '<path d="M7 13V5H4v8z"></path>' +
+      '<path d="M7 13l4 7a2 2 0 0 0 2-2v-3h4a2 2 0 0 0 2-2l-1.5-6H7"></path>',
+    retry:
+      '<path d="M4 12a8 8 0 1 1 2.5 5.8"></path><path d="M4 20v-5h5"></path>'
+  };
+
+  function icon(name) {
+    return (
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"' +
+      ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      (ICON_PATHS[name] || '') +
+      '</svg>'
+    );
+  }
+
+  function iconButton(name, label) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'chat-action';
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    button.innerHTML = icon(name);
+    return button;
+  }
+
   // ---- speech ---------------------------------------------------------------
   // One utterance at a time. Starting a second while the first is speaking talks over
   // itself, so whatever is playing is cancelled first, and the button that started it
@@ -168,7 +212,7 @@
     speaking = null;
 
     if (previous && previous.button) {
-      previous.button.textContent = 'Listen';
+      setListenState(previous.button, false);
     }
   }
 
@@ -190,7 +234,7 @@
     const settle = () => {
       if (speaking === entry) {
         speaking = null;
-        button.textContent = 'Listen';
+        setListenState(button, false);
       }
     };
 
@@ -198,7 +242,7 @@
     utterance.onerror = settle;
 
     speaking = entry;
-    button.textContent = 'Stop';
+    setListenState(button, true);
     window.speechSynthesis.speak(utterance);
   }
 
@@ -280,6 +324,16 @@
     send.send();
   }
 
+  function setListenState(button, isSpeaking) {
+    button.innerHTML = icon(isSpeaking ? 'stop' : 'speaker');
+    const label = isSpeaking ? 'Stop reading' : 'Listen to this reply';
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+  }
+
+  // A compact row under the bubble: copy, share, and - on a reply - listen, rate and
+  // retry. It hugs the bubble's own edge rather than stretching across the screen, so it
+  // reads as an affordance on that message and not as a toolbar for the thread.
   function actionRow(message, options) {
     const text = String(message.text || '').trim();
 
@@ -290,10 +344,7 @@
     const row = document.createElement('div');
     row.className = 'chat-actions';
 
-    const copy = document.createElement('button');
-    copy.type = 'button';
-    copy.className = 'chat-action';
-    copy.textContent = 'Copy';
+    const copy = iconButton('copy', 'Copy this message');
     copy.addEventListener('click', () => {
       copyText(text)
         .then(() => window.toast?.('Copied'))
@@ -302,10 +353,7 @@
     row.appendChild(copy);
 
     if (typeof navigator.share === 'function') {
-      const share = document.createElement('button');
-      share.type = 'button';
-      share.className = 'chat-action';
-      share.textContent = 'Share';
+      const share = iconButton('share', 'Share this message');
       share.addEventListener('click', () => {
         // A dismissed share sheet rejects; that is not an error to report.
         Promise.resolve(navigator.share({ text })).catch(() => {});
@@ -315,10 +363,7 @@
 
     if (!message.mine) {
       if ('speechSynthesis' in window) {
-        const listen = document.createElement('button');
-        listen.type = 'button';
-        listen.className = 'chat-action';
-        listen.textContent = 'Listen';
+        const listen = iconButton('speaker', 'Listen to this reply');
         listen.addEventListener('click', () => toggleSpeech(text, listen));
         row.appendChild(listen);
       }
@@ -326,11 +371,15 @@
       const rating = ratingFor(text);
 
       ['up', 'down'].forEach(kind => {
-        const thumb = document.createElement('button');
-        thumb.type = 'button';
-        thumb.className = 'chat-action chat-rating' + (rating === kind ? ' is-on' : '');
-        thumb.textContent = kind === 'up' ? 'Good' : 'Bad';
-        thumb.setAttribute('aria-pressed', rating === kind ? 'true' : 'false');
+        const label = kind === 'up' ? 'Good reply' : 'Bad reply';
+        const thumb = iconButton(kind === 'up' ? 'thumbUp' : 'thumbDown', label);
+        thumb.classList.add('chat-rating');
+
+        if (rating === kind) {
+          thumb.classList.add('is-on');
+          thumb.setAttribute('aria-pressed', 'true');
+        }
+
         thumb.addEventListener('click', () => {
           recordFeedback(text, kind);
           row.querySelectorAll('.chat-rating').forEach(node => {
@@ -340,14 +389,12 @@
           thumb.classList.add('is-on');
           thumb.setAttribute('aria-pressed', 'true');
         });
+
         row.appendChild(thumb);
       });
 
       if (options && options.isLastAssistant && options.onRetry) {
-        const retry = document.createElement('button');
-        retry.type = 'button';
-        retry.className = 'chat-action';
-        retry.textContent = 'Retry';
+        const retry = iconButton('retry', 'Ask again');
         retry.addEventListener('click', options.onRetry);
         row.appendChild(retry);
       }

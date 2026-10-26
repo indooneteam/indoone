@@ -335,6 +335,13 @@
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
+    // The text comes back; a File does not, because the browser gives no handle to it
+    // once the document is gone. Saying so is the difference between a restore and a
+    // silently incomplete message.
+    if (record.hadAttachments) {
+      window.toast?.('Message restored - please re-attach your file');
+    }
+
     console.warn('Indoone: an unfinished message was restored to the composer.');
   }
 

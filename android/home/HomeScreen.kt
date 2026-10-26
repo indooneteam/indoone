@@ -57,6 +57,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.ThumbDown
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material.icons.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -1966,93 +1972,96 @@ private fun MessageActions(
     // that looks identical before and after reads as a button that did nothing.
     var rating by remember(value, initialRating) { mutableStateOf(initialRating) }
 
+    // Icons rather than words, and a row that hugs the bubble instead of stretching
+    // across the screen: a full-width row of labelled buttons reads as a toolbar for the
+    // thread rather than an affordance on one message. Every icon carries a
+    // contentDescription, so a screen reader still says what the button does.
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        horizontalArrangement = if (alignEnd) Arrangement.End else Arrangement.Start,
+        modifier = Modifier.padding(start = if (alignEnd) 0.dp else 2.dp, top = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = "Copy",
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable {
-                    val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(ClipData.newPlainText("Indoone message", value))
-                    // A tap with no visible result reads as a broken button.
-                    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
-                }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            color = Color(0xFF6B6B76),
-            fontSize = 12.sp,
-        )
+        IconAction(
+            icon = Icons.Outlined.ContentCopy,
+            label = "Copy this message",
+        ) {
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("Indoone message", value))
+            // A tap with no visible result reads as a broken button.
+            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+        }
 
-        Text(
-            text = "Share",
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable {
-                    val share = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, value)
-                    }
-                    context.startActivity(Intent.createChooser(share, "Share message"))
-                }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            color = Color(0xFF6B6B76),
-            fontSize = 12.sp,
-        )
+        IconAction(
+            icon = Icons.Outlined.Share,
+            label = "Share this message",
+        ) {
+            val share = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, value)
+            }
+            context.startActivity(Intent.createChooser(share, "Share message"))
+        }
 
-        // Reading the user's own message back to them is not a feature, so these three
-        // belong to a reply only.
+        // Reading the user's own message back to them is not a feature, so these belong
+        // to a reply only.
         if (assistant) {
             if (onListen != null) {
-                Text(
-                    text = if (speaking) "Stop" else "Listen",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onListen() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    color = Color(0xFF6B6B76),
-                    fontSize = 12.sp,
-                )
+                IconAction(
+                    icon = if (speaking) Icons.Outlined.Stop else Icons.Outlined.VolumeUp,
+                    label = if (speaking) "Stop reading" else "Listen to this reply",
+                ) { onListen() }
             }
 
             if (onRate != null) {
-                listOf(
-                    MessageFeedbackStore.UP to "Good",
-                    MessageFeedbackStore.DOWN to "Bad",
-                ).forEach { (kind, label) ->
-                    val chosen = rating == kind
-                    Text(
-                        text = label,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                rating = kind
-                                onRate(kind)
-                            }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        color = if (chosen) Color(0xFF6330DB) else Color(0xFF6B6B76),
-                        fontSize = 12.sp,
-                    )
+                IconAction(
+                    icon = Icons.Outlined.ThumbUp,
+                    label = "Good reply",
+                    tint = if (rating == MessageFeedbackStore.UP) Color(0xFF6330DB) else null,
+                ) {
+                    rating = MessageFeedbackStore.UP
+                    onRate(MessageFeedbackStore.UP)
+                }
+
+                IconAction(
+                    icon = Icons.Outlined.ThumbDown,
+                    label = "Bad reply",
+                    tint = if (rating == MessageFeedbackStore.DOWN) Color(0xFF6330DB) else null,
+                ) {
+                    rating = MessageFeedbackStore.DOWN
+                    onRate(MessageFeedbackStore.DOWN)
                 }
             }
 
             if (onRetry != null) {
-                Text(
-                    text = "Retry",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onRetry() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    color = Color(0xFF6B6B76),
-                    fontSize = 12.sp,
-                )
+                IconAction(
+                    icon = Icons.Outlined.Refresh,
+                    label = "Ask again",
+                ) { onRetry() }
             }
         }
     }
+}
+
+// One icon button in a bubble's action row. 30dp is the icon's box, not the touch
+// target: Compose's minimum touch target expands it, so a thumb still lands on it.
+@Composable
+private fun IconAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    tint: Color? = null,
+    onClick: () -> Unit,
+) {
+    Icon(
+        imageVector = icon,
+        contentDescription = label,
+        tint = tint ?: Color(0xFF8A8F98),
+        modifier = Modifier
+            .size(30.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(7.dp),
+    )
 }
 
 @Composable
