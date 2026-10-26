@@ -484,6 +484,49 @@
     return row;
   }
 
+  // A follow-up the backend offered with this reply: a held write's Confirm/Cancel, or
+  // the one next step a list makes obvious. Pressing one sends exactly its action text -
+  // for Confirm that is the word the reply used to ask the user to type, so a button and
+  // typing cannot diverge.
+  function chipsRow(chips) {
+    if (!Array.isArray(chips) || !chips.length) {
+      return null;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'chat-chips';
+
+    chips.forEach(chip => {
+      const label = String((chip && chip.label) || '').trim();
+      const action = String((chip && chip.action) || '').trim();
+
+      if (!label || !action) {
+        return;
+      }
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'chat-chip';
+      button.textContent = label;
+
+      button.addEventListener('click', () => {
+        const input = document.getElementById('chatInput');
+
+        if (!input) {
+          return;
+        }
+
+        input.value = action;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        window.IndooneSend?.send?.();
+      });
+
+      row.appendChild(button);
+    });
+
+    return row.childElementCount ? row : null;
+  }
+
   function bubble(message, options) {
     const row = document.createElement('div');
     row.className = message.mine ? 'chat-row mine' : 'chat-row theirs';
@@ -525,6 +568,12 @@
 
     if (actions) {
       column.appendChild(actions);
+    }
+
+    const chips = chipsRow(message.chips);
+
+    if (chips) {
+      column.appendChild(chips);
     }
 
     row.appendChild(column);

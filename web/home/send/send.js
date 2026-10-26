@@ -243,7 +243,7 @@
       store.setConversationId(result.conversationId);
       setActivity(null);
       window.IndooneInflight?.finish();
-      store.add({ text: result.reply, mine: false });
+      store.add({ text: result.reply, mine: false, chips: result.chips || [] });
 
       void window.IndooneCloudChat
         ?.appendMessage?.(result.conversationId, 'assistant', result.reply)

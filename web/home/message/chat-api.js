@@ -173,7 +173,11 @@
 
     return {
       conversationId: json.conversation_id,
-      reply: json.reply
+      reply: json.reply,
+      // Follow-ups the backend offered with this reply. Empty for most answers; a held
+      // write carries Confirm/Cancel so the user presses a button instead of typing a
+      // word the reply had to spell out.
+      chips: Array.isArray(json.action_chips) ? json.action_chips : []
     };
   }
 
