@@ -57,6 +57,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.ThumbDown
 import androidx.compose.material.icons.outlined.ThumbUp
@@ -668,13 +669,41 @@ fun HomeScreen(
     // connection, and a thread of twenty replies would open twenty of them. The
     // listener is what turns the button back to "Listen" when the reading finishes,
     // rather than leaving it saying "Stop" after the audio has gone.
+    // The turn the activity indicator belongs to. Without it the indicator is inferred
+    // from a delay, and a fast reply makes it flash back to Thinking after the answer.
+    var activeTurnId by remember { mutableStateOf<String?>(null) }
+    var activeTurnStartedAt by remember { mutableStateOf(0L) }
+
     var speakingText by remember { mutableStateOf<String?>(null) }
     val speechEngine = remember { arrayOfNulls<TextToSpeech>(1) }
 
     DisposableEffect(Unit) {
         val engine = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                speechEngine[0]?.language = Locale.getDefault()
+            val ready = speechEngine[0]
+
+            if (status == TextToSpeech.SUCCESS && ready != null) {
+                // A voice chosen for the assistant rather than the platform default, which
+                // on most phones is the same robotic one every app uses. Indian English
+                // first, then any English voice the engine has without a network, then
+                // whatever it offers. A genuinely branded character voice needs a cloud
+                // speech service; this is the best a system engine can do.
+                val voices = ready.voices?.toList().orEmpty()
+                val english = voices.filter { it.locale?.language == "en" }
+                val chosen = english.firstOrNull { it.locale?.country == "IN" }
+                    ?: english.firstOrNull { !it.isNetworkConnectionRequired }
+                    ?: english.firstOrNull()
+                    ?: voices.firstOrNull()
+
+                if (chosen != null) {
+                    ready.voice = chosen
+                } else {
+                    ready.language = Locale.UK
+                }
+
+                // A shade slower and slightly lower than the default: the default reads
+                // like a screen reader, and a reply read at speed is hard to follow.
+                ready.setPitch(0.95f)
+                ready.setSpeechRate(0.98f)
             }
         }
 
@@ -741,6 +770,18 @@ fun HomeScreen(
             delay(1000L)
 
             val current = conversationId ?: continue
+
+            // Received becomes Thinking here, from one owner, and only while the turn is
+            // still in flight. This is the fix for the indicator flashing back: it used
+            // to be a delayed coroutine that could fire after the answer had landed.
+            if (
+                activeTurnId != null &&
+                chatActivityState == ChatActivityState.RECEIVED &&
+                System.currentTimeMillis() - activeTurnStartedAt > 350L
+            ) {
+                chatActivityState = ChatActivityState.THINKING
+            }
+
             val settled = withContext(Dispatchers.IO) { store.takeSettled(current) }
 
             if (settled.isEmpty()) {
@@ -777,6 +818,8 @@ fun HomeScreen(
                 }
             }
 
+            // The turn is settled, so the indicator belongs to nothing any more.
+            activeTurnId = null
             chatActivityState = ChatActivityState.IDLE
             isSending = false
         }
@@ -914,22 +957,17 @@ fun HomeScreen(
                 request,
             )
 
-            // The live activity stays. Sending used to show Received, then Thinking, and
-            // the reply arrived with Preparing - handing the turn to a worker must not
-            // cost that, because it is the only sign the message went anywhere.
-            //
-            // It is cleared where the turn settles: the reconciliation effect below, once
-            // the worker has an answer or a failure.
+            // The live activity stays, and the reconciliation effect below owns every
+            // stage of it. A coroutine here that flipped to Thinking after a delay used
+            // to race that effect: on a fast reply it fired after the answer had landed
+            // and the indicator reappeared. One owner, one order: Received, Thinking,
+            // Preparing, done.
             isSending = true
+            activeTurnId = turn.id
+            activeTurnStartedAt = System.currentTimeMillis()
             chatActivityState = ChatActivityState.RECEIVED
 
             scope.launch {
-                delay(350L)
-
-                if (chatActivityState != ChatActivityState.IDLE) {
-                    chatActivityState = ChatActivityState.THINKING
-                }
-
                 runCatching {
                     withContext(Dispatchers.IO) {
                         cloudChatRepository.appendMessage(
@@ -1559,7 +1597,11 @@ fun HomeScreen(
                                             fontSize = 15.sp,
                                         )
                                     }
-                                    MessageActions(message.text, alignEnd = true)
+                                    MessageActions(
+                                        text = message.text,
+                                        alignEnd = true,
+                                        onEdit = { input = message.text },
+                                    )
                                 }
                             }
                         }
@@ -1612,6 +1654,25 @@ fun HomeScreen(
                                     text = message.text,
                                     assistant = true,
                                     speaking = speakingText == message.text,
+                                    pairText = run {
+                                        // The question this reply answered, so copy and
+                                        // share hand over the exchange rather than an
+                                        // answer that means nothing on its own.
+                                        var asked = ""
+
+                                        for (position in index - 1 downTo 0) {
+                                            if (messages[position].fromUser) {
+                                                asked = messages[position].text.trim()
+                                                break
+                                            }
+                                        }
+
+                                        if (asked.isBlank()) {
+                                            message.text
+                                        } else {
+                                            "User: $asked\n\nAI: ${message.text}"
+                                        }
+                                    },
                                     initialRating = remember(message.text) {
                                         MessageFeedbackStore.ratingFor(context, message.text)
                                     },
@@ -1651,6 +1712,9 @@ fun HomeScreen(
 
                                                 messages = trimmed
                                                 input = question
+                                                // A stale flag would swallow the retry
+                                                // silently - the tap would do nothing.
+                                                isSending = false
                                                 sendMessage()
                                             }
                                         }
@@ -1972,9 +2036,11 @@ private fun MessageActions(
     assistant: Boolean = false,
     speaking: Boolean = false,
     initialRating: String = "",
+    pairText: String = "",
     onListen: (() -> Unit)? = null,
     onRate: ((String) -> Unit)? = null,
     onRetry: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val value = text.trim()
@@ -1983,44 +2049,51 @@ private fun MessageActions(
         return
     }
 
+    // Copy and share carry the question with the answer: an answer on its own is usually
+    // meaningless out of context, and pasting a pair back into a chat is what people
+    // actually do with it.
+    val pair = pairText.trim().ifEmpty { value }
+
     // The chosen thumb stays coloured after the tap, so the state is visible - a rating
     // that looks identical before and after reads as a button that did nothing.
     var rating by remember(value, initialRating) { mutableStateOf(initialRating) }
 
-    // Icons rather than words, and a row that hugs the bubble instead of stretching
-    // across the screen: a full-width row of labelled buttons reads as a toolbar for the
-    // thread rather than an affordance on one message. Every icon carries a
-    // contentDescription, so a screen reader still says what the button does.
     Row(
         modifier = Modifier.padding(start = if (alignEnd) 0.dp else 2.dp, top = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconAction(
-            icon = Icons.Outlined.ContentCopy,
-            label = "Copy this message",
-        ) {
-            val clipboard =
-                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("Indoone message", value))
-            // A tap with no visible result reads as a broken button.
-            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
-        }
-
-        IconAction(
-            icon = Icons.Outlined.Share,
-            label = "Share this message",
-        ) {
-            val share = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, value)
+        if (!assistant) {
+            // A sent message carries one action: edit. Editing means putting the text back
+            // where it came from - the composer - rather than rewriting history, because
+            // the reply below it answered that text.
+            IconAction(
+                icon = Icons.Outlined.Edit,
+                label = "Edit this message",
+            ) { onEdit?.invoke() }
+        } else {
+            IconAction(
+                icon = Icons.Outlined.ContentCopy,
+                label = "Copy this exchange",
+            ) {
+                val clipboard =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Indoone exchange", pair))
+                // A tap with no visible result reads as a broken button.
+                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
             }
-            context.startActivity(Intent.createChooser(share, "Share message"))
-        }
 
-        // Reading the user's own message back to them is not a feature, so these belong
-        // to a reply only.
-        if (assistant) {
+            IconAction(
+                icon = Icons.Outlined.Share,
+                label = "Share this exchange",
+            ) {
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, pair)
+                }
+                context.startActivity(Intent.createChooser(share, "Share exchange"))
+            }
+
             if (onListen != null) {
                 IconAction(
                     icon = if (speaking) Icons.Outlined.Stop else Icons.Outlined.VolumeUp,

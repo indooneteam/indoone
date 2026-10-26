@@ -173,7 +173,10 @@
       '<path d="M7 13V5H4v8z"></path>' +
       '<path d="M7 13l4 7a2 2 0 0 0 2-2v-3h4a2 2 0 0 0 2-2l-1.5-6H7"></path>',
     retry:
-      '<path d="M4 12a8 8 0 1 1 2.5 5.8"></path><path d="M4 20v-5h5"></path>'
+      '<path d="M4 12a8 8 0 1 1 2.5 5.8"></path><path d="M4 20v-5h5"></path>',
+    edit:
+      '<path d="M4 20h4l10-10a2.5 2.5 0 0 0-4-4L4 16z"></path>' +
+      '<path d="M13.5 6.5 17.5 10.5"></path>'
   };
 
   function icon(name) {
@@ -216,6 +219,33 @@
     }
   }
 
+  // A voice chosen for the assistant rather than the browser's default, which on most
+  // systems is the same robotic one every app uses. Preference order: an Indian English
+  // voice, then any Google English voice, then the first English voice the platform has.
+  // A genuinely branded character needs a cloud speech service; this is the best a
+  // system engine can do, and it is honest about which one it picked.
+  function preferredVoice() {
+    if (!('speechSynthesis' in window)) {
+      return null;
+    }
+
+    const voices = window.speechSynthesis.getVoices() || [];
+
+    if (!voices.length) {
+      return null;
+    }
+
+    const english = voices.filter(voice => /^en(-|_|$)/i.test(voice.lang || ''));
+
+    return (
+      english.find(voice => /en[-_]IN/i.test(voice.lang || '')) ||
+      english.find(voice => /google/i.test(voice.name || '')) ||
+      english.find(voice => /natural|neural|enhanced|premium/i.test(voice.name || '')) ||
+      english[0] ||
+      voices[0]
+    );
+  }
+
   function toggleSpeech(text, button) {
     if (!('speechSynthesis' in window)) {
       return;
@@ -229,6 +259,18 @@
     stopSpeaking();
 
     const utterance = new SpeechSynthesisUtterance(text);
+    const voice = preferredVoice();
+
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang || 'en-IN';
+    }
+
+    // A shade slower and slightly lower than the platform default: the defaults read
+    // like a screen reader, and a reply read at speed is hard to follow.
+    utterance.rate = 0.98;
+    utterance.pitch = 0.95;
+
     const entry = { text, button };
 
     const settle = () => {
@@ -331,9 +373,27 @@
     button.setAttribute('title', label);
   }
 
-  // A compact row under the bubble: copy, share, and - on a reply - listen, rate and
-  // retry. It hugs the bubble's own edge rather than stretching across the screen, so it
-  // reads as an affordance on that message and not as a toolbar for the thread.
+  // Editing a prompt means putting it back where it came from: the composer. The sent
+  // message stays in the thread, because the reply below it answered that text - silently
+  // rewriting history would leave an answer to a question that no longer exists.
+  function editPrompt(text) {
+    const input = document.getElementById('chatInput');
+
+    if (!input) {
+      return;
+    }
+
+    input.value = text;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    window.toast?.('Edit your message, then send');
+  }
+
+  // A compact row under the bubble.
+  //
+  // A reply carries copy, share, listen, a rating and - on the latest one - retry. The
+  // user's own message carries one thing: edit. Copy on a reply copies the pair, because
+  // an answer on its own is usually meaningless out of context.
   function actionRow(message, options) {
     const text = String(message.text || '').trim();
 
@@ -344,60 +404,67 @@
     const row = document.createElement('div');
     row.className = 'chat-actions';
 
-    const copy = iconButton('copy', 'Copy this message');
+    if (message.mine) {
+      const edit = iconButton('edit', 'Edit this message');
+      edit.addEventListener('click', () => editPrompt(text));
+      row.appendChild(edit);
+      return row;
+    }
+
+    const pair = (options && options.pairText) || text;
+
+    const copy = iconButton('copy', 'Copy this exchange');
     copy.addEventListener('click', () => {
-      copyText(text)
+      copyText(pair)
         .then(() => window.toast?.('Copied'))
         .catch(() => window.toast?.('Could not copy'));
     });
     row.appendChild(copy);
 
     if (typeof navigator.share === 'function') {
-      const share = iconButton('share', 'Share this message');
+      const share = iconButton('share', 'Share this exchange');
       share.addEventListener('click', () => {
         // A dismissed share sheet rejects; that is not an error to report.
-        Promise.resolve(navigator.share({ text })).catch(() => {});
+        Promise.resolve(navigator.share({ text: pair })).catch(() => {});
       });
       row.appendChild(share);
     }
 
-    if (!message.mine) {
-      if ('speechSynthesis' in window) {
-        const listen = iconButton('speaker', 'Listen to this reply');
-        listen.addEventListener('click', () => toggleSpeech(text, listen));
-        row.appendChild(listen);
+    if ('speechSynthesis' in window) {
+      const listen = iconButton('speaker', 'Listen to this reply');
+      listen.addEventListener('click', () => toggleSpeech(text, listen));
+      row.appendChild(listen);
+    }
+
+    const rating = ratingFor(text);
+
+    ['up', 'down'].forEach(kind => {
+      const label = kind === 'up' ? 'Good reply' : 'Bad reply';
+      const thumb = iconButton(kind === 'up' ? 'thumbUp' : 'thumbDown', label);
+      thumb.classList.add('chat-rating');
+
+      if (rating === kind) {
+        thumb.classList.add('is-on');
+        thumb.setAttribute('aria-pressed', 'true');
       }
 
-      const rating = ratingFor(text);
-
-      ['up', 'down'].forEach(kind => {
-        const label = kind === 'up' ? 'Good reply' : 'Bad reply';
-        const thumb = iconButton(kind === 'up' ? 'thumbUp' : 'thumbDown', label);
-        thumb.classList.add('chat-rating');
-
-        if (rating === kind) {
-          thumb.classList.add('is-on');
-          thumb.setAttribute('aria-pressed', 'true');
-        }
-
-        thumb.addEventListener('click', () => {
-          recordFeedback(text, kind);
-          row.querySelectorAll('.chat-rating').forEach(node => {
-            node.classList.remove('is-on');
-            node.setAttribute('aria-pressed', 'false');
-          });
-          thumb.classList.add('is-on');
-          thumb.setAttribute('aria-pressed', 'true');
+      thumb.addEventListener('click', () => {
+        recordFeedback(text, kind);
+        row.querySelectorAll('.chat-rating').forEach(node => {
+          node.classList.remove('is-on');
+          node.setAttribute('aria-pressed', 'false');
         });
-
-        row.appendChild(thumb);
+        thumb.classList.add('is-on');
+        thumb.setAttribute('aria-pressed', 'true');
       });
 
-      if (options && options.isLastAssistant && options.onRetry) {
-        const retry = iconButton('retry', 'Ask again');
-        retry.addEventListener('click', options.onRetry);
-        row.appendChild(retry);
-      }
+      row.appendChild(thumb);
+    });
+
+    if (options && options.isLastAssistant && options.onRetry) {
+      const retry = iconButton('retry', 'Ask again');
+      retry.addEventListener('click', options.onRetry);
+      row.appendChild(retry);
     }
 
     return row;
@@ -485,9 +552,27 @@
     );
 
     messages.forEach((message, index) => {
+      // Copy and share carry the question with the answer: an answer on its own is
+      // usually meaningless out of context, and pasting a pair back into a chat is what
+      // people actually do with it.
+      let question = '';
+
+      if (!message.mine) {
+        for (let before = index - 1; before >= 0; before -= 1) {
+          if (messages[before].mine) {
+            question = String(messages[before].text || '').trim();
+            break;
+          }
+        }
+      }
+
+      const answer = String(message.text || '').trim();
+      const pairText = question ? `User: ${question}\n\nAI: ${answer}` : answer;
+
       list.appendChild(
         bubble(message, {
           isLastAssistant: index === lastAssistant,
+          pairText,
           onRetry: () => retryLast(messages)
         })
       );
