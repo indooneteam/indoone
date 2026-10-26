@@ -196,8 +196,100 @@
     };
   }
 
+  // The same pipeline as /api/chat, delivered as it is produced.
+  //
+  // The server sends `meta` (the conversation id), then `delta` events, then one `done`
+  // that carries the finished reply and the chips it offered. Reading them here means the
+  // caller can show the first words immediately and clear its "thinking" indicator on the
+  // first delta instead of waiting for the whole answer.
+  async function streamMessage({ message, conversationId, signal, onMeta, onDelta }) {
+    const token = await authToken();
+
+    const response = await fetch(`${BACKEND_URL}/api/chat/stream`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify({ message, conversation_id: conversationId }),
+      signal
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Indoone stream failed (${response.status})`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let conversation = conversationId || '';
+    let text = '';
+    let final = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Events are separated by a blank line; the last piece may be incomplete and stays
+      // in the buffer until the next read completes it.
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() || '';
+
+      for (const part of parts) {
+        const line = part.split('\n').find(item => item.startsWith('data: '));
+
+        if (!line) {
+          continue;
+        }
+
+        let event;
+
+        try {
+          event = JSON.parse(line.slice('data: '.length));
+        } catch {
+          continue;
+        }
+
+        if (event.type === 'meta') {
+          conversation = event.conversation_id || conversation;
+          onMeta?.(conversation);
+          continue;
+        }
+
+        if (event.type === 'delta' && event.text) {
+          text += event.text;
+          onDelta?.(event.text, text);
+          continue;
+        }
+
+        if (event.type === 'done') {
+          final = {
+            conversationId: conversation,
+            reply: event.reply || text,
+            chips: Array.isArray(event.action_chips) ? event.action_chips : []
+          };
+        }
+      }
+    }
+
+    // A stream that ends without its last event is not a reply. The caller falls back to
+    // the blocking endpoint rather than showing half an answer as if it were whole.
+    if (!final) {
+      throw new Error('Indoone stream ended without a reply');
+    }
+
+    return final;
+  }
+
   window.IndooneChatApi = {
     send,
+    streamMessage,
     uploadFile,
     backendUrl: BACKEND_URL
   };

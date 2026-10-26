@@ -229,12 +229,68 @@
         throw new Error('Indoone AI is not reachable right now.');
       }
 
-      const result = await api.send({
-        message,
-        conversationId,
-        attachments,
-        signal: controller.signal
-      });
+      // The stream is preferred: the first delta is the answer starting, so the indicator
+      // goes away then instead of after the whole reply.
+      //
+      // A turn with an attachment keeps the blocking endpoint, because the stream endpoint
+      // takes no attachments - a file sent to it would be silently dropped.
+      let result = null;
+      let streamedMessage = null;
+
+      if (!sentAttachments.length && typeof api.streamMessage === 'function') {
+        try {
+          result = await api.streamMessage({
+            message,
+            conversationId,
+            signal: controller.signal,
+            onMeta: id => store.setConversationId(id),
+            onDelta: (chunk, full) => {
+              if (activeTurnId !== turnId) {
+                return;
+              }
+
+              if (!streamedMessage) {
+                // First token: the wait is over.
+                setActivity(null);
+                streamedMessage = store.add({ text: '', mine: false });
+              }
+
+              streamedMessage.text = full;
+              window.IndooneMessages?.render(
+                document.getElementById('chatList'),
+                store.getMessages(),
+                null
+              );
+              window.IndooneChatScroll?.toBottom?.();
+            }
+          });
+        } catch (error) {
+          if (error?.name === 'AbortError') {
+            throw error;
+          }
+
+          // A stream that fails before a single token falls back to the blocking call:
+          // same pipeline, same answer, without the progressive reveal. A partial bubble
+          // is removed so the fallback does not leave half an answer behind.
+          console.warn('Indoone stream failed, falling back:', error);
+
+          if (streamedMessage) {
+            store.remove(streamedMessage);
+            streamedMessage = null;
+          }
+
+          result = null;
+        }
+      }
+
+      if (!result) {
+        result = await api.send({
+          message,
+          conversationId,
+          attachments,
+          signal: controller.signal
+        });
+      }
 
       if (activeTurnId !== turnId) {
         return;
@@ -243,7 +299,21 @@
       store.setConversationId(result.conversationId);
       setActivity(null);
       window.IndooneInflight?.finish();
-      store.add({ text: result.reply, mine: false, chips: result.chips || [] });
+
+      if (streamedMessage) {
+        // The streamed bubble becomes the finished one: same text, plus the chips the
+        // reply offered.
+        streamedMessage.text = result.reply;
+        streamedMessage.chips = result.chips || [];
+        window.IndooneMessages?.render(
+          document.getElementById('chatList'),
+          store.getMessages(),
+          null
+        );
+        window.IndooneChatScroll?.toBottom?.();
+      } else {
+        store.add({ text: result.reply, mine: false, chips: result.chips || [] });
+      }
 
       void window.IndooneCloudChat
         ?.appendMessage?.(result.conversationId, 'assistant', result.reply)
