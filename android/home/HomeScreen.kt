@@ -1600,7 +1600,14 @@ fun HomeScreen(
                                     MessageActions(
                                         text = message.text,
                                         alignEnd = true,
-                                        onEdit = { input = message.text },
+                                        // Editing replaces the message: the thread is cut
+                                        // back to just before it, so the old prompt and the
+                                        // answer it got are gone and the edited text takes
+                                        // their place instead of being appended below them.
+                                        onEdit = {
+                                            messages = messages.take(index)
+                                            input = message.text
+                                        },
                                     )
                                 }
                             }
@@ -1680,7 +1687,7 @@ fun HomeScreen(
                                     onRate = { kind ->
                                         MessageFeedbackStore.record(context, message.text, kind)
                                     },
-                                    onRetry = if (index == messages.indexOfLast { !it.fromUser }) {
+                                    onRetry = if (index == messages.indexOfLast { !it.fromUser } && retriesAvailable(messages)) {
                                         {
                                             // Re-ask the question behind this reply. The
                                             // trailing exchange comes off first - the reply
@@ -2129,6 +2136,19 @@ private fun MessageActions(
             }
         }
     }
+}
+
+// Retry is limited to two regenerations: the answer, then two more attempts. After that
+// the thread holds three answers to one question, which is enough to know whether it will
+// ever be right - and an unlimited retry is just a slot machine.
+private fun retriesAvailable(messages: List<ChatMessage>): Boolean {
+    val lastQuestion = messages.indexOfLast { it.fromUser }
+
+    if (lastQuestion < 0) {
+        return false
+    }
+
+    return messages.drop(lastQuestion + 1).count { !it.fromUser } <= 2
 }
 
 // One icon button in a bubble's action row. 30dp is the icon's box, not the touch
