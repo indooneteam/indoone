@@ -52,6 +52,22 @@ internal fun parseActionChips(array: JSONArray?): List<ActionChip> {
     return chips
 }
 
+// The inverse of parseActionChips, for the worker: a turn stored off-screen keeps the
+// buttons it was given, so recovering the thread does not silently drop them.
+internal fun chipsToJson(chips: List<ActionChip>): String? {
+    if (chips.isEmpty()) {
+        return null
+    }
+
+    val array = JSONArray()
+
+    chips.forEach { chip ->
+        array.put(JSONObject().put("label", chip.label).put("action", chip.action))
+    }
+
+    return array.toString()
+}
+
 data class FileUploadResponse(
     val fileId: String,
     val filename: String,

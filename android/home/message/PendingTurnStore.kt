@@ -31,6 +31,10 @@ class PendingTurnStore private constructor(context: Context) :
         val reply: String?,
         val error: String?,
         val createdAt: Long,
+        // The follow-ups the reply offered, as the JSON the backend sent. Stored as a
+        // string rather than parsed here: this class knows nothing about ActionChip, and a
+        // stored string survives a schema change better than a column per field.
+        val actionChips: String? = null,
     )
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -43,6 +47,7 @@ class PendingTurnStore private constructor(context: Context) :
                 status TEXT NOT NULL,
                 reply TEXT,
                 error TEXT,
+                action_chips TEXT,
                 created_at INTEGER NOT NULL
             )
             """.trimIndent()
@@ -51,8 +56,11 @@ class PendingTurnStore private constructor(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Nothing to migrate yet: version 1 is the first schema. A change here is a
-        // version bump with a real migration, the same rule the backend follows.
+        // Version 2 adds the chips a reply offered. Existing rows keep a null column, and
+        // the reader treats null as "no chips" - which is exactly what those turns were.
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE $TABLE ADD COLUMN action_chips TEXT")
+        }
     }
 
     /**
@@ -80,11 +88,17 @@ class PendingTurnStore private constructor(context: Context) :
         return turn
     }
 
-    fun markDelivered(id: String, reply: String) {
+    fun markDelivered(id: String, reply: String, actionChipsJson: String? = null) {
         val values = ContentValues().apply {
             put("status", STATUS_DELIVERED)
             put("reply", reply)
             putNull("error")
+
+            if (actionChipsJson.isNullOrBlank()) {
+                putNull("action_chips")
+            } else {
+                put("action_chips", actionChipsJson)
+            }
         }
         writableDatabase.update(TABLE, values, "id = ?", arrayOf(id))
     }
@@ -127,7 +141,7 @@ class PendingTurnStore private constructor(context: Context) :
         try {
             db.query(
                 TABLE,
-                arrayOf("id", "conversation_id", "text", "status", "reply", "error", "created_at"),
+                arrayOf("id", "conversation_id", "text", "status", "reply", "error", "created_at", "action_chips"),
                 selection,
                 args,
                 null,
@@ -144,6 +158,7 @@ class PendingTurnStore private constructor(context: Context) :
                         reply = if (cursor.isNull(4)) null else cursor.getString(4),
                         error = if (cursor.isNull(5)) null else cursor.getString(5),
                         createdAt = cursor.getLong(6),
+                        actionChips = if (cursor.isNull(7)) null else cursor.getString(7),
                     )
                 }
             }
@@ -171,7 +186,7 @@ class PendingTurnStore private constructor(context: Context) :
         val turns = mutableListOf<Turn>()
         readableDatabase.query(
             TABLE,
-            arrayOf("id", "conversation_id", "text", "status", "reply", "error", "created_at"),
+            arrayOf("id", "conversation_id", "text", "status", "reply", "error", "created_at", "action_chips"),
             selection,
             args,
             null,
@@ -188,6 +203,7 @@ class PendingTurnStore private constructor(context: Context) :
                     reply = if (cursor.isNull(4)) null else cursor.getString(4),
                     error = if (cursor.isNull(5)) null else cursor.getString(5),
                     createdAt = cursor.getLong(6),
+                    actionChips = if (cursor.isNull(7)) null else cursor.getString(7),
                 )
             }
         }
@@ -200,7 +216,7 @@ class PendingTurnStore private constructor(context: Context) :
         const val STATUS_DELIVERED = "delivered"
 
         private const val DB_NAME = "indoone_pending_turns.db"
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
         private const val TABLE = "pending_turns"
 
         @Volatile

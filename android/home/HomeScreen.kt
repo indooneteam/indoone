@@ -119,6 +119,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.indoone.home.message.ActionChip
+import com.indoone.home.message.parseActionChips
+import org.json.JSONArray
 import com.indoone.home.message.ChatApi
 import com.indoone.home.message.ChatApiException
 import com.indoone.home.message.ChatMediaAttachment
@@ -870,7 +872,15 @@ fun HomeScreen(
                     // its actions. Received and Thinking came from the send.
                     chatActivityState = ChatActivityState.PREPARING
                     delay(600L)
-                    messages = messages + ChatMessage(reply, false)
+                    // The chips came back with the reply; restore them, so a turn that
+                    // finished in the background keeps its buttons. A row written before
+                    // the column existed has null here, which reads as no chips.
+                    val restoredChips = parseActionChips(
+                        turn.actionChips?.let { raw ->
+                            runCatching { JSONArray(raw) }.getOrNull()
+                        }
+                    )
+                    messages = messages + ChatMessage(reply, false, chips = restoredChips)
                     runCatching {
                         withContext(Dispatchers.IO) {
                             cloudChatRepository.appendMessage(
