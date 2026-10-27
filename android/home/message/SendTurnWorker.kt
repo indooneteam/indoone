@@ -51,7 +51,7 @@ class SendTurnWorker(
                     conversationId = turn.conversationId,
                 )
             }
-            store.markDelivered(turn.id, response.reply)
+            store.markDelivered(turn.id, response.reply, chipsToJson(response.actionChips))
             Result.success()
         } catch (error: Exception) {
             val reason = error.message
