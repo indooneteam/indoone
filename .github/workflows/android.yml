@@ -3,8 +3,23 @@ name: Android Build
 on:
   push:
     branches: [ main, develop, terminal ]
+    # Android only. Without this, a change under web/ triggered a full Gradle build: the
+    # two clients share a repository, not a build, and a web edit should not be able to
+    # turn the Android check red or spend the minutes.
+    paths:
+      - "android/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/android.yml"
   pull_request:
     branches: [ main, develop, terminal ]
+    paths:
+      - "android/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/android.yml"
 
 jobs:
   build:
