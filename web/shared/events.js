@@ -353,22 +353,6 @@
       return window.editCurrent?.();
     }
 
-    if (event.target.closest('[data-create-recovery]')) {
-      return window.createBackup?.();
-    }
-
-    if (event.target.closest('[data-restore-recovery]')) {
-      return window.restoreRecoveryPdf?.();
-    }
-
-    if (event.target.closest('[data-delete-recovery]')) {
-      return window.deleteRecoveryPdf?.();
-    }
-
-    if (event.target.closest('[data-backup]')) {
-      return window.showBackup?.();
-    }
-
     if (event.target.closest('[data-about]')) {
       return window.openMenuFeature?.('about');
     }
