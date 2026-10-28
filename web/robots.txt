@@ -1,9 +1,0 @@
-# Indoone is meant to be found - everywhere, not only in India.
-User-agent: *
-Allow: /
-
-# Nothing behind a login is worth indexing, and the app shell without data is empty.
-Disallow: /authentication/
-Disallow: /settings/
-
-Sitemap: https://indooneteam.github.io/indoone/sitemap.xml
