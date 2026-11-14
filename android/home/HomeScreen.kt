@@ -1823,6 +1823,9 @@ fun HomeScreen(
                                     SentAttachmentContent(message.attachments)
                                 }
                                 if (message.text.isNotBlank()) {
+                                    // Glass, not a colour: a solid brand bubble made every
+                                    // message look like a button, and it was the only blue on
+                                    // the screen.
                                     Surface(
                                         shape = RoundedCornerShape(
                                             topStart = 18.dp,
@@ -1830,12 +1833,13 @@ fun HomeScreen(
                                             bottomStart = 18.dp,
                                             bottomEnd = 5.dp,
                                         ),
-                                        color = Color(0xFF703BE2),
+                                        color = Color(0x0E14121A),
+                                        border = BorderStroke(1.dp, Color(0x17141212)),
                                     ) {
                                         Text(
                                             message.text,
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                            color = Color.White,
+                                            color = Color(0xFF17151D),
                                             fontSize = 15.sp,
                                         )
                                     }
@@ -1868,16 +1872,11 @@ fun HomeScreen(
                             )
 
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Surface(
-                                    shape = RoundedCornerShape(
-                                        topStart = 18.dp,
-                                        topEnd = 18.dp,
-                                        bottomStart = 5.dp,
-                                        bottomEnd = 18.dp,
-                                    ),
-                                    color = Color(0xFFF5F2FB),
-                                ) {
-                                    Column(Modifier.padding(horizontal = 15.dp, vertical = 12.dp)) {
+                                // No bubble: the reply is the page, plain text on the
+                                // background, so a long answer reads like writing rather than
+                                // a boxed message.
+                                Box {
+                                    Column(Modifier.padding(horizontal = 0.dp, vertical = 2.dp)) {
                                         // A reply that carries links reads better as its prose and
                                         // then one row per link, each with a copy button, than as
                                         // one run of text with the URLs buried inside it.

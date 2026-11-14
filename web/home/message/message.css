@@ -67,17 +67,25 @@
    (bottom-right) and its padding is 12dp horizontal / 10dp vertical; the
    assistant bubble has its small corner at bottomStart (bottom-left) and its
    padding is 15dp / 12dp. The two radii used to be swapped. */
+/* Sent: glass, not a colour. A solid brand bubble made every message a button; a translucent
+   pane with a hairline edge reads as something you wrote and lets the page show through. */
 .chat-row.mine .chat-bubble {
   border-radius: 18px 18px 5px 18px;
   padding: 10px 12px;
-  background: #703be2;
-  color: #fff;
+  background: rgba(20, 18, 26, 0.055);
+  border: 1px solid rgba(20, 18, 26, 0.09);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  color: #17151d;
 }
 
+/* Received: no bubble at all. The reply is the page - plain text on the background, aligned
+   left, which is how a long answer stays readable instead of being boxed. */
 .chat-row.theirs .chat-bubble {
-  border-radius: 18px 18px 18px 5px;
-  background: #f5f2fb;
-  color: #292331;
+  border-radius: 0;
+  padding-left: 0;
+  background: none;
+  color: #17151d;
   /* Every reply stops at three quarters of the line. Without this a long answer ran edge to
      edge and read like a page, while a short one was a small bubble - two shapes for the same
      voice. The cap keeps them one shape; a short reply is still only as wide as its words. */
